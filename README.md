@@ -19,16 +19,12 @@ Built to replace Pterodactyl — modern stack, dark UI, fully self-hosted.
 ![Monorepo · Turborepo](https://www.shieldcn.dev/badge/Monorepo-Turborepo-EF4444.svg?logo=turborepo&variant=branded&size=sm)
 ![Agent-friendly AGENTS.md](https://www.shieldcn.dev/badge/Agent--friendly-AGENTS.md-D97757.svg?variant=secondary&size=sm)
 
-<br />
-
-> [!CAUTION]
-> **This project is in active, bare development.** There is no alpha, no stable release, and no deployment guide. The API surface changes without notice. Do not use Struxa for anything beyond local development and experimentation. It is not functional as a product yet.
-
-<br />
-
 <img src=".github/uploads/preview-small.jpeg" alt="Struxa panel preview" width="860" />
 
 </div>
+
+> [!CAUTION]
+> **This project is in active, bare development.** There is no alpha, no stable release, and no deployment guide. The API surface changes without notice. Do not use Struxa for anything beyond local development and experimentation. It is not functional as a product yet.
 
 <br />
 
@@ -39,8 +35,6 @@ Struxa is a self-hosted server management panel designed to be a modern, open-so
 The immediate focus is game server management — create, configure, and control game servers from a single panel. The longer-term roadmap expands into VPS management, node orchestration, and infrastructure tooling.
 
 Struxa is **not** a fork of Pterodactyl. It is a clean-room implementation with a different architecture, a different design language, and a different set of priorities.
-
----
 
 ## Planned Features
 
@@ -58,8 +52,6 @@ These are goals, not guarantees. Nothing below is shipped.
 - [ ] Billing and resource quotas (future)
 - [ ] Egg/image marketplace (future)
 
----
-
 ## Tech Stack
 
 | Layer | Technology |
@@ -75,8 +67,6 @@ These are goals, not guarantees. Nothing below is shipped.
 | Monorepo | [Turborepo](https://turbo.build) + [Bun workspaces](https://bun.sh) |
 | Runtime | [Bun](https://bun.sh) |
 | Linting | Oxlint + Oxfmt |
-
----
 
 ## Project Structure
 
@@ -96,8 +86,6 @@ struxa/
 ├── CONTRIBUTING.md       # Contributor guide
 └── turbo.json            # Turborepo pipeline
 ```
-
----
 
 ## Getting Started
 
@@ -147,13 +135,9 @@ Open [http://localhost:3001](http://localhost:3001) in your browser.
 
 </details>
 
----
-
 ## Roadmap
 
 The roadmap is tracked via GitHub Issues and GitHub Projects. If you want to follow progress, watch the repository or check the Issues tab. There is no public timeline.
-
----
 
 ## Contributing
 
@@ -161,13 +145,11 @@ Contributions are welcome — code, bug reports, design feedback, and documentat
 
 Note that because the project is in early development, large features may be deferred or redirected if they conflict with the current architecture direction.
 
----
-
 ## License
 
 MIT — see [LICENSE](./LICENSE) for details.
 
----
+<br />
 
 <div align="center">
   <sub>Struxa is not affiliated with Pterodactyl or any game server hosting provider.</sub>
