@@ -142,12 +142,6 @@ Note that because the project is in early development, large features may be def
 
 ---
 
-## Design
-
-Struxa uses a strict dark ops panel design language documented in [DESIGN.md](./DESIGN.md). All UI contributions must follow it. The short version: dark, dense, operator-focused — no decorative elements, color used only for status signals.
-
----
-
 ## License
 
 MIT — see [LICENSE](./LICENSE) for details.
