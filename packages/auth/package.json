@@ -1,0 +1,24 @@
+{
+  "name": "@struxav2/auth",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {},
+  "dependencies": {
+    "@struxav2/db": "workspace:*",
+    "@struxav2/env": "workspace:*",
+    "better-auth": "catalog:",
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@struxav2/config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}

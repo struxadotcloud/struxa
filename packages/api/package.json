@@ -1,0 +1,29 @@
+{
+  "name": "@struxav2/api",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {},
+  "dependencies": {
+    "@orpc/client": "catalog:",
+    "@orpc/openapi": "catalog:",
+    "@orpc/server": "catalog:",
+    "@orpc/zod": "catalog:",
+    "@struxav2/auth": "workspace:*",
+    "@struxav2/db": "workspace:*",
+    "@struxav2/env": "workspace:*",
+    "dotenv": "catalog:",
+    "next": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@struxav2/config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}
