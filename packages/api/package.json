@@ -1,5 +1,5 @@
 {
-  "name": "@struxav2/api",
+  "name": "@struxa/api",
   "type": "module",
   "exports": {
     ".": {
@@ -15,15 +15,15 @@
     "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",
     "@orpc/zod": "catalog:",
-    "@struxav2/auth": "workspace:*",
-    "@struxav2/db": "workspace:*",
-    "@struxav2/env": "workspace:*",
+    "@struxa/auth": "workspace:*",
+    "@struxa/db": "workspace:*",
+    "@struxa/env": "workspace:*",
     "dotenv": "catalog:",
     "next": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@struxav2/config": "workspace:*",
+    "@struxa/config": "workspace:*",
     "typescript": "catalog:"
   }
 }

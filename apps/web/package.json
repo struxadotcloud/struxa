@@ -8,15 +8,16 @@
     "start": "next start"
   },
   "dependencies": {
+    "@monaco-editor/react": "^4.6.0",
     "@orpc/client": "catalog:",
     "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",
     "@orpc/tanstack-query": "^1.13.14",
     "@orpc/zod": "catalog:",
-    "@struxav2/api": "workspace:*",
-    "@struxav2/auth": "workspace:*",
-    "@struxav2/env": "workspace:*",
-    "@struxav2/ui": "workspace:*",
+    "@struxa/api": "workspace:*",
+    "@struxa/auth": "workspace:*",
+    "@struxa/env": "workspace:*",
+    "@struxa/ui": "workspace:*",
     "@tanstack/react-form": "^1.28.0",
     "@tanstack/react-query": "^5.90.12",
     "babel-plugin-react-compiler": "^1.0.0",
@@ -32,7 +33,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@struxav2/config": "workspace:*",
+    "@struxa/config": "workspace:*",
     "@tailwindcss/postcss": "^4.1.18",
     "@tanstack/react-query-devtools": "^5.91.1",
     "@types/node": "^20",

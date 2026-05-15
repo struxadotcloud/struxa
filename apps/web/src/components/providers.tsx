@@ -1,6 +1,6 @@
 "use client";
 
-import { Toaster } from "@struxav2/ui/components/sonner";
+import { Toaster } from "@struxa/ui/components/sonner";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 

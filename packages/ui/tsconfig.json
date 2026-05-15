@@ -1,10 +1,10 @@
 {
-  "extends": "@struxav2/config/tsconfig.base.json",
+  "extends": "@struxa/config/tsconfig.base.json",
   "compilerOptions": {
     "jsx": "react-jsx",
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "paths": {
-      "@struxav2/ui/*": ["./src/*"]
+      "@struxa/ui/*": ["./src/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],

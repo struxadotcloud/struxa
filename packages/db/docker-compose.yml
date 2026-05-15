@@ -1,9 +1,9 @@
-name: struxav2
+name: struxa
 
 services:
   mysql:
     image: mysql
-    container_name: struxav2-mysql
+    container_name: struxa-mysql
     environment:
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: struxav2
@@ -12,7 +12,7 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - struxav2_mysql_data:/var/lib/mysql
+      - struxa_mysql_data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
@@ -21,4 +21,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  struxav2_mysql_data:
+  struxa_mysql_data:

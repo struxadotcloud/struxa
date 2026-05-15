@@ -1,5 +1,5 @@
 {
-  "name": "@struxav2/env",
+  "name": "@struxa/env",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -14,7 +14,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@struxav2/config": "workspace:*",
+    "@struxa/config": "workspace:*",
     "@types/node": "^22.13.14",
     "typescript": "catalog:"
   }

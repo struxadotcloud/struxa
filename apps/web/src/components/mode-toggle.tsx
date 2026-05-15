@@ -1,12 +1,12 @@
 "use client";
 
-import { Button } from "@struxav2/ui/components/button";
+import { Button } from "@struxa/ui/components/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@struxav2/ui/components/dropdown-menu";
+} from "@struxa/ui/components/dropdown-menu";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import * as React from "react";

@@ -1,4 +1,4 @@
-import { cn } from "@struxav2/ui/lib/utils";
+import { cn } from "@struxa/ui/lib/utils";
 import * as React from "react";
 
 function Card({

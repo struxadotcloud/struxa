@@ -1,4 +1,4 @@
-import "@struxav2/env/web";
+import "@struxa/env/web";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {

@@ -1,4 +1,4 @@
-import { auth } from "@struxav2/auth";
+import { auth } from "@struxa/auth";
 import type { NextRequest } from "next/server";
 
 export async function createContext(req: NextRequest) {

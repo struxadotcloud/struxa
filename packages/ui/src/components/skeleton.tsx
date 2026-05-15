@@ -1,4 +1,4 @@
-import { cn } from "@struxav2/ui/lib/utils";
+import { cn } from "@struxa/ui/lib/utils";
 
 function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
   return (

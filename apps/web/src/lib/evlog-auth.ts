@@ -1,4 +1,4 @@
-import { auth } from "@struxav2/auth";
+import { auth } from "@struxa/auth";
 import { createAuthMiddleware, type BetterAuthInstance } from "evlog/better-auth";
 
 import { useLogger } from "@/lib/evlog";

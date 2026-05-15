@@ -1,3 +1,3 @@
 {
-  "extends": "@struxav2/config/tsconfig.base.json"
+  "extends": "@struxa/config/tsconfig.base.json"
 }

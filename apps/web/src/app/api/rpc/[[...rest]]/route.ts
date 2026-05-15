@@ -3,8 +3,8 @@ import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins";
 import { onError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
-import { createContext } from "@struxav2/api/context";
-import { appRouter } from "@struxav2/api/routers/index";
+import { createContext } from "@struxa/api/context";
+import { appRouter } from "@struxa/api/routers/index";
 import { NextRequest } from "next/server";
 
 import { withEvlog } from "@/lib/evlog";

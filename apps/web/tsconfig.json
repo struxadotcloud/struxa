@@ -21,7 +21,7 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
-      "@struxav2/ui/*": ["../../packages/ui/src/*"]
+      "@struxa/ui/*": ["../../packages/ui/src/*"]
     }
   },
   "include": [

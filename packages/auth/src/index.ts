@@ -1,6 +1,6 @@
-import { createDb } from "@struxav2/db";
-import * as schema from "@struxav2/db/schema/auth";
-import { env } from "@struxav2/env/server";
+import { createDb } from "@struxa/db";
+import * as schema from "@struxa/db/schema/auth";
+import { env } from "@struxa/env/server";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";

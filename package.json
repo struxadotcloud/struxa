@@ -1,5 +1,5 @@
 {
-  "name": "struxav2",
+  "name": "struxa",
   "private": true,
   "workspaces": {
     "packages": [
@@ -32,24 +32,24 @@
     "build": "turbo build",
     "check-types": "turbo check-types",
     "dev:web": "turbo -F web dev",
-    "db:push": "turbo -F @struxav2/db db:push",
-    "db:studio": "turbo -F @struxav2/db db:studio",
-    "db:generate": "turbo -F @struxav2/db db:generate",
-    "db:migrate": "turbo -F @struxav2/db db:migrate",
-    "db:start": "turbo -F @struxav2/db db:start",
-    "db:watch": "turbo -F @struxav2/db db:watch",
-    "db:stop": "turbo -F @struxav2/db db:stop",
-    "db:down": "turbo -F @struxav2/db db:down",
+    "db:push": "turbo -F @struxa/db db:push",
+    "db:studio": "turbo -F @struxa/db db:studio",
+    "db:generate": "turbo -F @struxa/db db:generate",
+    "db:migrate": "turbo -F @struxa/db db:migrate",
+    "db:start": "turbo -F @struxa/db db:start",
+    "db:watch": "turbo -F @struxa/db db:watch",
+    "db:stop": "turbo -F @struxa/db db:stop",
+    "db:down": "turbo -F @struxa/db db:down",
     "check": "oxlint && oxfmt --write",
     "prepare": "husky"
   },
   "dependencies": {
-    "@struxav2/env": "workspace:*",
+    "@struxa/env": "workspace:*",
     "dotenv": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@struxav2/config": "workspace:*",
+    "@struxa/config": "workspace:*",
     "@types/node": "^22.13.14",
     "husky": "^9.1.7",
     "lint-staged": "^16.1.2",

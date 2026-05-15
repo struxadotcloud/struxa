@@ -1,5 +1,5 @@
 {
-  "name": "@struxav2/db",
+  "name": "@struxa/db",
   "type": "module",
   "exports": {
     ".": {
@@ -20,14 +20,14 @@
     "db:down": "docker compose down"
   },
   "dependencies": {
-    "@struxav2/env": "workspace:*",
+    "@struxa/env": "workspace:*",
     "dotenv": "catalog:",
     "drizzle-orm": "^0.45.1",
     "mysql2": "^3.14.0",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@struxav2/config": "workspace:*",
+    "@struxa/config": "workspace:*",
     "drizzle-kit": "^0.31.8",
     "typescript": "catalog:"
   }

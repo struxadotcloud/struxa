@@ -1,5 +1,5 @@
 {
-  "name": "@struxav2/auth",
+  "name": "@struxa/auth",
   "type": "module",
   "exports": {
     ".": {
@@ -11,14 +11,14 @@
   },
   "scripts": {},
   "dependencies": {
-    "@struxav2/db": "workspace:*",
-    "@struxav2/env": "workspace:*",
+    "@struxa/db": "workspace:*",
+    "@struxa/env": "workspace:*",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@struxav2/config": "workspace:*",
+    "@struxa/config": "workspace:*",
     "typescript": "catalog:"
   }
 }

@@ -12,11 +12,11 @@
   },
   "iconLibrary": "lucide",
   "aliases": {
-    "components": "@struxav2/ui/components",
-    "utils": "@struxav2/ui/lib/utils",
-    "hooks": "@struxav2/ui/hooks",
-    "lib": "@struxav2/ui/lib",
-    "ui": "@struxav2/ui/components"
+    "components": "@struxa/ui/components",
+    "utils": "@struxa/ui/lib/utils",
+    "hooks": "@struxa/ui/hooks",
+    "lib": "@struxa/ui/lib",
+    "ui": "@struxa/ui/components"
   },
   "menuColor": "default",
   "menuAccent": "subtle",

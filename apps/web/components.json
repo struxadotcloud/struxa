@@ -13,8 +13,8 @@
   "iconLibrary": "lucide",
   "aliases": {
     "components": "@/components",
-    "utils": "@struxav2/ui/lib/utils",
-    "ui": "@struxav2/ui/components",
+    "utils": "@struxa/ui/lib/utils",
+    "ui": "@struxa/ui/components",
     "lib": "@/lib",
     "hooks": "@/hooks"
   },
