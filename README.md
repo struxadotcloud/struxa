@@ -40,12 +40,12 @@ Struxa is **not** a fork of Pterodactyl. It is a clean-room implementation with 
 
 These are goals, not guarantees. Nothing below is shipped.
 
-- [ ] Game server lifecycle management (create, start, stop, restart, delete)
-- [ ] Real-time console streaming
-- [ ] Resource monitoring (CPU, RAM, disk, network)
-- [ ] File manager with editor
+- [x] Game server lifecycle management (create, start, stop, restart, delete)
+- [x] Real-time console streaming
+- [x] Resource monitoring (CPU, RAM, disk, network)
+- [x] File manager with editor
 - [ ] Multi-user support with role-based access control
-- [ ] Node management and agent communication
+- [x] Node management and agent communication
 - [ ] VPS provisioning and management
 - [ ] API key management
 - [ ] Activity and audit logs
