@@ -147,7 +147,7 @@ Note that because the project is in early development, large features may be def
 
 ## License
 
-MIT — see [LICENSE](./LICENSE) for details.
+[Elastic License 2.0 (ELv2)](./LICENSE) — you can use, modify, and self-host Struxa freely. You may **not** offer it as a hosted or managed service to third parties.
 
 <br />
 

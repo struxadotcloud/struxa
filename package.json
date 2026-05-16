@@ -21,6 +21,7 @@
       "@orpc/openapi": "^1.13.14",
       "@orpc/zod": "^1.13.14",
       "better-auth": "1.6.9",
+      "@better-auth/api-key": "^1.6.0",
       "@types/react": "^19.2.10",
       "@types/react-dom": "^19.2.3",
       "tailwindcss": "^4.1.18"

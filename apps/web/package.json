@@ -21,6 +21,7 @@
     "@tanstack/react-form": "^1.28.0",
     "@tanstack/react-query": "^5.90.12",
     "babel-plugin-react-compiler": "^1.0.0",
+    "@better-auth/api-key": "catalog:",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
     "evlog": "^2.14.1",

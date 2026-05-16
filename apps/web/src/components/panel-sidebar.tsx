@@ -66,7 +66,7 @@ export function PanelSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-[#222222] bg-[#0a0a0a]">
-      <SidebarHeader className="flex items-center justify-center border-b border-[#222222] px-4 py-3">
+      <SidebarHeader className="flex items-center justify-center border-b border-[#222222] px-4 py-4">
         <div className="flex items-center gap-2">
           <Image
             src="/logo-white.svg"

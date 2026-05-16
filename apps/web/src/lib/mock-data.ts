@@ -341,3 +341,327 @@ eula=true`,
     mimeType: "image/png",
   },
 ];
+
+// ── Databases ──────────────────────────────────────────────────────────────
+
+export interface MockDatabase {
+  id: string;
+  name: string;
+  username: string;
+  password: string;
+  host: string;
+  port: number;
+}
+
+export const mockDatabases: MockDatabase[] = [
+  {
+    id: "db-001",
+    name: "s1_luckperms",
+    username: "u1_luckperms",
+    password: "Xk9#mPqR2vL7",
+    host: "db.eu-west-1a.struxa.host",
+    port: 3306,
+  },
+  {
+    id: "db-002",
+    name: "s1_economy",
+    username: "u1_economy",
+    password: "Tz4!nWjY8cF1",
+    host: "db.eu-west-1a.struxa.host",
+    port: 3306,
+  },
+  {
+    id: "db-003",
+    name: "s1_playerstats",
+    username: "u1_playerstats",
+    password: "Rq6@kHsD3bG5",
+    host: "db.eu-west-1a.struxa.host",
+    port: 3306,
+  },
+];
+
+// ── Schedules ──────────────────────────────────────────────────────────────
+
+export interface MockSchedule {
+  id: string;
+  name: string;
+  cron: string;
+  enabled: boolean;
+  lastRun: string | null;
+  nextRun: string;
+  action: string;
+}
+
+export const mockSchedules: MockSchedule[] = [
+  {
+    id: "sch-001",
+    name: "Daily Restart",
+    cron: "0 6 * * *",
+    enabled: true,
+    lastRun: "May 15, 2026 06:00",
+    nextRun: "May 16, 2026 06:00",
+    action: "Restart server",
+  },
+  {
+    id: "sch-002",
+    name: "Hourly Backup",
+    cron: "0 * * * *",
+    enabled: true,
+    lastRun: "May 16, 2026 04:00",
+    nextRun: "May 16, 2026 05:00",
+    action: "Create backup",
+  },
+  {
+    id: "sch-003",
+    name: "Weekly Cleanup",
+    cron: "0 3 * * 0",
+    enabled: false,
+    lastRun: "May 11, 2026 03:00",
+    nextRun: "May 18, 2026 03:00",
+    action: "Run command: /cleanup",
+  },
+  {
+    id: "sch-004",
+    name: "Save World",
+    cron: "*/15 * * * *",
+    enabled: true,
+    lastRun: "May 16, 2026 04:45",
+    nextRun: "May 16, 2026 05:00",
+    action: "Run command: /save-all",
+  },
+];
+
+// ── Subusers ───────────────────────────────────────────────────────────────
+
+export type SubuserPermission =
+  | "console"
+  | "files"
+  | "backups"
+  | "databases"
+  | "schedules"
+  | "users"
+  | "network"
+  | "startup"
+  | "settings";
+
+export interface MockSubuser {
+  id: string;
+  email: string;
+  username: string;
+  twoFactor: boolean;
+  createdAt: string;
+  permissions: SubuserPermission[];
+}
+
+export const mockSubusers: MockSubuser[] = [
+  {
+    id: "sub-001",
+    email: "jakubkrzyz.kontakt@gmail.com",
+    username: "jakub",
+    twoFactor: true,
+    createdAt: "Jan 10, 2026",
+    permissions: [
+      "console", "files", "backups", "databases",
+      "schedules", "users", "network", "startup", "settings",
+    ],
+  },
+  {
+    id: "sub-002",
+    email: "alex@example.com",
+    username: "alexdev",
+    twoFactor: false,
+    createdAt: "Feb 3, 2026",
+    permissions: ["console", "files", "backups"],
+  },
+  {
+    id: "sub-003",
+    email: "mod@wafflesmp.net",
+    username: "wafflemod",
+    twoFactor: true,
+    createdAt: "Mar 18, 2026",
+    permissions: ["console", "files"],
+  },
+];
+
+// ── Backups ────────────────────────────────────────────────────────────────
+
+export type BackupStatus = "complete" | "creating" | "failed";
+
+export interface MockBackup {
+  id: string;
+  name: string;
+  sizeMb: number;
+  createdAt: string;
+  status: BackupStatus;
+}
+
+export const mockBackups: MockBackup[] = [
+  {
+    id: "bak-001",
+    name: "backup-2026-05-16-04-00.tar.gz",
+    sizeMb: 267,
+    createdAt: "May 16, 2026 04:00",
+    status: "complete",
+  },
+  {
+    id: "bak-002",
+    name: "backup-2026-05-15-04-00.tar.gz",
+    sizeMb: 264,
+    createdAt: "May 15, 2026 04:00",
+    status: "complete",
+  },
+  {
+    id: "bak-003",
+    name: "backup-2026-05-14-04-00.tar.gz",
+    sizeMb: 261,
+    createdAt: "May 14, 2026 04:00",
+    status: "complete",
+  },
+  {
+    id: "bak-004",
+    name: "backup-2026-05-13-04-00.tar.gz",
+    sizeMb: 0,
+    createdAt: "May 13, 2026 04:00",
+    status: "failed",
+  },
+  {
+    id: "bak-005",
+    name: "backup-2026-05-12-04-00.tar.gz",
+    sizeMb: 258,
+    createdAt: "May 12, 2026 04:00",
+    status: "complete",
+  },
+];
+
+// ── Allocations ────────────────────────────────────────────────────────────
+
+export interface MockAllocation {
+  id: string;
+  ip: string;
+  port: number;
+  alias: string | null;
+  primary: boolean;
+}
+
+export const mockAllocations: MockAllocation[] = [
+  { id: "alloc-001", ip: "82.23.170.72", port: 27011, alias: "WaffleSMP", primary: true },
+  { id: "alloc-002", ip: "82.23.170.72", port: 27012, alias: null, primary: false },
+  { id: "alloc-003", ip: "82.23.170.72", port: 27013, alias: "RCON", primary: false },
+];
+
+// ── Activity log (panel audit) ─────────────────────────────────────────────
+
+export interface MockActivity {
+  id: string;
+  ts: string;
+  event: string;
+  actor: string;
+  ip: string;
+}
+
+export const mockActivityLog: MockActivity[] = [
+  {
+    id: "act-001",
+    ts: "May 16, 2026 04:02",
+    event: "server:backup.complete",
+    actor: "system",
+    ip: "—",
+  },
+  {
+    id: "act-002",
+    ts: "May 16, 2026 04:00",
+    event: "server:backup.start",
+    actor: "system",
+    ip: "—",
+  },
+  {
+    id: "act-003",
+    ts: "May 16, 2026 03:12",
+    event: "server:console.command",
+    actor: "jakubkrzyz.kontakt@gmail.com",
+    ip: "89.64.12.33",
+  },
+  {
+    id: "act-004",
+    ts: "May 16, 2026 01:44",
+    event: "server:files.write",
+    actor: "alexdev",
+    ip: "212.77.100.5",
+  },
+  {
+    id: "act-005",
+    ts: "May 15, 2026 22:30",
+    event: "server:files.write",
+    actor: "jakubkrzyz.kontakt@gmail.com",
+    ip: "89.64.12.33",
+  },
+  {
+    id: "act-006",
+    ts: "May 15, 2026 18:01",
+    event: "server:power.stop",
+    actor: "jakubkrzyz.kontakt@gmail.com",
+    ip: "89.64.12.33",
+  },
+  {
+    id: "act-007",
+    ts: "May 15, 2026 06:00",
+    event: "server:power.restart",
+    actor: "system",
+    ip: "—",
+  },
+  {
+    id: "act-008",
+    ts: "May 15, 2026 04:01",
+    event: "server:backup.complete",
+    actor: "system",
+    ip: "—",
+  },
+  {
+    id: "act-009",
+    ts: "May 14, 2026 20:17",
+    event: "server:power.start",
+    actor: "jakubkrzyz.kontakt@gmail.com",
+    ip: "89.64.12.33",
+  },
+  {
+    id: "act-010",
+    ts: "May 14, 2026 20:15",
+    event: "user:login",
+    actor: "jakubkrzyz.kontakt@gmail.com",
+    ip: "89.64.12.33",
+  },
+];
+
+// ── Server startup variables ───────────────────────────────────────────────
+
+export interface MockServerVariable {
+  name: string;
+  envVar: string;
+  description: string;
+  value: string;
+  rules: string;
+}
+
+export const mockServerVariables: MockServerVariable[] = [
+  {
+    name: "Server Version",
+    envVar: "MINECRAFT_VERSION",
+    description: "The version of Minecraft to download and run.",
+    value: "1.21.11",
+    rules: "required|string|max:20",
+  },
+  {
+    name: "Server Jar URL",
+    envVar: "SERVER_JARFILE",
+    description: "The name of the server jarfile to run.",
+    value: "server.jar",
+    rules: "required|string|ends_with:.jar",
+  },
+  {
+    name: "Build Number",
+    envVar: "BUILD_NUMBER",
+    description: "The Paper build number. Use 'latest' for the newest build.",
+    value: "latest",
+    rules: "required|string|max:20",
+  },
+];

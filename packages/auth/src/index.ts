@@ -1,9 +1,11 @@
 import { createDb } from "@struxa/db";
 import * as schema from "@struxa/db/schema/auth";
 import { env } from "@struxa/env/server";
+import { apiKey } from "@better-auth/api-key";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
+import { admin, captcha, twoFactor } from "better-auth/plugins";
 
 export function createAuth() {
   const db = createDb();
@@ -19,7 +21,21 @@ export function createAuth() {
     },
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
-    plugins: [nextCookies()],
+    appName: "Struxa",
+    plugins: [
+      nextCookies(),
+      admin(),
+      twoFactor({ issuer: "Struxa" }),
+      apiKey(),
+      ...(env.TURNSTILE_SECRET_KEY
+        ? [
+            captcha({
+              provider: "cloudflare-turnstile",
+              secretKey: env.TURNSTILE_SECRET_KEY,
+            }),
+          ]
+        : []),
+    ],
   });
 }
 
