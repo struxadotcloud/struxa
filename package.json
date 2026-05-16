@@ -22,6 +22,8 @@
       "@orpc/zod": "^1.13.14",
       "better-auth": "1.6.9",
       "@better-auth/api-key": "^1.6.0",
+      "jose": "^5.10.0",
+      "croner": "^9.0.0",
       "@types/react": "^19.2.10",
       "@types/react-dom": "^19.2.3",
       "tailwindcss": "^4.1.18"
@@ -33,6 +35,7 @@
     "build": "turbo build",
     "check-types": "turbo check-types",
     "dev:web": "turbo -F web dev",
+    "dev:watchkeeper": "turbo -F @struxa/watchkeeper dev",
     "db:push": "turbo -F @struxa/db db:push",
     "db:studio": "turbo -F @struxa/db db:studio",
     "db:generate": "turbo -F @struxa/db db:generate",
@@ -47,7 +50,9 @@
   "dependencies": {
     "@struxa/env": "workspace:*",
     "dotenv": "catalog:",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "mysql2": "^3.14.0",
+    "drizzle-orm": "^0.45.1"
   },
   "devDependencies": {
     "@struxa/config": "workspace:*",

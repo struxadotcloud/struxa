@@ -16,7 +16,12 @@
     "@orpc/server": "catalog:",
     "@orpc/zod": "catalog:",
     "@struxa/auth": "workspace:*",
+    "jose": "catalog:",
+    "croner": "catalog:",
     "@struxa/db": "workspace:*",
+    "drizzle-orm": "^0.45.1",
+    "mysql2": "^3.14.0",
+    "bcryptjs": "^2.4.3",
     "@struxa/env": "workspace:*",
     "dotenv": "catalog:",
     "next": "catalog:",
@@ -24,6 +29,7 @@
   },
   "devDependencies": {
     "@struxa/config": "workspace:*",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "@types/bcryptjs": "^2.4.6"
   }
 }

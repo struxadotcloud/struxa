@@ -4,10 +4,11 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { use } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { SidebarTrigger } from "@struxa/ui/components/sidebar";
-import { Clock, ListChecks, Play, Trash2, Plus } from "lucide-react";
+import { Clock, ListChecks, Trash2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { mockServers, mockSchedules } from "@/lib/mock-data";
+import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
 import Loader from "@/components/loader";
 
@@ -33,23 +34,55 @@ function StatRow({
   );
 }
 
+function fmtDate(d: Date | string | null): string {
+  if (!d) return "—";
+  return new Date(d).toLocaleString();
+}
+
+function formatCron(sch: {
+  cronSecond: string;
+  cronMinute: string;
+  cronHour: string;
+  cronDayOfMonth: string;
+  cronDayOfWeek: string;
+}): string {
+  return `${sch.cronMinute} ${sch.cronHour} ${sch.cronDayOfMonth} * ${sch.cronDayOfWeek}`;
+}
+
 export default function SchedulesPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
   const { id } = use(params);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!isPending && !session) router.replace("/login");
   }, [isPending, session, router]);
 
+  const { data: server } = useQuery(orpc.servers.get.queryOptions({ input: { id } }));
+  const serverId = server?.id;
+
+  const { data: schedules = [], isPending: schedulesPending } = useQuery({
+    ...orpc.schedules.list.queryOptions({ input: { serverId: serverId ?? "" } }),
+    enabled: !!serverId,
+  });
+
+  const toggleMutation = useMutation(orpc.schedules.update.mutationOptions());
+
+  const deleteMutation = useMutation({
+    ...orpc.schedules.delete.mutationOptions(),
+    onSuccess: () => {
+      void queryClient.invalidateQueries(orpc.schedules.list.queryOptions({ input: { serverId: serverId ?? "" } }));
+    },
+  });
+
   if (isPending || !session) return <Loader />;
 
-  const server = mockServers.find((s) => s.id === id) ?? mockServers[0];
-  const enabled = mockSchedules.filter((s) => s.enabled);
-  const disabled = mockSchedules.filter((s) => !s.enabled);
+  const enabled = schedules.filter((s) => s.isActive);
+  const disabled = schedules.filter((s) => !s.isActive);
   const soonest = enabled
     .slice()
-    .sort((a, b) => a.nextRun.localeCompare(b.nextRun))[0];
+    .sort((a, b) => (a.nextRunAt && b.nextRunAt ? new Date(a.nextRunAt).getTime() - new Date(b.nextRunAt).getTime() : 0))[0];
 
   return (
     <>
@@ -61,21 +94,14 @@ export default function SchedulesPage({ params }: { params: Promise<{ id: string
           </Link>
           <span className="text-[#333333]">/</span>
           <Link
-            href={`/servers/${server.id}`}
+            href={`/servers/${id}`}
             className="text-[#555555] transition-colors hover:text-white"
           >
-            {server.name}
+            {server?.name ?? id}
           </Link>
           <span className="text-[#333333]">/</span>
           <span className="text-white">Schedules</span>
         </div>
-        <button
-          type="button"
-          className="flex items-center gap-1.5 px-4 py-1.5 text-sm font-medium bg-[#1a1a1a] border border-[#333333] text-white hover:bg-[#222222] transition-colors"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          New Schedule
-        </button>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
@@ -89,43 +115,56 @@ export default function SchedulesPage({ params }: { params: Promise<{ id: string
               <span className="text-[10px] uppercase tracking-widest text-[#555555]">Next Run</span>
               <span />
             </div>
-            {mockSchedules.map((sch) => (
-              <div
-                key={sch.id}
-                className="grid grid-cols-[28px_1fr_160px_180px_180px_72px] items-center border-b border-r border-[#222222] px-3 py-3 hover:bg-[#111111] transition-colors"
-              >
-                <span
-                  className={`h-2 w-2 shrink-0 rounded-full ${sch.enabled ? "bg-[#22c55e]" : "bg-[#333333]"}`}
-                />
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-sm text-white">{sch.name}</span>
-                  <span className="text-[11px] text-[#555555]">{sch.action}</span>
-                </div>
-                <span className="font-mono text-xs text-[#888888]">{sch.cron}</span>
-                <span className="text-xs text-[#555555]">{sch.lastRun ?? "—"}</span>
-                <span className="text-xs text-[#888888]">{sch.nextRun}</span>
-                <div className="flex items-center gap-2 justify-end pr-1">
+            {schedulesPending ? (
+              <div className="flex items-center justify-center py-12 text-sm text-[#555555]">Loading…</div>
+            ) : schedules.length === 0 ? (
+              <div className="flex items-center justify-center py-12 text-sm text-[#555555]">No schedules yet</div>
+            ) : (
+              schedules.map((sch) => (
+                <div
+                  key={sch.id}
+                  className="grid grid-cols-[28px_1fr_160px_180px_180px_72px] items-center border-b border-r border-[#222222] px-3 py-3 hover:bg-[#111111] transition-colors"
+                >
                   <button
                     type="button"
-                    className="text-[#444444] hover:text-[#22c55e] transition-colors"
+                    title={sch.isActive ? "Disable" : "Enable"}
+                    onClick={() => serverId && toggleMutation.mutate(
+                      { serverId, scheduleId: sch.id, isActive: !sch.isActive },
+                      { onSuccess: () => void queryClient.invalidateQueries(orpc.schedules.list.queryOptions({ input: { serverId } })) },
+                    )}
+                    className="flex items-center"
                   >
-                    <Play className="h-3.5 w-3.5" />
+                    <span
+                      className={`h-2 w-2 shrink-0 rounded-full ${sch.isActive ? "bg-[#22c55e]" : "bg-[#333333]"}`}
+                    />
                   </button>
-                  <button
-                    type="button"
-                    className="text-[#444444] hover:text-[#f43f5e] transition-colors"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-sm text-white">{sch.name}</span>
+                    <span className="text-[11px] text-[#555555]">
+                      {(sch.tasks as unknown[]).length} task{(sch.tasks as unknown[]).length !== 1 ? "s" : ""}
+                    </span>
+                  </div>
+                  <span className="font-mono text-xs text-[#888888]">{formatCron(sch)}</span>
+                  <span className="text-xs text-[#555555]">{fmtDate(sch.lastRunAt)}</span>
+                  <span className="text-xs text-[#888888]">{fmtDate(sch.nextRunAt)}</span>
+                  <div className="flex items-center gap-2 justify-end pr-1">
+                    <button
+                      type="button"
+                      onClick={() => serverId && deleteMutation.mutate({ serverId, scheduleId: sch.id })}
+                      className="text-[#444444] hover:text-[#f43f5e] transition-colors"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
         <aside className="flex w-[280px] shrink-0 flex-col overflow-y-auto border-l border-[#222222]">
           <StatRow icon={ListChecks} label="TASKS">
-            <span className="text-2xl font-bold text-white">{mockSchedules.length}</span>
+            <span className="text-2xl font-bold text-white">{schedules.length}</span>
           </StatRow>
           <StatRow icon={Clock} label="ENABLED">
             <span className="text-2xl font-bold text-[#22c55e]">{enabled.length}</span>
@@ -135,7 +174,7 @@ export default function SchedulesPage({ params }: { params: Promise<{ id: string
           </StatRow>
           <StatRow icon={Clock} label="NEXT RUN">
             <span className="text-sm font-bold text-white leading-snug">
-              {soonest?.nextRun ?? "—"}
+              {soonest ? fmtDate(soonest.nextRunAt) : "—"}
             </span>
             {soonest && (
               <span className="text-xs text-[#555555]">{soonest.name}</span>

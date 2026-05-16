@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { use } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { SidebarTrigger } from "@struxa/ui/components/sidebar";
 import { Server, Copy, Terminal, Globe } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { mockServers, mockServerVariables } from "@/lib/mock-data";
+import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
 import Loader from "@/components/loader";
 
@@ -65,21 +66,47 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
   const { id } = use(params);
-  const [unsaved, setUnsaved] = useState(false);
+  const [reinstallConfirm, setReinstallConfirm] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
 
   useEffect(() => {
     if (!isPending && !session) router.replace("/login");
   }, [isPending, session, router]);
 
+  const { data: server, isPending: serverPending } = useQuery(
+    orpc.servers.get.queryOptions({ input: { id } }),
+  );
+
+  const reinstallMutation = useMutation({
+    ...orpc.servers.reinstall.mutationOptions(),
+    onSuccess: () => setReinstallConfirm(false),
+  });
+
+  const deleteMutation = useMutation({
+    ...orpc.servers.delete.mutationOptions(),
+    onSuccess: () => router.replace("/"),
+  });
+
   if (isPending || !session) return <Loader />;
+  if (serverPending) return <Loader />;
 
-  const server = mockServers.find((s) => s.id === id) ?? mockServers[0];
+  const isAdmin = session.user.role === "admin";
 
+  const node = server?.node as { name?: string; fqdn?: string; daemonSFTP?: number } | undefined;
   const sftp = {
-    host: `sftp.eu-west-1a.struxa.host`,
-    port: 2022,
-    username: `struxa.${server.id}`,
+    host: node?.fqdn ?? "—",
+    port: node?.daemonSFTP ?? 2022,
+    username: `struxa.${server?.uuidShort ?? ""}`,
   };
+
+  function copy(text: string) {
+    void navigator.clipboard.writeText(text);
+  }
+
+  const serverVars = (server?.serverVariables ?? []) as Array<{
+    variableValue: string;
+    variable: { name: string; description: string | null; envVariable: string };
+  }>;
 
   return (
     <>
@@ -90,54 +117,39 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
             Game Servers
           </Link>
           <span className="text-[#333333]">/</span>
-          <Link href={`/servers/${server.id}`} className="text-[#555555] transition-colors hover:text-white">
-            {server.name}
+          <Link href={`/servers/${id}`} className="text-[#555555] transition-colors hover:text-white">
+            {server?.name ?? id}
           </Link>
           <span className="text-[#333333]">/</span>
           <span className="text-white">Settings</span>
         </div>
-        <button
-          type="button"
-          disabled={!unsaved}
-          className="px-4 py-1.5 text-sm font-medium bg-[#f59e0b] text-black enabled:hover:opacity-80 disabled:opacity-30 disabled:cursor-not-allowed transition-opacity"
-        >
-          Save Changes
-        </button>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
         <div className="flex flex-1 flex-col overflow-y-auto">
           <SectionHeader label="General" />
-          <SettingRow label="Server Name" description="Displayed in the panel. Does not affect the in-game name.">
+          <SettingRow label="Server Name" description="Displayed in the panel.">
             <input
-              defaultValue={server.name}
-              onChange={() => setUnsaved(true)}
-              className="w-52 bg-[#141414] border border-[#333333] px-2 py-1.5 text-sm text-white outline-none focus:border-[#555555] font-mono"
+              defaultValue={server?.name ?? ""}
+              readOnly
+              className="w-52 bg-[#141414] border border-[#333333] px-2 py-1.5 text-sm text-white outline-none font-mono opacity-70 cursor-default"
             />
           </SettingRow>
           <SettingRow label="Docker Image" description="Container image used to run this server.">
-            <select
-              className="w-64 bg-[#141414] border border-[#333333] px-2 py-1.5 text-sm text-white outline-none focus:border-[#555555]"
-              onChange={() => setUnsaved(true)}
-            >
-              <option>ghcr.io/pterodactyl/yolks:java_21</option>
-              <option>ghcr.io/pterodactyl/yolks:java_17</option>
-              <option>ghcr.io/pterodactyl/yolks:java_11</option>
-            </select>
+            <span className="font-mono text-sm text-[#888888] max-w-xs truncate">{server?.image ?? "—"}</span>
           </SettingRow>
 
           <SectionHeader label="SFTP" />
           <div className="border-b border-[#222222] px-4 py-3 bg-[#0a0a0a]">
             <p className="mb-3 text-xs text-[#555555]">
-              Use these credentials to connect via any SFTP client (FileZilla, WinSCP, etc.).
-              Your panel password is used for authentication.
+              Use these credentials to connect via any SFTP client. Your panel password is used for authentication.
             </p>
             <div className="grid grid-cols-3 gap-0 border-l border-t border-[#222222]">
               <div className="border-b border-r border-[#222222] px-3 py-3">
                 <p className="mb-1 text-[10px] uppercase tracking-widest text-[#444444]">Host</p>
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-sm text-white">{sftp.host}</span>
-                  <button type="button" className="text-[#444444] hover:text-white transition-colors">
+                  <button type="button" onClick={() => copy(sftp.host)} className="text-[#444444] hover:text-white transition-colors">
                     <Copy className="h-3.5 w-3.5" />
                   </button>
                 </div>
@@ -150,7 +162,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
                 <p className="mb-1 text-[10px] uppercase tracking-widest text-[#444444]">Username</p>
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-sm text-white">{sftp.username}</span>
-                  <button type="button" className="text-[#444444] hover:text-white transition-colors">
+                  <button type="button" onClick={() => copy(sftp.username)} className="text-[#444444] hover:text-white transition-colors">
                     <Copy className="h-3.5 w-3.5" />
                   </button>
                 </div>
@@ -161,20 +173,20 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
           <SectionHeader label="Startup" />
           <div className="border-b border-[#222222] px-4 py-3">
             <p className="mb-1 text-[10px] uppercase tracking-widest text-[#444444]">Startup Command</p>
-            <p className="font-mono text-xs text-[#888888] leading-relaxed">
-              java -Xms128M -Xmx{`{{SERVER_MEMORY}}`}M -jar {`{{SERVER_JARFILE}}`} nogui
+            <p className="font-mono text-xs text-[#888888] leading-relaxed break-all">
+              {server?.startup ?? "—"}
             </p>
           </div>
-          {mockServerVariables.map((variable) => (
+          {serverVars.map((sv) => (
             <SettingRow
-              key={variable.envVar}
-              label={variable.name}
-              description={variable.description}
+              key={sv.variable.envVariable}
+              label={sv.variable.name}
+              description={sv.variable.description ?? undefined}
             >
               <input
-                defaultValue={variable.value}
-                onChange={() => setUnsaved(true)}
-                className="w-40 bg-[#141414] border border-[#333333] px-2 py-1.5 font-mono text-sm text-white outline-none focus:border-[#555555]"
+                defaultValue={sv.variableValue}
+                readOnly
+                className="w-40 bg-[#141414] border border-[#333333] px-2 py-1.5 font-mono text-sm text-white outline-none opacity-70 cursor-default"
               />
             </SettingRow>
           ))}
@@ -184,40 +196,78 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
             label="Reinstall Server"
             description="This will reinstall the server using the configured egg. Existing data may be overwritten."
           >
-            <button
-              type="button"
-              className="px-4 py-1.5 text-sm font-medium border border-[#f59e0b]/50 text-[#f59e0b] hover:border-[#f59e0b] transition-colors"
-            >
-              Reinstall
-            </button>
+            {reinstallConfirm ? (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-[#f59e0b]">Are you sure?</span>
+                <button
+                  type="button"
+                  onClick={() => reinstallMutation.mutate({ serverId: id })}
+                  disabled={reinstallMutation.isPending}
+                  className="px-3 py-1 text-sm font-medium border border-[#f59e0b] text-[#f59e0b] hover:opacity-80 disabled:opacity-40 transition-opacity"
+                >
+                  {reinstallMutation.isPending ? "Reinstalling…" : "Confirm"}
+                </button>
+                <button type="button" onClick={() => setReinstallConfirm(false)} className="text-xs text-[#555555] hover:text-white transition-colors">
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setReinstallConfirm(true)}
+                className="px-4 py-1.5 text-sm font-medium border border-[#f59e0b]/50 text-[#f59e0b] hover:border-[#f59e0b] transition-colors"
+              >
+                Reinstall
+              </button>
+            )}
           </SettingRow>
-          <SettingRow
-            label="Delete Server"
-            description="Permanently deletes this server and all associated data. This action cannot be undone."
-          >
-            <button
-              type="button"
-              className="px-4 py-1.5 text-sm font-medium bg-[#f43f5e] text-white hover:opacity-80 transition-opacity"
+          {isAdmin && (
+            <SettingRow
+              label="Delete Server"
+              description="Permanently deletes this server and all associated data. This action cannot be undone."
             >
-              Delete Server
-            </button>
-          </SettingRow>
+              {deleteConfirm ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-[#f43f5e]">Are you sure?</span>
+                  <button
+                    type="button"
+                    onClick={() => deleteMutation.mutate({ id, purgeData: false })}
+                    disabled={deleteMutation.isPending}
+                    className="px-3 py-1 text-sm font-medium bg-[#f43f5e] text-white hover:opacity-80 disabled:opacity-40 transition-opacity"
+                  >
+                    {deleteMutation.isPending ? "Deleting…" : "Confirm Delete"}
+                  </button>
+                  <button type="button" onClick={() => setDeleteConfirm(false)} className="text-xs text-[#555555] hover:text-white transition-colors">
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setDeleteConfirm(true)}
+                  className="px-4 py-1.5 text-sm font-medium bg-[#f43f5e] text-white hover:opacity-80 transition-opacity"
+                >
+                  Delete Server
+                </button>
+              )}
+            </SettingRow>
+          )}
         </div>
 
         <aside className="flex w-[280px] shrink-0 flex-col overflow-y-auto border-l border-[#222222]">
           <StatRow icon={Server} label="SERVER ID">
-            <span className="font-mono text-sm font-bold text-[#888888]">{server.id}</span>
+            <span className="font-mono text-xs font-bold text-[#888888] break-all">{server?.uuid ?? "—"}</span>
           </StatRow>
           <StatRow icon={Globe} label="NODE">
-            <span className="font-mono text-sm font-bold text-white">{server.node}</span>
+            <span className="font-mono text-sm font-bold text-white">{node?.name ?? "—"}</span>
           </StatRow>
-          <StatRow icon={Server} label="GAME">
-            <span className="text-2xl font-bold text-white capitalize">{server.game}</span>
+          <StatRow icon={Server} label="EGG">
+            <span className="text-sm font-bold text-white">{(server?.egg as { name?: string } | undefined)?.name ?? "—"}</span>
           </StatRow>
           <StatRow icon={Terminal} label="SFTP HOST">
             <div className="flex items-center gap-2">
               <span className="font-mono text-sm text-white">{sftp.host}:{sftp.port}</span>
-              <button type="button" className="shrink-0 text-[#444444] hover:text-white transition-colors">
+              <button type="button" onClick={() => copy(`${sftp.host}:${sftp.port}`)} className="shrink-0 text-[#444444] hover:text-white transition-colors">
                 <Copy className="h-3.5 w-3.5" />
               </button>
             </div>

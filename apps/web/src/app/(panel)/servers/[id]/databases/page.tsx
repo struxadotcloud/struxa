@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { use } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { SidebarTrigger } from "@struxa/ui/components/sidebar";
-import { Database, Copy, RefreshCw, Trash2, Plus, Eye, EyeOff, ChevronRight } from "lucide-react";
+import { Database, Copy, RefreshCw, Trash2, Eye, EyeOff, ChevronRight } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { mockServers, mockDatabases, type MockDatabase } from "@/lib/mock-data";
+import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
 import Loader from "@/components/loader";
 
@@ -33,9 +34,33 @@ function StatRow({
   );
 }
 
-function DatabaseRow({ db }: { db: MockDatabase }) {
+type DbRow = {
+  id: string;
+  database: string;
+  username: string;
+  password: string;
+  remote: string;
+  host: { host: string; port: number };
+};
+
+function DatabaseRow({
+  db,
+  serverId,
+  onRotate,
+  onDelete,
+}: {
+  db: DbRow;
+  serverId: string;
+  onRotate: (id: string) => void;
+  onDelete: (id: string) => void;
+}) {
   const [open, setOpen] = useState(false);
   const [visible, setVisible] = useState(false);
+  const [pw, setPw] = useState(db.password);
+
+  function copy(text: string) {
+    void navigator.clipboard.writeText(text);
+  }
 
   return (
     <div className="border-b border-[#222222]">
@@ -48,13 +73,11 @@ function DatabaseRow({ db }: { db: MockDatabase }) {
           className={`h-3.5 w-3.5 shrink-0 text-[#444444] transition-transform ${open ? "rotate-90" : ""}`}
         />
         <Database className="h-4 w-4 shrink-0 text-[#555555]" />
-        <span className="font-mono text-sm font-medium text-white flex-1">{db.name}</span>
-        <div
-          className="flex items-center gap-2"
-          onClick={(e) => e.stopPropagation()}
-        >
+        <span className="font-mono text-sm font-medium text-white flex-1">{db.database}</span>
+        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
+            onClick={() => { onRotate(db.id); setPw("Rotating…"); }}
             className="flex items-center gap-1.5 px-3 py-1 text-xs text-[#888888] border border-[#333333] hover:text-white hover:border-[#555555] transition-colors"
           >
             <RefreshCw className="h-3 w-3" />
@@ -62,6 +85,7 @@ function DatabaseRow({ db }: { db: MockDatabase }) {
           </button>
           <button
             type="button"
+            onClick={() => onDelete(db.id)}
             className="flex items-center gap-1.5 px-3 py-1 text-xs text-[#f43f5e] border border-[#f43f5e]/30 hover:border-[#f43f5e] transition-colors"
           >
             <Trash2 className="h-3 w-3" />
@@ -76,7 +100,7 @@ function DatabaseRow({ db }: { db: MockDatabase }) {
             <p className="mb-1 text-[10px] uppercase tracking-widest text-[#444444]">Username</p>
             <div className="flex items-center gap-2">
               <span className="font-mono text-sm text-white">{db.username}</span>
-              <button type="button" className="text-[#444444] hover:text-white transition-colors">
+              <button type="button" onClick={() => copy(db.username)} className="text-[#444444] hover:text-white transition-colors">
                 <Copy className="h-3.5 w-3.5" />
               </button>
             </div>
@@ -85,16 +109,12 @@ function DatabaseRow({ db }: { db: MockDatabase }) {
             <p className="mb-1 text-[10px] uppercase tracking-widest text-[#444444]">Password</p>
             <div className="flex items-center gap-2">
               <span className="font-mono text-sm text-white">
-                {visible ? db.password : "••••••••••••"}
+                {visible ? pw : "••••••••••••"}
               </span>
-              <button
-                type="button"
-                onClick={() => setVisible((v) => !v)}
-                className="text-[#444444] hover:text-white transition-colors"
-              >
+              <button type="button" onClick={() => setVisible((v) => !v)} className="text-[#444444] hover:text-white transition-colors">
                 {visible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
               </button>
-              <button type="button" className="text-[#444444] hover:text-white transition-colors">
+              <button type="button" onClick={() => copy(pw)} className="text-[#444444] hover:text-white transition-colors">
                 <Copy className="h-3.5 w-3.5" />
               </button>
             </div>
@@ -102,23 +122,27 @@ function DatabaseRow({ db }: { db: MockDatabase }) {
           <div className="border-r border-t border-[#1a1a1a] px-4 py-3">
             <p className="mb-1 text-[10px] uppercase tracking-widest text-[#444444]">Host</p>
             <div className="flex items-center gap-2">
-              <span className="font-mono text-sm text-white">{db.host}</span>
-              <button type="button" className="text-[#444444] hover:text-white transition-colors">
+              <span className="font-mono text-sm text-white">{db.host.host}</span>
+              <button type="button" onClick={() => copy(db.host.host)} className="text-[#444444] hover:text-white transition-colors">
                 <Copy className="h-3.5 w-3.5" />
               </button>
             </div>
           </div>
           <div className="border-t border-[#1a1a1a] px-4 py-3">
             <p className="mb-1 text-[10px] uppercase tracking-widest text-[#444444]">Port</p>
-            <span className="font-mono text-sm text-white">{db.port}</span>
+            <span className="font-mono text-sm text-white">{db.host.port}</span>
           </div>
           <div className="col-span-2 border-t border-[#1a1a1a] px-4 py-3">
             <p className="mb-1 text-[10px] uppercase tracking-widest text-[#444444]">Connection String</p>
             <div className="flex items-center gap-2">
               <span className="font-mono text-xs text-[#888888]">
-                mysql://{db.username}:***@{db.host}:{db.port}/{db.name}
+                mysql://{db.username}:***@{db.host.host}:{db.host.port}/{db.database}
               </span>
-              <button type="button" className="text-[#444444] hover:text-white transition-colors shrink-0">
+              <button
+                type="button"
+                onClick={() => copy(`mysql://${db.username}:${pw}@${db.host.host}:${db.host.port}/${db.database}`)}
+                className="text-[#444444] hover:text-white transition-colors shrink-0"
+              >
                 <Copy className="h-3.5 w-3.5" />
               </button>
             </div>
@@ -133,14 +157,35 @@ export default function DatabasesPage({ params }: { params: Promise<{ id: string
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
   const { id } = use(params);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!isPending && !session) router.replace("/login");
   }, [isPending, session, router]);
 
-  if (isPending || !session) return <Loader />;
+  const { data: server } = useQuery(orpc.servers.get.queryOptions({ input: { id } }));
+  const serverId = server?.id;
 
-  const server = mockServers.find((s) => s.id === id) ?? mockServers[0];
+  const { data: databases = [], isPending: dbPending } = useQuery({
+    ...orpc.databases.list.queryOptions({ input: { serverId: serverId ?? "" } }),
+    enabled: !!serverId,
+  });
+
+  const rotateMutation = useMutation({
+    ...orpc.databases.rotatePassword.mutationOptions(),
+    onSuccess: () => {
+      void queryClient.invalidateQueries(orpc.databases.list.queryOptions({ input: { serverId: serverId ?? "" } }));
+    },
+  });
+
+  const deleteMutation = useMutation({
+    ...orpc.databases.delete.mutationOptions(),
+    onSuccess: () => {
+      void queryClient.invalidateQueries(orpc.databases.list.queryOptions({ input: { serverId: serverId ?? "" } }));
+    },
+  });
+
+  if (isPending || !session) return <Loader />;
 
   return (
     <>
@@ -151,35 +196,40 @@ export default function DatabasesPage({ params }: { params: Promise<{ id: string
             Game Servers
           </Link>
           <span className="text-[#333333]">/</span>
-          <Link href={`/servers/${server.id}`} className="text-[#555555] transition-colors hover:text-white">
-            {server.name}
+          <Link href={`/servers/${id}`} className="text-[#555555] transition-colors hover:text-white">
+            {server?.name ?? id}
           </Link>
           <span className="text-[#333333]">/</span>
           <span className="text-white">Databases</span>
         </div>
-        <button
-          type="button"
-          className="flex items-center gap-1.5 px-4 py-1.5 text-sm font-medium bg-[#1a1a1a] border border-[#333333] text-white hover:bg-[#222222] transition-colors"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          New Database
-        </button>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
         <div className="flex flex-1 flex-col overflow-y-auto">
-          {mockDatabases.map((db) => (
-            <DatabaseRow key={db.id} db={db} />
-          ))}
+          {dbPending ? (
+            <div className="flex items-center justify-center py-12 text-sm text-[#555555]">Loading…</div>
+          ) : databases.length === 0 ? (
+            <div className="flex items-center justify-center py-12 text-sm text-[#555555]">No databases yet</div>
+          ) : (
+            databases.map((db) => (
+              <DatabaseRow
+                key={db.id}
+                db={db as DbRow}
+                serverId={serverId ?? ""}
+                onRotate={(dbId) => serverId && rotateMutation.mutate({ serverId, databaseId: dbId })}
+                onDelete={(dbId) => serverId && deleteMutation.mutate({ serverId, databaseId: dbId })}
+              />
+            ))
+          )}
         </div>
 
         <aside className="flex w-[280px] shrink-0 flex-col overflow-y-auto border-l border-[#222222]">
           <StatRow icon={Database} label="DATABASES">
-            <span className="text-2xl font-bold text-white">{mockDatabases.length}</span>
+            <span className="text-2xl font-bold text-white">{databases.length}</span>
           </StatRow>
           <StatRow icon={Database} label="HOST">
             <span className="font-mono text-sm font-bold text-white leading-snug">
-              {mockDatabases[0]?.host ?? "—"}
+              {(databases[0] as DbRow | undefined)?.host.host ?? "—"}
             </span>
           </StatRow>
           <StatRow icon={Database} label="NOTE">

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import Editor from "@monaco-editor/react";
 import { SidebarTrigger } from "@struxa/ui/components/sidebar";
 import {
@@ -15,11 +16,24 @@ import {
   FileImage,
   Save,
   ChevronLeft,
+  Plus,
+  Upload,
+  X,
 } from "lucide-react";
 import type { Monaco } from "@monaco-editor/react";
-import { mockServers, mockFileTree, type FileItem } from "@/lib/mock-data";
+import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
 import Loader from "@/components/loader";
+
+interface WingsFile {
+  name: string;
+  size: number;
+  file: boolean;
+  directory: boolean;
+  symlink: boolean;
+  mime?: string;
+  editable?: boolean;
+}
 
 function defineTheme(monaco: Monaco) {
   monaco.editor.defineTheme("struxa-dark", {
@@ -59,26 +73,12 @@ function defineTheme(monaco: Monaco) {
 function getLanguage(filename: string): string {
   const ext = filename.split(".").pop()?.toLowerCase() ?? "";
   const map: Record<string, string> = {
-    json: "json",
-    yml: "yaml",
-    yaml: "yaml",
-    js: "javascript",
-    ts: "typescript",
-    jsx: "javascript",
-    tsx: "typescript",
-    java: "java",
-    sh: "shell",
-    bash: "shell",
-    xml: "xml",
-    html: "html",
-    css: "css",
-    md: "markdown",
-    sql: "sql",
-    properties: "ini",
-    cfg: "ini",
-    ini: "ini",
-    toml: "ini",
-    log: "plaintext",
+    json: "json", yml: "yaml", yaml: "yaml",
+    js: "javascript", ts: "typescript", jsx: "javascript", tsx: "typescript",
+    java: "java", sh: "shell", bash: "shell",
+    xml: "xml", html: "html", css: "css", md: "markdown",
+    sql: "sql", properties: "ini", cfg: "ini", ini: "ini",
+    toml: "ini", log: "plaintext",
   };
   return map[ext] ?? "plaintext";
 }
@@ -89,25 +89,21 @@ function fmtBytes(bytes: number): string {
   return `${(bytes / 1048576).toFixed(1)} MB`;
 }
 
-function isTextFile(item: FileItem): boolean {
-  if (!item.mimeType) return false;
-  return item.mimeType.startsWith("text/") || item.mimeType === "application/json";
+function isText(file: WingsFile): boolean {
+  const mime = file.mime ?? "";
+  if (mime.startsWith("text/") || mime === "application/json") return true;
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+  return ["txt", "json", "yml", "yaml", "xml", "sh", "bash", "cfg", "ini", "toml", "properties", "md", "log", "conf", "java", "js", "ts", "css", "html"].includes(ext);
 }
 
-function isImageFile(item: FileItem): boolean {
-  return item.mimeType?.startsWith("image/") ?? false;
+function isImage(file: WingsFile): boolean {
+  return (file.mime ?? "").startsWith("image/");
 }
 
-function FileIcon({
-  item,
-  className = "h-4 w-4 shrink-0",
-}: {
-  item: FileItem;
-  className?: string;
-}) {
-  if (item.type === "directory") return <Folder className={`${className} text-[#f59e0b]`} />;
-  if (isImageFile(item)) return <FileImage className={`${className} text-[#a855f7]`} />;
-  if (isTextFile(item)) return <FileCode2 className={`${className} text-[#3b82f6]`} />;
+function FileIcon({ file, className = "h-4 w-4 shrink-0" }: { file: WingsFile; className?: string }) {
+  if (file.directory) return <Folder className={`${className} text-[#f59e0b]`} />;
+  if (isImage(file)) return <FileImage className={`${className} text-[#a855f7]`} />;
+  if (isText(file)) return <FileCode2 className={`${className} text-[#3b82f6]`} />;
   return <File className={`${className} text-[#555555]`} />;
 }
 
@@ -120,41 +116,161 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
     if (!isPending && !session) router.replace("/login");
   }, [isPending, session, router]);
 
-  const [dirPath, setDirPath] = useState<string[]>([]);
-  const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
-  const [editContent, setEditContent] = useState<string>("");
+  const [dirPath, setDirPath] = useState("/");
+  const [entries, setEntries] = useState<WingsFile[]>([]);
+  const [loadingDir, setLoadingDir] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<WingsFile | null>(null);
+  const [editContent, setEditContent] = useState("");
   const [unsaved, setUnsaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [showNewFile, setShowNewFile] = useState(false);
+  const [newFileName, setNewFileName] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
+  const newFileInputRef = useRef<HTMLInputElement>(null);
+
+  const { data: fileToken } = useQuery(
+    orpc.files.getToken.queryOptions({ input: { serverId: id } }),
+  );
+
+  const fetchDir = useCallback(async (dir: string): Promise<WingsFile[]> => {
+    if (!fileToken) return [];
+    setLoadingDir(true);
+    try {
+      const res = await fetch(
+        `${fileToken.baseUrl}/files/list-directory?directory=${encodeURIComponent(dir)}`,
+        { headers: { Authorization: `Bearer ${fileToken.token}` } },
+      );
+      if (!res.ok) return [];
+      const raw = (await res.json()) as Record<string, WingsFile>;
+      const data = Object.values(raw);
+      const sorted = data.sort((a, b) => {
+        if (a.file !== b.file) return a.file ? 1 : -1;
+        return a.name.localeCompare(b.name);
+      });
+      setEntries(sorted);
+      setDirPath(dir);
+      setSelectedFile(null);
+      setEditContent("");
+      setUnsaved(false);
+      return sorted;
+    } finally {
+      setLoadingDir(false);
+    }
+  }, [fileToken]);
+
+  useEffect(() => {
+    if (fileToken) void fetchDir("/");
+  }, [fileToken, fetchDir]);
+
+  async function openFile(file: WingsFile) {
+    if (!fileToken || !file.file || !isText(file)) {
+      setSelectedFile(file);
+      setEditContent("");
+      setUnsaved(false);
+      return;
+    }
+    const filePath = dirPath === "/" ? `/${file.name}` : `${dirPath}/${file.name}`;
+    const res = await fetch(
+      `${fileToken.baseUrl}/files/contents?file=${encodeURIComponent(filePath)}`,
+      { headers: { Authorization: `Bearer ${fileToken.token}` } },
+    );
+    const text = res.ok ? await res.text() : "";
+    setSelectedFile(file);
+    setEditContent(text);
+    setUnsaved(false);
+  }
+
+  async function handleSave() {
+    if (!fileToken || !selectedFile) return;
+    const filePath = dirPath === "/" ? `/${selectedFile.name}` : `${dirPath}/${selectedFile.name}`;
+    setSaving(true);
+    try {
+      await fetch(
+        `${fileToken.baseUrl}/files/write?file=${encodeURIComponent(filePath)}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${fileToken.token}`,
+            "Content-Type": "text/plain",
+          },
+          body: editContent,
+        },
+      );
+      setUnsaved(false);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function createFile() {
+    const name = newFileName.trim();
+    if (!fileToken || !name) return;
+    const filePath = dirPath === "/" ? `/${name}` : `${dirPath}/${name}`;
+    await fetch(
+      `${fileToken.baseUrl}/files/write?file=${encodeURIComponent(filePath)}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${fileToken.token}`,
+          "Content-Type": "text/plain",
+        },
+        body: "",
+      },
+    );
+    setShowNewFile(false);
+    setNewFileName("");
+    const refreshed = await fetchDir(dirPath);
+    const entry = refreshed.find((e) => e.name === name);
+    if (entry?.file) {
+      await openFile(entry);
+    }
+  }
+
+  async function handleUpload(files: FileList | null) {
+    if (!fileToken || !files || files.length === 0) return;
+    setUploading(true);
+    try {
+      await Promise.all(
+        Array.from(files).map(async (file) => {
+          const filePath = dirPath === "/" ? `/${file.name}` : `${dirPath}/${file.name}`;
+          const buffer = await file.arrayBuffer();
+          await fetch(
+            `${fileToken.baseUrl}/files/write?file=${encodeURIComponent(filePath)}`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${fileToken.token}`,
+                "Content-Type": "application/octet-stream",
+              },
+              body: buffer,
+            },
+          );
+        }),
+      );
+      await fetchDir(dirPath);
+    } finally {
+      setUploading(false);
+      if (uploadInputRef.current) uploadInputRef.current.value = "";
+    }
+  }
+
+  const { data: server } = useQuery(orpc.servers.get.queryOptions({ input: { id } }));
 
   if (isPending || !session) return <Loader />;
 
-  const server = mockServers.find((s) => s.id === id) ?? mockServers[0];
+  const pathSegments = dirPath === "/" ? [] : dirPath.split("/").filter(Boolean);
 
-  function currentItems(): FileItem[] {
-    let items = mockFileTree;
-    for (const seg of dirPath) {
-      const dir = items.find((i) => i.name === seg && i.type === "directory");
-      items = dir?.children ?? [];
-    }
-    return items;
+  function navigateUp() {
+    if (pathSegments.length === 0) return;
+    const parent = pathSegments.length === 1 ? "/" : "/" + pathSegments.slice(0, -1).join("/");
+    void fetchDir(parent);
   }
 
-  function openFile(item: FileItem) {
-    setSelectedFile(item);
-    setEditContent(item.content ?? "");
-    setUnsaved(false);
+  function navigateInto(name: string) {
+    const next = dirPath === "/" ? `/${name}` : `${dirPath}/${name}`;
+    void fetchDir(next);
   }
-
-  function handleEditorChange(value: string | undefined) {
-    setEditContent(value ?? "");
-    setUnsaved(true);
-  }
-
-  function handleSave() {
-    setUnsaved(false);
-  }
-
-  const items = currentItems();
-  const currentPathStr = dirPath.length > 0 ? "/" + dirPath.join("/") : "/";
 
   return (
     <>
@@ -165,11 +281,8 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
             Game Servers
           </Link>
           <span className="text-[#333333]">/</span>
-          <Link
-            href={`/servers/${id}`}
-            className="text-[#555555] transition-colors hover:text-white"
-          >
-            {server.name}
+          <Link href={`/servers/${id}`} className="text-[#555555] transition-colors hover:text-white">
+            {server?.name ?? id}
           </Link>
           <span className="text-[#333333]">/</span>
           <span className="text-white">Files</span>
@@ -178,45 +291,102 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
 
       <div className="flex flex-1 overflow-hidden">
         <div className="flex w-60 shrink-0 flex-col border-r border-[#222222]">
-          <div className="flex h-10 shrink-0 items-center border-b border-[#222222] px-3">
-            <span className="truncate font-mono text-[11px] text-[#555555]">{currentPathStr}</span>
-          </div>
-          <div className="flex-1 overflow-y-auto py-1">
-            {dirPath.length > 0 && (
+          <div className="flex h-10 shrink-0 items-center justify-between border-b border-[#222222] px-3">
+            <span className="truncate font-mono text-[11px] text-[#555555]">{dirPath}</span>
+            <div className="flex shrink-0 items-center gap-1">
               <button
                 type="button"
-                onClick={() => setDirPath((p) => p.slice(0, -1))}
+                title="New file"
+                onClick={() => {
+                  setShowNewFile(true);
+                  setTimeout(() => newFileInputRef.current?.focus(), 0);
+                }}
+                className="rounded p-1 text-[#555555] transition-colors hover:bg-[#1a1a1a] hover:text-white"
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                title="Upload files"
+                disabled={uploading}
+                onClick={() => uploadInputRef.current?.click()}
+                className="rounded p-1 text-[#555555] transition-colors hover:bg-[#1a1a1a] hover:text-white disabled:opacity-40"
+              >
+                <Upload className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+          <input
+            ref={uploadInputRef}
+            type="file"
+            multiple
+            className="hidden"
+            onChange={(e) => void handleUpload(e.target.files)}
+          />
+          {showNewFile && (
+            <div className="flex items-center gap-1 border-b border-[#222222] px-2 py-1.5">
+              <Plus className="h-3.5 w-3.5 shrink-0 text-[#555555]" />
+              <input
+                ref={newFileInputRef}
+                type="text"
+                value={newFileName}
+                onChange={(e) => setNewFileName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") void createFile();
+                  if (e.key === "Escape") { setShowNewFile(false); setNewFileName(""); }
+                }}
+                placeholder="filename.ext"
+                className="flex-1 bg-transparent font-mono text-xs text-white placeholder-[#444444] outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => { setShowNewFile(false); setNewFileName(""); }}
+                className="text-[#444444] hover:text-white"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          )}
+          <div className="flex-1 overflow-y-auto py-1">
+            {pathSegments.length > 0 && (
+              <button
+                type="button"
+                onClick={navigateUp}
                 className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-[#555555] transition-colors hover:bg-[#111111] hover:text-white"
               >
                 <ChevronLeft className="h-3.5 w-3.5 shrink-0" />
                 <span className="font-mono">..</span>
               </button>
             )}
-            {items.map((item) => (
-              <button
-                key={item.path}
-                type="button"
-                onClick={() => {
-                  if (item.type === "directory") {
-                    setDirPath((p) => [...p, item.name]);
-                  } else {
-                    openFile(item);
-                  }
-                }}
-                className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors hover:bg-[#111111] ${
-                  selectedFile?.path === item.path ? "bg-[#111111] text-white" : "text-[#888888]"
-                }`}
-              >
-                <FileIcon item={item} />
-                <span className="flex-1 truncate font-mono">{item.name}</span>
-                {item.type === "directory" && (
-                  <ChevronRight className="h-3 w-3 shrink-0 text-[#333333]" />
-                )}
-                {item.type === "file" && item.size !== undefined && (
-                  <span className="shrink-0 text-[10px] text-[#444444]">{fmtBytes(item.size)}</span>
-                )}
-              </button>
-            ))}
+            {loadingDir ? (
+              <div className="px-3 py-4 text-xs text-[#555555]">Loading…</div>
+            ) : (
+              entries.map((file) => (
+                <button
+                  key={file.name}
+                  type="button"
+                  onClick={() => {
+                    if (file.directory) {
+                      navigateInto(file.name);
+                    } else {
+                      void openFile(file);
+                    }
+                  }}
+                  className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors hover:bg-[#111111] ${
+                    selectedFile?.name === file.name ? "bg-[#111111] text-white" : "text-[#888888]"
+                  }`}
+                >
+                  <FileIcon file={file} />
+                  <span className="flex-1 truncate font-mono">{file.name}</span>
+                  {file.directory && (
+                    <ChevronRight className="h-3 w-3 shrink-0 text-[#333333]" />
+                  )}
+                  {file.file && (
+                    <span className="shrink-0 text-[10px] text-[#444444]">{fmtBytes(file.size)}</span>
+                  )}
+                </button>
+              ))
+            )}
           </div>
         </div>
 
@@ -225,28 +395,29 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
             <>
               <div className="flex h-10 shrink-0 items-center justify-between border-b border-[#222222] px-4">
                 <div className="flex items-center gap-2">
-                  <FileIcon item={selectedFile} />
+                  <FileIcon file={selectedFile} />
                   <span className="font-mono text-xs text-white">{selectedFile.name}</span>
                   {unsaved && <span className="h-1.5 w-1.5 rounded-full bg-[#f59e0b]" />}
                 </div>
-                {isTextFile(selectedFile) && (
+                {isText(selectedFile) && (
                   <button
                     type="button"
-                    onClick={handleSave}
+                    onClick={() => void handleSave()}
+                    disabled={saving}
                     className={`flex items-center gap-1.5 px-3 py-1 text-xs font-medium transition-colors ${
-                      unsaved
+                      unsaved && !saving
                         ? "bg-[#22c55e] text-black hover:opacity-90"
                         : "bg-[#1a1a1a] text-[#555555] cursor-default"
                     }`}
                   >
                     <Save className="h-3.5 w-3.5" />
-                    Save
+                    {saving ? "Saving…" : "Save"}
                   </button>
                 )}
               </div>
 
               <div className="flex-1 overflow-hidden">
-                {isImageFile(selectedFile) ? (
+                {isImage(selectedFile) ? (
                   <div
                     className="flex h-full items-center justify-center"
                     style={{
@@ -257,23 +428,20 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
                     <div className="flex flex-col items-center gap-3 bg-[#0a0a0a]/80 px-8 py-6">
                       <FileImage className="h-12 w-12 text-[#333333]" />
                       <span className="font-mono text-sm text-[#555555]">{selectedFile.name}</span>
-                      <span className="text-xs text-[#333333]">
-                        {fmtBytes(selectedFile.size ?? 0)}
-                      </span>
+                      <span className="text-xs text-[#333333]">{fmtBytes(selectedFile.size)}</span>
                     </div>
                   </div>
-                ) : isTextFile(selectedFile) ? (
+                ) : isText(selectedFile) ? (
                   <Editor
                     height="100%"
                     language={getLanguage(selectedFile.name)}
                     value={editContent}
                     theme="struxa-dark"
-                    onChange={handleEditorChange}
+                    onChange={(v) => { setEditContent(v ?? ""); setUnsaved(true); }}
                     beforeMount={defineTheme}
                     options={{
                       fontSize: 13,
-                      fontFamily:
-                        "var(--font-geist-mono), 'JetBrains Mono', 'Fira Code', monospace",
+                      fontFamily: "var(--font-geist-mono), 'JetBrains Mono', 'Fira Code', monospace",
                       lineHeight: 20,
                       minimap: { enabled: false },
                       scrollBeyondLastLine: false,
@@ -291,9 +459,7 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
                   <div className="flex h-full flex-col items-center justify-center gap-3">
                     <File className="h-10 w-10 text-[#333333]" />
                     <span className="text-sm text-[#555555]">Binary file — cannot be edited</span>
-                    <span className="font-mono text-xs text-[#333333]">
-                      {selectedFile.mimeType}
-                    </span>
+                    <span className="font-mono text-xs text-[#333333]">{selectedFile.mime}</span>
                   </div>
                 )}
               </div>

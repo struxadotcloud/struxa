@@ -4,10 +4,11 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { use } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { SidebarTrigger } from "@struxa/ui/components/sidebar";
 import { Activity, Power, FileText, HardDrive } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { mockServers, mockActivityLog } from "@/lib/mock-data";
+import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
 import Loader from "@/components/loader";
 
@@ -51,6 +52,11 @@ function getEventStyle(event: string): EventStyle {
   return { label: event, color: "text-[#888888]", border: "border-[#333333]" };
 }
 
+function fmtDate(d: Date | string | null): string {
+  if (!d) return "—";
+  return new Date(d).toLocaleString();
+}
+
 export default function ActivityPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
@@ -60,14 +66,20 @@ export default function ActivityPage({ params }: { params: Promise<{ id: string 
     if (!isPending && !session) router.replace("/login");
   }, [isPending, session, router]);
 
+  const { data: server } = useQuery(orpc.servers.get.queryOptions({ input: { id } }));
+  const serverId = server?.id;
+
+  const { data: activityData, isPending: activityPending } = useQuery({
+    ...orpc.activity.list.queryOptions({ input: { serverId: serverId ?? "", page: 1 } }),
+    enabled: !!serverId,
+  });
+
   if (isPending || !session) return <Loader />;
 
-  const server = mockServers.find((s) => s.id === id) ?? mockServers[0];
-
-  const todayPrefix = "May 16, 2026";
-  const powerCount = mockActivityLog.filter((e) => e.event.startsWith("server:power")).length;
-  const fileCount = mockActivityLog.filter((e) => e.event.startsWith("server:files")).length;
-  const backupCount = mockActivityLog.filter((e) => e.event.startsWith("server:backup")).length;
+  const entries = activityData?.data ?? [];
+  const powerCount = entries.filter((e) => e.eventType.startsWith("server:power")).length;
+  const fileCount = entries.filter((e) => e.eventType.startsWith("server:files")).length;
+  const backupCount = entries.filter((e) => e.eventType.startsWith("server:backup")).length;
 
   return (
     <>
@@ -78,8 +90,8 @@ export default function ActivityPage({ params }: { params: Promise<{ id: string 
             Game Servers
           </Link>
           <span className="text-[#333333]">/</span>
-          <Link href={`/servers/${server.id}`} className="text-[#555555] transition-colors hover:text-white">
-            {server.name}
+          <Link href={`/servers/${id}`} className="text-[#555555] transition-colors hover:text-white">
+            {server?.name ?? id}
           </Link>
           <span className="text-[#333333]">/</span>
           <span className="text-white">Activity</span>
@@ -95,33 +107,36 @@ export default function ActivityPage({ params }: { params: Promise<{ id: string 
               <span className="text-[10px] uppercase tracking-widest text-[#555555]">Actor</span>
               <span className="text-[10px] uppercase tracking-widest text-[#555555]">IP Address</span>
             </div>
-            {mockActivityLog.map((entry) => {
-              const style = getEventStyle(entry.event);
-              return (
-                <div
-                  key={entry.id}
-                  className="grid grid-cols-[200px_220px_1fr_140px] items-center border-b border-r border-[#222222] px-3 py-3 hover:bg-[#111111] transition-colors"
-                >
-                  <span className="font-mono text-xs text-[#444444]">{entry.ts}</span>
-                  <span className={`font-mono text-xs border px-1.5 py-0.5 w-fit ${style.color} ${style.border}`}>
-                    {style.label}
-                  </span>
-                  <span className="text-sm text-[#888888] truncate pr-4">{entry.actor}</span>
-                  <span className="font-mono text-xs text-[#555555]">{entry.ip}</span>
-                </div>
-              );
-            })}
+            {activityPending ? (
+              <div className="flex items-center justify-center py-12 text-sm text-[#555555]">Loading…</div>
+            ) : entries.length === 0 ? (
+              <div className="flex items-center justify-center py-12 text-sm text-[#555555]">No activity yet</div>
+            ) : (
+              entries.map((entry) => {
+                const style = getEventStyle(entry.eventType);
+                return (
+                  <div
+                    key={entry.id}
+                    className="grid grid-cols-[200px_220px_1fr_140px] items-center border-b border-r border-[#222222] px-3 py-3 hover:bg-[#111111] transition-colors"
+                  >
+                    <span className="font-mono text-xs text-[#444444]">{fmtDate(entry.timestamp)}</span>
+                    <span className={`font-mono text-xs border px-1.5 py-0.5 w-fit ${style.color} ${style.border}`}>
+                      {style.label}
+                    </span>
+                    <span className="text-sm text-[#888888] truncate pr-4">
+                      {entry.userId ?? "system"}
+                    </span>
+                    <span className="font-mono text-xs text-[#555555]">{entry.ip ?? "—"}</span>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
 
         <aside className="flex w-[280px] shrink-0 flex-col overflow-y-auto border-l border-[#222222]">
           <StatRow icon={Activity} label="EVENTS">
-            <span className="text-2xl font-bold text-white">{mockActivityLog.length}</span>
-          </StatRow>
-          <StatRow icon={Activity} label="TODAY">
-            <span className="text-2xl font-bold text-white">
-              {mockActivityLog.filter((e) => e.ts.startsWith(todayPrefix)).length}
-            </span>
+            <span className="text-2xl font-bold text-white">{entries.length}</span>
           </StatRow>
           <StatRow icon={Power} label="POWER EVENTS">
             <span className="text-2xl font-bold text-white">{powerCount}</span>
