@@ -261,6 +261,11 @@ function Step2({ onDone }: { onDone: () => void }) {
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
           Loading...
         </div>
+        <div className="pt-2">
+          <button onClick={onDone} className="bg-neutral-800 px-5 py-2 text-sm font-medium text-white transition-opacity hover:opacity-80">
+            Skip →
+          </button>
+        </div>
       </div>
     );
   }

@@ -21,9 +21,12 @@ export const onboardingRouter = {
     if (await isSetupDone()) {
       throw new Error("Setup is already complete.");
     }
-    const [{ total }] = await db.select({ total: count() }).from(user);
-    if (total !== 1) {
-      throw new Error("Unexpected number of users.");
+    const [{ adminCount }] = await db
+      .select({ adminCount: count() })
+      .from(user)
+      .where(eq(user.role, "admin"));
+    if (adminCount > 0) {
+      throw new Error("An administrator account already exists.");
     }
     await db
       .update(user)
@@ -54,7 +57,10 @@ export const onboardingRouter = {
       repos.map(async ({ id, label, owner, repo }): Promise<RepoResult> => {
         const res = await fetch(
           `https://api.github.com/repos/${owner}/${repo}/git/trees/HEAD?recursive=1`,
-          { headers: { Accept: "application/vnd.github+json" } },
+          {
+            headers: { Accept: "application/vnd.github+json" },
+            signal: AbortSignal.timeout(8000),
+          },
         );
         if (!res.ok) return { id, label, categories: [] };
 
