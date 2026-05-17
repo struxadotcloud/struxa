@@ -23,9 +23,6 @@ Built to replace Pterodactyl — modern stack, dark UI, fully self-hosted.
 
 </div>
 
-> [!CAUTION]
-> **This project is in active, bare development.** There is no alpha, no stable release, and no deployment guide. The API surface changes without notice. Do not use Struxa for anything beyond local development and experimentation. It is not functional as a product yet.
-
 <br />
 
 ## What is Struxa?
@@ -35,6 +32,9 @@ Struxa is a self-hosted server management panel designed to be a modern, open-so
 The immediate focus is game server management — create, configure, and control game servers from a single panel. The longer-term roadmap expands into VPS management, node orchestration, and infrastructure tooling.
 
 Struxa is **not** a fork of Pterodactyl. It is a clean-room implementation with a different architecture, a different design language, and a different set of priorities.
+
+> [!CAUTION]
+> **This project is in active, bare development.** There is no alpha, no stable release, and no deployment guide. The API surface changes without notice. Do not use Struxa for anything beyond local development and experimentation. It is not functional as a product yet.
 
 ## Planned Features
 
