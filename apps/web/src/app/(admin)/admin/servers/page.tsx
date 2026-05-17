@@ -87,7 +87,7 @@ export default function AdminServersPage() {
                   <span className="font-mono text-xs text-[#555555]">
                     {server.allocation.ip}:{server.allocation.port}
                   </span>
-                  <span className="text-xs text-[#444444]">{server.node.name}</span>
+                  <span className="text-xs text-[#444444]">{(server as { node?: { name: string } }).node?.name ?? "—"}</span>
                   <span className="text-xs" style={{ color: statusColor }}>
                     {statusLabel}
                   </span>

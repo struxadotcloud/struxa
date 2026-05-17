@@ -104,13 +104,12 @@ export const backupsRouter = {
       });
       if (!backup || !backup.isSuccessful) throw new ORPCError("NOT_FOUND");
 
+      const node = server.node as typeof nodes.$inferSelect;
       const token = await signWsToken({
         user_uuid: context.session.user.id,
         server_uuid: server.uuid,
         permissions: ["backup.download"],
-      });
-
-      const node = server.node as typeof nodes.$inferSelect;
+      }, node.token);
       const url = `${node.scheme}://${node.fqdn}:${node.daemonListen}/download/backup?token=${token}`;
       return { url };
     }),

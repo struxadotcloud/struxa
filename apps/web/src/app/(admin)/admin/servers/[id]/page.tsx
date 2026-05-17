@@ -13,7 +13,7 @@ function invalidateServer(id: string) {
 }
 
 function invalidateList() {
-  void queryClient.invalidateQueries(orpc.servers.key());
+  void queryClient.invalidateQueries({ queryKey: orpc.servers.key() });
 }
 
 export default function AdminServerDetailPage({ params }: { params: Promise<{ id: string }> }) {

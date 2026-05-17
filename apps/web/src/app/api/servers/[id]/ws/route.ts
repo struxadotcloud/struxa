@@ -1,5 +1,4 @@
-import { and, eq, or } from "drizzle-orm";
-import { headers } from "next/headers";
+import { and, eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { auth } from "@struxa/auth";
 import { db } from "@struxa/db";
@@ -38,14 +37,14 @@ export async function GET(
     ? ["*"]
     : await getSubuserPermissions(session.user.id, server.id);
 
-  const token = await signWsToken({
-    user_uuid: session.user.id,
-    server_uuid: server.uuid,
-    permissions,
-  });
-
   const node = server.node as typeof nodes.$inferSelect;
-  const socketUrl = `wss://${node.fqdn}:${node.daemonListen}/api/servers/${server.uuid}/ws`;
+  const token = await signWsToken(
+    { user_uuid: session.user.id, server_uuid: server.uuid, permissions },
+    node.token,
+  );
+
+  const wsScheme = node.scheme === "https" ? "wss" : "ws";
+  const socketUrl = `${wsScheme}://${node.fqdn}:${node.daemonListen}/api/servers/${server.uuid}/ws`;
 
   return Response.json({ data: { token, socket: socketUrl } });
 }

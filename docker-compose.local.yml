@@ -1,0 +1,98 @@
+# Local Docker Compose — builds all images from source
+# Usage: docker compose -f docker-compose.local.yml --env-file .env.local up --build
+
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-password}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-struxa}
+      MYSQL_USER: ${MYSQL_USER:-struxa}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-password}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "root",
+          "-p${MYSQL_ROOT_PASSWORD:-password}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - struxa
+
+  migrate:
+    build:
+      context: .
+      dockerfile: packages/db/Dockerfile
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-mysql://struxa:password@mysql:3306/struxa}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: "no"
+    networks:
+      - struxa
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-3001}:3001"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-mysql://struxa:password@mysql:3306/struxa}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3001}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3001}
+      NODE_ENV: production
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY}
+      JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY}
+      JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY}
+      DATABASE_ENCRYPTION_KEY: ${DATABASE_ENCRYPTION_KEY}
+      APP_URL: ${APP_URL:-http://localhost:3001}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - struxa
+
+  watchkeeper:
+    build:
+      context: .
+      dockerfile: apps/watchkeeper/Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-mysql://struxa:password@mysql:3306/struxa}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3001}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3001}
+      NODE_ENV: production
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY}
+      JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY}
+      JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY}
+      DATABASE_ENCRYPTION_KEY: ${DATABASE_ENCRYPTION_KEY}
+      APP_URL: ${APP_URL:-http://localhost:3001}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - struxa
+
+volumes:
+  mysql_data:
+
+networks:
+  struxa:
+    driver: bridge

@@ -1,0 +1,17 @@
+node_modules
+**/node_modules
+.next
+**/.next
+dist
+**/dist
+.turbo
+.git
+.github
+.vscode
+.env
+.env.*
+**/.env
+**/.env.*
+*.log
+*.tsbuildinfo
+coverage
