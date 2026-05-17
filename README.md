@@ -12,7 +12,7 @@ Built to replace Pterodactyl — modern stack, dark UI, fully self-hosted.
 ![Last commit](https://www.shieldcn.dev/github/last-commit/struxadotcloud/struxa.svg?variant=secondary&size=sm)
 ![Open issues](https://www.shieldcn.dev/github/open-issues/struxadotcloud/struxa.svg?variant=secondary&size=sm)
 ![Release](https://www.shieldcn.dev/github/release/struxadotcloud/struxa.svg?size=sm)
-![License](https://www.shieldcn.dev/github/license/struxadotcloud/struxa.svg?variant=ghost&size=sm)
+![License · ELv2](https://www.shieldcn.dev/badge/License-ELv2-000000.svg?variant=secondary&size=sm)
 
 ![Package mgr · Bun](https://www.shieldcn.dev/badge/Package_mgr-Bun-000000.svg?logo=bun&variant=branded&size=sm)
 ![Language · TypeScript](https://www.shieldcn.dev/badge/Language-TypeScript-3178C6.svg?logo=typescript&variant=branded&size=sm)
@@ -52,40 +52,6 @@ These are goals, not guarantees. Nothing below is shipped.
 - [ ] Billing and resource quotas (future)
 - [ ] Egg/image marketplace (future)
 
-## Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Framework | [Next.js 16](https://nextjs.org) + [React 19](https://react.dev) |
-| Language | TypeScript (strict) |
-| API | [oRPC](https://orpc.unnoq.com) — end-to-end type-safe procedures |
-| Database | MySQL + [Drizzle ORM](https://orm.drizzle.team) |
-| Auth | [Better-Auth](https://better-auth.com) |
-| Data Fetching | [TanStack Query](https://tanstack.com/query) |
-| UI Primitives | [shadcn/ui](https://ui.shadcn.com) via shared `packages/ui` |
-| Styling | [Tailwind CSS 4](https://tailwindcss.com) |
-| Monorepo | [Turborepo](https://turbo.build) + [Bun workspaces](https://bun.sh) |
-| Runtime | [Bun](https://bun.sh) |
-| Linting | Oxlint + Oxfmt |
-
-## Project Structure
-
-```
-struxa/
-├── apps/
-│   ├── web/              # Main Next.js panel application (port 3001)
-│   └── fumadocs/         # Documentation site
-├── packages/
-│   ├── ui/               # Shared UI primitives (@struxa/ui)
-│   ├── api/              # oRPC router and procedures (@struxa/api)
-│   ├── auth/             # Better-Auth config (@struxa/auth)
-│   ├── db/               # Drizzle ORM schema and client (@struxa/db)
-│   ├── env/              # Environment variable schemas (@struxa/env)
-│   └── config/           # Shared TypeScript config (@struxa/config)
-├── DESIGN.md             # UI/UX design reference
-├── CONTRIBUTING.md       # Contributor guide
-└── turbo.json            # Turborepo pipeline
-```
 
 ## Getting Started
 
@@ -135,6 +101,26 @@ Open [http://localhost:3001](http://localhost:3001) in your browser.
 
 </details>
 
+## Tech Stack
+<details>
+    <summary>Current tech stack</summary>
+
+| Layer | Technology |
+|---|---|
+| Framework | [Next.js 16](https://nextjs.org) + [React 19](https://react.dev) |
+| Language | TypeScript (strict) |
+| API | [oRPC](https://orpc.unnoq.com) — end-to-end type-safe procedures |
+| Database | MySQL + [Drizzle ORM](https://orm.drizzle.team) |
+| Auth | [Better-Auth](https://better-auth.com) |
+| Data Fetching | [TanStack Query](https://tanstack.com/query) |
+| UI Primitives | [shadcn/ui](https://ui.shadcn.com) via shared `packages/ui` |
+| Styling | [Tailwind CSS 4](https://tailwindcss.com) |
+| Monorepo | [Turborepo](https://turbo.build) + [Bun workspaces](https://bun.sh) |
+| Runtime | [Bun](https://bun.sh) |
+| Linting | Oxlint + Oxfmt |
+
+</details>
+
 ## Roadmap
 
 The roadmap is tracked via GitHub Issues and GitHub Projects. If you want to follow progress, watch the repository or check the Issues tab. There is no public timeline.
@@ -148,6 +134,18 @@ Note that because the project is in early development, large features may be def
 ## License
 
 [Elastic License 2.0 (ELv2)](./LICENSE) — you can use, modify, and self-host Struxa freely. You may **not** offer it as a hosted or managed service to third parties.
+
+<br />
+
+## Sponsors & Acknowledgements
+
+<div align="center">
+
+| Sponsor | Contribution |
+|:---:|:---|
+| <a href="https://pshost.pl" target="_blank"><img src="https://cdn.pejpal.cloud/psHost-banner.png" alt="psHost" height="48" /></a> | VPS for testing infrastructure |
+
+</div>
 
 <br />
 
