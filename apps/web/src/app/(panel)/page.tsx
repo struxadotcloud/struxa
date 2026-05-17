@@ -13,10 +13,10 @@ type DbStatus = "" | "installing" | "install_failed" | "suspended" | "restoring_
 type PowerState = "offline" | "running" | "starting" | "stopping" | string;
 
 const LIFECYCLE_DOT: Record<string, string> = {
-  installing: "#f59e0b",
+  installing: "#888888",
   install_failed: "#f43f5e",
   suspended: "#f43f5e",
-  restoring_backup: "#f59e0b",
+  restoring_backup: "#888888",
 };
 const LIFECYCLE_LABEL: Record<string, string> = {
   installing: "Installing",
@@ -27,8 +27,8 @@ const LIFECYCLE_LABEL: Record<string, string> = {
 
 const POWER_DOT: Record<string, string> = {
   running: "#22c55e",
-  starting: "#f59e0b",
-  stopping: "#f59e0b",
+  starting: "#888888",
+  stopping: "#888888",
   offline: "#555555",
 };
 const POWER_LABEL: Record<string, string> = {

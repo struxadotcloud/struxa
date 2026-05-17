@@ -383,7 +383,7 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
                 updateMutation.mutate({ id: serverId, suspended: !isSuspended })
               }
               disabled={updateMutation.isPending}
-              className="border border-[#f59e0b]/40 px-4 py-1.5 text-sm font-medium text-[#f59e0b] transition-opacity hover:opacity-80 disabled:opacity-40"
+              className="border border-[#555555] px-4 py-1.5 text-sm font-medium text-[#888888] transition-opacity hover:opacity-80 disabled:opacity-40"
             >
               {isSuspended ? "Unsuspend" : "Suspend"}
             </button>

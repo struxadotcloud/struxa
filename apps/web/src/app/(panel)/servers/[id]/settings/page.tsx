@@ -445,12 +445,12 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
           >
             {reinstallConfirm ? (
               <div className="flex items-center gap-2">
-                <span className="text-xs text-[#f59e0b]">Are you sure?</span>
+                <span className="text-xs text-[#888888]">Are you sure?</span>
                 <button
                   type="button"
                   onClick={() => reinstallMutation.mutate({ serverId: id })}
                   disabled={reinstallMutation.isPending}
-                  className="px-3 py-1 text-sm font-medium border border-[#f59e0b] text-[#f59e0b] hover:opacity-80 disabled:opacity-40 transition-opacity"
+                  className="px-3 py-1 text-sm font-medium border border-[#555555] text-[#888888] hover:opacity-80 disabled:opacity-40 transition-opacity"
                 >
                   {reinstallMutation.isPending ? "Reinstalling…" : "Confirm"}
                 </button>
@@ -462,7 +462,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
               <button
                 type="button"
                 onClick={() => setReinstallConfirm(true)}
-                className="px-4 py-1.5 text-sm font-medium border border-[#f59e0b]/50 text-[#f59e0b] hover:border-[#f59e0b] transition-colors"
+                className="px-4 py-1.5 text-sm font-medium border border-[#555555]/50 text-[#888888] hover:border-[#555555] transition-colors"
               >
                 Reinstall
               </button>

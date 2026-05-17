@@ -327,7 +327,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
             type="button"
             disabled={!canRestart || powerMutation.isPending}
             onClick={() => powerMutation.mutate({ serverId: id, action: "restart" })}
-            className="px-4 py-1.5 text-sm font-medium transition-opacity bg-[#f59e0b] text-black enabled:hover:opacity-80 disabled:opacity-30 disabled:cursor-not-allowed"
+            className="px-4 py-1.5 text-sm font-medium transition-opacity bg-neutral-700 text-white enabled:hover:opacity-80 disabled:opacity-30 disabled:cursor-not-allowed"
           >
             Restart
           </button>
@@ -364,7 +364,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                     : wsStatus === "running"
                       ? "bg-[#22c55e]"
                       : wsStatus === "starting" || wsStatus === "stopping"
-                        ? "bg-[#f59e0b] animate-pulse"
+                        ? "bg-[#888888] animate-pulse"
                         : "bg-[#555555]"
                 }`}
               />

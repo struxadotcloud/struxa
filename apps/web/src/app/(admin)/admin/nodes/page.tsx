@@ -4,8 +4,15 @@ import Link from "next/link";
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { SidebarTrigger } from "@struxa/ui/components/sidebar";
-import { Server, Plus, ExternalLink } from "lucide-react";
+import { Server, Plus, ExternalLink, ChevronDown, Trash2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@struxa/ui/components/dropdown-menu";
 import { orpc, queryClient } from "@/utils/orpc";
+import { ContextMenu, RowMenu, type ActionItem } from "@/components/context-menu";
 
 function invalidate() {
   void queryClient.invalidateQueries({ queryKey: orpc.nodes.key() });
@@ -15,6 +22,7 @@ export default function NodesPage() {
   const { data: nodes, isLoading } = useQuery(orpc.nodes.list.queryOptions());
   const { data: locations } = useQuery(orpc.locations.list.queryOptions());
   const createMutation = useMutation(orpc.nodes.create.mutationOptions({ onSuccess: invalidate }));
+  const deleteMutation = useMutation(orpc.nodes.delete.mutationOptions({ onSuccess: invalidate }));
 
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState({
@@ -30,11 +38,29 @@ export default function NodesPage() {
     daemonSFTP: 2022,
     uploadSize: 100,
   });
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   async function handleCreate() {
     if (!form.name.trim() || !form.locationId || !form.fqdn.trim()) return;
     await createMutation.mutateAsync(form);
     setAdding(false);
+  }
+
+  function nodeActions(node: { id: string; name: string }): ActionItem[] {
+    return [
+      {
+        label: "View Details",
+        icon: ExternalLink,
+        onClick: () => { window.location.href = `/admin/nodes/${node.id}`; },
+      },
+      "separator",
+      {
+        label: "Delete",
+        icon: Trash2,
+        onClick: () => setConfirmDelete(node.id),
+        destructive: true,
+      },
+    ];
   }
 
   return (
@@ -62,12 +88,13 @@ export default function NodesPage() {
 
       <div className="flex-1 overflow-auto">
         {adding && (
-          <div className="border-b border-[#222222] bg-[#141414] p-4">
+          <div className="border-b border-[#222222] p-4">
             <p className="mb-3 text-xs uppercase tracking-widest text-[#555555]">New Node</p>
             <div className="grid grid-cols-3 gap-3">
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] uppercase tracking-wider text-[#555555]">Name *</label>
                 <input
+                  autoFocus
                   className="border border-[#333333] bg-[#0a0a0a] px-3 py-1.5 text-sm text-white outline-none placeholder:text-[#444444] focus:border-[#555555]"
                   placeholder="Node 01"
                   value={form.name}
@@ -76,18 +103,28 @@ export default function NodesPage() {
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] uppercase tracking-wider text-[#555555]">Location *</label>
-                <select
-                  className="border border-[#333333] bg-[#0a0a0a] px-3 py-1.5 text-sm text-white outline-none focus:border-[#555555]"
-                  value={form.locationId}
-                  onChange={(e) => setForm((f) => ({ ...f, locationId: e.target.value }))}
-                >
-                  <option value="">Select location...</option>
-                  {locations?.map((l) => (
-                    <option key={l.id} value={l.id}>
-                      {l.name} ({l.short})
-                    </option>
-                  ))}
-                </select>
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="flex items-center justify-between border border-[#333333] bg-[#0a0a0a] px-3 py-1.5 text-sm text-white outline-none transition-colors hover:border-[#555555] data-[popup-open]:border-[#555555]">
+                    <span className={form.locationId ? "text-white" : "text-[#444444]"}>
+                      {form.locationId
+                        ? (locations?.find((l) => l.id === form.locationId)?.name ?? "Select...")
+                        : "Select location..."}
+                    </span>
+                    <ChevronDown className="ml-2 h-3.5 w-3.5 shrink-0 text-[#555555]" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" sideOffset={2} className="border border-[#222222] bg-[#0d0d0d] p-0 shadow-xl">
+                    {locations?.map((l) => (
+                      <DropdownMenuItem
+                        key={l.id}
+                        onClick={() => setForm((f) => ({ ...f, locationId: l.id }))}
+                        className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm text-[#888888] focus:bg-[#1a1a1a] focus:text-white"
+                      >
+                        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${form.locationId === l.id ? "bg-[#22c55e]" : "bg-transparent"}`} />
+                        {l.name} <span className="text-[#444444]">({l.short})</span>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] uppercase tracking-wider text-[#555555]">FQDN *</label>
@@ -100,14 +137,24 @@ export default function NodesPage() {
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] uppercase tracking-wider text-[#555555]">Scheme</label>
-                <select
-                  className="border border-[#333333] bg-[#0a0a0a] px-3 py-1.5 text-sm text-white outline-none focus:border-[#555555]"
-                  value={form.scheme}
-                  onChange={(e) => setForm((f) => ({ ...f, scheme: e.target.value as "https" | "http" }))}
-                >
-                  <option value="https">HTTPS</option>
-                  <option value="http">HTTP</option>
-                </select>
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="flex items-center justify-between border border-[#333333] bg-[#0a0a0a] px-3 py-1.5 text-sm text-white outline-none transition-colors hover:border-[#555555] data-[popup-open]:border-[#555555]">
+                    <span>{form.scheme.toUpperCase()}</span>
+                    <ChevronDown className="ml-2 h-3.5 w-3.5 shrink-0 text-[#555555]" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" sideOffset={2} className="border border-[#222222] bg-[#0d0d0d] p-0 shadow-xl">
+                    {(["https", "http"] as const).map((s) => (
+                      <DropdownMenuItem
+                        key={s}
+                        onClick={() => setForm((f) => ({ ...f, scheme: s }))}
+                        className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm text-[#888888] focus:bg-[#1a1a1a] focus:text-white"
+                      >
+                        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${form.scheme === s ? "bg-[#22c55e]" : "bg-transparent"}`} />
+                        {s.toUpperCase()}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] uppercase tracking-wider text-[#555555]">Memory (MB)</label>
@@ -158,7 +205,7 @@ export default function NodesPage() {
               <button
                 type="button"
                 onClick={() => setAdding(false)}
-                className="bg-neutral-700 px-4 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-80"
+                className="bg-neutral-800 px-4 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-80"
               >
                 Cancel
               </button>
@@ -166,39 +213,82 @@ export default function NodesPage() {
           </div>
         )}
 
+        {confirmDelete && (
+          <div className="flex items-center gap-3 border-b border-[#222222] bg-[#0d0d0d] px-4 py-3">
+            <span className="text-sm text-[#f43f5e]">Delete node?</span>
+            <span className="text-xs text-[#555555]">This will remove all associated data.</span>
+            <button
+              type="button"
+              onClick={async () => {
+                await deleteMutation.mutateAsync({ id: confirmDelete });
+                setConfirmDelete(null);
+              }}
+              disabled={deleteMutation.isPending}
+              className="bg-[#f43f5e] px-3 py-1 text-xs font-medium text-white disabled:opacity-40"
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(null)}
+              className="bg-neutral-800 px-3 py-1 text-xs font-medium text-white"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 border-l border-[#222222]">
           {isLoading && (
-            <div className="border-r border-b border-[#222222] px-4 py-3 text-sm text-[#555555]">
-              Loading...
-            </div>
+            <div className="border-r border-b border-[#222222] px-4 py-3 text-sm text-[#555555]">Loading...</div>
           )}
           {nodes?.length === 0 && !isLoading && (
             <div className="border-r border-b border-[#222222] px-4 py-3 text-sm text-[#555555]">
-              No nodes yet.
+              No nodes yet. Create one to start deploying servers.
             </div>
           )}
-          {nodes?.map((node) => (
-            <Link
-              key={node.id}
-              href={`/admin/nodes/${node.id}` as never}
-              className="flex items-center justify-between border-r border-b border-[#222222] px-4 py-3 hover:bg-[#111111]"
-            >
-              <div className="flex items-center gap-4">
-                <div
-                  className="h-2 w-2 rounded-full"
-                  style={{ backgroundColor: node.maintenanceMode ? "#f59e0b" : "#22c55e" }}
-                />
-                <span className="text-sm font-medium text-white">{node.name}</span>
-                <span className="font-mono text-xs text-[#555555]">
-                  {node.fqdn}:{node.daemonListen}
-                </span>
-                <span className="text-xs text-[#444444]">
-                  {(node.memory / 1024).toFixed(1)} GB RAM · {(node.disk / 1024).toFixed(1)} GB Disk
-                </span>
-              </div>
-              <ExternalLink className="h-3.5 w-3.5 text-[#444444]" />
-            </Link>
-          ))}
+          {nodes?.map((node) => {
+            const actions = nodeActions(node);
+            return (
+              <ContextMenu key={node.id} items={actions}>
+                {({ onContextMenu }) => (
+                  <div
+                    onContextMenu={onContextMenu}
+                    className="flex items-center justify-between border-r border-b border-[#222222] px-4 py-3 hover:bg-[#111111]"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div
+                        className="h-2 w-2 rounded-full"
+                        style={{ backgroundColor: node.maintenanceMode ? "#888888" : "#22c55e" }}
+                      />
+                      <span className="text-sm font-medium text-white">{node.name}</span>
+                      <span className="font-mono text-xs text-[#555555]">
+                        {node.fqdn}:{node.daemonListen}
+                      </span>
+                      <span className="text-xs text-[#444444]">
+                        {(node.memory / 1024).toFixed(1)} GB · {(node.disk / 1024).toFixed(1)} GB disk
+                      </span>
+                      {node.maintenanceMode && (
+                        <span className="border border-[#333333] px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-[#555555]">
+                          Maintenance
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/admin/nodes/${node.id}` as never}
+                        className="flex items-center gap-1 text-xs text-[#555555] transition-colors hover:text-white"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </Link>
+                      <RowMenu items={actions} />
+                    </div>
+                  </div>
+                )}
+              </ContextMenu>
+            );
+          })}
         </div>
       </div>
     </>

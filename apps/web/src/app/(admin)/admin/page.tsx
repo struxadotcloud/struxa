@@ -41,7 +41,7 @@ export default function AdminDashboard() {
       <header className="flex h-14 shrink-0 items-center gap-3 border-b border-[#222222] px-4">
         <SidebarTrigger className="-ml-1 text-[#888888] hover:text-white" />
         <span className="text-sm text-white">Admin Dashboard</span>
-        <span className="border border-[#f59e0b]/30 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-[#f59e0b]">
+        <span className="border border-[#333333] px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-[#555555]">
           admin
         </span>
       </header>

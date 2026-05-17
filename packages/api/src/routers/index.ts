@@ -15,6 +15,8 @@ import { subusersRouter } from "./subusers";
 import { activityRouter } from "./activity";
 import { filesRouter } from "./files";
 import { usersRouter } from "./users";
+import { settingsRouter } from "./settings";
+import { onboardingRouter } from "./onboarding";
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
@@ -34,6 +36,8 @@ export const appRouter = {
   activity: activityRouter,
   files: filesRouter,
   users: usersRouter,
+  settings: settingsRouter,
+  onboarding: onboardingRouter,
 };
 
 export type AppRouter = typeof appRouter;

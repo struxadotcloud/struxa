@@ -46,7 +46,7 @@ function getEventStyle(event: string): EventStyle {
   if (event.startsWith("server:files"))
     return { label: event.split(":")[1] ?? event, color: "text-[#3b82f6]", border: "border-[#3b82f6]/40" };
   if (event.startsWith("server:console"))
-    return { label: "console.command", color: "text-[#f59e0b]", border: "border-[#f59e0b]/40" };
+    return { label: "console.command", color: "text-[#888888]", border: "border-[#333333]" };
   if (event.startsWith("user:"))
     return { label: event.split(":")[1] ?? event, color: "text-[#888888]", border: "border-[#333333]" };
   return { label: event, color: "text-[#888888]", border: "border-[#333333]" };

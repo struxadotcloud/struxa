@@ -88,7 +88,7 @@ export default function NetworkPage({ params }: { params: Promise<{ id: string }
             ) : (
               <div className="grid grid-cols-[28px_180px_80px_1fr] items-center border-b border-r border-[#222222] px-3 py-3 hover:bg-[#111111] transition-colors">
                 <span className="flex items-center justify-center">
-                  <Star className="h-3.5 w-3.5 fill-[#f59e0b] text-[#f59e0b]" />
+                  <Star className="h-3.5 w-3.5 fill-white text-white" />
                 </span>
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-sm text-white">{alloc.ip}</span>

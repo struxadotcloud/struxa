@@ -47,7 +47,7 @@ function StatRow({
 }
 
 function StatusDot({ backup }: { backup: { isSuccessful: boolean; completedAt: Date | string | null } }) {
-  if (backup.completedAt === null) return <span className="h-2 w-2 shrink-0 rounded-full bg-[#f59e0b] animate-pulse" />;
+  if (backup.completedAt === null) return <span className="h-2 w-2 shrink-0 rounded-full bg-[#888888] animate-pulse" />;
   if (backup.isSuccessful) return <span className="h-2 w-2 shrink-0 rounded-full bg-[#22c55e]" />;
   return <span className="h-2 w-2 shrink-0 rounded-full bg-[#f43f5e]" />;
 }
@@ -118,7 +118,7 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
         <button
           type="button"
           onClick={() => setShowCreate(true)}
-          className="px-4 py-1.5 text-sm font-medium bg-[#f59e0b] text-black hover:opacity-80 transition-opacity"
+          className="px-4 py-1.5 text-sm font-medium bg-white text-black hover:opacity-80 transition-opacity"
         >
           Create Backup
         </button>

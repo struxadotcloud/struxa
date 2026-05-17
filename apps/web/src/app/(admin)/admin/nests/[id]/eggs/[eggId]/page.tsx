@@ -6,6 +6,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { SidebarTrigger } from "@struxa/ui/components/sidebar";
 import { Egg, Package, Plus, Trash2 } from "lucide-react";
 import { orpc, queryClient } from "@/utils/orpc";
+import { ContextMenu, RowMenu, type ActionItem } from "@/components/context-menu";
 
 function invalidateEgg(eggId: string) {
   void queryClient.invalidateQueries(orpc.eggs.get.queryOptions({ input: { id: eggId } }));
@@ -54,7 +55,6 @@ function VariableRow({
   const [description, setDescription] = useState(variable.description ?? "");
   const [userViewable, setUserViewable] = useState(variable.userViewable);
   const [userEditable, setUserEditable] = useState(variable.userEditable);
-  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const updateMutation = useMutation(
     orpc.eggs.updateVariable.mutationOptions({ onSuccess: onSaved }),
@@ -63,112 +63,99 @@ function VariableRow({
     orpc.eggs.deleteVariable.mutationOptions({ onSuccess: onDeleted }),
   );
 
+  const actions: ActionItem[] = [
+    {
+      label: "Delete Variable",
+      icon: Trash2,
+      onClick: () => deleteMutation.mutate({ variableId: variable.id }),
+      destructive: true,
+    },
+  ];
+
   return (
-    <div className="border-b border-[#222222] px-4 py-3">
-      <div className="grid grid-cols-4 gap-3">
-        <div>
-          <label className="mb-1 block text-[10px] uppercase tracking-wider text-[#555555]">Name</label>
-          <input
-            className="w-full border border-[#333333] bg-[#0a0a0a] px-2 py-1 text-xs text-white outline-none focus:border-[#555555]"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-[10px] uppercase tracking-wider text-[#555555]">Env Variable</label>
-          <input
-            className="w-full border border-[#333333] bg-[#0a0a0a] px-2 py-1 font-mono text-xs text-white outline-none focus:border-[#555555]"
-            value={envVariable}
-            onChange={(e) => setEnvVariable(e.target.value)}
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-[10px] uppercase tracking-wider text-[#555555]">Default Value</label>
-          <input
-            className="w-full border border-[#333333] bg-[#0a0a0a] px-2 py-1 text-xs text-white outline-none focus:border-[#555555]"
-            value={defaultValue}
-            onChange={(e) => setDefaultValue(e.target.value)}
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-[10px] uppercase tracking-wider text-[#555555]">Description</label>
-          <input
-            className="w-full border border-[#333333] bg-[#0a0a0a] px-2 py-1 text-xs text-white outline-none focus:border-[#555555]"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </div>
-      </div>
-      <div className="mt-2 flex items-center gap-4">
-        <label className="flex items-center gap-1.5 text-xs text-[#888888]">
-          <input
-            type="checkbox"
-            checked={userViewable}
-            onChange={(e) => setUserViewable(e.target.checked)}
-            className="h-3 w-3"
-          />
-          User Viewable
-        </label>
-        <label className="flex items-center gap-1.5 text-xs text-[#888888]">
-          <input
-            type="checkbox"
-            checked={userEditable}
-            onChange={(e) => setUserEditable(e.target.checked)}
-            className="h-3 w-3"
-          />
-          User Editable
-        </label>
-        <div className="ml-auto flex items-center gap-2">
-          {updateMutation.isSuccess && <span className="text-xs text-[#22c55e]">Saved</span>}
-          {updateMutation.isError && <span className="text-xs text-[#f43f5e]">{updateMutation.error.message}</span>}
-          <button
-            type="button"
-            onClick={() =>
-              updateMutation.mutate({
-                variableId: variable.id,
-                name,
-                envVariable,
-                defaultValue,
-                description,
-                userViewable,
-                userEditable,
-              })
-            }
-            disabled={updateMutation.isPending}
-            className="bg-white px-3 py-1 text-xs font-medium text-black transition-opacity hover:opacity-80 disabled:opacity-40"
-          >
-            {updateMutation.isPending ? "Saving..." : "Save"}
-          </button>
-          {confirmDelete ? (
-            <>
+    <ContextMenu items={actions}>
+      {({ onContextMenu }) => (
+        <div onContextMenu={onContextMenu} className="border-b border-[#222222] px-4 py-3 hover:bg-[#111111]">
+          <div className="grid grid-cols-4 gap-3">
+            <div>
+              <label className="mb-1 block text-[10px] uppercase tracking-wider text-[#555555]">Name</label>
+              <input
+                className="w-full border border-[#333333] bg-[#0a0a0a] px-2 py-1 text-xs text-white outline-none focus:border-[#555555]"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-[10px] uppercase tracking-wider text-[#555555]">Env Variable</label>
+              <input
+                className="w-full border border-[#333333] bg-[#0a0a0a] px-2 py-1 font-mono text-xs text-white outline-none focus:border-[#555555]"
+                value={envVariable}
+                onChange={(e) => setEnvVariable(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-[10px] uppercase tracking-wider text-[#555555]">Default Value</label>
+              <input
+                className="w-full border border-[#333333] bg-[#0a0a0a] px-2 py-1 text-xs text-white outline-none focus:border-[#555555]"
+                value={defaultValue}
+                onChange={(e) => setDefaultValue(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-[10px] uppercase tracking-wider text-[#555555]">Description</label>
+              <input
+                className="w-full border border-[#333333] bg-[#0a0a0a] px-2 py-1 text-xs text-white outline-none focus:border-[#555555]"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="mt-2 flex items-center gap-4">
+            <label className="flex items-center gap-1.5 text-xs text-[#888888]">
+              <input
+                type="checkbox"
+                checked={userViewable}
+                onChange={(e) => setUserViewable(e.target.checked)}
+                className="h-3 w-3"
+              />
+              User Viewable
+            </label>
+            <label className="flex items-center gap-1.5 text-xs text-[#888888]">
+              <input
+                type="checkbox"
+                checked={userEditable}
+                onChange={(e) => setUserEditable(e.target.checked)}
+                className="h-3 w-3"
+              />
+              User Editable
+            </label>
+            <div className="ml-auto flex items-center gap-2">
+              {updateMutation.isSuccess && <span className="text-xs text-[#22c55e]">Saved</span>}
+              {updateMutation.isError && <span className="text-xs text-[#f43f5e]">{updateMutation.error.message}</span>}
               <button
                 type="button"
-                onClick={() => deleteMutation.mutate({ variableId: variable.id })}
-                disabled={deleteMutation.isPending}
-                className="bg-[#f43f5e] px-3 py-1 text-xs font-medium text-white disabled:opacity-40"
+                onClick={() =>
+                  updateMutation.mutate({
+                    variableId: variable.id,
+                    name,
+                    envVariable,
+                    defaultValue,
+                    description,
+                    userViewable,
+                    userEditable,
+                  })
+                }
+                disabled={updateMutation.isPending}
+                className="bg-white px-3 py-1 text-xs font-medium text-black transition-opacity hover:opacity-80 disabled:opacity-40"
               >
-                Confirm
+                {updateMutation.isPending ? "Saving..." : "Save"}
               </button>
-              <button
-                type="button"
-                onClick={() => setConfirmDelete(false)}
-                className="bg-neutral-700 px-3 py-1 text-xs font-medium text-white"
-              >
-                Cancel
-              </button>
-            </>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setConfirmDelete(true)}
-              className="text-[#555555] transition-colors hover:text-[#f43f5e]"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          )}
+              <RowMenu items={actions} />
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      )}
+    </ContextMenu>
   );
 }
 
@@ -249,19 +236,11 @@ export default function EggDetailPage({
   }
 
   if (isLoading) {
-    return (
-      <div className="flex h-full items-center justify-center text-sm text-[#555555]">
-        Loading...
-      </div>
-    );
+    return <div className="flex h-full items-center justify-center text-sm text-[#555555]">Loading...</div>;
   }
 
   if (!egg) {
-    return (
-      <div className="flex h-full items-center justify-center text-sm text-[#555555]">
-        Egg not found.
-      </div>
-    );
+    return <div className="flex h-full items-center justify-center text-sm text-[#555555]">Egg not found.</div>;
   }
 
   return (
@@ -287,8 +266,8 @@ export default function EggDetailPage({
       </header>
 
       <div className="flex-1 overflow-auto">
-        {/* Egg details form */}
-        <div className="border-b border-[#222222] bg-[#0d0d0d] p-4">
+        {/* Egg details */}
+        <div className="border-b border-[#222222] p-4">
           <p className="mb-3 text-[10px] uppercase tracking-widest text-[#555555]">Egg Details</p>
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -439,7 +418,7 @@ export default function EggDetailPage({
             />
           ))}
 
-          {/* Add new variable */}
+          {/* Add variable */}
           <div className="border-r border-b border-[#222222] bg-[#0d0d0d] px-4 py-3">
             <p className="mb-2 text-[10px] uppercase tracking-wider text-[#444444]">Add Variable</p>
             <div className="flex items-end gap-2">
@@ -450,6 +429,7 @@ export default function EggDetailPage({
                   value={newVarName}
                   onChange={(e) => setNewVarName(e.target.value)}
                   placeholder="Server Port"
+                  onKeyDown={(e) => { if (e.key === "Enter") void handleAddVariable(); }}
                 />
               </div>
               <div>
@@ -459,6 +439,7 @@ export default function EggDetailPage({
                   value={newVarEnv}
                   onChange={(e) => setNewVarEnv(e.target.value)}
                   placeholder="SERVER_PORT"
+                  onKeyDown={(e) => { if (e.key === "Enter") void handleAddVariable(); }}
                 />
               </div>
               <div>
@@ -468,6 +449,7 @@ export default function EggDetailPage({
                   value={newVarDefault}
                   onChange={(e) => setNewVarDefault(e.target.value)}
                   placeholder="25565"
+                  onKeyDown={(e) => { if (e.key === "Enter") void handleAddVariable(); }}
                 />
               </div>
               <button

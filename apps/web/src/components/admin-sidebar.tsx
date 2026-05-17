@@ -22,6 +22,7 @@ import {
   Database,
   Monitor,
   Users,
+  Settings2,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -32,6 +33,7 @@ const NAV_ITEMS = [
   { key: "database-hosts", label: "Database Hosts", icon: Database, href: "/admin/database-hosts" },
   { key: "servers", label: "Servers", icon: Monitor, href: "/admin/servers" },
   { key: "users", label: "Users", icon: Users, href: "/admin/users" },
+  { key: "settings", label: "Settings", icon: Settings2, href: "/admin/settings" },
 ];
 
 export function AdminSidebar() {
@@ -58,7 +60,7 @@ export function AdminSidebar() {
           {state === "expanded" && (
             <div className="flex flex-col">
               <span className="text-sm font-semibold text-white">struxa</span>
-              <span className="text-[10px] uppercase tracking-widest text-[#f59e0b]">admin</span>
+              <span className="text-[10px] uppercase tracking-widest text-[#555555]">admin</span>
             </div>
           )}
         </div>

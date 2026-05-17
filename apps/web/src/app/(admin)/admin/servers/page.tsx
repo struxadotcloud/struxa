@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { SidebarTrigger } from "@struxa/ui/components/sidebar";
-import { Monitor, Pencil, Plus, Trash2 } from "lucide-react";
+import { Monitor, Plus, ExternalLink, Pencil, Trash2 } from "lucide-react";
 import { orpc, queryClient } from "@/utils/orpc";
+import { ContextMenu, RowMenu, type ActionItem } from "@/components/context-menu";
 
 function invalidate() {
   void queryClient.invalidateQueries({ queryKey: orpc.servers.key() });
@@ -13,9 +14,9 @@ function invalidate() {
 
 const STATUS_COLOR: Record<string, string> = {
   "": "#22c55e",
-  installing: "#f59e0b",
+  installing: "#888888",
   install_failed: "#f43f5e",
-  restoring_backup: "#f59e0b",
+  restoring_backup: "#888888",
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -31,6 +32,28 @@ export default function AdminServersPage() {
 
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [purge, setPurge] = useState(false);
+
+  function serverActions(server: { uuid: string; name: string; suspended?: boolean }): ActionItem[] {
+    return [
+      {
+        label: "View Panel",
+        icon: ExternalLink,
+        onClick: () => { window.location.href = `/servers/${server.uuid}`; },
+      },
+      {
+        label: "Edit Config",
+        icon: Pencil,
+        onClick: () => { window.location.href = `/admin/servers/${server.uuid}`; },
+      },
+      "separator",
+      {
+        label: "Delete",
+        icon: Trash2,
+        onClick: () => { setConfirmDelete(server.uuid); setPurge(false); },
+        destructive: true,
+      },
+    ];
+  }
 
   return (
     <>
@@ -55,11 +78,43 @@ export default function AdminServersPage() {
       </header>
 
       <div className="flex-1 overflow-auto">
+        {confirmDelete && (
+          <div className="flex items-center gap-3 border-b border-[#222222] bg-[#0d0d0d] px-4 py-3">
+            <span className="text-sm text-[#f43f5e]">Delete server?</span>
+            <label className="flex items-center gap-1.5 text-xs text-[#888888]">
+              <input
+                type="checkbox"
+                checked={purge}
+                onChange={(e) => setPurge(e.target.checked)}
+                className="h-3 w-3"
+              />
+              Purge files from node
+            </label>
+            <button
+              type="button"
+              onClick={async () => {
+                await deleteMutation.mutateAsync({ id: confirmDelete, purgeData: purge });
+                setConfirmDelete(null);
+                setPurge(false);
+              }}
+              disabled={deleteMutation.isPending}
+              className="bg-[#f43f5e] px-3 py-1 text-xs font-medium text-white disabled:opacity-40"
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete"}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setConfirmDelete(null); setPurge(false); }}
+              className="bg-neutral-800 px-3 py-1 text-xs font-medium text-white"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 border-l border-[#222222]">
           {isLoading && (
-            <div className="border-r border-b border-[#222222] px-4 py-3 text-sm text-[#555555]">
-              Loading...
-            </div>
+            <div className="border-r border-b border-[#222222] px-4 py-3 text-sm text-[#555555]">Loading...</div>
           )}
           {servers?.length === 0 && !isLoading && (
             <div className="border-r border-b border-[#222222] px-4 py-3 text-sm text-[#555555]">
@@ -70,79 +125,48 @@ export default function AdminServersPage() {
             const isSuspended = (server as { suspended?: boolean }).suspended;
             const statusColor = isSuspended ? "#555555" : (STATUS_COLOR[server.status] ?? "#888888");
             const statusLabel = isSuspended ? "Suspended" : (STATUS_LABEL[server.status] ?? server.status);
+            const actions = serverActions({ uuid: server.uuid, name: server.name, suspended: isSuspended });
 
             return (
-              <div
-                key={server.id}
-                className="flex items-center justify-between border-r border-b border-[#222222] px-4 py-3 hover:bg-[#111111]"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="h-2 w-2 rounded-full" style={{ backgroundColor: statusColor }} />
-                  <Link
-                    href={`/servers/${server.uuid}` as never}
-                    className="text-sm font-medium text-white transition-colors hover:text-[#22c55e]"
+              <ContextMenu key={server.id} items={actions}>
+                {({ onContextMenu }) => (
+                  <div
+                    onContextMenu={onContextMenu}
+                    className="flex items-center justify-between border-r border-b border-[#222222] px-4 py-3 hover:bg-[#111111]"
                   >
-                    {server.name}
-                  </Link>
-                  <span className="font-mono text-xs text-[#555555]">
-                    {server.allocation.ip}:{server.allocation.port}
-                  </span>
-                  <span className="text-xs text-[#444444]">{(server as { node?: { name: string } }).node?.name ?? "—"}</span>
-                  <span className="text-xs" style={{ color: statusColor }}>
-                    {statusLabel}
-                  </span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="font-mono text-xs text-[#444444]">
-                    {server.memory} MB · {server.disk} MB disk
-                  </span>
-                  <Link
-                    href={`/admin/servers/${server.uuid}` as never}
-                    className="text-[#555555] transition-colors hover:text-white"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Link>
-                  {confirmDelete === server.uuid ? (
-                    <div className="flex items-center gap-2">
-                      <label className="flex items-center gap-1.5 text-xs text-[#f43f5e]">
-                        <input
-                          type="checkbox"
-                          checked={purge}
-                          onChange={(e) => setPurge(e.target.checked)}
-                          className="h-3 w-3"
-                        />
-                        Purge data
-                      </label>
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          await deleteMutation.mutateAsync({ id: server.uuid, purgeData: purge });
-                          setConfirmDelete(null);
-                          setPurge(false);
-                        }}
-                        className="bg-[#f43f5e] px-3 py-1 text-xs font-medium text-white"
+                    <div className="flex items-center gap-4">
+                      <div className="h-2 w-2 rounded-full" style={{ backgroundColor: statusColor }} />
+                      <Link
+                        href={`/servers/${server.uuid}` as never}
+                        className="text-sm font-medium text-white transition-colors hover:text-[#22c55e]"
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        Delete
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => { setConfirmDelete(null); setPurge(false); }}
-                        className="bg-neutral-700 px-3 py-1 text-xs font-medium text-white"
-                      >
-                        Cancel
-                      </button>
+                        {server.name}
+                      </Link>
+                      <span className="font-mono text-xs text-[#555555]">
+                        {server.allocation.ip}:{server.allocation.port}
+                      </span>
+                      <span className="text-xs text-[#444444]">
+                        {(server as { node?: { name: string } }).node?.name ?? "—"}
+                      </span>
+                      <span className="text-xs" style={{ color: statusColor }}>{statusLabel}</span>
                     </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setConfirmDelete(server.uuid)}
-                      className="text-[#555555] transition-colors hover:text-[#f43f5e]"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-              </div>
+                    <div className="flex items-center gap-3">
+                      <span className="font-mono text-xs text-[#444444]">
+                        {server.memory} MB · {server.disk} MB disk
+                      </span>
+                      <Link
+                        href={`/admin/servers/${server.uuid}` as never}
+                        className="text-[#555555] transition-colors hover:text-white"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Link>
+                      <RowMenu items={actions} />
+                    </div>
+                  </div>
+                )}
+              </ContextMenu>
             );
           })}
         </div>

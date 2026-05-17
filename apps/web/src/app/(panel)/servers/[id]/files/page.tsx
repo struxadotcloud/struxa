@@ -101,7 +101,7 @@ function isImage(file: WingsFile): boolean {
 }
 
 function FileIcon({ file, className = "h-4 w-4 shrink-0" }: { file: WingsFile; className?: string }) {
-  if (file.directory) return <Folder className={`${className} text-[#f59e0b]`} />;
+  if (file.directory) return <Folder className={`${className} text-[#888888]`} />;
   if (isImage(file)) return <FileImage className={`${className} text-[#a855f7]`} />;
   if (isText(file)) return <FileCode2 className={`${className} text-[#3b82f6]`} />;
   return <File className={`${className} text-[#555555]`} />;
@@ -397,7 +397,7 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
                 <div className="flex items-center gap-2">
                   <FileIcon file={selectedFile} />
                   <span className="font-mono text-xs text-white">{selectedFile.name}</span>
-                  {unsaved && <span className="h-1.5 w-1.5 rounded-full bg-[#f59e0b]" />}
+                  {unsaved && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
                 </div>
                 {isText(selectedFile) && (
                   <button

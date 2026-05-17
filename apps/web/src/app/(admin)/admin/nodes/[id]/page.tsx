@@ -125,7 +125,7 @@ export default function NodeDetailPage({ params }: { params: Promise<{ id: strin
                   type="button"
                   onClick={() => regenTokenMutation.mutate({ id })}
                   disabled={regenTokenMutation.isPending}
-                  className="flex items-center gap-1 text-xs text-[#f59e0b] transition-opacity hover:opacity-80 disabled:opacity-40"
+                  className="flex items-center gap-1 text-xs text-[#888888] transition-opacity hover:text-white hover:opacity-80 disabled:opacity-40"
                 >
                   <RefreshCw className="h-3 w-3" />
                   Regen Token
