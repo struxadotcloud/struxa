@@ -22,24 +22,6 @@
         "typescript": "catalog:",
       },
     },
-    "apps/watchkeeper": {
-      "name": "@struxa/watchkeeper",
-      "version": "0.0.1",
-      "dependencies": {
-        "@struxa/api": "workspace:*",
-        "@struxa/db": "workspace:*",
-        "@struxa/env": "workspace:*",
-        "croner": "catalog:",
-        "dotenv": "catalog:",
-        "drizzle-orm": "^0.45.1",
-        "mysql2": "^3.14.0",
-      },
-      "devDependencies": {
-        "@struxa/config": "workspace:*",
-        "@types/node": "^22.13.14",
-        "typescript": "catalog:",
-      },
-    },
     "apps/web": {
       "name": "web",
       "version": "0.1.0",
@@ -605,8 +587,6 @@
     "@struxa/env": ["@struxa/env@workspace:packages/env"],
 
     "@struxa/ui": ["@struxa/ui@workspace:packages/ui"],
-
-    "@struxa/watchkeeper": ["@struxa/watchkeeper@workspace:apps/watchkeeper"],
 
     "@swc/helpers": ["@swc/helpers@0.5.15", "", { "dependencies": { "tslib": "^2.8.0" } }, "sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g=="],
 
