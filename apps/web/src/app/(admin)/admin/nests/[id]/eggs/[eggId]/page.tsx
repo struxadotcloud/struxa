@@ -423,7 +423,7 @@ export default function EggDetailPage({
         </div>
 
         {/* Variables */}
-        <div className="border-l border-t border-[#222222]">
+        <div className="border-l border-[#222222]">
           <div className="flex items-center justify-between border-r border-b border-[#222222] bg-[#0d0d0d] px-4 py-2">
             <span className="text-[10px] uppercase tracking-widest text-[#555555]">Variables</span>
             <span className="text-[10px] text-[#444444]">{egg.variables.length}</span>

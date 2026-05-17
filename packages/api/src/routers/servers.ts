@@ -4,6 +4,7 @@ import { z } from "zod";
 import { ORPCError } from "@orpc/server";
 import { db } from "@struxa/db";
 import {
+  eggVariables,
   eggs,
   nodeAllocations,
   nodes,
@@ -198,22 +199,137 @@ export const serversRouter = {
       await db.update(servers).set(serverUpdates).where(eq(servers.uuid, input.id));
     }),
 
+  updateStartupVariable: protectedProcedure
+    .input(
+      z.object({
+        serverId: z.string(),
+        envVariable: z.string(),
+        value: z.string(),
+      }),
+    )
+    .handler(async ({ context, input }) => {
+      const server = await db.query.servers.findFirst({
+        where: eq(servers.uuid, input.serverId),
+      });
+      if (!server) throw new ORPCError("NOT_FOUND");
+
+      const userId = context.session.user.id;
+      const isAdmin = context.session.user.role === "admin";
+      if (!isAdmin && server.userId !== userId) {
+        const sub = await db.query.subusers.findFirst({
+          where: and(eq(subusers.userId, userId), eq(subusers.serverId, server.id)),
+        });
+        if (!sub) throw new ORPCError("FORBIDDEN");
+      }
+
+      const eggVar = await db.query.eggVariables.findFirst({
+        where: and(
+          eq(eggVariables.eggId, server.eggId),
+          eq(eggVariables.envVariable, input.envVariable),
+        ),
+      });
+      if (!eggVar) throw new ORPCError("NOT_FOUND", { message: "Variable not found" });
+      if (!eggVar.userEditable && !isAdmin) throw new ORPCError("FORBIDDEN", { message: "Variable is not user-editable" });
+
+      await db
+        .update(serverVariables)
+        .set({ variableValue: input.value })
+        .where(
+          and(
+            eq(serverVariables.serverId, server.id),
+            eq(serverVariables.variableId, eggVar.id),
+          ),
+        );
+
+      const allVars = await db.query.serverVariables.findMany({
+        where: eq(serverVariables.serverId, server.id),
+        with: { variable: { columns: { envVariable: true, defaultValue: true } } },
+      });
+      const varMap: Record<string, string> = {};
+      for (const sv of allVars) {
+        varMap[sv.variable.envVariable] = sv.variableValue ?? sv.variable.defaultValue ?? "";
+      }
+      await db
+        .update(servers)
+        .set({ invocation: buildInvocation(server.startup, varMap) })
+        .where(eq(servers.id, server.id));
+    }),
+
+  updateDockerImage: protectedProcedure
+    .input(
+      z.object({
+        serverId: z.string(),
+        image: z.string().min(1),
+      }),
+    )
+    .handler(async ({ context, input }) => {
+      const server = await db.query.servers.findFirst({
+        where: eq(servers.uuid, input.serverId),
+        with: { egg: { columns: { dockerImages: true } } },
+      });
+      if (!server) throw new ORPCError("NOT_FOUND");
+
+      const userId = context.session.user.id;
+      const isAdmin = context.session.user.role === "admin";
+      if (!isAdmin && server.userId !== userId) {
+        const sub = await db.query.subusers.findFirst({
+          where: and(eq(subusers.userId, userId), eq(subusers.serverId, server.id)),
+        });
+        if (!sub) throw new ORPCError("FORBIDDEN");
+      }
+
+      let validImages: string[] = [];
+      try {
+        const parsed = JSON.parse(server.egg.dockerImages ?? "{}") as Record<string, string>;
+        validImages = Object.keys(parsed);
+      } catch {}
+
+      if (validImages.length > 0 && !validImages.includes(input.image)) {
+        throw new ORPCError("BAD_REQUEST", { message: "Image not in allowed list" });
+      }
+
+      await db
+        .update(servers)
+        .set({ image: input.image })
+        .where(eq(servers.uuid, input.serverId));
+    }),
+
+  rename: protectedProcedure
+    .input(z.object({ serverId: z.string(), name: z.string().min(1).max(255) }))
+    .handler(async ({ context, input }) => {
+      const server = await db.query.servers.findFirst({
+        where: eq(servers.uuid, input.serverId),
+      });
+      if (!server) throw new ORPCError("NOT_FOUND");
+
+      const userId = context.session.user.id;
+      const isAdmin = context.session.user.role === "admin";
+      if (!isAdmin && server.userId !== userId) {
+        const sub = await db.query.subusers.findFirst({
+          where: and(eq(subusers.userId, userId), eq(subusers.serverId, server.id)),
+        });
+        if (!sub) throw new ORPCError("FORBIDDEN");
+      }
+
+      await db.update(servers).set({ name: input.name }).where(eq(servers.uuid, input.serverId));
+    }),
+
   get: protectedProcedure
     .input(z.object({ id: z.string() }))
     .handler(async ({ context, input }) => {
       const server = await db.query.servers.findFirst({
         where: eq(servers.uuid, input.id),
         columns: {
-          id: true, uuid: true, name: true, description: true, status: true,
-          suspended: true, powerState: true, memory: true, disk: true, cpu: true,
-          swap: true, io: true, threads: true, oomDisabled: true, image: true,
-          startup: true, invocation: true, skipScripts: true, userId: true,
+          id: true, uuid: true, uuidShort: true, name: true, description: true,
+          status: true, suspended: true, powerState: true, memory: true, disk: true,
+          cpu: true, swap: true, io: true, threads: true, oomDisabled: true,
+          image: true, startup: true, invocation: true, skipScripts: true, userId: true,
         },
         with: {
           allocation: { columns: { ip: true, port: true } },
-          node: { columns: { name: true } },
+          node: { columns: { name: true, fqdn: true, daemonSFTP: true } },
           egg: {
-            columns: { id: true, uuid: true, name: true, startup: true },
+            columns: { id: true, uuid: true, name: true, startup: true, dockerImages: true },
             with: {
               variables: {
                 columns: {

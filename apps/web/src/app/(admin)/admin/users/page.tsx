@@ -13,9 +13,9 @@ export default function AdminUsersPage() {
       </header>
 
       <div className="flex-1 overflow-auto">
-        <div className="grid grid-cols-1 border-l border-t border-[#222222]">
+        <div className="grid grid-cols-1 border-l border-[#222222]">
           <div className="border-r border-b border-[#222222] px-4 py-3 text-sm text-[#555555]">
-            User management is handled through Better Auth. Use the Better Auth admin panel or API to manage users.
+            User managment will be added in next minor version
           </div>
         </div>
       </div>

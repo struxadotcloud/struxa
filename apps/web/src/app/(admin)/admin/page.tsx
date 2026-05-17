@@ -47,7 +47,7 @@ export default function AdminDashboard() {
       </header>
 
       <div className="flex-1 overflow-auto p-0">
-        <div className="grid grid-cols-3 border-l border-t border-[#222222]">
+        <div className="grid grid-cols-3 border-l border-[#222222]">
           <StatCard
             icon={Server}
             label="Nodes"

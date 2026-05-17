@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1779014361380,
+      "tag": "0000_bent_true_believers",
+      "breakpoints": true
+    }
+  ]
+}

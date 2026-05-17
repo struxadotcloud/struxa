@@ -138,7 +138,7 @@ export default function NodeDetailPage({ params }: { params: Promise<{ id: strin
           </div>
         )}
 
-        <div className="grid grid-cols-2 border-l border-t border-[#222222]">
+        <div className="grid grid-cols-2 border-l border-[#222222]">
           <div className="flex flex-col gap-1 border-r border-b border-[#222222] p-4">
             <span className="text-[10px] uppercase tracking-widest text-[#555555]">FQDN</span>
             <span className="font-mono text-sm text-white">{node.fqdn}</span>
@@ -235,7 +235,7 @@ export default function NodeDetailPage({ params }: { params: Promise<{ id: strin
             </div>
           )}
 
-          <div className="grid grid-cols-1 border-l border-t border-[#222222]">
+          <div className="grid grid-cols-1 border-l border-[#222222]">
             {allocations.length === 0 && (
               <div className="border-r border-b border-[#222222] px-4 py-3 text-sm text-[#555555]">
                 No allocations. Add some to create servers on this node.

@@ -174,7 +174,7 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
           </div>
         )}
 
-        <div className="grid grid-cols-1 border-l border-t border-[#222222]">
+        <div className="grid grid-cols-1 border-l border-[#222222]">
           <div className="flex items-center justify-between border-r border-b border-[#222222] px-4 py-2 bg-[#0d0d0d]">
             <span className="text-[10px] uppercase tracking-widest text-[#555555]">Eggs</span>
             <span className="text-[10px] text-[#444444]">{eggs?.length ?? 0}</span>
