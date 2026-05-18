@@ -523,7 +523,7 @@ function Step4({ locationId, onDone }: { locationId: string; onDone: () => void 
 
 // ─── Step 5: Complete ─────────────────────────────────────────────────────────
 
-function Step5({ onDone, busy }: { onDone: () => void; busy: boolean }) {
+function Step5({ onDone, busy, error }: { onDone: () => void; busy: boolean; error: string | null }) {
   return (
     <div className="flex flex-col gap-0">
       <div className="border-b border-[#1a1a1a] py-4">
@@ -531,6 +531,11 @@ function Step5({ onDone, busy }: { onDone: () => void; busy: boolean }) {
           Your panel is ready. Head to the admin dashboard to create servers and manage your infrastructure.
         </p>
       </div>
+      {error && (
+        <div className="border-b border-[#1a1a1a] py-4">
+          <ErrorBanner msg={error} />
+        </div>
+      )}
 
       <div className="border-b border-[#1a1a1a] py-4">
         <p className="mb-3 text-[10px] uppercase tracking-widest text-[#555555]">What's Next</p>
@@ -572,6 +577,7 @@ export default function SetupPage() {
   const [completed, setCompleted] = useState<Set<number>>(new Set());
   const [locationId, setLocationId] = useState("");
   const [finishing, setFinishing] = useState(false);
+  const [finishError, setFinishError] = useState<string | null>(null);
   const complete = useMutation(orpc.onboarding.completeSetup.mutationOptions());
 
   function advance(s: number) {
@@ -581,8 +587,15 @@ export default function SetupPage() {
 
   async function finish() {
     setFinishing(true);
-    await complete.mutateAsync(undefined);
-    router.push("/admin");
+    setFinishError(null);
+    try {
+      await complete.mutateAsync(undefined);
+      // Hard navigation so the server layouts re-run without any router cache
+      window.location.href = "/admin";
+    } catch (e) {
+      setFinishError(e instanceof Error ? e.message : "Failed to complete setup. Please try again.");
+      setFinishing(false);
+    }
   }
 
   const TITLES: Record<Step, [string, string]> = {
@@ -616,7 +629,7 @@ export default function SetupPage() {
         {step === 2 && <Step2 onDone={() => advance(2)} />}
         {step === 3 && <Step3 onDone={id => { setLocationId(id); advance(3); }} />}
         {step === 4 && <Step4 locationId={locationId} onDone={() => advance(4)} />}
-        {step === 5 && <Step5 onDone={finish} busy={finishing} />}
+        {step === 5 && <Step5 onDone={finish} busy={finishing} error={finishError} />}
       </div>
     </main>
   );
