@@ -41,6 +41,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Resolve float tag
+        id: tags
+        run: echo "float=${{ inputs.prerelease == true && 'nightly' || 'latest' }}" >> "$GITHUB_OUTPUT"
+
       - name: Build and push dashboard
         uses: docker/build-push-action@v6
         with:
@@ -49,7 +53,7 @@ jobs:
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.OWNER }}/dashboard:${{ inputs.version }}
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/dashboard:latest
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/dashboard:${{ steps.tags.outputs.float }}
           cache-from: type=gha,scope=dashboard
           cache-to: type=gha,mode=max,scope=dashboard
 
@@ -61,7 +65,7 @@ jobs:
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.OWNER }}/watchkeeper:${{ inputs.version }}
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/watchkeeper:latest
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/watchkeeper:${{ steps.tags.outputs.float }}
           cache-from: type=gha,scope=watchkeeper
           cache-to: type=gha,mode=max,scope=watchkeeper
 
@@ -73,7 +77,7 @@ jobs:
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.OWNER }}/migrate:${{ inputs.version }}
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/migrate:latest
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/migrate:${{ steps.tags.outputs.float }}
           cache-from: type=gha,scope=migrate
           cache-to: type=gha,mode=max,scope=migrate
 
