@@ -157,6 +157,8 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
   const wsRef = useRef<WebSocket | null>(null);
   const intentionalClose = useRef(false);
   const consoleEndRef = useRef<HTMLDivElement>(null);
+  const prevRxRef = useRef(0);
+  const prevTxRef = useRef(0);
   const [lines, setLines] = useState<string[]>([]);
   const [command, setCommand] = useState("");
   const [wsStatus, setWsStatus] = useState<WsStatus>("offline");
@@ -201,8 +203,8 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
           const msg = JSON.parse(event.data) as { event: string; args?: string[] };
 
           if (msg.event === "auth success") {
-            ws.send(JSON.stringify({ event: "send logs" }));
-            ws.send(JSON.stringify({ event: "send stats" }));
+            ws.send(JSON.stringify({ event: "send logs", args: [] }));
+            ws.send(JSON.stringify({ event: "send stats", args: [] }));
           } else if (msg.event === "console output") {
             const line = msg.args?.[0] ?? "";
             setLines((prev) => [...prev.slice(-499), line]);
@@ -212,13 +214,13 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                 cpu_absolute?: number;
                 memory_bytes?: number;
                 memory_limit_bytes?: number;
-                disk_megabytes?: number;
+                disk_bytes?: number;
                 network?: { rx_bytes?: number; tx_bytes?: number };
               };
               const cpu = raw.cpu_absolute ?? 0;
               const memBytes = raw.memory_bytes ?? 0;
               const memLimitBytes = raw.memory_limit_bytes ?? 0;
-              const diskMb = raw.disk_megabytes ?? 0;
+              const diskMb = (raw.disk_bytes ?? 0) / (1024 * 1024);
               const rxBytes = raw.network?.rx_bytes ?? 0;
               const txBytes = raw.network?.tx_bytes ?? 0;
               statsRef.current = { cpu, memBytes, memLimitBytes, diskMb, rxBytes, txBytes };
@@ -271,11 +273,15 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
   useEffect(() => {
     const id = setInterval(() => {
       const s = statsRef.current;
+      const rxRate = Math.max(0, s.rxBytes - prevRxRef.current) / 2;
+      const txRate = Math.max(0, s.txBytes - prevTxRef.current) / 2;
+      prevRxRef.current = s.rxBytes;
+      prevTxRef.current = s.txBytes;
       setCpuHistory((prev) => [...prev.slice(1), s.cpu]);
       setRamHistory((prev) => [...prev.slice(1), s.memBytes / (1024 * 1024)]);
       setDiskHistory((prev) => [...prev.slice(1), s.diskMb]);
-      setRxHistory((prev) => [...prev.slice(1), s.rxBytes]);
-      setTxHistory((prev) => [...prev.slice(1), s.txBytes]);
+      setRxHistory((prev) => [...prev.slice(1), rxRate]);
+      setTxHistory((prev) => [...prev.slice(1), txRate]);
     }, 2000);
     return () => clearInterval(id);
   }, []);
@@ -448,10 +454,10 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
             </div>
           </StatRow>
           <StatRow icon={ArrowDown} label="INBOUND" chart={<Sparkline data={rxHistory} />}>
-            <span className="text-2xl font-bold text-white">{fmtBytes(stats.rxBytes)}</span>
+            <span className="text-2xl font-bold text-white">{fmtBytes(rxHistory[rxHistory.length - 1] ?? 0)}</span>
           </StatRow>
           <StatRow icon={ArrowUp} label="OUTBOUND" chart={<Sparkline data={txHistory} />}>
-            <span className="text-2xl font-bold text-white">{fmtBytes(stats.txBytes)}</span>
+            <span className="text-2xl font-bold text-white">{fmtBytes(txHistory[txHistory.length - 1] ?? 0)}</span>
           </StatRow>
         </aside>
       </div>

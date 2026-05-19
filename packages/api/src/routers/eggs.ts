@@ -89,6 +89,8 @@ export const eggsRouter = {
         dockerImages: z.record(z.string(), z.string()).optional(),
         startup: z.string().min(1).optional(),
         stopCommand: z.string().optional(),
+        configStartup: z.string().optional(),
+        features: z.array(z.string()).optional(),
         scriptInstall: z.string().optional(),
         scriptEntry: z.string().optional(),
         scriptContainer: z.string().optional(),
@@ -96,12 +98,13 @@ export const eggsRouter = {
       }),
     )
     .handler(async ({ input }) => {
-      const { id, dockerImages, ...data } = input;
+      const { id, dockerImages, features, ...data } = input;
       await db
         .update(eggs)
         .set({
           ...data,
           ...(dockerImages ? { dockerImages: JSON.stringify(dockerImages) } : {}),
+          ...(features !== undefined ? { features: JSON.stringify(features) } : {}),
         })
         .where(eq(eggs.id, id));
       return db.query.eggs.findFirst({

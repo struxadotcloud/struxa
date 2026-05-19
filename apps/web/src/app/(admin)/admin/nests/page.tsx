@@ -4,9 +4,10 @@ import Link from "next/link";
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { SidebarTrigger } from "@struxa/ui/components/sidebar";
-import { Package, Plus, ExternalLink, Trash2 } from "lucide-react";
+import { Package, Plus, Trash2, Search } from "lucide-react";
 import { orpc, queryClient } from "@/utils/orpc";
 import { ContextMenu, RowMenu, type ActionItem } from "@/components/context-menu";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 function invalidate() {
   void queryClient.invalidateQueries({ queryKey: orpc.nests.key() });
@@ -17,9 +18,15 @@ export default function NestsPage() {
   const createMutation = useMutation(orpc.nests.create.mutationOptions({ onSuccess: invalidate }));
   const deleteMutation = useMutation(orpc.nests.delete.mutationOptions({ onSuccess: invalidate }));
 
+  const [search, setSearch] = useState("");
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState({ name: "", description: "", author: "admin" });
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+
+  const filtered = (nests ?? []).filter((n) => {
+    const q = search.toLowerCase();
+    return n.name.toLowerCase().includes(q) || (n.author ?? "").toLowerCase().includes(q);
+  });
 
   async function handleCreate() {
     if (!form.name.trim()) return;
@@ -30,12 +37,6 @@ export default function NestsPage() {
 
   function nestActions(nest: { id: string; name: string }): ActionItem[] {
     return [
-      {
-        label: "Manage Eggs",
-        icon: ExternalLink,
-        onClick: () => { window.location.href = `/admin/nests/${nest.id}`; },
-      },
-      "separator",
       {
         label: "Delete",
         icon: Trash2,
@@ -58,14 +59,25 @@ export default function NestsPage() {
             </span>
           )}
         </div>
-        <button
-          type="button"
-          onClick={() => setAdding(true)}
-          className="flex items-center gap-1.5 bg-white px-4 py-1.5 text-sm font-medium text-black transition-opacity hover:opacity-80"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          New Nest
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="relative flex items-center">
+            <Search className="absolute left-2.5 h-3.5 w-3.5 text-[#555555]" />
+            <input
+              className="border border-[#333333] bg-[#0a0a0a] py-1.5 pl-8 pr-3 text-sm text-white outline-none placeholder:text-[#444444] focus:border-[#555555]"
+              placeholder="Search nests..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => setAdding(true)}
+            className="flex items-center gap-1.5 bg-white px-4 py-1.5 text-sm font-medium text-black transition-opacity hover:opacity-80"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            New Nest
+          </button>
+        </div>
       </header>
 
       <div className="flex-1 overflow-auto">
@@ -125,41 +137,31 @@ export default function NestsPage() {
           </div>
         )}
 
-        {confirmDelete && (
-          <div className="flex items-center gap-3 border-b border-[#222222] px-4 py-3">
-            <span className="text-sm text-[#f43f5e]">Delete nest?</span>
-            <span className="text-xs text-[#555555]">All eggs in this nest will also be deleted.</span>
-            <button
-              type="button"
-              onClick={async () => {
-                await deleteMutation.mutateAsync({ id: confirmDelete });
-                setConfirmDelete(null);
-              }}
-              disabled={deleteMutation.isPending}
-              className="bg-[#f43f5e] px-3 py-1 text-xs font-medium text-white disabled:opacity-40"
-            >
-              {deleteMutation.isPending ? "Deleting..." : "Delete"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setConfirmDelete(null)}
-              className="bg-neutral-800 px-3 py-1 text-xs font-medium text-white"
-            >
-              Cancel
-            </button>
-          </div>
-        )}
+        <ConfirmDialog
+          open={confirmDelete !== null}
+          onOpenChange={(open) => { if (!open) setConfirmDelete(null); }}
+          title="Delete nest?"
+          description="All eggs in this nest will also be deleted."
+          confirmLabel="Delete"
+          destructive
+          loading={deleteMutation.isPending}
+          onConfirm={async () => {
+            if (!confirmDelete) return;
+            await deleteMutation.mutateAsync({ id: confirmDelete });
+            setConfirmDelete(null);
+          }}
+        />
 
         <div className="grid grid-cols-1 border-l border-[#222222]">
           {isLoading && (
             <div className="border-r border-b border-[#222222] px-4 py-3 text-sm text-[#555555]">Loading...</div>
           )}
-          {nests?.length === 0 && !isLoading && (
+          {!isLoading && filtered.length === 0 && (
             <div className="border-r border-b border-[#222222] px-4 py-3 text-sm text-[#555555]">
-              No nests yet. Import eggs from the onboarding wizard or create one manually.
+              {search ? "No nests match your search." : "No nests yet. Import eggs from the onboarding wizard or create one manually."}
             </div>
           )}
-          {nests?.map((nest) => {
+          {filtered.map((nest) => {
             const actions = nestActions(nest);
             return (
               <ContextMenu key={nest.id} items={actions}>
@@ -169,21 +171,17 @@ export default function NestsPage() {
                     className="flex items-center justify-between border-r border-b border-[#222222] px-4 py-3 hover:bg-[#111111]"
                   >
                     <div className="flex items-center gap-4">
-                      <span className="text-sm font-medium text-white">{nest.name}</span>
+                      <Link
+                        href={`/admin/nests/${nest.id}` as never}
+                        className="text-sm font-medium text-white transition-colors hover:text-[#22c55e]"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {nest.name}
+                      </Link>
                       {nest.author && <span className="text-xs text-[#555555]">{nest.author}</span>}
                       {nest.description && <span className="text-xs text-[#444444]">{nest.description}</span>}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Link
-                        href={`/admin/nests/${nest.id}` as never}
-                        className="flex items-center gap-1.5 text-xs text-[#555555] transition-colors hover:text-white"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <ExternalLink className="h-3.5 w-3.5" />
-                        Manage Eggs
-                      </Link>
-                      <RowMenu items={actions} />
-                    </div>
+                    <RowMenu items={actions} />
                   </div>
                 )}
               </ContextMenu>

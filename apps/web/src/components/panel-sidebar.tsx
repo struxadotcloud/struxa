@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useParams } from "next/navigation";
+import { usePathname, useParams, useRouter } from "next/navigation";
 import {
   Sidebar,
   SidebarHeader,
@@ -28,8 +28,11 @@ import {
   Archive,
   Globe,
   Activity,
+  LogOut,
+  ShieldCheck,
 } from "lucide-react";
 import { mockServers } from "@/lib/mock-data";
+import { authClient } from "@/lib/auth-client";
 
 const NAV_PRIMARY = [
   { key: "servers", label: "Game Servers", icon: Server },
@@ -39,7 +42,6 @@ const NAV_PRIMARY = [
 
 const NAV_SECONDARY = [
   { key: "support", label: "Support", icon: LifeBuoy },
-  { key: "settings", label: "Settings", icon: Settings },
 ];
 
 const NAV_SERVER = [
@@ -58,6 +60,15 @@ export function PanelSidebar() {
   const { state } = useSidebar();
   const pathname = usePathname();
   const params = useParams();
+  const router = useRouter();
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
+  const initials = user?.name ? user.name[0]!.toUpperCase() : "?";
+
+  async function handleLogout() {
+    await authClient.signOut();
+    router.push("/login");
+  }
 
   const isServerPage = pathname.startsWith("/servers/");
   const serverId = isServerPage ? (params.id as string) : null;
@@ -139,6 +150,17 @@ export function PanelSidebar() {
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
+                  {user?.role === "admin" && (
+                    <SidebarMenuItem>
+                      <SidebarMenuButton
+                        render={<Link href={"/admin" as never} />}
+                        className="gap-2.5 text-xs"
+                      >
+                        <ShieldCheck className="h-4 w-4" />
+                        Admin Dashboard
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
@@ -146,8 +168,32 @@ export function PanelSidebar() {
         )}
       </SidebarContent>
 
-      <div className="flex h-11 shrink-0 items-center border-t border-[#222222] px-4">
-        <p className="text-[10px] text-[#444444]">$0.00 balance</p>
+      <div className="flex shrink-0 items-center border-t border-[#222222] px-3 py-2.5">
+        {state === "expanded" ? (
+          <div className="flex w-full items-center gap-2.5">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#333333] bg-[#1a1a1a] text-xs font-semibold text-white">
+              {initials}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-medium text-white">{user?.name ?? "—"}</p>
+              <p className="truncate text-[10px] text-[#555555]">{user?.email ?? ""}</p>
+            </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="text-[#555555] transition-colors hover:text-white"
+              title="Sign out"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ) : (
+          <div className="flex w-full justify-center">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full border border-[#333333] bg-[#1a1a1a] text-xs font-semibold text-white">
+              {initials}
+            </div>
+          </div>
+        )}
       </div>
     </Sidebar>
   );

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { SidebarTrigger } from "@struxa/ui/components/sidebar";
-import { Server, Plus, ExternalLink, ChevronDown, Trash2 } from "lucide-react";
+import { Server, Plus, ChevronDown, Trash2, Search } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +13,7 @@ import {
 } from "@struxa/ui/components/dropdown-menu";
 import { orpc, queryClient } from "@/utils/orpc";
 import { ContextMenu, RowMenu, type ActionItem } from "@/components/context-menu";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 function invalidate() {
   void queryClient.invalidateQueries({ queryKey: orpc.nodes.key() });
@@ -24,6 +25,7 @@ export default function NodesPage() {
   const createMutation = useMutation(orpc.nodes.create.mutationOptions({ onSuccess: invalidate }));
   const deleteMutation = useMutation(orpc.nodes.delete.mutationOptions({ onSuccess: invalidate }));
 
+  const [search, setSearch] = useState("");
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState({
     name: "",
@@ -40,6 +42,11 @@ export default function NodesPage() {
   });
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
+  const filtered = (nodes ?? []).filter((n) => {
+    const q = search.toLowerCase();
+    return n.name.toLowerCase().includes(q) || n.fqdn.toLowerCase().includes(q);
+  });
+
   async function handleCreate() {
     if (!form.name.trim() || !form.locationId || !form.fqdn.trim()) return;
     await createMutation.mutateAsync(form);
@@ -48,12 +55,6 @@ export default function NodesPage() {
 
   function nodeActions(node: { id: string; name: string }): ActionItem[] {
     return [
-      {
-        label: "View Details",
-        icon: ExternalLink,
-        onClick: () => { window.location.href = `/admin/nodes/${node.id}`; },
-      },
-      "separator",
       {
         label: "Delete",
         icon: Trash2,
@@ -76,14 +77,25 @@ export default function NodesPage() {
             </span>
           )}
         </div>
-        <button
-          type="button"
-          onClick={() => setAdding(true)}
-          className="flex items-center gap-1.5 bg-white px-4 py-1.5 text-sm font-medium text-black transition-opacity hover:opacity-80"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          New Node
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="relative flex items-center">
+            <Search className="absolute left-2.5 h-3.5 w-3.5 text-[#555555]" />
+            <input
+              className="border border-[#333333] bg-[#0a0a0a] py-1.5 pl-8 pr-3 text-sm text-white outline-none placeholder:text-[#444444] focus:border-[#555555]"
+              placeholder="Search nodes..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => setAdding(true)}
+            className="flex items-center gap-1.5 bg-white px-4 py-1.5 text-sm font-medium text-black transition-opacity hover:opacity-80"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            New Node
+          </button>
+        </div>
       </header>
 
       <div className="flex-1 overflow-auto">
@@ -213,41 +225,31 @@ export default function NodesPage() {
           </div>
         )}
 
-        {confirmDelete && (
-          <div className="flex items-center gap-3 border-b border-[#222222] bg-[#0d0d0d] px-4 py-3">
-            <span className="text-sm text-[#f43f5e]">Delete node?</span>
-            <span className="text-xs text-[#555555]">This will remove all associated data.</span>
-            <button
-              type="button"
-              onClick={async () => {
-                await deleteMutation.mutateAsync({ id: confirmDelete });
-                setConfirmDelete(null);
-              }}
-              disabled={deleteMutation.isPending}
-              className="bg-[#f43f5e] px-3 py-1 text-xs font-medium text-white disabled:opacity-40"
-            >
-              {deleteMutation.isPending ? "Deleting..." : "Delete"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setConfirmDelete(null)}
-              className="bg-neutral-800 px-3 py-1 text-xs font-medium text-white"
-            >
-              Cancel
-            </button>
-          </div>
-        )}
+        <ConfirmDialog
+          open={confirmDelete !== null}
+          onOpenChange={(open) => { if (!open) setConfirmDelete(null); }}
+          title="Delete node?"
+          description="This will remove all associated data."
+          confirmLabel="Delete"
+          destructive
+          loading={deleteMutation.isPending}
+          onConfirm={async () => {
+            if (!confirmDelete) return;
+            await deleteMutation.mutateAsync({ id: confirmDelete });
+            setConfirmDelete(null);
+          }}
+        />
 
         <div className="grid grid-cols-1 border-l border-[#222222]">
           {isLoading && (
             <div className="border-r border-b border-[#222222] px-4 py-3 text-sm text-[#555555]">Loading...</div>
           )}
-          {nodes?.length === 0 && !isLoading && (
+          {!isLoading && filtered.length === 0 && (
             <div className="border-r border-b border-[#222222] px-4 py-3 text-sm text-[#555555]">
-              No nodes yet. Create one to start deploying servers.
+              {search ? "No nodes match your search." : "No nodes yet. Create one to start deploying servers."}
             </div>
           )}
-          {nodes?.map((node) => {
+          {filtered.map((node) => {
             const actions = nodeActions(node);
             return (
               <ContextMenu key={node.id} items={actions}>
@@ -261,7 +263,13 @@ export default function NodesPage() {
                         className="h-2 w-2 rounded-full"
                         style={{ backgroundColor: node.maintenanceMode ? "#888888" : "#22c55e" }}
                       />
-                      <span className="text-sm font-medium text-white">{node.name}</span>
+                      <Link
+                        href={`/admin/nodes/${node.id}` as never}
+                        className="text-sm font-medium text-white transition-colors hover:text-[#22c55e]"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {node.name}
+                      </Link>
                       <span className="font-mono text-xs text-[#555555]">
                         {node.fqdn}:{node.daemonListen}
                       </span>
@@ -274,16 +282,7 @@ export default function NodesPage() {
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Link
-                        href={`/admin/nodes/${node.id}` as never}
-                        className="flex items-center gap-1 text-xs text-[#555555] transition-colors hover:text-white"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <ExternalLink className="h-3.5 w-3.5" />
-                      </Link>
-                      <RowMenu items={actions} />
-                    </div>
+                    <RowMenu items={actions} />
                   </div>
                 )}
               </ContextMenu>

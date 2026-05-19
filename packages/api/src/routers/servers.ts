@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { and, eq, or } from "drizzle-orm";
+import { and, eq, inArray, or } from "drizzle-orm";
 import { z } from "zod";
 import { ORPCError } from "@orpc/server";
 import { db } from "@struxa/db";
@@ -76,6 +76,68 @@ export const serversRouter = {
     return rows;
   }),
 
+  listStatuses: protectedProcedure.handler(async ({ context }) => {
+    const userId = context.session.user.id;
+    const isAdmin = context.session.user.role === "admin";
+
+    const serverQuery = {
+      columns: { uuid: true, nodeId: true } as const,
+      with: { node: true } as const,
+    };
+
+    const ownServers = isAdmin
+      ? await db.query.servers.findMany(serverQuery)
+      : await db.query.servers.findMany({ where: eq(servers.userId, userId), ...serverQuery });
+
+    let allServers: typeof ownServers = ownServers;
+
+    if (!isAdmin) {
+      const subuserEntries = await db.query.subusers.findMany({
+        where: eq(subusers.userId, userId),
+        columns: { serverId: true },
+      });
+      if (subuserEntries.length > 0) {
+        const subuserIds = subuserEntries.map((s) => s.serverId);
+        const subuserServers = await db.query.servers.findMany({
+          where: inArray(servers.id, subuserIds),
+          ...serverQuery,
+        });
+        const ownUuids = new Set(ownServers.map((s) => s.uuid));
+        allServers = [...ownServers, ...subuserServers.filter((s) => !ownUuids.has(s.uuid))];
+      }
+    }
+
+    // Group by node to make one request per node instead of one per server
+    const byNode = new Map<string, { node: typeof nodes.$inferSelect; uuids: string[] }>();
+    for (const server of allServers) {
+      const node = server.node as typeof nodes.$inferSelect;
+      if (!byNode.has(server.nodeId)) {
+        byNode.set(server.nodeId, { node, uuids: [] });
+      }
+      byNode.get(server.nodeId)!.uuids.push(server.uuid);
+    }
+
+    const statuses: Record<string, string> = {};
+    await Promise.allSettled(
+      [...byNode.values()].map(async ({ node, uuids }) => {
+        try {
+          const allowed = new Set(uuids);
+          const client = createWingsClient(node);
+          const util = await client.getUtilization();
+          for (const [uuid, data] of Object.entries(util)) {
+            if (allowed.has(uuid)) {
+              statuses[uuid] = data.state;
+            }
+          }
+        } catch {
+          // Node unreachable — its servers are absent from the map, UI treats them as offline
+        }
+      }),
+    );
+
+    return statuses as Record<string, string>;
+  }),
+
   update: adminProcedure
     .input(
       z.object({
@@ -91,13 +153,16 @@ export const serversRouter = {
         oomDisabled: z.boolean().optional(),
         image: z.string().min(1).optional(),
         startup: z.string().min(1).optional(),
-        suspended: z.boolean().optional(),
+        userId: z.string().optional(),
+        nodeId: z.string().uuid().optional(),
+        allocationId: z.string().uuid().optional(),
       }),
     )
     .handler(async ({ input }) => {
       const {
-        id, suspended, startup,
+        id, startup,
         name, description, memory, disk, cpu, swap, io, threads, oomDisabled, image,
+        userId, nodeId, allocationId,
       } = input;
 
       const server = await db.query.servers.findFirst({
@@ -118,7 +183,9 @@ export const serversRouter = {
         image?: string;
         startup?: string;
         invocation?: string;
-        suspended?: boolean;
+        userId?: string;
+        nodeId?: string;
+        allocationId?: string;
       } = {};
 
       if (name !== undefined) updates.name = name;
@@ -131,7 +198,14 @@ export const serversRouter = {
       if (threads !== undefined) updates.threads = threads;
       if (oomDisabled !== undefined) updates.oomDisabled = oomDisabled;
       if (image !== undefined) updates.image = image;
-      if (suspended !== undefined) updates.suspended = suspended;
+      if (userId !== undefined) updates.userId = userId;
+      if (nodeId !== undefined) updates.nodeId = nodeId;
+
+      if (allocationId !== undefined && allocationId !== server.allocationId) {
+        await db.update(nodeAllocations).set({ serverId: null }).where(eq(nodeAllocations.id, server.allocationId));
+        await db.update(nodeAllocations).set({ serverId: server.id }).where(eq(nodeAllocations.id, allocationId));
+        updates.allocationId = allocationId;
+      }
 
       if (startup !== undefined) {
         updates.startup = startup;
@@ -148,6 +222,27 @@ export const serversRouter = {
 
       if (Object.keys(updates).length > 0) {
         await db.update(servers).set(updates).where(eq(servers.uuid, id));
+      }
+    }),
+
+  suspend: adminProcedure
+    .input(z.object({ id: z.string(), suspended: z.boolean() }))
+    .handler(async ({ input }) => {
+      const server = await db.query.servers.findFirst({
+        where: eq(servers.uuid, input.id),
+        with: { node: true },
+      });
+      if (!server) throw new ORPCError("NOT_FOUND");
+
+      await db.update(servers).set({ suspended: input.suspended }).where(eq(servers.uuid, input.id));
+
+      if (input.suspended && server.powerState !== "offline") {
+        const client = createWingsClient(server.node as typeof nodes.$inferSelect);
+        try {
+          await client.sendPowerAction(server.uuid, "kill");
+        } catch {
+          // Wings unreachable — DB flag is set; enforcement happens at next Wings contact
+        }
       }
     }),
 
@@ -372,6 +467,52 @@ export const serversRouter = {
       return { ...serverFields, serverVariables: variables };
     }),
 
+  adminGet: adminProcedure
+    .input(z.object({ id: z.string() }))
+    .handler(async ({ input }) => {
+      const server = await db.query.servers.findFirst({
+        where: eq(servers.uuid, input.id),
+        columns: {
+          id: true, uuid: true, uuidShort: true, name: true, description: true,
+          status: true, suspended: true, powerState: true, memory: true, disk: true,
+          cpu: true, swap: true, io: true, threads: true, oomDisabled: true,
+          image: true, startup: true, invocation: true, skipScripts: true,
+          userId: true, nodeId: true, allocationId: true,
+        },
+        with: {
+          allocation: { columns: { id: true, ip: true, port: true } },
+          node: { columns: { id: true, name: true, fqdn: true, daemonSFTP: true } },
+          egg: {
+            columns: { id: true, uuid: true, name: true, startup: true, dockerImages: true },
+            with: {
+              variables: {
+                columns: {
+                  id: true, name: true, envVariable: true, description: true,
+                  defaultValue: true, userViewable: true, userEditable: true, rules: true,
+                },
+              },
+            },
+          },
+        },
+      });
+      if (!server) throw new ORPCError("NOT_FOUND");
+
+      const variables = await db.query.serverVariables.findMany({
+        where: eq(serverVariables.serverId, server.id),
+        columns: { variableId: true, variableValue: true },
+        with: {
+          variable: {
+            columns: {
+              id: true, name: true, envVariable: true, description: true,
+              defaultValue: true, userViewable: true, userEditable: true, rules: true,
+            },
+          },
+        },
+      });
+
+      return { ...server, serverVariables: variables };
+    }),
+
   power: protectedProcedure
     .input(
       z.object({
@@ -396,6 +537,10 @@ export const serversRouter = {
           ),
         });
         if (!sub) throw new ORPCError("FORBIDDEN");
+      }
+
+      if (server.suspended) {
+        throw new ORPCError("FORBIDDEN", { message: "Server is suspended" });
       }
 
       const client = createWingsClient(server.node as typeof nodes.$inferSelect);

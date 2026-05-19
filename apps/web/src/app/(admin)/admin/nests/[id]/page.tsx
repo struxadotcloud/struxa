@@ -4,9 +4,10 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { SidebarTrigger } from "@struxa/ui/components/sidebar";
-import { Package, Pencil, Plus, Trash2, Upload } from "lucide-react";
+import { Package, Plus, Trash2, Upload, Search } from "lucide-react";
 import { orpc, queryClient } from "@/utils/orpc";
 import { ContextMenu, RowMenu, type ActionItem } from "@/components/context-menu";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 function invalidateNests() {
   void queryClient.invalidateQueries(orpc.nests.list.queryOptions());
@@ -35,12 +36,18 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
     orpc.eggs.delete.mutationOptions({ onSuccess: () => invalidateEggs(nestId) }),
   );
 
+  const [search, setSearch] = useState("");
   const [nestName, setNestName] = useState("");
   const [nestAuthor, setNestAuthor] = useState("");
   const [nestDescription, setNestDescription] = useState("");
   const [showImport, setShowImport] = useState(false);
   const [importJson, setImportJson] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+
+  const filtered = (eggs ?? []).filter((e) => {
+    const q = search.toLowerCase();
+    return e.name.toLowerCase().includes(q) || (e.description ?? "").toLowerCase().includes(q);
+  });
 
   useEffect(() => {
     if (nest) {
@@ -69,12 +76,6 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
   function eggActions(egg: { id: string; name: string }): ActionItem[] {
     return [
       {
-        label: "Edit Egg",
-        icon: Pencil,
-        onClick: () => { window.location.href = `/admin/nests/${nestId}/eggs/${egg.id}`; },
-      },
-      "separator",
-      {
         label: "Delete",
         icon: Trash2,
         onClick: () => setConfirmDelete(egg.id),
@@ -85,6 +86,21 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
 
   return (
     <>
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        onOpenChange={(open) => { if (!open) setConfirmDelete(null); }}
+        title="Delete egg?"
+        description="This will permanently remove the egg and all its variables."
+        confirmLabel="Delete"
+        destructive
+        loading={deleteMutation.isPending}
+        onConfirm={async () => {
+          if (!confirmDelete) return;
+          await deleteMutation.mutateAsync({ id: confirmDelete });
+          setConfirmDelete(null);
+        }}
+      />
+
       <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#222222] px-4">
         <div className="flex items-center gap-2 text-xs">
           <SidebarTrigger className="-ml-1 text-[#888888] hover:text-white" />
@@ -188,37 +204,23 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
           </div>
         )}
 
-        {/* Delete confirm bar */}
-        {confirmDelete && (
-          <div className="flex items-center gap-3 border-b border-[#222222] px-4 py-3">
-            <span className="text-sm text-[#f43f5e]">Delete egg?</span>
-            <button
-              type="button"
-              onClick={async () => {
-                await deleteMutation.mutateAsync({ id: confirmDelete });
-                setConfirmDelete(null);
-              }}
-              disabled={deleteMutation.isPending}
-              className="bg-[#f43f5e] px-3 py-1 text-xs font-medium text-white disabled:opacity-40"
-            >
-              {deleteMutation.isPending ? "Deleting..." : "Delete"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setConfirmDelete(null)}
-              className="bg-neutral-800 px-3 py-1 text-xs font-medium text-white"
-            >
-              Cancel
-            </button>
-          </div>
-        )}
-
         {/* Eggs list */}
         <div className="grid grid-cols-1 border-l border-[#222222]">
           <div className="flex items-center justify-between border-r border-b border-[#222222] bg-[#0d0d0d] px-4 py-2">
-            <span className="text-[10px] uppercase tracking-widest text-[#555555]">Eggs</span>
             <div className="flex items-center gap-3">
+              <span className="text-[10px] uppercase tracking-widest text-[#555555]">Eggs</span>
               <span className="text-[10px] text-[#444444]">{eggs?.length ?? 0}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="relative flex items-center">
+                <Search className="absolute left-2 h-3 w-3 text-[#555555]" />
+                <input
+                  className="border border-[#333333] bg-[#0a0a0a] py-1 pl-6 pr-2 text-xs text-white outline-none placeholder:text-[#444444] focus:border-[#555555]"
+                  placeholder="Search eggs..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
               <button
                 type="button"
                 onClick={() => setShowImport(true)}
@@ -232,12 +234,12 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
           {isLoading && (
             <div className="border-r border-b border-[#222222] px-4 py-3 text-sm text-[#555555]">Loading...</div>
           )}
-          {eggs?.length === 0 && !isLoading && (
+          {!isLoading && filtered.length === 0 && (
             <div className="border-r border-b border-[#222222] px-4 py-3 text-sm text-[#555555]">
-              No eggs yet. Import a Pterodactyl egg JSON to get started.
+              {search ? "No eggs match your search." : "No eggs yet. Import a Pterodactyl egg JSON to get started."}
             </div>
           )}
-          {eggs?.map((egg) => {
+          {filtered.map((egg) => {
             const actions = eggActions(egg);
             return (
               <ContextMenu key={egg.id} items={actions}>
@@ -247,7 +249,13 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
                     className="flex items-center justify-between border-r border-b border-[#222222] px-4 py-3 hover:bg-[#111111]"
                   >
                     <div className="flex min-w-0 items-center gap-4">
-                      <span className="text-sm font-medium text-white">{egg.name}</span>
+                      <Link
+                        href={`/admin/nests/${nestId}/eggs/${egg.id}` as never}
+                        className="text-sm font-medium text-white transition-colors hover:text-[#22c55e]"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {egg.name}
+                      </Link>
                       {egg.description && (
                         <span className="max-w-sm truncate text-xs text-[#555555]">{egg.description}</span>
                       )}
@@ -259,14 +267,6 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
                       <span className="max-w-[200px] truncate font-mono text-xs text-[#444444]">
                         {egg.startup}
                       </span>
-                      <Link
-                        href={`/admin/nests/${nestId}/eggs/${egg.id}` as never}
-                        className="text-[#555555] transition-colors hover:text-white"
-                        onClick={(e) => e.stopPropagation()}
-                        title="Edit egg"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Link>
                       <RowMenu items={actions} />
                     </div>
                   </div>

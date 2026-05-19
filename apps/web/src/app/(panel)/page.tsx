@@ -10,7 +10,6 @@ import { authClient } from "@/lib/auth-client";
 import Loader from "@/components/loader";
 
 type DbStatus = "" | "installing" | "install_failed" | "suspended" | "restoring_backup" | string;
-type PowerState = "offline" | "running" | "starting" | "stopping" | string;
 
 const LIFECYCLE_DOT: Record<string, string> = {
   installing: "#888888",
@@ -40,7 +39,11 @@ const POWER_LABEL: Record<string, string> = {
 
 const PULSE_STATES = new Set(["installing", "restoring_backup", "starting", "stopping"]);
 
-function getDisplay(status: DbStatus, powerState: PowerState): { dot: string; label: string; pulse: boolean } {
+function getDisplay(
+  status: DbStatus,
+  powerState: string | undefined,
+  statusLoading: boolean,
+): { dot: string; label: string; pulse: boolean } {
   if (status !== "") {
     return {
       dot: LIFECYCLE_DOT[status] ?? "#888888",
@@ -48,10 +51,14 @@ function getDisplay(status: DbStatus, powerState: PowerState): { dot: string; la
       pulse: PULSE_STATES.has(status),
     };
   }
+  if (statusLoading) {
+    return { dot: "#333333", label: "—", pulse: true };
+  }
+  const ps = powerState ?? "offline";
   return {
-    dot: POWER_DOT[powerState] ?? "#555555",
-    label: POWER_LABEL[powerState] ?? powerState,
-    pulse: PULSE_STATES.has(powerState),
+    dot: POWER_DOT[ps] ?? "#555555",
+    label: POWER_LABEL[ps] ?? ps,
+    pulse: PULSE_STATES.has(ps),
   };
 }
 
@@ -59,13 +66,20 @@ type Server = {
   uuid: string;
   name: string;
   status: string;
-  powerState: string | null;
   allocation: { ip: string; port: number } | null;
   egg: { name: string } | null;
 };
 
-function ServerCard({ server }: { server: Server }) {
-  const { dot, label, pulse } = getDisplay(server.status, server.powerState ?? "offline");
+function ServerCard({
+  server,
+  powerState,
+  statusLoading,
+}: {
+  server: Server;
+  powerState: string | undefined;
+  statusLoading: boolean;
+}) {
+  const { dot, label, pulse } = getDisplay(server.status, powerState, statusLoading);
   return (
     <Link href={`/servers/${server.uuid}`} className="block">
       <div className="flex flex-col gap-3 border-r border-b border-[#222222] p-4 transition-colors hover:bg-[#111111]">
@@ -111,15 +125,20 @@ export default function ServersPage() {
     if (!sessionPending && !session) router.replace("/login");
   }, [sessionPending, session, router]);
 
-  const { data: servers, isPending: serversPending } = useQuery({
-    ...orpc.servers.list.queryOptions(),
+  const { data: servers, isPending: serversPending } = useQuery(
+    orpc.servers.list.queryOptions(),
+  );
+
+  const { data: statuses, isPending: statusesPending } = useQuery({
+    ...orpc.servers.listStatuses.queryOptions(),
+    enabled: !serversPending && !!servers,
     refetchInterval: 30_000,
   });
 
   if (sessionPending || !session) return <Loader />;
 
   const list = servers ?? [];
-  const online = list.filter((s) => s.powerState === "running").length;
+  const online = statuses ? list.filter((s) => statuses[s.uuid] === "running").length : 0;
 
   return (
     <>
@@ -130,9 +149,11 @@ export default function ServersPage() {
           <span className="border border-[#333333] px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-[#555555]">
             {list.length} total
           </span>
-          <span className="border border-[#22c55e]/30 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-[#22c55e]">
-            {online} online
-          </span>
+          {statuses && (
+            <span className="border border-[#22c55e]/30 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-[#22c55e]">
+              {online} online
+            </span>
+          )}
         </div>
         <button
           className="bg-white px-4 py-1.5 text-sm font-medium text-black transition-opacity hover:opacity-80"
@@ -155,6 +176,8 @@ export default function ServersPage() {
               <ServerCard
                 key={server.uuid}
                 server={server as Server}
+                powerState={statuses?.[server.uuid]}
+                statusLoading={statusesPending}
               />
             ))}
           </div>

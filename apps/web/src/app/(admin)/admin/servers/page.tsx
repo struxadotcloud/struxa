@@ -4,9 +4,10 @@ import Link from "next/link";
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { SidebarTrigger } from "@struxa/ui/components/sidebar";
-import { Monitor, Plus, ExternalLink, Pencil, Trash2 } from "lucide-react";
+import { Monitor, Plus, ExternalLink, Trash2, Search } from "lucide-react";
 import { orpc, queryClient } from "@/utils/orpc";
 import { ContextMenu, RowMenu, type ActionItem } from "@/components/context-menu";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 function invalidate() {
   void queryClient.invalidateQueries({ queryKey: orpc.servers.key() });
@@ -30,20 +31,25 @@ export default function AdminServersPage() {
   const { data: servers, isLoading } = useQuery(orpc.servers.list.queryOptions());
   const deleteMutation = useMutation(orpc.servers.delete.mutationOptions({ onSuccess: invalidate }));
 
+  const [search, setSearch] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [purge, setPurge] = useState(false);
 
-  function serverActions(server: { uuid: string; name: string; suspended?: boolean }): ActionItem[] {
+  const filtered = (servers ?? []).filter((s) => {
+    const q = search.toLowerCase();
+    return (
+      s.name.toLowerCase().includes(q) ||
+      s.allocation.ip.includes(q) ||
+      ((s as { node?: { name: string } }).node?.name ?? "").toLowerCase().includes(q)
+    );
+  });
+
+  function serverActions(server: { uuid: string; name: string }): ActionItem[] {
     return [
       {
         label: "View Panel",
         icon: ExternalLink,
         onClick: () => { window.location.href = `/servers/${server.uuid}`; },
-      },
-      {
-        label: "Edit Config",
-        icon: Pencil,
-        onClick: () => { window.location.href = `/admin/servers/${server.uuid}`; },
       },
       "separator",
       {
@@ -68,64 +74,67 @@ export default function AdminServersPage() {
             </span>
           )}
         </div>
-        <Link
-          href={"/admin/servers/new" as never}
-          className="flex items-center gap-1.5 bg-white px-4 py-1.5 text-sm font-medium text-black transition-opacity hover:opacity-80"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          New Server
-        </Link>
+        <div className="flex items-center gap-2">
+          <div className="relative flex items-center">
+            <Search className="absolute left-2.5 h-3.5 w-3.5 text-[#555555]" />
+            <input
+              className="border border-[#333333] bg-[#0a0a0a] py-1.5 pl-8 pr-3 text-sm text-white outline-none placeholder:text-[#444444] focus:border-[#555555]"
+              placeholder="Search servers..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <Link
+            href={"/admin/servers/new" as never}
+            className="flex items-center gap-1.5 bg-white px-4 py-1.5 text-sm font-medium text-black transition-opacity hover:opacity-80"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            New Server
+          </Link>
+        </div>
       </header>
 
-      <div className="flex-1 overflow-auto">
-        {confirmDelete && (
-          <div className="flex items-center gap-3 border-b border-[#222222] bg-[#0d0d0d] px-4 py-3">
-            <span className="text-sm text-[#f43f5e]">Delete server?</span>
-            <label className="flex items-center gap-1.5 text-xs text-[#888888]">
-              <input
-                type="checkbox"
-                checked={purge}
-                onChange={(e) => setPurge(e.target.checked)}
-                className="h-3 w-3"
-              />
-              Purge files from node
-            </label>
-            <button
-              type="button"
-              onClick={async () => {
-                await deleteMutation.mutateAsync({ id: confirmDelete, purgeData: purge });
-                setConfirmDelete(null);
-                setPurge(false);
-              }}
-              disabled={deleteMutation.isPending}
-              className="bg-[#f43f5e] px-3 py-1 text-xs font-medium text-white disabled:opacity-40"
-            >
-              {deleteMutation.isPending ? "Deleting..." : "Delete"}
-            </button>
-            <button
-              type="button"
-              onClick={() => { setConfirmDelete(null); setPurge(false); }}
-              className="bg-neutral-800 px-3 py-1 text-xs font-medium text-white"
-            >
-              Cancel
-            </button>
-          </div>
-        )}
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        onOpenChange={(open) => { if (!open) { setConfirmDelete(null); setPurge(false); } }}
+        title="Delete server?"
+        description="This action cannot be undone."
+        confirmLabel="Delete"
+        destructive
+        loading={deleteMutation.isPending}
+        onConfirm={async () => {
+          if (!confirmDelete) return;
+          await deleteMutation.mutateAsync({ id: confirmDelete, purgeData: purge });
+          setConfirmDelete(null);
+          setPurge(false);
+        }}
+      >
+        <label className="flex items-center gap-2 text-xs text-[#888888]">
+          <input
+            type="checkbox"
+            checked={purge}
+            onChange={(e) => setPurge(e.target.checked)}
+            className="h-3 w-3"
+          />
+          Purge files from node
+        </label>
+      </ConfirmDialog>
 
+      <div className="flex-1 overflow-auto">
         <div className="grid grid-cols-1 border-l border-[#222222]">
           {isLoading && (
             <div className="border-r border-b border-[#222222] px-4 py-3 text-sm text-[#555555]">Loading...</div>
           )}
-          {servers?.length === 0 && !isLoading && (
+          {!isLoading && filtered.length === 0 && (
             <div className="border-r border-b border-[#222222] px-4 py-3 text-sm text-[#555555]">
-              No servers yet.
+              {search ? "No servers match your search." : "No servers yet."}
             </div>
           )}
-          {servers?.map((server) => {
+          {filtered.map((server) => {
             const isSuspended = (server as { suspended?: boolean }).suspended;
             const statusColor = isSuspended ? "#555555" : (STATUS_COLOR[server.status] ?? "#888888");
             const statusLabel = isSuspended ? "Suspended" : (STATUS_LABEL[server.status] ?? server.status);
-            const actions = serverActions({ uuid: server.uuid, name: server.name, suspended: isSuspended });
+            const actions = serverActions({ uuid: server.uuid, name: server.name });
 
             return (
               <ContextMenu key={server.id} items={actions}>
@@ -137,7 +146,7 @@ export default function AdminServersPage() {
                     <div className="flex items-center gap-4">
                       <div className="h-2 w-2 rounded-full" style={{ backgroundColor: statusColor }} />
                       <Link
-                        href={`/servers/${server.uuid}` as never}
+                        href={`/admin/servers/${server.uuid}` as never}
                         className="text-sm font-medium text-white transition-colors hover:text-[#22c55e]"
                         onClick={(e) => e.stopPropagation()}
                       >
@@ -156,11 +165,12 @@ export default function AdminServersPage() {
                         {server.memory} MB · {server.disk} MB disk
                       </span>
                       <Link
-                        href={`/admin/servers/${server.uuid}` as never}
+                        href={`/servers/${server.uuid}` as never}
                         className="text-[#555555] transition-colors hover:text-white"
+                        title="View panel"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <Pencil className="h-3.5 w-3.5" />
+                        <ExternalLink className="h-3.5 w-3.5" />
                       </Link>
                       <RowMenu items={actions} />
                     </div>

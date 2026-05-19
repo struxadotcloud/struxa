@@ -6,7 +6,7 @@ import { SidebarProvider, SidebarInset } from "@struxa/ui/components/sidebar";
 import { PanelSidebar } from "./panel-sidebar";
 
 const AUTH_ROUTES = ["/login", "/register", "/forgot-password"];
-const SIDEBAR_STORAGE_KEY = "panel:sidebar:open";
+const SIDEBAR_STORAGE_KEY = "sidebar:open";
 
 export function PanelShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

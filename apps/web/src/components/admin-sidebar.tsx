@@ -1,8 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Sidebar,
   SidebarHeader,
@@ -23,7 +22,10 @@ import {
   Monitor,
   Users,
   Settings2,
+  LogOut,
 } from "lucide-react";
+import Link from "next/link";
+import { authClient } from "@/lib/auth-client";
 
 const NAV_ITEMS = [
   { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/admin" },
@@ -39,6 +41,15 @@ const NAV_ITEMS = [
 export function AdminSidebar() {
   const { state } = useSidebar();
   const pathname = usePathname();
+  const router = useRouter();
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
+  const initials = user?.name ? user.name[0]!.toUpperCase() : "?";
+
+  async function handleLogout() {
+    await authClient.signOut();
+    router.push("/login");
+  }
 
   function isActive(href: string) {
     if (href === "/admin") return pathname === "/admin";
@@ -87,10 +98,32 @@ export function AdminSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <div className="flex h-11 shrink-0 items-center gap-2 border-t border-[#222222] px-4">
-        <Link href="/" className="text-[10px] text-[#444444] hover:text-[#888888] transition-colors">
-          ← Back to panel
-        </Link>
+      <div className="flex shrink-0 items-center border-t border-[#222222] px-3 py-2.5">
+        {state === "expanded" ? (
+          <div className="flex w-full items-center gap-2.5">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#333333] bg-[#1a1a1a] text-xs font-semibold text-white">
+              {initials}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-medium text-white">{user?.name ?? "—"}</p>
+              <p className="truncate text-[10px] text-[#555555]">{user?.email ?? ""}</p>
+            </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="text-[#555555] transition-colors hover:text-white"
+              title="Sign out"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ) : (
+          <div className="flex w-full justify-center">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full border border-[#333333] bg-[#1a1a1a] text-xs font-semibold text-white">
+              {initials}
+            </div>
+          </div>
+        )}
       </div>
     </Sidebar>
   );

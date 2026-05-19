@@ -1,110 +1,20 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useQuery, useMutation, keepPreviousData } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { skipToken } from "@tanstack/react-query";
 import { SidebarTrigger } from "@struxa/ui/components/sidebar";
-import { Monitor, ChevronRight } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@struxa/ui/components/dropdown-menu";
+import { Monitor, ChevronRight, ChevronDown } from "lucide-react";
 import { orpc } from "@/utils/orpc";
-
-function useDebounce<T>(value: T, delay: number): T {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const id = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(id);
-  }, [value, delay]);
-  return debounced;
-}
-
-function UserCombobox({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (id: string) => void;
-}) {
-  const [query, setQuery] = useState("");
-  const [open, setOpen] = useState(false);
-  const [selectedLabel, setSelectedLabel] = useState("");
-  const ref = useRef<HTMLDivElement>(null);
-
-  const debouncedQuery = useDebounce(query.trim(), 300);
-
-  const { data: results = [], isFetching } = useQuery({
-    ...orpc.users.search.queryOptions({ input: { query: debouncedQuery } }),
-    enabled: debouncedQuery.length > 0,
-    placeholderData: keepPreviousData,
-  });
-
-  useEffect(() => {
-    function onClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener("mousedown", onClickOutside);
-    return () => document.removeEventListener("mousedown", onClickOutside);
-  }, []);
-
-  // Clear selection label if value is cleared externally
-  useEffect(() => {
-    if (!value) { setSelectedLabel(""); setQuery(""); }
-  }, [value]);
-
-  function select(user: { id: string; name: string; email: string }) {
-    onChange(user.id);
-    setSelectedLabel(`${user.name} (${user.email})`);
-    setQuery("");
-    setOpen(false);
-  }
-
-  return (
-    <div ref={ref} className="relative">
-      {selectedLabel && !open ? (
-        <div className="flex items-center gap-2 border border-[#333333] bg-[#141414] px-3 py-2">
-          <span className="flex-1 text-sm text-white">{selectedLabel}</span>
-          <button
-            type="button"
-            onClick={() => { onChange(""); setSelectedLabel(""); setOpen(true); }}
-            className="text-[10px] text-[#555555] hover:text-white"
-          >
-            change
-          </button>
-        </div>
-      ) : (
-        <input
-          autoFocus={open}
-          className="w-full border border-[#333333] bg-[#141414] px-3 py-2 text-sm text-white outline-none placeholder:text-[#444444] focus:border-[#555555]"
-          placeholder="Search by name or email…"
-          value={query}
-          onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
-          onFocus={() => setOpen(true)}
-        />
-      )}
-      {open && query.trim().length > 0 && (
-        <div className="absolute left-0 right-0 top-full z-50 border border-[#333333] bg-[#0d0d0d]">
-          {isFetching && debouncedQuery !== query.trim() ? (
-            <div className="px-3 py-2 text-xs text-[#555555]">Searching…</div>
-          ) : results.length === 0 ? (
-            <div className="px-3 py-2 text-xs text-[#555555]">{debouncedQuery.length > 0 ? "No users found" : "Type to search…"}</div>
-          ) : (
-            results.map((u) => (
-              <button
-                key={u.id}
-                type="button"
-                onMouseDown={(e) => { e.preventDefault(); select(u); }}
-                className="flex w-full flex-col px-3 py-2 text-left hover:bg-[#1a1a1a]"
-              >
-                <span className="text-sm text-white">{u.name}</span>
-                <span className="text-xs text-[#555555]">{u.email}</span>
-              </button>
-            ))
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
+import { UserCombobox } from "@/components/user-combobox";
 
 const STEPS = [
   "Basic Info",
@@ -308,36 +218,54 @@ export default function NewServerPage() {
             <div className="grid gap-4">
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] uppercase tracking-wider text-[#555555]">Node *</label>
-                <select
-                  className="border border-[#333333] bg-[#141414] px-3 py-2 text-sm text-white outline-none focus:border-[#555555]"
-                  value={nodeAlloc.nodeId}
-                  onChange={(e) => setNodeAlloc({ nodeId: e.target.value, allocationId: "" })}
-                >
-                  <option value="">Select a node...</option>
-                  {nodes?.map((n) => (
-                    <option key={n.id} value={n.id}>
-                      {n.name} ({n.fqdn})
-                    </option>
-                  ))}
-                </select>
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="flex items-center justify-between border border-[#333333] bg-[#141414] px-3 py-2 text-sm text-white outline-none transition-colors hover:border-[#555555] data-[popup-open]:border-[#555555]">
+                    <span className={nodeAlloc.nodeId ? "text-white" : "text-[#444444]"}>
+                      {nodeAlloc.nodeId ? (nodes?.find((n) => n.id === nodeAlloc.nodeId)?.name ?? "Select a node...") : "Select a node..."}
+                    </span>
+                    <ChevronDown className="ml-2 h-3.5 w-3.5 shrink-0 text-[#555555]" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" sideOffset={2} className="border border-[#222222] bg-[#0d0d0d] p-0 shadow-xl">
+                    {nodes?.map((n) => (
+                      <DropdownMenuItem
+                        key={n.id}
+                        onClick={() => setNodeAlloc({ nodeId: n.id, allocationId: "" })}
+                        className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm text-[#888888] focus:bg-[#1a1a1a] focus:text-white"
+                      >
+                        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${nodeAlloc.nodeId === n.id ? "bg-[#22c55e]" : "bg-transparent"}`} />
+                        {n.name} <span className="text-[#444444]">({n.fqdn})</span>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
               {nodeAlloc.nodeId && (
                 <div className="flex flex-col gap-1">
                   <label className="text-[10px] uppercase tracking-wider text-[#555555]">
                     Allocation * ({freeAllocations.length} available)
                   </label>
-                  <select
-                    className="border border-[#333333] bg-[#141414] px-3 py-2 font-mono text-sm text-white outline-none focus:border-[#555555]"
-                    value={nodeAlloc.allocationId}
-                    onChange={(e) => setNodeAlloc((f) => ({ ...f, allocationId: e.target.value }))}
-                  >
-                    <option value="">Select an allocation...</option>
-                    {freeAllocations.map((a) => (
-                      <option key={a.id} value={a.id}>
-                        {a.ip}:{a.port}
-                      </option>
-                    ))}
-                  </select>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="flex items-center justify-between border border-[#333333] bg-[#141414] px-3 py-2 font-mono text-sm text-white outline-none transition-colors hover:border-[#555555] data-[popup-open]:border-[#555555]">
+                      <span className={nodeAlloc.allocationId ? "text-white" : "text-[#444444]"}>
+                        {nodeAlloc.allocationId
+                          ? (() => { const a = freeAllocations.find((a) => a.id === nodeAlloc.allocationId); return a ? `${a.ip}:${a.port}` : "Select an allocation..."; })()
+                          : "Select an allocation..."}
+                      </span>
+                      <ChevronDown className="ml-2 h-3.5 w-3.5 shrink-0 text-[#555555]" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" sideOffset={2} className="border border-[#222222] bg-[#0d0d0d] p-0 shadow-xl">
+                      {freeAllocations.map((a) => (
+                        <DropdownMenuItem
+                          key={a.id}
+                          onClick={() => setNodeAlloc((f) => ({ ...f, allocationId: a.id }))}
+                          className="flex cursor-pointer items-center gap-2.5 px-3 py-2 font-mono text-sm text-[#888888] focus:bg-[#1a1a1a] focus:text-white"
+                        >
+                          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${nodeAlloc.allocationId === a.id ? "bg-[#22c55e]" : "bg-transparent"}`} />
+                          {a.ip}:{a.port}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                   {freeAllocations.length === 0 && (
                     <p className="text-xs text-[#f43f5e]">
                       No free allocations. Add some in the node management page.
@@ -355,43 +283,56 @@ export default function NewServerPage() {
             <div className="grid gap-4">
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] uppercase tracking-wider text-[#555555]">Nest *</label>
-                <select
-                  className="border border-[#333333] bg-[#141414] px-3 py-2 text-sm text-white outline-none focus:border-[#555555]"
-                  value={nestEgg.nestId}
-                  onChange={(e) =>
-                    setNestEgg({ nestId: e.target.value, eggId: "", image: "" })
-                  }
-                >
-                  <option value="">Select a nest...</option>
-                  {nests?.map((n) => (
-                    <option key={n.id} value={n.id}>
-                      {n.name}
-                    </option>
-                  ))}
-                </select>
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="flex items-center justify-between border border-[#333333] bg-[#141414] px-3 py-2 text-sm text-white outline-none transition-colors hover:border-[#555555] data-[popup-open]:border-[#555555]">
+                    <span className={nestEgg.nestId ? "text-white" : "text-[#444444]"}>
+                      {nestEgg.nestId ? (nests?.find((n) => n.id === nestEgg.nestId)?.name ?? "Select a nest...") : "Select a nest..."}
+                    </span>
+                    <ChevronDown className="ml-2 h-3.5 w-3.5 shrink-0 text-[#555555]" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" sideOffset={2} className="border border-[#222222] bg-[#0d0d0d] p-0 shadow-xl">
+                    {nests?.map((n) => (
+                      <DropdownMenuItem
+                        key={n.id}
+                        onClick={() => setNestEgg({ nestId: n.id, eggId: "", image: "" })}
+                        className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm text-[#888888] focus:bg-[#1a1a1a] focus:text-white"
+                      >
+                        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${nestEgg.nestId === n.id ? "bg-[#22c55e]" : "bg-transparent"}`} />
+                        {n.name}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
               {nestEgg.nestId && (
                 <div className="flex flex-col gap-1">
                   <label className="text-[10px] uppercase tracking-wider text-[#555555]">Egg *</label>
-                  <select
-                    className="border border-[#333333] bg-[#141414] px-3 py-2 text-sm text-white outline-none focus:border-[#555555]"
-                    value={nestEgg.eggId}
-                    onChange={(e) => {
-                      const egg = eggs?.find((egg) => egg.id === e.target.value);
-                      const dockerImages = egg?.dockerImages
-                        ? (JSON.parse(egg.dockerImages) as Record<string, string>)
-                        : {};
-                      const firstImage = Object.values(dockerImages)[0] ?? "";
-                      setNestEgg((f) => ({ ...f, eggId: e.target.value, image: firstImage }));
-                    }}
-                  >
-                    <option value="">Select an egg...</option>
-                    {eggs?.map((egg) => (
-                      <option key={egg.id} value={egg.id}>
-                        {egg.name}
-                      </option>
-                    ))}
-                  </select>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="flex items-center justify-between border border-[#333333] bg-[#141414] px-3 py-2 text-sm text-white outline-none transition-colors hover:border-[#555555] data-[popup-open]:border-[#555555]">
+                      <span className={nestEgg.eggId ? "text-white" : "text-[#444444]"}>
+                        {nestEgg.eggId ? (eggs?.find((egg) => egg.id === nestEgg.eggId)?.name ?? "Select an egg...") : "Select an egg..."}
+                      </span>
+                      <ChevronDown className="ml-2 h-3.5 w-3.5 shrink-0 text-[#555555]" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" sideOffset={2} className="border border-[#222222] bg-[#0d0d0d] p-0 shadow-xl">
+                      {eggs?.map((egg) => (
+                        <DropdownMenuItem
+                          key={egg.id}
+                          onClick={() => {
+                            const dockerImages = egg.dockerImages
+                              ? (JSON.parse(egg.dockerImages) as Record<string, string>)
+                              : {};
+                            const firstImage = Object.values(dockerImages)[0] ?? "";
+                            setNestEgg((f) => ({ ...f, eggId: egg.id, image: firstImage }));
+                          }}
+                          className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm text-[#888888] focus:bg-[#1a1a1a] focus:text-white"
+                        >
+                          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${nestEgg.eggId === egg.id ? "bg-[#22c55e]" : "bg-transparent"}`} />
+                          {egg.name}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               )}
               {nestEgg.eggId && selectedEgg && (
@@ -399,20 +340,30 @@ export default function NewServerPage() {
                   <label className="text-[10px] uppercase tracking-wider text-[#555555]">
                     Docker Image *
                   </label>
-                  <select
-                    className="border border-[#333333] bg-[#141414] px-3 py-2 font-mono text-sm text-white outline-none focus:border-[#555555]"
-                    value={nestEgg.image}
-                    onChange={(e) => setNestEgg((f) => ({ ...f, image: e.target.value }))}
-                  >
-                    <option value="">Select an image...</option>
-                    {Object.entries(
-                      JSON.parse(selectedEgg.dockerImages ?? "{}") as Record<string, string>,
-                    ).map(([alias, img]) => (
-                      <option key={img} value={img}>
-                        {alias || img}
-                      </option>
-                    ))}
-                  </select>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="flex items-center justify-between border border-[#333333] bg-[#141414] px-3 py-2 font-mono text-sm text-white outline-none transition-colors hover:border-[#555555] data-[popup-open]:border-[#555555]">
+                      <span className={nestEgg.image ? "truncate text-white" : "text-[#444444]"}>
+                        {nestEgg.image
+                          ? (Object.entries(JSON.parse(selectedEgg.dockerImages ?? "{}") as Record<string, string>).find(([, img]) => img === nestEgg.image)?.[0] || nestEgg.image)
+                          : "Select an image..."}
+                      </span>
+                      <ChevronDown className="ml-2 h-3.5 w-3.5 shrink-0 text-[#555555]" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" sideOffset={2} className="border border-[#222222] bg-[#0d0d0d] p-0 shadow-xl">
+                      {Object.entries(
+                        JSON.parse(selectedEgg.dockerImages ?? "{}") as Record<string, string>,
+                      ).map(([alias, img]) => (
+                        <DropdownMenuItem
+                          key={img}
+                          onClick={() => setNestEgg((f) => ({ ...f, image: img }))}
+                          className="flex cursor-pointer items-center gap-2.5 px-3 py-2 font-mono text-sm text-[#888888] focus:bg-[#1a1a1a] focus:text-white"
+                        >
+                          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${nestEgg.image === img ? "bg-[#22c55e]" : "bg-transparent"}`} />
+                          {alias || img}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                   {selectedEgg.description && (
                     <p className="mt-1 text-xs text-[#555555]">{selectedEgg.description}</p>
                   )}

@@ -5,7 +5,7 @@ import { SidebarProvider, SidebarInset } from "@struxa/ui/components/sidebar";
 import { AdminSidebar } from "./admin-sidebar";
 import { ThemeProvider } from "./theme-provider";
 
-const SIDEBAR_STORAGE_KEY = "admin:sidebar:open";
+const SIDEBAR_STORAGE_KEY = "sidebar:open";
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(true);

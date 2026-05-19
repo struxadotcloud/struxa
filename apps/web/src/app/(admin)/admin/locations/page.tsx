@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { SidebarTrigger } from "@struxa/ui/components/sidebar";
-import { MapPin, Pencil, Plus, Trash2, Check, X } from "lucide-react";
+import { MapPin, Pencil, Plus, Trash2, Check, X, Search } from "lucide-react";
 import { orpc, queryClient } from "@/utils/orpc";
 import { ContextMenu, RowMenu, type ActionItem } from "@/components/context-menu";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 function invalidate() {
   void queryClient.invalidateQueries({ queryKey: orpc.locations.key() });
@@ -17,11 +18,17 @@ export default function LocationsPage() {
   const updateMutation = useMutation(orpc.locations.update.mutationOptions({ onSuccess: invalidate }));
   const deleteMutation = useMutation(orpc.locations.delete.mutationOptions({ onSuccess: invalidate }));
 
+  const [search, setSearch] = useState("");
   const [form, setForm] = useState({ name: "", short: "", long: "" });
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ name: "", short: "", long: "" });
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+
+  const filtered = (locations ?? []).filter((l) => {
+    const q = search.toLowerCase();
+    return l.name.toLowerCase().includes(q) || l.short.toLowerCase().includes(q);
+  });
 
   function startEdit(loc: { id: string; name: string; short: string; long: string | null }) {
     setEditingId(loc.id);
@@ -52,6 +59,20 @@ export default function LocationsPage() {
 
   return (
     <>
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        onOpenChange={(open) => { if (!open) setConfirmDelete(null); }}
+        title="Delete location?"
+        description="This will permanently remove the location. Nodes assigned to it may be affected."
+        confirmLabel="Delete"
+        destructive
+        loading={deleteMutation.isPending}
+        onConfirm={async () => {
+          if (!confirmDelete) return;
+          await deleteMutation.mutateAsync({ id: confirmDelete });
+          setConfirmDelete(null);
+        }}
+      />
       <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#222222] px-4">
         <div className="flex items-center gap-3">
           <SidebarTrigger className="-ml-1 text-[#888888] hover:text-white" />
@@ -63,14 +84,25 @@ export default function LocationsPage() {
             </span>
           )}
         </div>
-        <button
-          type="button"
-          onClick={() => { setAdding(true); setEditingId(null); }}
-          className="flex items-center gap-1.5 bg-white px-4 py-1.5 text-sm font-medium text-black transition-opacity hover:opacity-80"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          New Location
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="relative flex items-center">
+            <Search className="absolute left-2.5 h-3.5 w-3.5 text-[#555555]" />
+            <input
+              className="border border-[#333333] bg-[#0a0a0a] py-1.5 pl-8 pr-3 text-sm text-white outline-none placeholder:text-[#444444] focus:border-[#555555]"
+              placeholder="Search locations..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => { setAdding(true); setEditingId(null); }}
+            className="flex items-center gap-1.5 bg-white px-4 py-1.5 text-sm font-medium text-black transition-opacity hover:opacity-80"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            New Location
+          </button>
+        </div>
       </header>
 
       <div className="flex-1 overflow-auto">
@@ -134,12 +166,12 @@ export default function LocationsPage() {
           {isLoading && (
             <div className="border-r border-b border-[#222222] px-4 py-3 text-sm text-[#555555]">Loading...</div>
           )}
-          {locations?.length === 0 && !isLoading && (
+          {!isLoading && filtered.length === 0 && (
             <div className="border-r border-b border-[#222222] px-4 py-3 text-sm text-[#555555]">
-              No locations yet. Create one to start adding nodes.
+              {search ? "No locations match your search." : "No locations yet. Create one to start adding nodes."}
             </div>
           )}
-          {locations?.map((loc) =>
+          {filtered.map((loc) =>
             editingId === loc.id ? (
               <div key={loc.id} className="grid grid-cols-[120px_1fr_1fr_auto] items-center gap-3 border-r border-b border-[#222222] px-4 py-2.5">
                 <input
@@ -195,30 +227,7 @@ export default function LocationsPage() {
                       {loc.long && <span className="text-xs text-[#555555]">{loc.long}</span>}
                     </div>
                     <div className="flex items-center gap-1">
-                      {confirmDelete === loc.id ? (
-                        <>
-                          <span className="mr-2 text-xs text-[#f43f5e]">Delete?</span>
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              await deleteMutation.mutateAsync({ id: loc.id });
-                              setConfirmDelete(null);
-                            }}
-                            className="bg-[#f43f5e] px-3 py-1 text-xs font-medium text-white"
-                          >
-                            Confirm
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setConfirmDelete(null)}
-                            className="ml-1 bg-neutral-800 px-3 py-1 text-xs font-medium text-white"
-                          >
-                            Cancel
-                          </button>
-                        </>
-                      ) : (
-                        <RowMenu items={rowActions(loc)} />
-                      )}
+                      <RowMenu items={rowActions(loc)} />
                     </div>
                   </div>
                 )}
