@@ -255,9 +255,12 @@ export async function getInstallScript(
   const egg = await db.query.eggs.findFirst({ where: eq(eggs.id, server.eggId) });
   if (!egg) return null;
 
+  const rawEntrypoint = egg.scriptEntry ?? "bash";
+  const entrypoint = rawEntrypoint.trim().split(/\s+/)[0] || "bash";
+
   return {
     container_image: egg.scriptContainer ?? server.image,
-    entrypoint: `${egg.scriptEntry ?? "bash"} script.${egg.scriptExtension ?? "sh"}`,
+    entrypoint,
     script: egg.scriptInstall ?? "",
   };
 }
