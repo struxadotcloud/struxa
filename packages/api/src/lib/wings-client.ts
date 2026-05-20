@@ -62,7 +62,8 @@ export class WingsClient {
       ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
     });
     if (!res.ok) {
-      throw new WingsError(res.status, `Wings API error: ${res.status} ${path}`);
+      const body = await res.text().catch(() => "");
+      throw new WingsError(res.status, `Wings API error: ${res.status} ${path} — ${body}`);
     }
     return res;
   }
@@ -83,7 +84,7 @@ export class WingsClient {
   }
 
   async reinstallServer(uuid: string): Promise<void> {
-    await this.request("POST", `/api/servers/${uuid}/reinstall`);
+    await this.request("POST", `/api/servers/${uuid}/reinstall`, {});
   }
 
   async createBackup(uuid: string, payload: BackupPayload): Promise<void> {

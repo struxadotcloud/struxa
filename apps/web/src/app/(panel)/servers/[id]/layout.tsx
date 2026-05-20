@@ -2,6 +2,7 @@
 
 import { use } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { ShieldOff } from "lucide-react";
 import { orpc } from "@/utils/orpc";
 
 function BlockedPage({
@@ -15,51 +16,37 @@ function BlockedPage({
 
   return (
     <div className="flex flex-1 flex-col bg-background">
-      <div className="flex shrink-0 items-center gap-3 border-b border-border bg-card px-4 py-2">
+      <div className="flex shrink-0 items-center gap-2 border-b border-border bg-card px-4 py-2.5">
         <span className="text-sm font-medium text-foreground">{name}</span>
-        <span
-          className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-            suspended
-              ? "bg-red-500/10 text-red-500"
-              : "bg-amber-500/10 text-amber-500"
-          }`}
-        >
+        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+          suspended ? "bg-red-500/10 text-red-400" : "bg-amber-500/10 text-amber-400"
+        }`}>
           {suspended ? "Suspended" : "Installing"}
         </span>
       </div>
 
       <div className="flex flex-1 items-center justify-center p-6">
-        <div
-          className={`flex w-full max-w-md flex-col items-center gap-5 rounded-2xl border p-8 text-center shadow-sm ${
-            suspended
-              ? "border-red-500/20 bg-red-500/5"
-              : "border-amber-500/20 bg-amber-500/5"
-          }`}
-        >
-          <span
-            className={`flex h-12 w-12 items-center justify-center rounded-full ${
-              suspended ? "bg-red-500/10" : "bg-amber-500/10"
-            }`}
-          >
-            <span
-              className={`h-3 w-3 rounded-full ${suspended ? "" : "animate-pulse"} ${
-                suspended ? "bg-red-500/50" : "bg-amber-500"
-              }`}
-            />
-          </span>
-
-          <div className="flex flex-col gap-1.5">
-            <p className="text-base font-semibold text-foreground">{name}</p>
-            <p className={`text-sm font-medium ${suspended ? "text-red-500" : "text-amber-500"}`}>
-              {suspended ? "Server Suspended" : "Installing…"}
-            </p>
-          </div>
-
-          <p className="text-sm leading-relaxed text-muted-foreground">
-            {suspended
-              ? "Access to this server has been restricted by an administrator. Contact support if you believe this is a mistake."
-              : "Your server is being set up. This page will refresh automatically once it's ready."}
-          </p>
+        <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-xl border border-border bg-card p-8 text-center shadow-sm">
+          {suspended ? (
+            <>
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-muted">
+                <ShieldOff className="h-5 w-5 text-red-400" />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <p className="text-sm font-semibold text-foreground">Server suspended</p>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  Access to this server has been restricted by an administrator. Contact support if you think this is a mistake.
+                </p>
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-col gap-1.5">
+              <p className="text-sm font-semibold text-foreground">Installation in progress</p>
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                Your server is currently being installed. This usually takes a minute or two depending on the egg configuration. The page will refresh automatically once it's ready.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -77,7 +64,7 @@ export default function ServerLayout({
 
   const { data: server, isLoading } = useQuery({
     ...orpc.servers.get.queryOptions({ input: { id } }),
-    refetchInterval: 5000,
+    refetchInterval: (query) => query.state.data?.status === "installing" ? 1500 : 5000,
     select: (s) => ({ status: s.status, suspended: s.suspended, name: s.name }),
   });
 

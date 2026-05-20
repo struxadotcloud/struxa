@@ -561,13 +561,23 @@ export const serversRouter = {
         throw new ORPCError("FORBIDDEN");
       }
 
+      const previousStatus = server.status;
+
       await db
         .update(servers)
         .set({ status: "installing" })
         .where(eq(servers.id, server.id));
 
-      const client = createWingsClient(server.node as typeof nodes.$inferSelect);
-      await client.reinstallServer(server.uuid);
+      try {
+        const client = createWingsClient(server.node as typeof nodes.$inferSelect);
+        await client.reinstallServer(server.uuid);
+      } catch (e) {
+        await db
+          .update(servers)
+          .set({ status: previousStatus })
+          .where(eq(servers.id, server.id));
+        throw e;
+      }
     }),
 
   create: adminProcedure

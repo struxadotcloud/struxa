@@ -118,6 +118,7 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
   const [entries, setEntries] = useState<WingsFile[]>([]);
   const [loadingDir, setLoadingDir] = useState(false);
   const [selectedFile, setSelectedFile] = useState<WingsFile | null>(null);
+  const [openFilePath, setOpenFilePath] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
   const [unsaved, setUnsaved] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -148,9 +149,6 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
       });
       setEntries(sorted);
       setDirPath(dir);
-      setSelectedFile(null);
-      setEditContent("");
-      setUnsaved(false);
       return sorted;
     } finally {
       setLoadingDir(false);
@@ -162,26 +160,28 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
   }, [fileToken, fetchDir]);
 
   async function openFile(file: WingsFile) {
+    const filePath = dirPath === "/" ? `/${file.name}` : `${dirPath}/${file.name}`;
     if (!fileToken || !file.file || !isText(file)) {
       setSelectedFile(file);
+      setOpenFilePath(filePath);
       setEditContent("");
       setUnsaved(false);
       return;
     }
-    const filePath = dirPath === "/" ? `/${file.name}` : `${dirPath}/${file.name}`;
     const res = await fetch(
       `${fileToken.baseUrl}/files/contents?file=${encodeURIComponent(filePath)}`,
       { headers: { Authorization: `Bearer ${fileToken.token}` } },
     );
     const text = res.ok ? await res.text() : "";
     setSelectedFile(file);
+    setOpenFilePath(filePath);
     setEditContent(text);
     setUnsaved(false);
   }
 
   async function handleSave() {
-    if (!fileToken || !selectedFile) return;
-    const filePath = dirPath === "/" ? `/${selectedFile.name}` : `${dirPath}/${selectedFile.name}`;
+    if (!fileToken || !selectedFile || !openFilePath) return;
+    const filePath = openFilePath;
     setSaving(true);
     try {
       await fetch(
@@ -344,31 +344,34 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
             {loadingDir ? (
               <div className="px-3 py-4 text-xs text-muted-foreground">Loading…</div>
             ) : (
-              entries.map((file) => (
-                <button
-                  key={file.name}
-                  type="button"
-                  onClick={() => {
-                    if (file.directory) {
-                      navigateInto(file.name);
-                    } else {
-                      void openFile(file);
-                    }
-                  }}
-                  className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors hover:bg-muted ${
-                    selectedFile?.name === file.name ? "bg-muted text-foreground" : "text-muted-foreground"
-                  }`}
-                >
-                  <FileIcon file={file} />
-                  <span className="flex-1 truncate font-mono">{file.name}</span>
-                  {file.directory && (
-                    <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground/50" />
-                  )}
-                  {file.file && (
-                    <span className="shrink-0 text-[10px] text-muted-foreground/60">{fmtBytes(file.size)}</span>
-                  )}
-                </button>
-              ))
+              entries.map((file) => {
+                const itemPath = dirPath === "/" ? `/${file.name}` : `${dirPath}/${file.name}`;
+                return (
+                  <button
+                    key={file.name}
+                    type="button"
+                    onClick={() => {
+                      if (file.directory) {
+                        navigateInto(file.name);
+                      } else {
+                        void openFile(file);
+                      }
+                    }}
+                    className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors hover:bg-muted ${
+                      openFilePath === itemPath ? "bg-muted text-foreground" : "text-muted-foreground"
+                    }`}
+                  >
+                    <FileIcon file={file} />
+                    <span className="flex-1 truncate font-mono">{file.name}</span>
+                    {file.directory && (
+                      <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground/50" />
+                    )}
+                    {file.file && (
+                      <span className="shrink-0 text-[10px] text-muted-foreground/60">{fmtBytes(file.size)}</span>
+                    )}
+                  </button>
+                );
+              })
             )}
           </div>
         </div>

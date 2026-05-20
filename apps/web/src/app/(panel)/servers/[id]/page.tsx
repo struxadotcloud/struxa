@@ -18,6 +18,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
+import { toast } from "sonner";
 import Loader from "@/components/loader";
 
 function fmtMb(mb: number) {
@@ -283,6 +284,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
 
   const powerMutation = useMutation({
     ...orpc.servers.power.mutationOptions(),
+    onError: (error) => toast.error(error.message),
   });
 
   function sendCommand() {

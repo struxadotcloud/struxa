@@ -12,7 +12,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@struxa/ui/components/dropdown-menu";
+import {
+  Dialog,
+  DialogPopup,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from "@struxa/ui/components/dialog";
 import { Button } from "@struxa/ui/components/button";
+import { toast } from "sonner";
 import { orpc, queryClient } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
 import Loader from "@/components/loader";
@@ -226,7 +235,11 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
 
   const reinstallMutation = useMutation({
     ...orpc.servers.reinstall.mutationOptions(),
-    onSuccess: () => setReinstallConfirm(false),
+    onSuccess: () => {
+      setReinstallConfirm(false);
+      void queryClient.invalidateQueries(orpc.servers.get.queryOptions({ input: { id } }));
+    },
+    onError: (error) => toast.error(error.message),
   });
 
   const renameMutation = useMutation(orpc.servers.rename.mutationOptions());
@@ -297,7 +310,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
   let dockerImageOptions: { tag: string; alias: string }[] = [];
   try {
     const parsed = JSON.parse(egg?.dockerImages ?? "{}") as Record<string, string>;
-    dockerImageOptions = Object.entries(parsed).map(([tag, alias]) => ({ tag, alias }));
+    dockerImageOptions = Object.entries(parsed).map(([alias, tag]) => ({ tag, alias }));
   } catch {}
 
   const currentImage = server?.image ?? "";
@@ -440,34 +453,41 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
           <SectionCard title="Danger Zone" description="Irreversible actions that affect this server.">
             <SettingRow
               label="Reinstall Server"
-              description="Reinstalls the server using the configured egg. Existing data may be overwritten."
+              description="Runs the egg installer again. Install-script files will be overwritten — other server data is usually preserved but not guaranteed."
             >
-              {reinstallConfirm ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Are you sure?</span>
-                  <button
-                    type="button"
-                    onClick={() => reinstallMutation.mutate({ serverId: id })}
-                    disabled={reinstallMutation.isPending}
-                    className="rounded-lg bg-destructive px-3 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-40"
-                  >
-                    {reinstallMutation.isPending ? "Reinstalling…" : "Confirm"}
-                  </button>
-                  <button type="button" onClick={() => setReinstallConfirm(false)} className="text-xs text-muted-foreground transition-colors hover:text-foreground">
-                    Cancel
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setReinstallConfirm(true)}
-                  className="rounded-lg border border-destructive/30 px-3 py-1.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/10"
-                >
-                  Reinstall
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => setReinstallConfirm(true)}
+                className="rounded-lg border border-destructive/30 px-3 py-1.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/10"
+              >
+                Reinstall
+              </button>
             </SettingRow>
           </SectionCard>
+
+          <Dialog open={reinstallConfirm} onOpenChange={(open) => { if (!open) setReinstallConfirm(false); }}>
+            <DialogPopup showCloseButton={false} className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Reinstall "{server?.name}"?</DialogTitle>
+                <DialogDescription>
+                  This will run the egg installer again. Files created by the installer (startup scripts, default configs) will be overwritten. Other server data is usually preserved, but this is not guaranteed. The server will be temporarily unavailable.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button variant="outline" size="sm" onClick={() => setReinstallConfirm(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  disabled={reinstallMutation.isPending}
+                  onClick={() => reinstallMutation.mutate({ serverId: id })}
+                >
+                  {reinstallMutation.isPending ? "Reinstalling…" : "Reinstall"}
+                </Button>
+              </DialogFooter>
+            </DialogPopup>
+          </Dialog>
         </div>
 
         <aside className="flex w-[240px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
