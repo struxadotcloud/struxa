@@ -4,6 +4,15 @@ import Link from "next/link";
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Plus, Trash2, Search, ChevronRight } from "lucide-react";
+import {
+  Dialog,
+  DialogPopup,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+} from "@struxa/ui/components/dialog";
 import { orpc, queryClient } from "@/utils/orpc";
 import { ContextMenu, RowMenu, type ActionItem } from "@/components/context-menu";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -18,7 +27,7 @@ export default function NestsPage() {
   const deleteMutation = useMutation(orpc.nests.delete.mutationOptions({ onSuccess: invalidate }));
 
   const [search, setSearch] = useState("");
-  const [adding, setAdding] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ name: "", description: "", author: "admin" });
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
@@ -27,11 +36,15 @@ export default function NestsPage() {
     return n.name.toLowerCase().includes(q) || (n.author ?? "").toLowerCase().includes(q);
   });
 
+  function closeCreate() {
+    setShowCreate(false);
+    setForm({ name: "", description: "", author: "admin" });
+  }
+
   async function handleCreate() {
     if (!form.name.trim()) return;
     await createMutation.mutateAsync(form);
-    setForm({ name: "", description: "", author: "admin" });
-    setAdding(false);
+    closeCreate();
   }
 
   function nestActions(nest: { id: string; name: string }): ActionItem[] {
@@ -47,6 +60,67 @@ export default function NestsPage() {
 
   return (
     <>
+      <Dialog open={showCreate} onOpenChange={(open) => { if (!open) closeCreate(); }}>
+        <DialogPopup showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>New Nest</DialogTitle>
+            <DialogDescription>Create a container for grouping related eggs.</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-4 px-5 py-4">
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-foreground">Name <span className="text-destructive">*</span></label>
+              <input
+                autoFocus
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
+                placeholder="Minecraft"
+                value={form.name}
+                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                onKeyDown={(e) => { if (e.key === "Enter") void handleCreate(); if (e.key === "Escape") closeCreate(); }}
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-foreground">Author</label>
+              <input
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
+                placeholder="admin"
+                value={form.author}
+                onChange={(e) => setForm((f) => ({ ...f, author: e.target.value }))}
+                onKeyDown={(e) => { if (e.key === "Enter") void handleCreate(); if (e.key === "Escape") closeCreate(); }}
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-foreground">Description</label>
+              <input
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
+                placeholder="Optional"
+                value={form.description}
+                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                onKeyDown={(e) => { if (e.key === "Enter") void handleCreate(); if (e.key === "Escape") closeCreate(); }}
+              />
+            </div>
+            {createMutation.isError && (
+              <p className="text-xs text-destructive">{createMutation.error.message}</p>
+            )}
+          </div>
+          <DialogFooter>
+            <DialogClose
+              className="rounded-lg px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              disabled={createMutation.isPending}
+            >
+              Cancel
+            </DialogClose>
+            <button
+              type="button"
+              onClick={() => void handleCreate()}
+              disabled={!form.name.trim() || createMutation.isPending}
+              className="rounded-lg bg-foreground px-4 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
+            >
+              {createMutation.isPending ? "Creating…" : "Create Nest"}
+            </button>
+          </DialogFooter>
+        </DialogPopup>
+      </Dialog>
+
       <div className="flex-1 overflow-auto px-6 py-5">
         <div className="mx-auto max-w-5xl">
         <div className="mb-5 flex items-center justify-between">
@@ -65,7 +139,7 @@ export default function NestsPage() {
             </div>
             <button
               type="button"
-              onClick={() => setAdding(true)}
+              onClick={() => setShowCreate(true)}
               className="flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80"
             >
               <Plus className="h-3.5 w-3.5" />
@@ -73,61 +147,6 @@ export default function NestsPage() {
             </button>
           </div>
         </div>
-        {adding && (
-          <div className="mb-4 rounded-xl border border-border bg-card p-4 shadow-sm">
-            <p className="mb-3 text-xs font-medium text-muted-foreground">New Nest</p>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-foreground">Name <span className="text-destructive">*</span></label>
-                <input
-                  autoFocus
-                  className="w-full rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
-                  placeholder="Minecraft"
-                  value={form.name}
-                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  onKeyDown={(e) => { if (e.key === "Enter") void handleCreate(); if (e.key === "Escape") setAdding(false); }}
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-foreground">Author</label>
-                <input
-                  className="w-full rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
-                  placeholder="admin"
-                  value={form.author}
-                  onChange={(e) => setForm((f) => ({ ...f, author: e.target.value }))}
-                  onKeyDown={(e) => { if (e.key === "Enter") void handleCreate(); if (e.key === "Escape") setAdding(false); }}
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-foreground">Description</label>
-                <input
-                  className="w-full rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
-                  placeholder="Optional"
-                  value={form.description}
-                  onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                  onKeyDown={(e) => { if (e.key === "Enter") void handleCreate(); if (e.key === "Escape") setAdding(false); }}
-                />
-              </div>
-            </div>
-            <div className="mt-3 flex gap-2">
-              <button
-                type="button"
-                onClick={handleCreate}
-                disabled={createMutation.isPending}
-                className="rounded-lg bg-foreground px-4 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
-              >
-                {createMutation.isPending ? "Creating..." : "Create"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setAdding(false)}
-                className="rounded-lg border border-border px-4 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
 
         <ConfirmDialog
           open={confirmDelete !== null}

@@ -3,6 +3,15 @@
 import { useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Search, ShieldCheck, ShieldOff, Ban, UserX, Trash2 } from "lucide-react";
+import {
+  Dialog,
+  DialogPopup,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+} from "@struxa/ui/components/dialog";
 import { orpc, queryClient } from "@/utils/orpc";
 import { ContextMenu, RowMenu, type ActionItem } from "@/components/context-menu";
 
@@ -59,6 +68,79 @@ export default function AdminUsersPage() {
 
   return (
     <>
+      <Dialog open={dialog?.type === "ban"} onOpenChange={(open) => { if (!open) { setDialog(null); setBanReason(""); } }}>
+        <DialogPopup showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Ban {dialog?.type === "ban" ? dialog.name : ""}</DialogTitle>
+            <DialogDescription>This user will be locked out of their account.</DialogDescription>
+          </DialogHeader>
+          <div className="px-5 py-4">
+            <label className="mb-1.5 block text-xs font-medium text-foreground">Reason <span className="text-muted-foreground font-normal">(optional)</span></label>
+            <input
+              autoFocus
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
+              placeholder="e.g. ToS violation"
+              value={banReason}
+              onChange={(e) => setBanReason(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Escape") { setDialog(null); setBanReason(""); } }}
+            />
+            {banMutation.isError && (
+              <p className="mt-2 text-xs text-destructive">{banMutation.error.message}</p>
+            )}
+          </div>
+          <DialogFooter>
+            <DialogClose
+              className="rounded-lg px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              disabled={banMutation.isPending}
+            >
+              Cancel
+            </DialogClose>
+            <button
+              type="button"
+              disabled={banMutation.isPending}
+              onClick={async () => {
+                if (dialog?.type !== "ban") return;
+                await banMutation.mutateAsync({ userId: dialog.userId, reason: banReason || undefined });
+                setDialog(null);
+                setBanReason("");
+              }}
+              className="rounded-lg bg-destructive px-4 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+            >
+              {banMutation.isPending ? "Banning…" : "Ban User"}
+            </button>
+          </DialogFooter>
+        </DialogPopup>
+      </Dialog>
+
+      <Dialog open={dialog?.type === "confirmDelete"} onOpenChange={(open) => { if (!open) setDialog(null); }}>
+        <DialogPopup showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Delete {dialog?.type === "confirmDelete" ? dialog.name : ""}?</DialogTitle>
+            <DialogDescription>This action is permanent and cannot be undone.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose
+              className="rounded-lg px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              disabled={deleteMutation.isPending}
+            >
+              Cancel
+            </DialogClose>
+            <button
+              type="button"
+              disabled={deleteMutation.isPending}
+              onClick={async () => {
+                if (dialog?.type !== "confirmDelete") return;
+                await deleteMutation.mutateAsync({ userId: dialog.userId });
+                setDialog(null);
+              }}
+              className="rounded-lg bg-destructive px-4 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+            >
+              {deleteMutation.isPending ? "Deleting…" : "Delete User"}
+            </button>
+          </DialogFooter>
+        </DialogPopup>
+      </Dialog>
+
       <div className="flex-1 overflow-auto px-6 py-5">
         <div className="mx-auto max-w-5xl">
         <div className="mb-5 flex items-center justify-between">
@@ -75,64 +157,6 @@ export default function AdminUsersPage() {
             />
           </div>
         </div>
-        {/* Inline dialogs */}
-        {dialog?.type === "ban" && (
-          <div className="mb-4 rounded-xl border border-border bg-card p-4 shadow-sm">
-            <p className="mb-3 text-sm font-medium text-foreground">Ban {dialog.name}</p>
-            <div className="flex items-center gap-3">
-              <input
-                autoFocus
-                className="flex-1 rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-ring transition-colors"
-                placeholder="Ban reason (optional)"
-                value={banReason}
-                onChange={(e) => setBanReason(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Escape") setDialog(null); }}
-              />
-              <button
-                type="button"
-                disabled={banMutation.isPending}
-                onClick={async () => {
-                  await banMutation.mutateAsync({ userId: dialog.userId, reason: banReason || undefined });
-                  setDialog(null);
-                  setBanReason("");
-                }}
-                className="rounded-lg bg-destructive px-4 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-40"
-              >
-                {banMutation.isPending ? "Banningâ€¦" : "Ban"}
-              </button>
-              <button
-                type="button"
-                onClick={() => { setDialog(null); setBanReason(""); }}
-                className="rounded-lg border border-border px-4 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-
-        {dialog?.type === "confirmDelete" && (
-          <div className="mb-4 flex items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3">
-            <div className="flex-1">
-              <span className="text-sm font-medium text-destructive">Delete {dialog.name}?</span>
-              <span className="ml-2 text-xs text-muted-foreground">This cannot be undone.</span>
-            </div>
-            <button
-              type="button"
-              disabled={deleteMutation.isPending}
-              onClick={async () => {
-                await deleteMutation.mutateAsync({ userId: dialog.userId });
-                setDialog(null);
-              }}
-              className="rounded-lg bg-destructive px-3 py-1.5 text-xs font-medium text-white disabled:opacity-40"
-            >
-              {deleteMutation.isPending ? "Deletingâ€¦" : "Delete"}
-            </button>
-            <button type="button" onClick={() => setDialog(null)} className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted">
-              Cancel
-            </button>
-          </div>
-        )}
 
         {/* Table */}
         <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
