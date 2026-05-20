@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { use } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Server, Copy, Terminal, Globe, ChevronDown } from "lucide-react";
+import { Server, Copy, Terminal, Globe, ChevronDown, ExternalLink } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
   DropdownMenu,
@@ -12,6 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@struxa/ui/components/dropdown-menu";
+import { Button } from "@struxa/ui/components/button";
 import { orpc, queryClient } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
 import Loader from "@/components/loader";
@@ -283,7 +284,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
   const sftp = {
     host: node?.fqdn ?? "—",
     port: node?.daemonSFTP ?? 2022,
-    username: `struxa.${server?.uuidShort ?? ""}`,
+    username: `${session?.user.email?.split("@")[0] ?? "user"}.${server?.uuidShort ?? ""}`,
   };
 
   function copy(text: string) {
@@ -358,6 +359,17 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
                   </div>
                 </div>
               ))}
+            </div>
+            <div className="flex items-center justify-between border-t border-border px-4 py-3">
+              <p className="text-xs text-muted-foreground">Opens your local SFTP client via protocol handler.</p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(`sftp://${sftp.username}@${sftp.host}:${sftp.port}`, "_self")}
+              >
+                <ExternalLink />
+                Connect
+              </Button>
             </div>
           </SectionCard>
 
