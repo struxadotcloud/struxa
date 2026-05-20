@@ -66,7 +66,7 @@ function ServerCard({ server, powerState, statusLoading }: {
         </div>
 
         <div className="flex items-center justify-between">
-          <span className="font-mono text-xs text-muted-foreground">
+          <span className="text-xs text-muted-foreground">
             {server.allocation ? `${server.allocation.ip}:${server.allocation.port}` : "No allocation"}
           </span>
           <span

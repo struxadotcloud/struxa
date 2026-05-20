@@ -289,7 +289,7 @@ export default function NodesPage() {
                         </span>
                       )}
                     </div>
-                    <span className="font-mono text-xs text-muted-foreground">
+                    <span className="text-xs text-muted-foreground">
                       {node.fqdn}:{node.daemonListen}
                     </span>
                     <span className="text-xs text-muted-foreground">

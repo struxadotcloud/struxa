@@ -94,7 +94,7 @@ export default function NetworkPage({ params }: { params: Promise<{ id: string }
                   <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
                 </span>
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-sm text-foreground">{alloc.ip}</span>
+                  <span className="text-sm text-foreground">{alloc.ip}</span>
                   <button
                     type="button"
                     onClick={() => copy(alloc.ip)}
@@ -103,7 +103,7 @@ export default function NetworkPage({ params }: { params: Promise<{ id: string }
                     <Copy className="h-3.5 w-3.5" />
                   </button>
                 </div>
-                <span className="font-mono text-sm text-foreground">{alloc.port}</span>
+                <span className="text-sm text-foreground">{alloc.port}</span>
                 <span>
                   <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-[11px] font-medium text-green-600 dark:text-green-400">
                     Primary
@@ -117,7 +117,7 @@ export default function NetworkPage({ params }: { params: Promise<{ id: string }
         <aside className="flex w-[220px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           <div className="overflow-y-auto">
             <StatRow icon={Globe} label="Primary">
-              <span className="font-mono text-sm font-semibold text-foreground leading-snug">
+              <span className="text-sm font-semibold text-foreground leading-snug">
                 {alloc ? `${alloc.ip}:${alloc.port}` : "—"}
               </span>
             </StatRow>

@@ -157,7 +157,7 @@ export default function AdminServersPage() {
                         {server.name}
                       </Link>
                     </div>
-                    <span className="font-mono text-xs text-muted-foreground">
+                    <span className="text-xs text-muted-foreground">
                       {server.allocation.ip}:{server.allocation.port}
                     </span>
                     <span className="text-xs text-muted-foreground">

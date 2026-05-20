@@ -110,7 +110,7 @@ export function PanelSidebar() {
                         />
                       }
                       isActive={item.key === activeServerTab}
-                      className="gap-2.5 rounded-lg text-sm"
+                      className="gap-2.5 rounded-lg py-2 text-sm"
                     >
                       <item.icon className="h-4 w-4" />
                       {item.label}
@@ -130,7 +130,7 @@ export function PanelSidebar() {
                       <SidebarMenuButton
                         render={<Link href={item.href as never} />}
                         isActive={pathname === "/" ? item.key === "servers" : pathname.startsWith(item.href) && item.href !== "/"}
-                        className="gap-2.5 rounded-lg text-sm"
+                        className="gap-2.5 rounded-lg py-2 text-sm"
                       >
                         <item.icon className="h-4 w-4" />
                         {item.label}
@@ -148,7 +148,7 @@ export function PanelSidebar() {
                     <SidebarMenuItem key={item.key}>
                       <SidebarMenuButton
                         render={<Link href={item.href as never} />}
-                        className="gap-2.5 rounded-lg text-sm"
+                        className="gap-2.5 rounded-lg py-2 text-sm"
                       >
                         <item.icon className="h-4 w-4" />
                         {item.label}
@@ -159,7 +159,7 @@ export function PanelSidebar() {
                     <SidebarMenuItem>
                       <SidebarMenuButton
                         render={<Link href={"/admin" as never} />}
-                        className="gap-2.5 rounded-lg text-sm"
+                        className="gap-2.5 rounded-lg py-2 text-sm"
                       >
                         <ShieldCheck className="h-4 w-4" />
                         Admin Dashboard
@@ -176,7 +176,7 @@ export function PanelSidebar() {
       <div className="flex shrink-0 items-center border-t border-sidebar-border px-3 py-3">
         {state === "expanded" ? (
           <div className="flex w-full items-center gap-2.5">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
               {initials}
             </div>
             <div className="min-w-0 flex-1">
@@ -194,7 +194,7 @@ export function PanelSidebar() {
           </div>
         ) : (
           <div className="flex w-full justify-center">
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
               {initials}
             </div>
           </div>

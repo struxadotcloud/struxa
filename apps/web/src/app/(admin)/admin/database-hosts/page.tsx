@@ -143,7 +143,7 @@ export default function DatabaseHostsPage() {
               className={`grid grid-cols-[1fr_220px_80px_80px] items-center px-4 py-3 hover:bg-muted/40 transition-colors ${i < (hosts.length - 1) ? "border-b border-border" : ""}`}
             >
               <span className="text-sm font-medium text-foreground">{host.name}</span>
-              <span className="font-mono text-xs text-muted-foreground">
+              <span className="text-xs text-muted-foreground">
                 {host.username}@{host.host}:{host.port}
               </span>
               <span>

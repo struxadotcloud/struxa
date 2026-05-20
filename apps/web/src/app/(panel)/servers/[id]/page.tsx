@@ -430,7 +430,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
           <div className="overflow-y-auto">
             <StatRow icon={Globe} label="Address">
               <div className="flex items-center justify-between">
-                <span className="font-mono text-sm font-semibold text-foreground">
+                <span className="text-sm font-semibold text-foreground">
                   {alloc ? `${alloc.ip}:${alloc.port}` : "—"}
                 </span>
                 {alloc && (

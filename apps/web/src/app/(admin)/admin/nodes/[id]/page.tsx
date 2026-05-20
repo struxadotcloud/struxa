@@ -15,7 +15,7 @@ function InfoCard({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5 rounded-xl border border-border bg-card p-4 shadow-sm">
       <span className="text-xs font-medium text-muted-foreground">{label}</span>
-      <span className="font-mono text-sm font-semibold text-foreground">{value}</span>
+      <span className="text-sm font-semibold text-foreground">{value}</span>
     </div>
   );
 }
@@ -240,11 +240,11 @@ export default function NodeDetailPage({ params }: { params: Promise<{ id: strin
                     className="h-2 w-2 rounded-full"
                     style={{ backgroundColor: alloc.serverId ? "rgb(var(--muted-foreground) / 0.4)" : "#22c55e" }}
                   />
-                  <span className="font-mono text-sm text-foreground">
+                  <span className="text-sm text-foreground">
                     {alloc.ip}:{alloc.port}
                   </span>
                   {alloc.ipAlias && (
-                    <span className="font-mono text-xs text-muted-foreground">{alloc.ipAlias}</span>
+                    <span className="text-xs text-muted-foreground">{alloc.ipAlias}</span>
                   )}
                   {alloc.serverId && (
                     <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
