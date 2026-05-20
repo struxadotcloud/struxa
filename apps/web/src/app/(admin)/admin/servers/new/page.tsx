@@ -2,17 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { skipToken } from "@tanstack/react-query";
-import { SidebarTrigger } from "@struxa/ui/components/sidebar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@struxa/ui/components/dropdown-menu";
-import { Monitor, ChevronRight, ChevronDown, Check } from "lucide-react";
+import { ChevronRight, ChevronDown, Check } from "lucide-react";
 import { orpc } from "@/utils/orpc";
 import { UserCombobox } from "@/components/user-combobox";
 
@@ -166,18 +164,6 @@ export default function NewServerPage() {
 
   return (
     <>
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4">
-        <div className="flex items-center gap-2 text-sm">
-          <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
-          <Link href={"/admin/servers" as never} className="text-muted-foreground transition-colors hover:text-foreground">
-            Servers
-          </Link>
-          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
-          <Monitor className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="font-medium text-foreground">New Server</span>
-        </div>
-      </header>
-
       <StepIndicator current={step} />
 
       <div className="flex-1 overflow-auto p-6">

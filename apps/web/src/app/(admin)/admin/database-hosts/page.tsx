@@ -1,9 +1,8 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { SidebarTrigger } from "@struxa/ui/components/sidebar";
-import { Database, Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { orpc, queryClient } from "@/utils/orpc";
 
 function invalidate() {
@@ -50,28 +49,21 @@ export default function DatabaseHostsPage() {
 
   return (
     <>
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4">
-        <div className="flex items-center gap-2.5">
-          <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
-          <Database className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium text-foreground">Database Hosts</span>
-          {hosts && (
-            <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-              {hosts.length}
-            </span>
-          )}
+      <div className="flex-1 overflow-auto px-6 py-5">
+        <div className="mx-auto max-w-5xl">
+        <div className="mb-5 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+              <h1 className="text-sm font-semibold text-foreground">Database Hosts</h1>
+          </div>
+          <button
+            type="button"
+            onClick={() => setAdding(true)}
+            className="flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            New Host
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => setAdding(true)}
-          className="flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          New Host
-        </button>
-      </header>
-
-      <div className="flex-1 overflow-auto p-4">
         {adding && (
           <div className="mb-4 rounded-xl border border-border bg-card p-4 shadow-sm">
             <p className="mb-3 text-xs font-medium text-muted-foreground">New Database Host</p>
@@ -94,7 +86,7 @@ export default function DatabaseHostsPage() {
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium text-foreground">Password <span className="text-destructive">*</span></label>
-                <input type="password" className={inputClass()} placeholder="••••••••" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} />
+                <input type="password" className={inputClass()} placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} />
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium text-foreground">Max Databases <span className="text-muted-foreground font-normal">(0 = unlimited)</span></label>
@@ -196,6 +188,7 @@ export default function DatabaseHostsPage() {
               </div>
             </div>
           ))}
+        </div>
         </div>
       </div>
     </>

@@ -3,8 +3,7 @@
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { SidebarTrigger } from "@struxa/ui/components/sidebar";
-import { Egg, Package, Plus, Trash2, ChevronRight } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { orpc, queryClient } from "@/utils/orpc";
 import { ContextMenu, RowMenu, type ActionItem } from "@/components/context-menu";
 
@@ -279,23 +278,6 @@ export default function EggDetailPage({
 
   return (
     <>
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4">
-        <div className="flex items-center gap-2 text-sm">
-          <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
-          <Link href={"/admin/nests" as never} className="text-muted-foreground transition-colors hover:text-foreground">
-            Nests
-          </Link>
-          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
-          <Package className="h-3.5 w-3.5 text-muted-foreground" />
-          <Link href={`/admin/nests/${nestId}` as never} className="text-muted-foreground transition-colors hover:text-foreground">
-            {nest?.name ?? nestId}
-          </Link>
-          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
-          <Egg className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="font-medium text-foreground">{egg.name}</span>
-        </div>
-      </header>
-
       <div className="flex shrink-0 items-center gap-1 border-b border-border bg-card px-4">
         {TABS.map((t) => (
           <button
@@ -318,7 +300,7 @@ export default function EggDetailPage({
         ))}
       </div>
 
-      <div className="flex-1 overflow-auto p-4">
+      <div className="flex-1 overflow-auto px-6 py-5">
         {tab === "general" && (
           <div className="mx-auto max-w-2xl flex flex-col gap-4">
             <div className="rounded-xl border border-border bg-card shadow-sm">
@@ -553,12 +535,7 @@ export default function EggDetailPage({
           <div className="mx-auto max-w-4xl">
             <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
               <div className="flex items-center justify-between border-b border-border bg-muted/40 px-4 py-2.5">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-muted-foreground">Variables</span>
-                  <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                    {egg.variables.length}
-                  </span>
-                </div>
+                <span className="text-xs font-medium text-muted-foreground">Variables</span>
               </div>
 
               {egg.variables.length === 0 && (

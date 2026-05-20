@@ -4,8 +4,6 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { SidebarTrigger } from "@struxa/ui/components/sidebar";
-import { Button } from "@struxa/ui/components/button";
 import { Server } from "lucide-react";
 import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
@@ -106,27 +104,6 @@ export default function ServersPage() {
 
   return (
     <>
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4">
-        <div className="flex items-center gap-3">
-          <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
-          <div className="flex items-center gap-2">
-            <Server className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium text-foreground">Game Servers</span>
-          </div>
-          <span className="rounded-md bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
-            {list.length}
-          </span>
-          {statuses && online > 0 && (
-            <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-600 dark:text-green-400">
-              {online} online
-            </span>
-          )}
-        </div>
-        <Button size="sm" type="button">
-          Top up
-        </Button>
-      </header>
-
       <div className="flex-1 overflow-auto">
         {serversPending ? (
           <Loader />

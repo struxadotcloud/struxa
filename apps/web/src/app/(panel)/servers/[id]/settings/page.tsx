@@ -1,12 +1,10 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import Link from "next/link";
 import { use } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { SidebarTrigger } from "@struxa/ui/components/sidebar";
-import { Server, Copy, Terminal, Globe, ChevronDown, ChevronRight } from "lucide-react";
+import { Server, Copy, Terminal, Globe, ChevronDown } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
   DropdownMenu,
@@ -305,22 +303,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
 
   return (
     <>
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4">
-        <div className="flex items-center gap-2 text-sm">
-          <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
-          <Link href="/" className="text-muted-foreground transition-colors hover:text-foreground">
-            Game Servers
-          </Link>
-          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
-          <Link href={`/servers/${id}`} className="text-muted-foreground transition-colors hover:text-foreground">
-            {server?.name ?? id}
-          </Link>
-          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
-          <span className="font-medium text-foreground">Settings</span>
-        </div>
-      </header>
-
-      <div className="flex flex-1 gap-3 overflow-hidden p-3">
+      <div className="flex flex-1 gap-3 overflow-hidden px-4 py-4">
         <div className="flex flex-1 flex-col gap-3 overflow-y-auto">
           <SectionCard title="General" description="Basic server configuration.">
             <SettingRow label="Server Name" description="Displayed in the panel.">

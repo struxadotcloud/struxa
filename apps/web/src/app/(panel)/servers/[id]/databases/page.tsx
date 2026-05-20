@@ -1,12 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { use } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { SidebarTrigger } from "@struxa/ui/components/sidebar";
-import { Database, Copy, RefreshCw, Trash2, Eye, EyeOff, ChevronRight, Plus } from "lucide-react";
+import { Database, Copy, RefreshCw, Trash2, Eye, EyeOff, Plus, ChevronRight } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
   Dialog,
@@ -264,27 +262,19 @@ export default function DatabasesPage({ params }: { params: Promise<{ id: string
         </DialogPopup>
       </Dialog>
 
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4">
-        <div className="flex items-center gap-2 text-sm">
-          <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
-          <Link href="/" className="text-muted-foreground transition-colors hover:text-foreground">Game Servers</Link>
-          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
-          <Link href={`/servers/${id}`} className="text-muted-foreground transition-colors hover:text-foreground">{server?.name ?? id}</Link>
-          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
-          <span className="font-medium text-foreground">Databases</span>
-        </div>
-        <button
-          type="button"
-          onClick={() => setShowCreate(true)}
-          className="flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          New Database
-        </button>
-      </header>
-
-      <div className="flex flex-1 gap-3 overflow-hidden p-3">
+      <div className="flex flex-1 gap-3 overflow-hidden px-4 py-4">
         <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+          <div className="flex items-center justify-between border-b border-border px-4 py-3">
+            <p className="text-sm font-medium text-foreground">Databases</p>
+            <button
+              type="button"
+              onClick={() => setShowCreate(true)}
+              className="flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              New Database
+            </button>
+          </div>
           <div className="flex-1 overflow-y-auto">
             {dbPending ? (
               <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">Loading…</div>

@@ -1,9 +1,8 @@
-"use client";
+﻿"use client";
 
 import { useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { SidebarTrigger } from "@struxa/ui/components/sidebar";
-import { Users, ChevronLeft, ChevronRight, Search, ShieldCheck, ShieldOff, Ban, UserX, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, ShieldCheck, ShieldOff, Ban, UserX, Trash2 } from "lucide-react";
 import { orpc, queryClient } from "@/utils/orpc";
 import { ContextMenu, RowMenu, type ActionItem } from "@/components/context-menu";
 
@@ -60,20 +59,12 @@ export default function AdminUsersPage() {
 
   return (
     <>
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4">
-        <div className="flex items-center gap-3">
-          <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
-          <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium text-foreground">Users</span>
+      <div className="flex-1 overflow-auto px-6 py-5">
+        <div className="mx-auto max-w-5xl">
+        <div className="mb-5 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+              <h1 className="text-sm font-semibold text-foreground">Users</h1>
           </div>
-          {data && (
-            <span className="rounded-md bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
-              {data.total}
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
           <div className="relative flex items-center">
             <Search className="absolute left-2.5 h-3.5 w-3.5 text-muted-foreground" />
             <input
@@ -84,9 +75,6 @@ export default function AdminUsersPage() {
             />
           </div>
         </div>
-      </header>
-
-      <div className="flex-1 overflow-auto p-4">
         {/* Inline dialogs */}
         {dialog?.type === "ban" && (
           <div className="mb-4 rounded-xl border border-border bg-card p-4 shadow-sm">
@@ -110,7 +98,7 @@ export default function AdminUsersPage() {
                 }}
                 className="rounded-lg bg-destructive px-4 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-40"
               >
-                {banMutation.isPending ? "Banning…" : "Ban"}
+                {banMutation.isPending ? "Banningâ€¦" : "Ban"}
               </button>
               <button
                 type="button"
@@ -138,7 +126,7 @@ export default function AdminUsersPage() {
               }}
               className="rounded-lg bg-destructive px-3 py-1.5 text-xs font-medium text-white disabled:opacity-40"
             >
-              {deleteMutation.isPending ? "Deleting…" : "Delete"}
+              {deleteMutation.isPending ? "Deletingâ€¦" : "Delete"}
             </button>
             <button type="button" onClick={() => setDialog(null)} className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted">
               Cancel
@@ -159,7 +147,7 @@ export default function AdminUsersPage() {
           </div>
 
           {isLoading && (
-            <div className="px-4 py-3 text-sm text-muted-foreground">Loading…</div>
+            <div className="px-4 py-3 text-sm text-muted-foreground">Loadingâ€¦</div>
           )}
           {!isLoading && data?.users.length === 0 && (
             <div className="px-4 py-8 text-center text-sm text-muted-foreground">No users found.</div>
@@ -178,7 +166,7 @@ export default function AdminUsersPage() {
                       <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
                         {(u.name ?? u.email).charAt(0).toUpperCase()}
                       </div>
-                      <span className="text-sm font-medium text-foreground">{u.name ?? "—"}</span>
+                      <span className="text-sm font-medium text-foreground">{u.name ?? "â€”"}</span>
                     </div>
 
                     <span className="font-mono text-xs text-muted-foreground">{u.email}</span>
@@ -208,7 +196,7 @@ export default function AdminUsersPage() {
                     <span className="text-xs text-muted-foreground">
                       {u.createdAt
                         ? new Date(u.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-                        : "—"}
+                        : "â€”"}
                     </span>
 
                     <RowMenu items={actions} />
@@ -222,7 +210,7 @@ export default function AdminUsersPage() {
         {data && totalPages > 1 && (
           <div className="mt-3 flex items-center justify-between">
             <span className="text-xs text-muted-foreground">
-              Page {page} of {totalPages} · {data.total} users
+              Page {page} of {totalPages} Â· {data.total} users
             </span>
             <div className="flex items-center gap-1.5">
               <button
@@ -246,6 +234,7 @@ export default function AdminUsersPage() {
             </div>
           </div>
         )}
+        </div>
       </div>
     </>
   );

@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { SidebarTrigger } from "@struxa/ui/components/sidebar";
 import { Server, Monitor, Activity } from "lucide-react";
 import Link from "next/link";
 import { orpc } from "@/utils/orpc";
@@ -52,13 +51,12 @@ export default function AdminDashboard() {
   const onlineNodes = nodes?.filter((n) => !n.maintenanceMode).length ?? 0;
 
   return (
-    <>
-      <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border bg-card px-4">
-        <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
-        <span className="text-sm font-medium text-foreground">Dashboard</span>
-      </header>
+    <div className="flex-1 overflow-auto px-6 py-5">
+      <div className="mx-auto max-w-5xl">
+        <div className="mb-5 flex items-center gap-2.5">
+          <h1 className="text-sm font-semibold text-foreground">Dashboard</h1>
+        </div>
 
-      <div className="flex-1 overflow-auto p-4">
         <div className="mb-6">
           <h2 className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">Overview</h2>
           <div className="grid grid-cols-3 gap-3">
@@ -90,7 +88,7 @@ export default function AdminDashboard() {
             {QUICK_LINKS.map((link) => (
               <Link
                 key={link.href}
-                href={link.href}
+                href={link.href as never}
                 className="group flex flex-col gap-1 rounded-xl border border-border bg-card p-4 shadow-sm transition-all hover:shadow-md hover:border-border/80"
               >
                 <span className="text-sm font-medium text-foreground group-hover:text-foreground">{link.label}</span>
@@ -100,6 +98,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }

@@ -1,9 +1,8 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { SidebarTrigger } from "@struxa/ui/components/sidebar";
-import { MapPin, Pencil, Plus, Trash2, Check, X, Search } from "lucide-react";
+import { Pencil, Plus, Trash2, Check, X, Search } from "lucide-react";
 import { orpc, queryClient } from "@/utils/orpc";
 import { ContextMenu, RowMenu, type ActionItem } from "@/components/context-menu";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -78,39 +77,32 @@ export default function LocationsPage() {
         }}
       />
 
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4">
-        <div className="flex items-center gap-2.5">
-          <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
-          <MapPin className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium text-foreground">Locations</span>
-          {locations && (
-            <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-              {locations.length}
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="relative flex items-center">
-            <Search className="absolute left-2.5 h-3.5 w-3.5 text-muted-foreground/50" />
-            <input
-              className="rounded-lg border border-border bg-background py-1.5 pl-8 pr-3 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
-              placeholder="Search locations..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+      <div className="flex-1 overflow-auto px-6 py-5">
+        <div className="mx-auto max-w-5xl">
+        <div className="mb-5 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+              <h1 className="text-sm font-semibold text-foreground">Locations</h1>
           </div>
-          <button
-            type="button"
-            onClick={() => { setAdding(true); setEditingId(null); }}
-            className="flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            New Location
-          </button>
+          <div className="flex items-center gap-2">
+            <div className="relative flex items-center">
+              <Search className="absolute left-2.5 h-3.5 w-3.5 text-muted-foreground/50" />
+              <input
+                className="rounded-lg border border-border bg-background py-1.5 pl-8 pr-3 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
+                placeholder="Search locations..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => { setAdding(true); setEditingId(null); }}
+              className="flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              New Location
+            </button>
+          </div>
         </div>
-      </header>
-
-      <div className="flex-1 overflow-auto p-4">
         {adding && (
           <div className="mb-4 rounded-xl border border-border bg-card p-4 shadow-sm">
             <p className="mb-3 text-xs font-medium text-muted-foreground">New Location</p>
@@ -245,6 +237,7 @@ export default function LocationsPage() {
               </ContextMenu>
             );
           })}
+        </div>
         </div>
       </div>
     </>

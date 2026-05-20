@@ -3,8 +3,7 @@
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { SidebarTrigger } from "@struxa/ui/components/sidebar";
-import { Package, Plus, Trash2, Upload, Search, ChevronRight } from "lucide-react";
+import { Plus, Trash2, Upload, Search, ChevronRight } from "lucide-react";
 import { orpc, queryClient } from "@/utils/orpc";
 import { ContextMenu, RowMenu, type ActionItem } from "@/components/context-menu";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -105,28 +104,25 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
         }}
       />
 
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4">
-        <div className="flex items-center gap-2 text-sm">
-          <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
-          <Link href={"/admin/nests" as never} className="text-muted-foreground transition-colors hover:text-foreground">
-            Nests
-          </Link>
-          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
-          <Package className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="font-medium text-foreground">{nest?.name ?? nestId}</span>
-        </div>
-        <button
-          type="button"
-          onClick={() => setShowImport((v) => !v)}
-          className="flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80"
-        >
-          <Upload className="h-3.5 w-3.5" />
-          Import JSON
-        </button>
-      </header>
-
-      <div className="flex-1 overflow-auto p-4">
+      <div className="flex-1 overflow-auto px-6 py-5">
         <div className="mx-auto max-w-3xl flex flex-col gap-4">
+        <div className="mb-1 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm">
+              <Link href={"/admin/nests" as never} className="text-muted-foreground transition-colors hover:text-foreground">
+              Nests
+            </Link>
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+            <span className="font-medium text-foreground">{nest?.name ?? nestId}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowImport((v) => !v)}
+            className="flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80"
+          >
+            <Upload className="h-3.5 w-3.5" />
+            Import JSON
+          </button>
+        </div>
           <div className="rounded-xl border border-border bg-card shadow-sm">
             <div className="border-b border-border px-4 py-3">
               <h2 className="text-sm font-semibold text-foreground">Nest Settings</h2>
@@ -201,12 +197,7 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
 
           <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
             <div className="flex items-center justify-between border-b border-border bg-muted/40 px-4 py-2.5">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-muted-foreground">Eggs</span>
-                <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                  {eggs?.length ?? 0}
-                </span>
-              </div>
+              <span className="text-xs font-medium text-muted-foreground">Eggs</span>
               <div className="flex items-center gap-2">
                 <div className="relative flex items-center">
                   <Search className="absolute left-2.5 h-3.5 w-3.5 text-muted-foreground/50" />
@@ -258,9 +249,6 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
                         {egg.description && (
                           <span className="max-w-sm truncate text-xs text-muted-foreground">{egg.description}</span>
                         )}
-                        <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                          {egg.variables.length} vars
-                        </span>
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
                         <span className="max-w-[200px] truncate font-mono text-xs text-muted-foreground">

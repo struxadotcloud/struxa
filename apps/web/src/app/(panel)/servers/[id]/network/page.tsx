@@ -1,12 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
-import Link from "next/link";
 import { use } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { SidebarTrigger } from "@struxa/ui/components/sidebar";
-import { Globe, Copy, Star, ChevronRight } from "lucide-react";
+import { Globe, Copy, Star } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
@@ -57,22 +55,7 @@ export default function NetworkPage({ params }: { params: Promise<{ id: string }
 
   return (
     <>
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4">
-        <div className="flex items-center gap-2 text-sm">
-          <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
-          <Link href="/" className="text-muted-foreground transition-colors hover:text-foreground">
-            Game Servers
-          </Link>
-          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
-          <Link href={`/servers/${id}`} className="text-muted-foreground transition-colors hover:text-foreground">
-            {server?.name ?? id}
-          </Link>
-          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
-          <span className="font-medium text-foreground">Network</span>
-        </div>
-      </header>
-
-      <div className="flex flex-1 gap-3 overflow-hidden p-3">
+      <div className="flex flex-1 gap-3 overflow-hidden px-4 py-4">
         <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           <div className="grid grid-cols-[32px_1fr_100px_120px] border-b border-border bg-muted/40 px-4 py-2.5">
             <span />

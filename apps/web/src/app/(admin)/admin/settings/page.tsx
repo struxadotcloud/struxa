@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { SidebarTrigger } from "@struxa/ui/components/sidebar";
-import { Settings2, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { orpc, queryClient } from "@/utils/orpc";
 
 function invalidateSettings() {
@@ -90,16 +89,9 @@ export default function AdminSettingsPage() {
 
   if (isLoading) {
     return (
-      <>
-        <header className="flex h-14 shrink-0 items-center gap-2.5 border-b border-border bg-card px-4">
-          <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
-          <Settings2 className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium text-foreground">Settings</span>
-        </header>
-        <div className="flex flex-1 items-center justify-center">
-          <p className="text-sm text-muted-foreground">Loading...</p>
-        </div>
-      </>
+      <div className="flex flex-1 items-center justify-center">
+        <p className="text-sm text-muted-foreground">Loading...</p>
+      </div>
     );
   }
 
@@ -108,15 +100,11 @@ export default function AdminSettingsPage() {
   const df = defaultsForm();
 
   return (
-    <>
-      <header className="flex h-14 shrink-0 items-center gap-2.5 border-b border-border bg-card px-4">
-        <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
-        <Settings2 className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm font-medium text-foreground">Settings</span>
-      </header>
-
-      <div className="flex-1 overflow-auto p-4">
-        <div className="mx-auto max-w-2xl flex flex-col gap-4">
+    <div className="flex-1 overflow-auto px-6 py-5">
+      <div className="mx-auto max-w-2xl flex flex-col gap-4">
+        <div className="mb-1 flex items-center gap-2.5">
+          <h1 className="text-sm font-semibold text-foreground">Settings</h1>
+        </div>
           <SectionCard title="General">
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
@@ -240,6 +228,5 @@ export default function AdminSettingsPage() {
           </SectionCard>
         </div>
       </div>
-    </>
   );
 }

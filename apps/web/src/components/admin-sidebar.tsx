@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Sidebar,
@@ -11,8 +10,15 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  useSidebar,
+  SidebarTrigger,
 } from "@struxa/ui/components/sidebar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@struxa/ui/components/dropdown-menu";
 import {
   LayoutDashboard,
   MapPin,
@@ -23,6 +29,7 @@ import {
   Users,
   Settings2,
   LogOut,
+  ChevronLeft,
 } from "lucide-react";
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
@@ -39,7 +46,6 @@ const NAV_ITEMS = [
 ];
 
 export function AdminSidebar() {
-  const { state } = useSidebar();
   const pathname = usePathname();
   const router = useRouter();
   const { data: session } = authClient.useSession();
@@ -58,18 +64,65 @@ export function AdminSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
-      <SidebarHeader className="border-b border-sidebar-border px-3 py-3">
-        <div className="flex items-center gap-2 px-1">
-          <Image src="/logo-dark.svg" alt="Struxa" width={80} height={24} priority className="h-5 w-auto dark:hidden" />
-          <Image src="/logo-white.svg" alt="Struxa" width={80} height={24} priority className="hidden h-5 w-auto dark:block" />
-          {state === "expanded" && (
-            <span className="rounded-full bg-destructive/10 px-1.5 py-0.5 text-[10px] font-medium text-destructive">admin</span>
-          )}
+      <SidebarHeader className="p-0">
+        <div className="hidden group-data-[collapsible=icon]:flex justify-center py-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex h-8 w-8 items-center justify-center rounded-lg text-xs font-semibold text-foreground transition-colors hover:bg-sidebar-accent">
+              {initials}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="right" align="start" className="w-48 rounded-xl border border-border bg-card p-1 shadow-lg">
+              <DropdownMenuItem
+                onClick={() => router.push("/" as never)}
+                className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Back to Panel
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="my-1 border-border" />
+              <DropdownMenuItem
+                onClick={handleLogout}
+                className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        <div className="group-data-[collapsible=icon]:hidden px-2 py-1.5">
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-sidebar-accent">
+              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-muted text-xs font-semibold text-foreground">
+                {initials}
+              </div>
+              <div className="min-w-0 flex-1 text-left">
+                <p className="truncate text-sm font-medium text-foreground">{user?.name ?? "—"}</p>
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="right" align="start" className="w-52 rounded-xl border border-border bg-card p-1 shadow-lg">
+              <DropdownMenuItem
+                onClick={() => router.push("/" as never)}
+                className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Back to Panel
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="my-1 border-border" />
+              <DropdownMenuItem
+                onClick={handleLogout}
+                className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-2 py-2">
-        <SidebarGroup>
+      <SidebarContent className="px-2 py-1">
+        <SidebarGroup className="p-0">
           <SidebarGroupContent>
             <SidebarMenu>
               {NAV_ITEMS.map((item) => (
@@ -77,7 +130,8 @@ export function AdminSidebar() {
                   <SidebarMenuButton
                     render={<Link href={item.href as never} />}
                     isActive={isActive(item.href)}
-                    className="gap-2.5 rounded-lg py-2 text-sm"
+                    tooltip={item.label}
+                    className="h-auto gap-2 rounded-lg py-2 px-3 text-sm"
                   >
                     <item.icon className="h-4 w-4" />
                     {item.label}
@@ -89,32 +143,21 @@ export function AdminSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <div className="flex shrink-0 items-center border-t border-sidebar-border px-3 py-3">
-        {state === "expanded" ? (
-          <div className="flex w-full items-center gap-2.5">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
-              {initials}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-foreground">{user?.name ?? "—"}</p>
-              <p className="truncate text-xs text-muted-foreground">{user?.email ?? ""}</p>
-            </div>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              title="Sign out"
-            >
-              <LogOut className="h-3.5 w-3.5" />
-            </button>
+      <div className="border-t border-sidebar-border">
+        <div className="hidden group-data-[collapsible=icon]:flex justify-center py-3">
+          <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
+        </div>
+        <div className="group-data-[collapsible=icon]:hidden flex items-center gap-2 px-4 py-3">
+          <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
+          <div>
+            <p className="text-[10px] text-muted-foreground/50">© {new Date().getFullYear()} Struxa</p>
+            <p className="text-[10px] text-muted-foreground/40">
+              {process.env.NODE_ENV === "development"
+                ? "in-dev"
+                : [process.env.NEXT_PUBLIC_APP_VERSION, process.env.NEXT_PUBLIC_COMMIT_SHA?.slice(0, 7)].filter(Boolean).join(" · ")}
+            </p>
           </div>
-        ) : (
-          <div className="flex w-full justify-center">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
-              {initials}
-            </div>
-          </div>
-        )}
+        </div>
       </div>
     </Sidebar>
   );

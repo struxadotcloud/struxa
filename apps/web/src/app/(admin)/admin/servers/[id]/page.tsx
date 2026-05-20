@@ -5,14 +5,13 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { skipToken } from "@tanstack/react-query";
-import { SidebarTrigger } from "@struxa/ui/components/sidebar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@struxa/ui/components/dropdown-menu";
-import { Monitor, ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { orpc, queryClient } from "@/utils/orpc";
 import { UserCombobox } from "@/components/user-combobox";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -174,30 +173,6 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
 
   return (
     <>
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4">
-        <div className="flex items-center gap-2 text-sm">
-          <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
-          <Monitor className="h-4 w-4 text-muted-foreground" />
-          <Link href={"/admin/servers" as never} className="text-muted-foreground transition-colors hover:text-foreground">
-            Servers
-          </Link>
-          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
-          <span className="font-medium text-foreground">{server.name}</span>
-          {isSuspended && (
-            <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-[11px] font-medium text-destructive">
-              Suspended
-            </span>
-          )}
-        </div>
-        <Link
-          href={`/servers/${serverId}` as never}
-          className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-        >
-          <ExternalLink className="h-3.5 w-3.5" />
-          View Server
-        </Link>
-      </header>
-
       <div className="flex shrink-0 items-center gap-1 border-b border-border bg-card px-4">
         {TABS.map((t) => (
           <button
@@ -223,7 +198,7 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
         ))}
       </div>
 
-      <div className="flex-1 overflow-auto p-4">
+      <div className="flex-1 overflow-auto px-6 py-5">
         {tab === "general" && (
           <div className="mx-auto max-w-2xl flex flex-col gap-4">
             <SectionCard title="Identity">

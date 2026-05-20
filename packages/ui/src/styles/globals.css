@@ -81,11 +81,11 @@
   --chart-3: #f59e0b;
   --chart-4: #f43f5e;
   --chart-5: #888888;
-  --sidebar: #141414;
-  --sidebar-foreground: #a1a1aa;
+  --sidebar: #111111;
+  --sidebar-foreground: #888888;
   --sidebar-primary: #ffffff;
   --sidebar-primary-foreground: #000000;
-  --sidebar-accent: rgba(255, 255, 255, 0.08);
+  --sidebar-accent: rgba(255, 255, 255, 0.09);
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: #1e1e1e;
   --sidebar-ring: #ffffff;

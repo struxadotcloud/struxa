@@ -3,8 +3,7 @@
 import { use, useState } from "react";
 import Link from "next/link";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { SidebarTrigger } from "@struxa/ui/components/sidebar";
-import { Server, Plus, Trash2, Copy, RefreshCw, ChevronRight } from "lucide-react";
+import { Plus, Trash2, Copy, RefreshCw, ChevronRight } from "lucide-react";
 import { orpc, queryClient } from "@/utils/orpc";
 
 function invalidateNode(id: string) {
@@ -83,44 +82,42 @@ export default function NodeDetailPage({ params }: { params: Promise<{ id: strin
 
   return (
     <>
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4">
-        <div className="flex items-center gap-2 text-sm">
-          <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
-          <Link href={"/admin/nodes" as never} className="text-muted-foreground transition-colors hover:text-foreground">
-            Nodes
-          </Link>
-          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
-          <Server className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="font-medium text-foreground">{node.name}</span>
+      <div className="flex-1 overflow-auto px-6 py-5">
+        <div className="mx-auto max-w-5xl">
+        <div className="mb-5 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm">
+              <Link href={"/admin/nodes" as never} className="text-muted-foreground transition-colors hover:text-foreground">
+              Nodes
+            </Link>
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+            <span className="font-medium text-foreground">{node.name}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => testConnMutation.mutate({ id })}
+              disabled={testConnMutation.isPending}
+              className="rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-40"
+            >
+              {testConnMutation.isPending ? "Testing..." : "Test Connection"}
+            </button>
+            {testConnMutation.isSuccess && (
+              <span className={`text-xs font-medium ${testConnMutation.data.online ? "text-green-500" : "text-destructive"}`}>
+                {testConnMutation.data.online ? "Connected" : "Offline"}
+              </span>
+            )}
+            {testConnMutation.isError && (
+              <span className="text-xs font-medium text-destructive">Failed</span>
+            )}
+            <button
+              type="button"
+              onClick={() => setShowConfig((v) => !v)}
+              className="rounded-lg bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80"
+            >
+              {showConfig ? "Hide Config" : "Wings Config"}
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => testConnMutation.mutate({ id })}
-            disabled={testConnMutation.isPending}
-            className="rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-40"
-          >
-            {testConnMutation.isPending ? "Testing..." : "Test Connection"}
-          </button>
-          {testConnMutation.isSuccess && (
-            <span className={`text-xs font-medium ${testConnMutation.data.online ? "text-green-500" : "text-destructive"}`}>
-              {testConnMutation.data.online ? "Connected" : "Offline"}
-            </span>
-          )}
-          {testConnMutation.isError && (
-            <span className="text-xs font-medium text-destructive">Failed</span>
-          )}
-          <button
-            type="button"
-            onClick={() => setShowConfig((v) => !v)}
-            className="rounded-lg bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80"
-          >
-            {showConfig ? "Hide Config" : "Wings Config"}
-          </button>
-        </div>
-      </header>
-
-      <div className="flex-1 overflow-auto p-4">
         {showConfig && deployConfig?.yaml && (
           <div className="mb-4 rounded-xl border border-border bg-card shadow-sm overflow-hidden">
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
@@ -160,18 +157,7 @@ export default function NodeDetailPage({ params }: { params: Promise<{ id: strin
 
         <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
-            <div className="flex items-center gap-2.5">
-              <span className="text-sm font-medium text-foreground">Allocations</span>
-              <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                {allocations.length} total
-              </span>
-              <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-[11px] font-medium text-green-600 dark:text-green-400">
-                {freeAllocations.length} free
-              </span>
-              <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                {usedAllocations.length} used
-              </span>
-            </div>
+            <span className="text-sm font-medium text-foreground">Allocations</span>
             <button
               type="button"
               onClick={() => setAddingAlloc(true)}
@@ -286,6 +272,7 @@ export default function NodeDetailPage({ params }: { params: Promise<{ id: strin
               </div>
             ))}
           </div>
+        </div>
         </div>
       </div>
     </>

@@ -1,11 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { use } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { SidebarTrigger } from "@struxa/ui/components/sidebar";
 import {
   Globe,
   Clock,
@@ -13,12 +11,9 @@ import {
   HardDrive,
   ArrowDown,
   ArrowUp,
-  Settings,
-  Maximize2,
   Copy,
   SendHorizontal,
   MemoryStick,
-  ChevronRight,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { orpc } from "@/utils/orpc";
@@ -317,55 +312,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
 
   return (
     <>
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4">
-        <div className="flex items-center gap-2 text-sm">
-          <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
-          <Link href="/" className="text-muted-foreground transition-colors hover:text-foreground">
-            Game Servers
-          </Link>
-          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
-          <span className="font-medium text-foreground">{server?.name ?? id}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            disabled={!canStart || powerMutation.isPending}
-            onClick={() => powerMutation.mutate({ serverId: id, action: "start" })}
-            className="rounded-lg bg-green-500 px-3 py-1.5 text-sm font-medium text-white transition-opacity hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-30"
-          >
-            Start
-          </button>
-          <button
-            type="button"
-            disabled={!canRestart || powerMutation.isPending}
-            onClick={() => powerMutation.mutate({ serverId: id, action: "restart" })}
-            className="rounded-lg border border-border bg-secondary px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-30"
-          >
-            Restart
-          </button>
-          {canKill ? (
-            <button
-              type="button"
-              disabled={powerMutation.isPending}
-              onClick={() => powerMutation.mutate({ serverId: id, action: "kill" })}
-              className="rounded-lg bg-destructive px-3 py-1.5 text-sm font-medium text-white transition-opacity hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-30"
-            >
-              Kill
-            </button>
-          ) : (
-            <button
-              type="button"
-              disabled={!canStop || powerMutation.isPending}
-              onClick={() => powerMutation.mutate({ serverId: id, action: "stop" })}
-              className="rounded-lg bg-destructive px-3 py-1.5 text-sm font-medium text-white transition-opacity hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-30"
-            >
-              Stop
-            </button>
-          )}
-        </div>
-      </header>
-
-      <div className="flex flex-1 gap-3 overflow-hidden p-3">
+      <div className="flex flex-1 gap-3 overflow-hidden px-4 py-4">
         {/* Console panel */}
         <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-[#0f0f0f] shadow-sm">
           <div className="flex h-10 shrink-0 items-center justify-between rounded-t-xl border-b border-border/50 bg-[#161616] px-3">
@@ -385,9 +332,42 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                 {wsStatus}
               </span>
             </div>
-            <div className="flex items-center gap-3 text-zinc-600">
-              <Settings className="h-3.5 w-3.5 cursor-pointer transition-colors hover:text-zinc-300" />
-              <Maximize2 className="h-3.5 w-3.5 cursor-pointer transition-colors hover:text-zinc-300" />
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={!canStart || powerMutation.isPending}
+                onClick={() => powerMutation.mutate({ serverId: id, action: "start" })}
+                className="rounded-md bg-green-500/20 px-2.5 py-1 text-xs font-medium text-green-400 transition-colors hover:bg-green-500/30 disabled:cursor-not-allowed disabled:opacity-30"
+              >
+                Start
+              </button>
+              <button
+                type="button"
+                disabled={!canRestart || powerMutation.isPending}
+                onClick={() => powerMutation.mutate({ serverId: id, action: "restart" })}
+                className="rounded-md bg-zinc-700/60 px-2.5 py-1 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-30"
+              >
+                Restart
+              </button>
+              {canKill ? (
+                <button
+                  type="button"
+                  disabled={powerMutation.isPending}
+                  onClick={() => powerMutation.mutate({ serverId: id, action: "kill" })}
+                  className="rounded-md bg-red-500/20 px-2.5 py-1 text-xs font-medium text-red-400 transition-colors hover:bg-red-500/30 disabled:cursor-not-allowed disabled:opacity-30"
+                >
+                  Kill
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  disabled={!canStop || powerMutation.isPending}
+                  onClick={() => powerMutation.mutate({ serverId: id, action: "stop" })}
+                  className="rounded-md bg-red-500/20 px-2.5 py-1 text-xs font-medium text-red-400 transition-colors hover:bg-red-500/30 disabled:cursor-not-allowed disabled:opacity-30"
+                >
+                  Stop
+                </button>
+              )}
             </div>
           </div>
 
