@@ -30,18 +30,18 @@ import {
   Activity,
   LogOut,
   ShieldCheck,
+  ChevronLeft,
 } from "lucide-react";
-import { mockServers } from "@/lib/mock-data";
 import { authClient } from "@/lib/auth-client";
 
 const NAV_PRIMARY = [
-  { key: "servers", label: "Game Servers", icon: Server },
-  { key: "account", label: "Account", icon: User },
-  { key: "billing", label: "Billing", icon: CreditCard },
+  { key: "servers", label: "Game Servers", icon: Server, href: "/" },
+  { key: "account", label: "Account", icon: User, href: "/account" },
+  { key: "billing", label: "Billing", icon: CreditCard, href: "/billing" },
 ];
 
 const NAV_SECONDARY = [
-  { key: "support", label: "Support", icon: LifeBuoy },
+  { key: "support", label: "Support", icon: LifeBuoy, href: "/support" },
 ];
 
 const NAV_SERVER = [
@@ -72,28 +72,29 @@ export function PanelSidebar() {
 
   const isServerPage = pathname.startsWith("/servers/");
   const serverId = isServerPage ? (params.id as string) : null;
-  const _server = serverId ? mockServers.find((s) => s.id === serverId) : null;
   const activeServerTab = pathname.split("/servers/")[1]?.split("/")[1] ?? "console";
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-[#222222] bg-[#0a0a0a]">
-      <SidebarHeader className="flex items-center justify-center border-b border-[#222222] px-4 py-4">
-        <div className="flex items-center gap-2">
-          <Image
-            src="/logo-white.svg"
-            alt="Logo"
-            width={96}
-            height={28}
-            priority
-            className="h-6 w-auto"
-          />
-          {state === "expanded" && <span className="text-sm font-semibold text-white">struxa</span>}
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
+      <SidebarHeader className="border-b border-sidebar-border px-3 py-3">
+        <div className="flex items-center gap-2 px-1">
+          <Image src="/logo-dark.svg" alt="Struxa" width={80} height={24} priority className="h-5 w-auto dark:hidden" />
+          <Image src="/logo-white.svg" alt="Struxa" width={80} height={24} priority className="hidden h-5 w-auto dark:block" />
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="py-2">
+      <SidebarContent className="px-2 py-2">
         {isServerPage ? (
           <SidebarGroup>
+            {state === "expanded" && (
+              <Link
+                href="/"
+                className="mb-2 flex items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <ChevronLeft className="h-3 w-3" />
+                All Servers
+              </Link>
+            )}
             <SidebarGroupContent>
               <SidebarMenu>
                 {NAV_SERVER.map((item) => (
@@ -109,7 +110,7 @@ export function PanelSidebar() {
                         />
                       }
                       isActive={item.key === activeServerTab}
-                      className="gap-2.5 text-xs"
+                      className="gap-2.5 rounded-lg text-sm"
                     >
                       <item.icon className="h-4 w-4" />
                       {item.label}
@@ -127,8 +128,9 @@ export function PanelSidebar() {
                   {NAV_PRIMARY.map((item) => (
                     <SidebarMenuItem key={item.key}>
                       <SidebarMenuButton
-                        isActive={pathname === "/" ? item.key === "servers" : false}
-                        className="gap-2.5 text-xs"
+                        render={<Link href={item.href as never} />}
+                        isActive={pathname === "/" ? item.key === "servers" : pathname.startsWith(item.href) && item.href !== "/"}
+                        className="gap-2.5 rounded-lg text-sm"
                       >
                         <item.icon className="h-4 w-4" />
                         {item.label}
@@ -144,7 +146,10 @@ export function PanelSidebar() {
                 <SidebarMenu>
                   {NAV_SECONDARY.map((item) => (
                     <SidebarMenuItem key={item.key}>
-                      <SidebarMenuButton className="gap-2.5 text-xs">
+                      <SidebarMenuButton
+                        render={<Link href={item.href as never} />}
+                        className="gap-2.5 rounded-lg text-sm"
+                      >
                         <item.icon className="h-4 w-4" />
                         {item.label}
                       </SidebarMenuButton>
@@ -154,7 +159,7 @@ export function PanelSidebar() {
                     <SidebarMenuItem>
                       <SidebarMenuButton
                         render={<Link href={"/admin" as never} />}
-                        className="gap-2.5 text-xs"
+                        className="gap-2.5 rounded-lg text-sm"
                       >
                         <ShieldCheck className="h-4 w-4" />
                         Admin Dashboard
@@ -168,20 +173,20 @@ export function PanelSidebar() {
         )}
       </SidebarContent>
 
-      <div className="flex shrink-0 items-center border-t border-[#222222] px-3 py-2.5">
+      <div className="flex shrink-0 items-center border-t border-sidebar-border px-3 py-3">
         {state === "expanded" ? (
           <div className="flex w-full items-center gap-2.5">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#333333] bg-[#1a1a1a] text-xs font-semibold text-white">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
               {initials}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-medium text-white">{user?.name ?? "—"}</p>
-              <p className="truncate text-[10px] text-[#555555]">{user?.email ?? ""}</p>
+              <p className="truncate text-sm font-medium text-foreground">{user?.name ?? "—"}</p>
+              <p className="truncate text-xs text-muted-foreground">{user?.email ?? ""}</p>
             </div>
             <button
               type="button"
               onClick={handleLogout}
-              className="text-[#555555] transition-colors hover:text-white"
+              className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               title="Sign out"
             >
               <LogOut className="h-3.5 w-3.5" />
@@ -189,7 +194,7 @@ export function PanelSidebar() {
           </div>
         ) : (
           <div className="flex w-full justify-center">
-            <div className="flex h-7 w-7 items-center justify-center rounded-full border border-[#333333] bg-[#1a1a1a] text-xs font-semibold text-white">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
               {initials}
             </div>
           </div>

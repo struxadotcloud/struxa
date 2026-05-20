@@ -2,7 +2,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { SidebarTrigger } from "@struxa/ui/components/sidebar";
-import { Server, Monitor } from "lucide-react";
+import { Server, Monitor, Activity } from "lucide-react";
+import Link from "next/link";
 import { orpc } from "@/utils/orpc";
 
 function StatCard({
@@ -10,25 +11,39 @@ function StatCard({
   label,
   value,
   sub,
+  color,
 }: {
   icon: React.ElementType;
   label: string;
   value: React.ReactNode;
   sub?: string;
+  color?: string;
 }) {
   return (
-    <div className="flex flex-col gap-2 border-r border-b border-[#222222] p-5">
-      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-[#555555]">
-        <Icon className="h-3.5 w-3.5" />
-        {label}
+    <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-5 shadow-sm">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-muted-foreground">{label}</span>
+        <div
+          className="flex h-8 w-8 items-center justify-center rounded-lg"
+          style={{ backgroundColor: color ? `${color}18` : undefined }}
+        >
+          <Icon className="h-4 w-4" style={{ color: color ?? "currentColor" }} />
+        </div>
       </div>
-      <div className="flex items-baseline gap-1.5">
-        <span className="text-3xl font-bold text-white">{value}</span>
-        {sub && <span className="text-sm text-[#555555]">{sub}</span>}
+      <div className="flex items-baseline gap-2">
+        <span className="text-3xl font-bold text-foreground">{value}</span>
+        {sub && <span className="text-sm text-muted-foreground">{sub}</span>}
       </div>
     </div>
   );
 }
+
+const QUICK_LINKS = [
+  { href: "/admin/locations", label: "Manage Locations", description: "Add and configure Wings nodes" },
+  { href: "/admin/nodes", label: "Manage Nodes", description: "View and edit your nodes" },
+  { href: "/admin/nests", label: "Nests & Eggs", description: "Configure server templates" },
+  { href: "/admin/servers/new", label: "Create Server", description: "Provision a new game server" },
+];
 
 export default function AdminDashboard() {
   const { data: nodes } = useQuery(orpc.nodes.list.queryOptions());
@@ -38,50 +53,49 @@ export default function AdminDashboard() {
 
   return (
     <>
-      <header className="flex h-14 shrink-0 items-center gap-3 border-b border-[#222222] px-4">
-        <SidebarTrigger className="-ml-1 text-[#888888] hover:text-white" />
-        <span className="text-sm text-white">Admin Dashboard</span>
-        <span className="border border-[#333333] px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-[#555555]">
-          admin
-        </span>
+      <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border bg-card px-4">
+        <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
+        <span className="text-sm font-medium text-foreground">Dashboard</span>
       </header>
 
-      <div className="flex-1 overflow-auto p-0">
-        <div className="grid grid-cols-3 border-l border-[#222222]">
-          <StatCard
-            icon={Server}
-            label="Nodes"
-            value={nodes?.length ?? "—"}
-            sub={`${onlineNodes} online`}
-          />
-          <StatCard
-            icon={Monitor}
-            label="Servers"
-            value={servers?.length ?? "—"}
-          />
-          <StatCard
-            icon={Server}
-            label="Active Nodes"
-            value={onlineNodes}
-          />
+      <div className="flex-1 overflow-auto p-4">
+        <div className="mb-6">
+          <h2 className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">Overview</h2>
+          <div className="grid grid-cols-3 gap-3">
+            <StatCard
+              icon={Server}
+              label="Nodes"
+              value={nodes?.length ?? "—"}
+              sub={`${onlineNodes} online`}
+              color="#22c55e"
+            />
+            <StatCard
+              icon={Monitor}
+              label="Servers"
+              value={servers?.length ?? "—"}
+              color="#3b82f6"
+            />
+            <StatCard
+              icon={Activity}
+              label="Active Nodes"
+              value={onlineNodes}
+              color="#f59e0b"
+            />
+          </div>
         </div>
 
-        <div className="mt-8 px-6">
-          <p className="text-xs uppercase tracking-widest text-[#444444]">Quick links</p>
-          <div className="mt-3 grid grid-cols-4 border-l border-t border-[#222222]">
-            {[
-              { href: "/admin/locations", label: "Manage Locations" },
-              { href: "/admin/nodes", label: "Manage Nodes" },
-              { href: "/admin/nests", label: "Manage Nests & Eggs" },
-              { href: "/admin/servers/new", label: "Create Server" },
-            ].map((link) => (
-              <a
+        <div>
+          <h2 className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">Quick Links</h2>
+          <div className="grid grid-cols-2 gap-3">
+            {QUICK_LINKS.map((link) => (
+              <Link
                 key={link.href}
                 href={link.href}
-                className="flex items-center border-r border-b border-[#222222] px-4 py-3 text-sm text-[#888888] transition-colors hover:bg-[#111111] hover:text-white"
+                className="group flex flex-col gap-1 rounded-xl border border-border bg-card p-4 shadow-sm transition-all hover:shadow-md hover:border-border/80"
               >
-                {link.label}
-              </a>
+                <span className="text-sm font-medium text-foreground group-hover:text-foreground">{link.label}</span>
+                <span className="text-xs text-muted-foreground">{link.description}</span>
+              </Link>
             ))}
           </div>
         </div>

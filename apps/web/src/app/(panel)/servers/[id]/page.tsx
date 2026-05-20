@@ -18,6 +18,7 @@ import {
   Copy,
   SendHorizontal,
   MemoryStick,
+  ChevronRight,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { orpc } from "@/utils/orpc";
@@ -35,7 +36,7 @@ function fmtBytes(bytes: number) {
 }
 
 function Sparkline({ data, color = "#22c55e" }: { data: number[]; color?: string }) {
-  const h = 56;
+  const h = 48;
   const W = 248;
   const max = Math.max(...data, 1);
   const coords = data.map((v, i) => ({
@@ -45,8 +46,8 @@ function Sparkline({ data, color = "#22c55e" }: { data: number[]; color?: string
   const line = coords.map((p) => `${p.x},${p.y}`).join(" ");
   const area = `0,${h} ${line} ${W},${h}`;
   return (
-    <svg viewBox={`0 0 ${W} ${h}`} className="block h-14 w-full" preserveAspectRatio="none">
-      <polygon points={area} fill={color} fillOpacity={0.15} />
+    <svg viewBox={`0 0 ${W} ${h}`} className="block h-12 w-full" preserveAspectRatio="none">
+      <polygon points={area} fill={color} fillOpacity={0.12} />
       <polyline points={line} fill="none" stroke={color} strokeWidth={1.5} />
     </svg>
   );
@@ -64,10 +65,10 @@ function StatRow({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col border-b border-[#222222]">
-      <div className="flex flex-col gap-2 px-4 pt-4 pb-3">
-        <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-[#555555]">
-          <Icon className="h-3.5 w-3.5" />
+    <div className="flex flex-col border-b border-border last:border-b-0">
+      <div className="flex flex-col gap-1.5 px-4 pt-3 pb-2.5">
+        <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+          <Icon className="h-3 w-3" />
           {label}
         </div>
         {children}
@@ -96,7 +97,6 @@ interface AnsiSpan { text: string; color?: string; bg?: string; bold?: boolean }
 
 function parseAnsi(raw: string): AnsiSpan[] {
   const spans: AnsiSpan[] = [];
-  // ESC can be \x1b or its literal replacement ; also match bare [ sequences Wings strips ESC from
   const re = /\x1b\[([0-9;]*)m/g;
   let pos = 0;
   let color: string | undefined;
@@ -271,7 +271,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
   }, [lines]);
 
   useEffect(() => {
-    const id = setInterval(() => {
+    const intervalId = setInterval(() => {
       const s = statsRef.current;
       const rxRate = Math.max(0, s.rxBytes - prevRxRef.current) / 2;
       const txRate = Math.max(0, s.txBytes - prevTxRef.current) / 2;
@@ -283,13 +283,12 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
       setRxHistory((prev) => [...prev.slice(1), rxRate]);
       setTxHistory((prev) => [...prev.slice(1), txRate]);
     }, 2000);
-    return () => clearInterval(id);
+    return () => clearInterval(intervalId);
   }, []);
 
   const powerMutation = useMutation({
     ...orpc.servers.power.mutationOptions(),
   });
-
 
   function sendCommand() {
     if (!command.trim() || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
@@ -309,23 +308,30 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
   const canKill = wsStatus === "starting" || wsStatus === "stopping";
   const canRestart = wsStatus === "running";
 
+  const wsStatusColor =
+    wsStatus === "running"
+      ? "#22c55e"
+      : wsStatus === "starting" || wsStatus === "stopping"
+        ? "#f59e0b"
+        : "#71717a";
+
   return (
     <>
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#222222] px-4">
-        <div className="flex items-center gap-2 text-xs">
-          <SidebarTrigger className="-ml-1 text-[#888888] hover:text-white" />
-          <Link href="/" className="text-[#555555] transition-colors hover:text-white">
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4">
+        <div className="flex items-center gap-2 text-sm">
+          <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
+          <Link href="/" className="text-muted-foreground transition-colors hover:text-foreground">
             Game Servers
           </Link>
-          <span className="text-[#333333]">/</span>
-          <span className="text-white">{server?.name ?? id}</span>
+          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+          <span className="font-medium text-foreground">{server?.name ?? id}</span>
         </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
             disabled={!canStart || powerMutation.isPending}
             onClick={() => powerMutation.mutate({ serverId: id, action: "start" })}
-            className="px-4 py-1.5 text-sm font-medium transition-opacity bg-[#22c55e] text-black enabled:hover:opacity-80 disabled:opacity-30 disabled:cursor-not-allowed"
+            className="rounded-lg bg-green-500 px-3 py-1.5 text-sm font-medium text-white transition-opacity hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-30"
           >
             Start
           </button>
@@ -333,7 +339,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
             type="button"
             disabled={!canRestart || powerMutation.isPending}
             onClick={() => powerMutation.mutate({ serverId: id, action: "restart" })}
-            className="px-4 py-1.5 text-sm font-medium transition-opacity bg-neutral-700 text-white enabled:hover:opacity-80 disabled:opacity-30 disabled:cursor-not-allowed"
+            className="rounded-lg border border-border bg-secondary px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-30"
           >
             Restart
           </button>
@@ -342,7 +348,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
               type="button"
               disabled={powerMutation.isPending}
               onClick={() => powerMutation.mutate({ serverId: id, action: "kill" })}
-              className="px-4 py-1.5 text-sm font-medium transition-opacity bg-[#f43f5e] text-white enabled:hover:opacity-80 disabled:opacity-30 disabled:cursor-not-allowed"
+              className="rounded-lg bg-destructive px-3 py-1.5 text-sm font-medium text-white transition-opacity hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-30"
             >
               Kill
             </button>
@@ -351,7 +357,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
               type="button"
               disabled={!canStop || powerMutation.isPending}
               onClick={() => powerMutation.mutate({ serverId: id, action: "stop" })}
-              className="px-4 py-1.5 text-sm font-medium transition-opacity bg-[#f43f5e] text-white enabled:hover:opacity-80 disabled:opacity-30 disabled:cursor-not-allowed"
+              className="rounded-lg bg-destructive px-3 py-1.5 text-sm font-medium text-white transition-opacity hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-30"
             >
               Stop
             </button>
@@ -359,35 +365,38 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
-        <div className="flex flex-1 flex-col overflow-hidden">
-          <div className="flex h-10 shrink-0 items-center justify-between border-b border-[#222222] px-4">
+      <div className="flex flex-1 gap-3 overflow-hidden p-3">
+        {/* Console panel */}
+        <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-[#0f0f0f] shadow-sm">
+          <div className="flex h-10 shrink-0 items-center justify-between rounded-t-xl border-b border-border/50 bg-[#161616] px-3">
             <div className="flex items-center gap-2">
               <span
-                className={`h-2 w-2 rounded-full transition-colors ${
+                className={`h-2 w-2 rounded-full ${
                   !connected
-                    ? "bg-[#555555] animate-pulse"
+                    ? "animate-pulse bg-zinc-600"
                     : wsStatus === "running"
-                      ? "bg-[#22c55e]"
+                      ? "bg-green-500"
                       : wsStatus === "starting" || wsStatus === "stopping"
-                        ? "bg-[#888888] animate-pulse"
-                        : "bg-[#555555]"
+                        ? "animate-pulse bg-amber-500"
+                        : "bg-zinc-600"
                 }`}
               />
-              <span className="text-sm text-white capitalize">{wsStatus}</span>
+              <span className="text-xs font-medium capitalize" style={{ color: wsStatusColor }}>
+                {wsStatus}
+              </span>
             </div>
-            <div className="flex items-center gap-3 text-[#555555]">
-              <Settings className="h-4 w-4 cursor-pointer hover:text-white" />
-              <Maximize2 className="h-4 w-4 cursor-pointer hover:text-white" />
+            <div className="flex items-center gap-3 text-zinc-600">
+              <Settings className="h-3.5 w-3.5 cursor-pointer transition-colors hover:text-zinc-300" />
+              <Maximize2 className="h-3.5 w-3.5 cursor-pointer transition-colors hover:text-zinc-300" />
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 font-mono text-xs">
+          <div className="flex-1 overflow-y-auto p-3 font-mono text-xs">
             {lines.length === 0 ? (
-              <div className="text-[#444444]">Waiting for console output…</div>
+              <div className="text-zinc-700">Waiting for console output…</div>
             ) : (
               lines.map((line, i) => (
-                <div key={i} className="leading-relaxed text-[#aaaaaa] whitespace-pre-wrap break-all">
+                <div key={i} className="leading-relaxed text-zinc-400 whitespace-pre-wrap break-all">
                   <AnsiLine raw={line} />
                 </div>
               ))
@@ -395,10 +404,10 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
             <div ref={consoleEndRef} />
           </div>
 
-          <div className="flex h-11 shrink-0 items-center border-t border-[#222222] bg-[#0d0d0d]">
-            <span className="px-3 font-mono text-sm text-[#555555]">{">"}</span>
+          <div className="flex h-11 shrink-0 items-center rounded-b-xl border-t border-border/50 bg-[#161616]">
+            <span className="px-3 font-mono text-sm text-zinc-600">{">"}</span>
             <input
-              className="flex-1 bg-transparent font-mono text-sm text-white outline-none placeholder:text-[#444444]"
+              className="flex-1 bg-transparent font-mono text-sm text-zinc-200 outline-none placeholder:text-zinc-700"
               placeholder="Type a command..."
               value={command}
               onChange={(e) => setCommand(e.target.value)}
@@ -409,56 +418,67 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
             <button
               type="button"
               onClick={sendCommand}
-              className="px-4 text-[#555555] transition-colors hover:text-[#22c55e]"
+              className="px-3 text-zinc-600 transition-colors hover:text-green-400"
             >
               <SendHorizontal className="h-4 w-4" />
             </button>
           </div>
         </div>
 
-        <aside className="flex w-[280px] shrink-0 flex-col overflow-y-auto border-l border-[#222222]">
-          <StatRow icon={Globe} label="ADDRESS">
-            <div className="flex items-center justify-between">
-              <span className="font-mono text-base font-bold text-white">
-                {alloc ? `${alloc.ip}:${alloc.port}` : "—"}
+        {/* Stats panel */}
+        <aside className="flex w-[260px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+          <div className="overflow-y-auto">
+            <StatRow icon={Globe} label="Address">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-sm font-semibold text-foreground">
+                  {alloc ? `${alloc.ip}:${alloc.port}` : "—"}
+                </span>
+                {alloc && (
+                  <button
+                    type="button"
+                    onClick={() => copy(`${alloc.ip}:${alloc.port}`)}
+                    className="rounded p-0.5 text-muted-foreground/50 transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            </StatRow>
+            <StatRow icon={Clock} label="Status">
+              <span
+                className="rounded-full px-2 py-0.5 text-xs font-semibold capitalize"
+                style={{ color: wsStatusColor, backgroundColor: `${wsStatusColor}18` }}
+              >
+                {wsStatus}
               </span>
-              {alloc && (
-                <Copy
-                  className="h-3.5 w-3.5 cursor-pointer text-[#555555] hover:text-white"
-                  onClick={() => copy(`${alloc.ip}:${alloc.port}`)}
-                />
-              )}
-            </div>
-          </StatRow>
-          <StatRow icon={Clock} label="STATUS">
-            <span className="text-xl font-bold text-white capitalize">{wsStatus}</span>
-          </StatRow>
-          <StatRow icon={Cpu} label="CPU" chart={<Sparkline data={cpuHistory} color="#3b82f6" />}>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl font-bold text-white">{stats.cpu.toFixed(1)}%</span>
-              <span className="text-sm text-[#555555]">/ {server?.cpu ?? 0}%</span>
-            </div>
-          </StatRow>
-          <StatRow icon={MemoryStick} label="MEMORY" chart={<Sparkline data={ramHistory} color="#a855f7" />}>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl font-bold text-white">
-                {fmtMb(stats.memBytes / (1024 * 1024))}
-              </span>
-              <span className="text-sm text-[#555555]">/ {fmtMb(stats.memLimitBytes / (1024 * 1024))}</span>
-            </div>
-          </StatRow>
-          <StatRow icon={HardDrive} label="DISK" chart={<Sparkline data={diskHistory} color="#f43f5e" />}>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl font-bold text-white">{fmtMb(stats.diskMb)}</span>
-              <span className="text-sm text-[#555555]">/ {fmtMb(server?.disk ?? 0)}</span>
-            </div>
-          </StatRow>
-          <StatRow icon={ArrowDown} label="INBOUND" chart={<Sparkline data={rxHistory} />}>
-            <span className="text-2xl font-bold text-white">{fmtBytes(rxHistory[rxHistory.length - 1] ?? 0)}</span>
-          </StatRow>
-          <StatRow icon={ArrowUp} label="OUTBOUND" chart={<Sparkline data={txHistory} />}>
-            <span className="text-2xl font-bold text-white">{fmtBytes(txHistory[txHistory.length - 1] ?? 0)}</span>
-          </StatRow>
+            </StatRow>
+            <StatRow icon={Cpu} label="CPU" chart={<Sparkline data={cpuHistory} color="#3b82f6" />}>
+              <div className="flex items-baseline gap-1">
+                <span className="text-xl font-bold text-foreground">{stats.cpu.toFixed(1)}%</span>
+                <span className="text-xs text-muted-foreground">/ {server?.cpu ?? 0}%</span>
+              </div>
+            </StatRow>
+            <StatRow icon={MemoryStick} label="Memory" chart={<Sparkline data={ramHistory} color="#a855f7" />}>
+              <div className="flex items-baseline gap-1">
+                <span className="text-xl font-bold text-foreground">
+                  {fmtMb(stats.memBytes / (1024 * 1024))}
+                </span>
+                <span className="text-xs text-muted-foreground">/ {fmtMb(stats.memLimitBytes / (1024 * 1024))}</span>
+              </div>
+            </StatRow>
+            <StatRow icon={HardDrive} label="Disk" chart={<Sparkline data={diskHistory} color="#f43f5e" />}>
+              <div className="flex items-baseline gap-1">
+                <span className="text-xl font-bold text-foreground">{fmtMb(stats.diskMb)}</span>
+                <span className="text-xs text-muted-foreground">/ {fmtMb(server?.disk ?? 0)}</span>
+              </div>
+            </StatRow>
+            <StatRow icon={ArrowDown} label="Inbound" chart={<Sparkline data={rxHistory} />}>
+              <span className="text-xl font-bold text-foreground">{fmtBytes(rxHistory[rxHistory.length - 1] ?? 0)}</span>
+            </StatRow>
+            <StatRow icon={ArrowUp} label="Outbound" chart={<Sparkline data={txHistory} />}>
+              <span className="text-xl font-bold text-foreground">{fmtBytes(txHistory[txHistory.length - 1] ?? 0)}</span>
+            </StatRow>
+          </div>
         </aside>
       </div>
     </>

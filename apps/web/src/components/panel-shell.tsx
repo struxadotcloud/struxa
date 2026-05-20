@@ -29,7 +29,7 @@ export function PanelShell({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider open={open} onOpenChange={handleOpenChange} className="h-svh overflow-hidden">
       <PanelSidebar />
-      <SidebarInset className="flex flex-col overflow-hidden bg-[#0a0a0a]">{children}</SidebarInset>
+      <SidebarInset className="flex flex-col overflow-hidden bg-background">{children}</SidebarInset>
     </SidebarProvider>
   );
 }

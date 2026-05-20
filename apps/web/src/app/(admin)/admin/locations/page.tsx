@@ -12,6 +12,10 @@ function invalidate() {
   void queryClient.invalidateQueries({ queryKey: orpc.locations.key() });
 }
 
+function inputClass(small?: boolean) {
+  return `w-full rounded-lg border border-border bg-background px-3 ${small ? "py-1" : "py-1.5"} text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors`;
+}
+
 export default function LocationsPage() {
   const { data: locations, isLoading } = useQuery(orpc.locations.list.queryOptions());
   const createMutation = useMutation(orpc.locations.create.mutationOptions({ onSuccess: invalidate }));
@@ -73,22 +77,23 @@ export default function LocationsPage() {
           setConfirmDelete(null);
         }}
       />
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#222222] px-4">
-        <div className="flex items-center gap-3">
-          <SidebarTrigger className="-ml-1 text-[#888888] hover:text-white" />
-          <MapPin className="h-4 w-4 text-[#555555]" />
-          <span className="text-sm text-white">Locations</span>
+
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4">
+        <div className="flex items-center gap-2.5">
+          <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
+          <MapPin className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium text-foreground">Locations</span>
           {locations && (
-            <span className="border border-[#333333] px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-[#555555]">
+            <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
               {locations.length}
             </span>
           )}
         </div>
         <div className="flex items-center gap-2">
           <div className="relative flex items-center">
-            <Search className="absolute left-2.5 h-3.5 w-3.5 text-[#555555]" />
+            <Search className="absolute left-2.5 h-3.5 w-3.5 text-muted-foreground/50" />
             <input
-              className="border border-[#333333] bg-[#0a0a0a] py-1.5 pl-8 pr-3 text-sm text-white outline-none placeholder:text-[#444444] focus:border-[#555555]"
+              className="rounded-lg border border-border bg-background py-1.5 pl-8 pr-3 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
               placeholder="Search locations..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -97,7 +102,7 @@ export default function LocationsPage() {
           <button
             type="button"
             onClick={() => { setAdding(true); setEditingId(null); }}
-            className="flex items-center gap-1.5 bg-white px-4 py-1.5 text-sm font-medium text-black transition-opacity hover:opacity-80"
+            className="flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80"
           >
             <Plus className="h-3.5 w-3.5" />
             New Location
@@ -105,36 +110,36 @@ export default function LocationsPage() {
         </div>
       </header>
 
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto p-4">
         {adding && (
-          <div className="border-b border-[#222222] p-4">
-            <p className="mb-3 text-xs uppercase tracking-widest text-[#555555]">New Location</p>
+          <div className="mb-4 rounded-xl border border-border bg-card p-4 shadow-sm">
+            <p className="mb-3 text-xs font-medium text-muted-foreground">New Location</p>
             <div className="grid grid-cols-3 gap-3">
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] uppercase tracking-wider text-[#555555]">Name *</label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-foreground">Name <span className="text-destructive">*</span></label>
                 <input
                   autoFocus
-                  className="border border-[#333333] bg-[#0a0a0a] px-3 py-1.5 text-sm text-white outline-none placeholder:text-[#444444] focus:border-[#555555]"
+                  className={inputClass()}
                   placeholder="US East"
                   value={form.name}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                   onKeyDown={(e) => { if (e.key === "Enter") void handleCreate(); if (e.key === "Escape") setAdding(false); }}
                 />
               </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] uppercase tracking-wider text-[#555555]">Short Code *</label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-foreground">Short Code <span className="text-destructive">*</span></label>
                 <input
-                  className="border border-[#333333] bg-[#0a0a0a] px-3 py-1.5 text-sm text-white outline-none placeholder:text-[#444444] focus:border-[#555555]"
+                  className={inputClass()}
                   placeholder="us-east"
                   value={form.short}
                   onChange={(e) => setForm((f) => ({ ...f, short: e.target.value }))}
                   onKeyDown={(e) => { if (e.key === "Enter") void handleCreate(); if (e.key === "Escape") setAdding(false); }}
                 />
               </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] uppercase tracking-wider text-[#555555]">Description</label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-foreground">Description</label>
                 <input
-                  className="border border-[#333333] bg-[#0a0a0a] px-3 py-1.5 text-sm text-white outline-none placeholder:text-[#444444] focus:border-[#555555]"
+                  className={inputClass()}
                   placeholder="Optional description"
                   value={form.long}
                   onChange={(e) => setForm((f) => ({ ...f, long: e.target.value }))}
@@ -147,14 +152,14 @@ export default function LocationsPage() {
                 type="button"
                 onClick={handleCreate}
                 disabled={createMutation.isPending}
-                className="bg-white px-4 py-1.5 text-sm font-medium text-black transition-opacity hover:opacity-80 disabled:opacity-40"
+                className="rounded-lg bg-foreground px-4 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
               >
                 {createMutation.isPending ? "Creating..." : "Create"}
               </button>
               <button
                 type="button"
                 onClick={() => setAdding(false)}
-                className="bg-neutral-800 px-4 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-80"
+                className="rounded-lg border border-border px-4 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
               >
                 Cancel
               </button>
@@ -162,33 +167,41 @@ export default function LocationsPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 border-l border-[#222222]">
+        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+          <div className="grid grid-cols-[120px_1fr_1fr_48px] border-b border-border bg-muted/40 px-4 py-2.5">
+            <span className="text-xs font-medium text-muted-foreground">Short</span>
+            <span className="text-xs font-medium text-muted-foreground">Name</span>
+            <span className="text-xs font-medium text-muted-foreground">Description</span>
+            <span />
+          </div>
+
           {isLoading && (
-            <div className="border-r border-b border-[#222222] px-4 py-3 text-sm text-[#555555]">Loading...</div>
+            <div className="px-4 py-8 text-center text-sm text-muted-foreground">Loading...</div>
           )}
           {!isLoading && filtered.length === 0 && (
-            <div className="border-r border-b border-[#222222] px-4 py-3 text-sm text-[#555555]">
+            <div className="px-4 py-8 text-center text-sm text-muted-foreground">
               {search ? "No locations match your search." : "No locations yet. Create one to start adding nodes."}
             </div>
           )}
-          {filtered.map((loc) =>
-            editingId === loc.id ? (
-              <div key={loc.id} className="grid grid-cols-[120px_1fr_1fr_auto] items-center gap-3 border-r border-b border-[#222222] px-4 py-2.5">
+          {filtered.map((loc, i) => {
+            const isLast = i === filtered.length - 1;
+            return editingId === loc.id ? (
+              <div key={loc.id} className={`grid grid-cols-[120px_1fr_1fr_48px] items-center gap-3 px-4 py-2.5 ${!isLast ? "border-b border-border" : ""}`}>
                 <input
                   autoFocus
-                  className="border border-[#555555] bg-[#0a0a0a] px-2 py-1 font-mono text-xs text-white outline-none focus:border-white"
+                  className={inputClass(true)}
                   value={editForm.short}
                   onChange={(e) => setEditForm((f) => ({ ...f, short: e.target.value }))}
                   onKeyDown={(e) => { if (e.key === "Enter") void handleUpdate(); if (e.key === "Escape") setEditingId(null); }}
                 />
                 <input
-                  className="border border-[#555555] bg-[#0a0a0a] px-2 py-1 text-sm text-white outline-none focus:border-white"
+                  className={inputClass(true)}
                   value={editForm.name}
                   onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
                   onKeyDown={(e) => { if (e.key === "Enter") void handleUpdate(); if (e.key === "Escape") setEditingId(null); }}
                 />
                 <input
-                  className="border border-[#333333] bg-[#0a0a0a] px-2 py-1 text-sm text-[#888888] outline-none focus:border-[#555555]"
+                  className={inputClass(true)}
                   placeholder="Description"
                   value={editForm.long}
                   onChange={(e) => setEditForm((f) => ({ ...f, long: e.target.value }))}
@@ -199,7 +212,7 @@ export default function LocationsPage() {
                     type="button"
                     onClick={handleUpdate}
                     disabled={updateMutation.isPending}
-                    className="flex h-6 w-6 items-center justify-center text-[#22c55e] transition-opacity hover:opacity-70 disabled:opacity-40"
+                    className="flex h-6 w-6 items-center justify-center rounded text-green-500 hover:bg-muted transition-colors disabled:opacity-40"
                     title="Save (Enter)"
                   >
                     <Check className="h-3.5 w-3.5" />
@@ -207,7 +220,7 @@ export default function LocationsPage() {
                   <button
                     type="button"
                     onClick={() => setEditingId(null)}
-                    className="flex h-6 w-6 items-center justify-center text-[#555555] transition-colors hover:text-white"
+                    className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                     title="Cancel (Esc)"
                   >
                     <X className="h-3.5 w-3.5" />
@@ -219,21 +232,19 @@ export default function LocationsPage() {
                 {({ onContextMenu }) => (
                   <div
                     onContextMenu={onContextMenu}
-                    className="flex items-center justify-between border-r border-b border-[#222222] px-4 py-3 hover:bg-[#111111]"
+                    className={`flex items-center justify-between px-4 py-3 hover:bg-muted/40 transition-colors ${!isLast ? "border-b border-border" : ""}`}
                   >
                     <div className="flex items-center gap-4">
-                      <span className="w-20 font-mono text-xs text-[#888888]">{loc.short}</span>
-                      <span className="text-sm text-white">{loc.name}</span>
-                      {loc.long && <span className="text-xs text-[#555555]">{loc.long}</span>}
+                      <span className="w-24 font-mono text-xs text-muted-foreground">{loc.short}</span>
+                      <span className="text-sm font-medium text-foreground">{loc.name}</span>
+                      {loc.long && <span className="text-xs text-muted-foreground">{loc.long}</span>}
                     </div>
-                    <div className="flex items-center gap-1">
-                      <RowMenu items={rowActions(loc)} />
-                    </div>
+                    <RowMenu items={rowActions(loc)} />
                   </div>
                 )}
               </ContextMenu>
-            ),
-          )}
+            );
+          })}
         </div>
       </div>
     </>

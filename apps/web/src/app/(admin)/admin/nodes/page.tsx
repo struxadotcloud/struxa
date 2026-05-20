@@ -19,6 +19,10 @@ function invalidate() {
   void queryClient.invalidateQueries({ queryKey: orpc.nodes.key() });
 }
 
+function inputClass() {
+  return "w-full rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors";
+}
+
 export default function NodesPage() {
   const { data: nodes, isLoading } = useQuery(orpc.nodes.list.queryOptions());
   const { data: locations } = useQuery(orpc.locations.list.queryOptions());
@@ -66,22 +70,22 @@ export default function NodesPage() {
 
   return (
     <>
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#222222] px-4">
-        <div className="flex items-center gap-3">
-          <SidebarTrigger className="-ml-1 text-[#888888] hover:text-white" />
-          <Server className="h-4 w-4 text-[#555555]" />
-          <span className="text-sm text-white">Nodes</span>
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4">
+        <div className="flex items-center gap-2.5">
+          <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
+          <Server className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium text-foreground">Nodes</span>
           {nodes && (
-            <span className="border border-[#333333] px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-[#555555]">
+            <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
               {nodes.length}
             </span>
           )}
         </div>
         <div className="flex items-center gap-2">
           <div className="relative flex items-center">
-            <Search className="absolute left-2.5 h-3.5 w-3.5 text-[#555555]" />
+            <Search className="absolute left-2.5 h-3.5 w-3.5 text-muted-foreground/50" />
             <input
-              className="border border-[#333333] bg-[#0a0a0a] py-1.5 pl-8 pr-3 text-sm text-white outline-none placeholder:text-[#444444] focus:border-[#555555]"
+              className="rounded-lg border border-border bg-background py-1.5 pl-8 pr-3 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
               placeholder="Search nodes..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -90,7 +94,7 @@ export default function NodesPage() {
           <button
             type="button"
             onClick={() => setAdding(true)}
-            className="flex items-center gap-1.5 bg-white px-4 py-1.5 text-sm font-medium text-black transition-opacity hover:opacity-80"
+            className="flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80"
           >
             <Plus className="h-3.5 w-3.5" />
             New Node
@@ -98,108 +102,108 @@ export default function NodesPage() {
         </div>
       </header>
 
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto p-4">
         {adding && (
-          <div className="border-b border-[#222222] p-4">
-            <p className="mb-3 text-xs uppercase tracking-widest text-[#555555]">New Node</p>
+          <div className="mb-4 rounded-xl border border-border bg-card p-4 shadow-sm">
+            <p className="mb-3 text-xs font-medium text-muted-foreground">New Node</p>
             <div className="grid grid-cols-3 gap-3">
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] uppercase tracking-wider text-[#555555]">Name *</label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-foreground">Name <span className="text-destructive">*</span></label>
                 <input
                   autoFocus
-                  className="border border-[#333333] bg-[#0a0a0a] px-3 py-1.5 text-sm text-white outline-none placeholder:text-[#444444] focus:border-[#555555]"
+                  className={inputClass()}
                   placeholder="Node 01"
                   value={form.name}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                 />
               </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] uppercase tracking-wider text-[#555555]">Location *</label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-foreground">Location <span className="text-destructive">*</span></label>
                 <DropdownMenu>
-                  <DropdownMenuTrigger className="flex items-center justify-between border border-[#333333] bg-[#0a0a0a] px-3 py-1.5 text-sm text-white outline-none transition-colors hover:border-[#555555] data-[popup-open]:border-[#555555]">
-                    <span className={form.locationId ? "text-white" : "text-[#444444]"}>
+                  <DropdownMenuTrigger className="flex w-full items-center justify-between rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-foreground outline-none transition-colors hover:border-ring data-[popup-open]:border-ring">
+                    <span className={form.locationId ? "text-foreground" : "text-muted-foreground/50"}>
                       {form.locationId
                         ? (locations?.find((l) => l.id === form.locationId)?.name ?? "Select...")
                         : "Select location..."}
                     </span>
-                    <ChevronDown className="ml-2 h-3.5 w-3.5 shrink-0 text-[#555555]" />
+                    <ChevronDown className="ml-2 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" sideOffset={2} className="border border-[#222222] bg-[#0d0d0d] p-0 shadow-xl">
+                  <DropdownMenuContent align="start" sideOffset={4} className="rounded-xl border border-border bg-card p-1 shadow-lg">
                     {locations?.map((l) => (
                       <DropdownMenuItem
                         key={l.id}
                         onClick={() => setForm((f) => ({ ...f, locationId: l.id }))}
-                        className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm text-[#888888] focus:bg-[#1a1a1a] focus:text-white"
+                        className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground"
                       >
-                        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${form.locationId === l.id ? "bg-[#22c55e]" : "bg-transparent"}`} />
-                        {l.name} <span className="text-[#444444]">({l.short})</span>
+                        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${form.locationId === l.id ? "bg-green-500" : "bg-transparent"}`} />
+                        {l.name} <span className="text-muted-foreground/50">({l.short})</span>
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] uppercase tracking-wider text-[#555555]">FQDN *</label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-foreground">FQDN <span className="text-destructive">*</span></label>
                 <input
-                  className="border border-[#333333] bg-[#0a0a0a] px-3 py-1.5 text-sm text-white outline-none placeholder:text-[#444444] focus:border-[#555555]"
+                  className={inputClass()}
                   placeholder="node01.example.com"
                   value={form.fqdn}
                   onChange={(e) => setForm((f) => ({ ...f, fqdn: e.target.value }))}
                 />
               </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] uppercase tracking-wider text-[#555555]">Scheme</label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-foreground">Scheme</label>
                 <DropdownMenu>
-                  <DropdownMenuTrigger className="flex items-center justify-between border border-[#333333] bg-[#0a0a0a] px-3 py-1.5 text-sm text-white outline-none transition-colors hover:border-[#555555] data-[popup-open]:border-[#555555]">
+                  <DropdownMenuTrigger className="flex w-full items-center justify-between rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-foreground outline-none transition-colors hover:border-ring data-[popup-open]:border-ring">
                     <span>{form.scheme.toUpperCase()}</span>
-                    <ChevronDown className="ml-2 h-3.5 w-3.5 shrink-0 text-[#555555]" />
+                    <ChevronDown className="ml-2 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" sideOffset={2} className="border border-[#222222] bg-[#0d0d0d] p-0 shadow-xl">
+                  <DropdownMenuContent align="start" sideOffset={4} className="rounded-xl border border-border bg-card p-1 shadow-lg">
                     {(["https", "http"] as const).map((s) => (
                       <DropdownMenuItem
                         key={s}
                         onClick={() => setForm((f) => ({ ...f, scheme: s }))}
-                        className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm text-[#888888] focus:bg-[#1a1a1a] focus:text-white"
+                        className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground"
                       >
-                        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${form.scheme === s ? "bg-[#22c55e]" : "bg-transparent"}`} />
+                        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${form.scheme === s ? "bg-green-500" : "bg-transparent"}`} />
                         {s.toUpperCase()}
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] uppercase tracking-wider text-[#555555]">Memory (MB)</label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-foreground">Memory (MB)</label>
                 <input
                   type="number"
-                  className="border border-[#333333] bg-[#0a0a0a] px-3 py-1.5 text-sm text-white outline-none focus:border-[#555555]"
+                  className={inputClass()}
                   value={form.memory}
                   onChange={(e) => setForm((f) => ({ ...f, memory: Number(e.target.value) }))}
                 />
               </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] uppercase tracking-wider text-[#555555]">Disk (MB)</label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-foreground">Disk (MB)</label>
                 <input
                   type="number"
-                  className="border border-[#333333] bg-[#0a0a0a] px-3 py-1.5 text-sm text-white outline-none focus:border-[#555555]"
+                  className={inputClass()}
                   value={form.disk}
                   onChange={(e) => setForm((f) => ({ ...f, disk: Number(e.target.value) }))}
                 />
               </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] uppercase tracking-wider text-[#555555]">Daemon Port</label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-foreground">Daemon Port</label>
                 <input
                   type="number"
-                  className="border border-[#333333] bg-[#0a0a0a] px-3 py-1.5 text-sm text-white outline-none focus:border-[#555555]"
+                  className={inputClass()}
                   value={form.daemonListen}
                   onChange={(e) => setForm((f) => ({ ...f, daemonListen: Number(e.target.value) }))}
                 />
               </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] uppercase tracking-wider text-[#555555]">SFTP Port</label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-foreground">SFTP Port</label>
                 <input
                   type="number"
-                  className="border border-[#333333] bg-[#0a0a0a] px-3 py-1.5 text-sm text-white outline-none focus:border-[#555555]"
+                  className={inputClass()}
                   value={form.daemonSFTP}
                   onChange={(e) => setForm((f) => ({ ...f, daemonSFTP: Number(e.target.value) }))}
                 />
@@ -210,14 +214,14 @@ export default function NodesPage() {
                 type="button"
                 onClick={handleCreate}
                 disabled={createMutation.isPending}
-                className="bg-white px-4 py-1.5 text-sm font-medium text-black transition-opacity hover:opacity-80 disabled:opacity-40"
+                className="rounded-lg bg-foreground px-4 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
               >
                 {createMutation.isPending ? "Creating..." : "Create"}
               </button>
               <button
                 type="button"
                 onClick={() => setAdding(false)}
-                className="bg-neutral-800 px-4 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-80"
+                className="rounded-lg border border-border px-4 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
               >
                 Cancel
               </button>
@@ -240,49 +244,60 @@ export default function NodesPage() {
           }}
         />
 
-        <div className="grid grid-cols-1 border-l border-[#222222]">
+        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+          <div className="grid grid-cols-[24px_1fr_200px_160px_48px] border-b border-border bg-muted/40 px-4 py-2.5">
+            <span />
+            <span className="text-xs font-medium text-muted-foreground">Name</span>
+            <span className="text-xs font-medium text-muted-foreground">Address</span>
+            <span className="text-xs font-medium text-muted-foreground">Resources</span>
+            <span />
+          </div>
+
           {isLoading && (
-            <div className="border-r border-b border-[#222222] px-4 py-3 text-sm text-[#555555]">Loading...</div>
+            <div className="px-4 py-8 text-center text-sm text-muted-foreground">Loading...</div>
           )}
           {!isLoading && filtered.length === 0 && (
-            <div className="border-r border-b border-[#222222] px-4 py-3 text-sm text-[#555555]">
+            <div className="px-4 py-8 text-center text-sm text-muted-foreground">
               {search ? "No nodes match your search." : "No nodes yet. Create one to start deploying servers."}
             </div>
           )}
-          {filtered.map((node) => {
+          {filtered.map((node, i) => {
             const actions = nodeActions(node);
+            const isLast = i === filtered.length - 1;
             return (
               <ContextMenu key={node.id} items={actions}>
                 {({ onContextMenu }) => (
                   <div
                     onContextMenu={onContextMenu}
-                    className="flex items-center justify-between border-r border-b border-[#222222] px-4 py-3 hover:bg-[#111111]"
+                    className={`grid grid-cols-[24px_1fr_200px_160px_48px] items-center px-4 py-3 hover:bg-muted/40 transition-colors ${!isLast ? "border-b border-border" : ""}`}
                   >
-                    <div className="flex items-center gap-4">
-                      <div
-                        className="h-2 w-2 rounded-full"
-                        style={{ backgroundColor: node.maintenanceMode ? "#888888" : "#22c55e" }}
-                      />
+                    <span
+                      className="h-2 w-2 rounded-full"
+                      style={{ backgroundColor: node.maintenanceMode ? "rgb(var(--muted-foreground) / 0.4)" : "#22c55e" }}
+                    />
+                    <div className="flex items-center gap-2">
                       <Link
                         href={`/admin/nodes/${node.id}` as never}
-                        className="text-sm font-medium text-white transition-colors hover:text-[#22c55e]"
+                        className="text-sm font-medium text-foreground transition-colors hover:text-green-500"
                         onClick={(e) => e.stopPropagation()}
                       >
                         {node.name}
                       </Link>
-                      <span className="font-mono text-xs text-[#555555]">
-                        {node.fqdn}:{node.daemonListen}
-                      </span>
-                      <span className="text-xs text-[#444444]">
-                        {(node.memory / 1024).toFixed(1)} GB · {(node.disk / 1024).toFixed(1)} GB disk
-                      </span>
                       {node.maintenanceMode && (
-                        <span className="border border-[#333333] px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-[#555555]">
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
                           Maintenance
                         </span>
                       )}
                     </div>
-                    <RowMenu items={actions} />
+                    <span className="font-mono text-xs text-muted-foreground">
+                      {node.fqdn}:{node.daemonListen}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {(node.memory / 1024).toFixed(1)} GB · {(node.disk / 1024).toFixed(1)} GB
+                    </span>
+                    <div className="flex items-center justify-end">
+                      <RowMenu items={actions} />
+                    </div>
                   </div>
                 )}
               </ContextMenu>

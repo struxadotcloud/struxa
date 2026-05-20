@@ -13,18 +13,11 @@ function invalidate() {
   void queryClient.invalidateQueries({ queryKey: orpc.servers.key() });
 }
 
-const STATUS_COLOR: Record<string, string> = {
-  "": "#22c55e",
-  installing: "#888888",
-  install_failed: "#f43f5e",
-  restoring_backup: "#888888",
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  "": "Installed",
-  installing: "Installing",
-  install_failed: "Install Failed",
-  restoring_backup: "Restoring",
+const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
+  "":               { label: "Installed",     color: "#22c55e", bg: "rgba(34,197,94,0.12)" },
+  installing:       { label: "Installing",    color: "#f59e0b", bg: "rgba(245,158,11,0.12)" },
+  install_failed:   { label: "Install Failed",color: "#ef4444", bg: "rgba(239,68,68,0.12)" },
+  restoring_backup: { label: "Restoring",     color: "#6366f1", bg: "rgba(99,102,241,0.12)" },
 };
 
 export default function AdminServersPage() {
@@ -63,22 +56,22 @@ export default function AdminServersPage() {
 
   return (
     <>
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#222222] px-4">
-        <div className="flex items-center gap-3">
-          <SidebarTrigger className="-ml-1 text-[#888888] hover:text-white" />
-          <Monitor className="h-4 w-4 text-[#555555]" />
-          <span className="text-sm text-white">Servers</span>
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4">
+        <div className="flex items-center gap-2.5">
+          <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
+          <Monitor className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium text-foreground">Servers</span>
           {servers && (
-            <span className="border border-[#333333] px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-[#555555]">
+            <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
               {servers.length}
             </span>
           )}
         </div>
         <div className="flex items-center gap-2">
           <div className="relative flex items-center">
-            <Search className="absolute left-2.5 h-3.5 w-3.5 text-[#555555]" />
+            <Search className="absolute left-2.5 h-3.5 w-3.5 text-muted-foreground/50" />
             <input
-              className="border border-[#333333] bg-[#0a0a0a] py-1.5 pl-8 pr-3 text-sm text-white outline-none placeholder:text-[#444444] focus:border-[#555555]"
+              className="rounded-lg border border-border bg-background py-1.5 pl-8 pr-3 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
               placeholder="Search servers..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -86,7 +79,7 @@ export default function AdminServersPage() {
           </div>
           <Link
             href={"/admin/servers/new" as never}
-            className="flex items-center gap-1.5 bg-white px-4 py-1.5 text-sm font-medium text-black transition-opacity hover:opacity-80"
+            className="flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80"
           >
             <Plus className="h-3.5 w-3.5" />
             New Server
@@ -109,64 +102,79 @@ export default function AdminServersPage() {
           setPurge(false);
         }}
       >
-        <label className="flex items-center gap-2 text-xs text-[#888888]">
+        <label className="flex items-center gap-2 text-sm text-muted-foreground">
           <input
             type="checkbox"
             checked={purge}
             onChange={(e) => setPurge(e.target.checked)}
-            className="h-3 w-3"
+            className="h-3.5 w-3.5 rounded"
           />
           Purge files from node
         </label>
       </ConfirmDialog>
 
-      <div className="flex-1 overflow-auto">
-        <div className="grid grid-cols-1 border-l border-[#222222]">
+      <div className="flex-1 overflow-auto p-4">
+        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+          <div className="grid grid-cols-[24px_1fr_180px_120px_120px_48px] border-b border-border bg-muted/40 px-4 py-2.5">
+            <span />
+            <span className="text-xs font-medium text-muted-foreground">Name</span>
+            <span className="text-xs font-medium text-muted-foreground">Address</span>
+            <span className="text-xs font-medium text-muted-foreground">Node</span>
+            <span className="text-xs font-medium text-muted-foreground">Status</span>
+            <span />
+          </div>
+
           {isLoading && (
-            <div className="border-r border-b border-[#222222] px-4 py-3 text-sm text-[#555555]">Loading...</div>
+            <div className="px-4 py-8 text-center text-sm text-muted-foreground">Loading...</div>
           )}
           {!isLoading && filtered.length === 0 && (
-            <div className="border-r border-b border-[#222222] px-4 py-3 text-sm text-[#555555]">
+            <div className="px-4 py-8 text-center text-sm text-muted-foreground">
               {search ? "No servers match your search." : "No servers yet."}
             </div>
           )}
-          {filtered.map((server) => {
+          {filtered.map((server, i) => {
             const isSuspended = (server as { suspended?: boolean }).suspended;
-            const statusColor = isSuspended ? "#555555" : (STATUS_COLOR[server.status] ?? "#888888");
-            const statusLabel = isSuspended ? "Suspended" : (STATUS_LABEL[server.status] ?? server.status);
+            const cfg = isSuspended
+              ? { label: "Suspended", color: "#71717a", bg: "rgba(113,113,122,0.10)" }
+              : (STATUS_CONFIG[server.status] ?? { label: server.status, color: "#71717a", bg: "rgba(113,113,122,0.10)" });
             const actions = serverActions({ uuid: server.uuid, name: server.name });
+            const isLast = i === filtered.length - 1;
 
             return (
               <ContextMenu key={server.id} items={actions}>
                 {({ onContextMenu }) => (
                   <div
                     onContextMenu={onContextMenu}
-                    className="flex items-center justify-between border-r border-b border-[#222222] px-4 py-3 hover:bg-[#111111]"
+                    className={`grid grid-cols-[24px_1fr_180px_120px_120px_48px] items-center px-4 py-3 hover:bg-muted/40 transition-colors ${!isLast ? "border-b border-border" : ""}`}
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="h-2 w-2 rounded-full" style={{ backgroundColor: statusColor }} />
+                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: cfg.color }} />
+                    <div className="flex items-center gap-2">
                       <Link
                         href={`/admin/servers/${server.uuid}` as never}
-                        className="text-sm font-medium text-white transition-colors hover:text-[#22c55e]"
+                        className="text-sm font-medium text-foreground transition-colors hover:text-green-500"
                         onClick={(e) => e.stopPropagation()}
                       >
                         {server.name}
                       </Link>
-                      <span className="font-mono text-xs text-[#555555]">
-                        {server.allocation.ip}:{server.allocation.port}
-                      </span>
-                      <span className="text-xs text-[#444444]">
-                        {(server as { node?: { name: string } }).node?.name ?? "—"}
-                      </span>
-                      <span className="text-xs" style={{ color: statusColor }}>{statusLabel}</span>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="font-mono text-xs text-[#444444]">
-                        {server.memory} MB · {server.disk} MB disk
+                    <span className="font-mono text-xs text-muted-foreground">
+                      {server.allocation.ip}:{server.allocation.port}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {(server as { node?: { name: string } }).node?.name ?? "—"}
+                    </span>
+                    <span>
+                      <span
+                        className="rounded-full px-2 py-0.5 text-[11px] font-medium"
+                        style={{ color: cfg.color, backgroundColor: cfg.bg }}
+                      >
+                        {cfg.label}
                       </span>
+                    </span>
+                    <div className="flex items-center justify-end gap-2">
                       <Link
                         href={`/servers/${server.uuid}` as never}
-                        className="text-[#555555] transition-colors hover:text-white"
+                        className="rounded p-0.5 text-muted-foreground/50 hover:bg-muted hover:text-foreground transition-colors"
                         title="View panel"
                         onClick={(e) => e.stopPropagation()}
                       >

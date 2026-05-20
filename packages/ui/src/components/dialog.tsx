@@ -48,7 +48,7 @@ export function DialogPopup({
       <DialogPrimitive.Viewport className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <DialogPrimitive.Popup
           className={cn(
-            "relative w-full max-w-sm border border-[#222222] bg-[#0d0d0d] shadow-xl transition-[opacity,scale] duration-200 data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0",
+            "relative w-full max-w-sm rounded-xl border border-border bg-card shadow-xl transition-[opacity,scale] duration-200 data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0",
             className,
           )}
           data-slot="dialog-popup"
@@ -74,7 +74,7 @@ export function DialogPopup({
 export function DialogHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>): React.ReactElement {
   return (
     <div
-      className={cn("flex flex-col gap-1 border-b border-[#222222] px-5 py-4", className)}
+      className={cn("flex flex-col gap-1 border-b border-border px-5 py-4", className)}
       data-slot="dialog-header"
       {...props}
     />
@@ -94,7 +94,7 @@ export function DialogFooter({ className, ...props }: React.HTMLAttributes<HTMLD
 export function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props): React.ReactElement {
   return (
     <DialogPrimitive.Title
-      className={cn("text-sm font-medium text-white", className)}
+      className={cn("text-sm font-medium text-foreground", className)}
       data-slot="dialog-title"
       {...props}
     />
@@ -104,7 +104,7 @@ export function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props
 export function DialogDescription({ className, ...props }: DialogPrimitive.Description.Props): React.ReactElement {
   return (
     <DialogPrimitive.Description
-      className={cn("text-xs text-[#888888]", className)}
+      className={cn("text-xs text-muted-foreground", className)}
       data-slot="dialog-description"
       {...props}
     />

@@ -74,11 +74,11 @@ export function ContextMenu({ items, children }: ContextMenuProps) {
           <div
             ref={menuRef}
             style={{ position: "fixed", left: pos.x, top: pos.y, zIndex: 9999 }}
-            className="min-w-[160px] border border-[#2a2a2a] bg-[#0d0d0d] py-1 shadow-2xl"
+            className="min-w-[160px] rounded-xl border border-border bg-card p-1 shadow-lg"
           >
             {items.map((item, i) =>
               item === "separator" ? (
-                <div key={i} className="my-1 h-px bg-[#1e1e1e]" />
+                <div key={i} className="my-1 h-px bg-border" />
               ) : (
                 <button
                   key={i}
@@ -87,10 +87,10 @@ export function ContextMenu({ items, children }: ContextMenuProps) {
                     close();
                     item.onClick();
                   }}
-                  className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-xs transition-colors hover:bg-[#181818] ${
+                  className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-1.5 text-xs transition-colors ${
                     item.destructive
-                      ? "text-[#f43f5e] hover:text-[#f43f5e]"
-                      : "text-[#888888] hover:text-white"
+                      ? "text-destructive hover:bg-destructive/10"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   }`}
                 >
                   {item.icon && <item.icon className="h-3.5 w-3.5 shrink-0" />}
@@ -115,25 +115,21 @@ export function RowMenu({ items }: RowMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className="flex h-6 w-6 items-center justify-center text-[#444444] outline-none transition-colors hover:text-white"
+        className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground/50 outline-none transition-colors hover:bg-muted hover:text-foreground"
         onClick={(e) => e.stopPropagation()}
       >
         <MoreHorizontal className="h-3.5 w-3.5" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="end"
-        sideOffset={4}
-        className="border border-[#222222] bg-[#0d0d0d] p-0 shadow-xl"
-      >
+      <DropdownMenuContent align="end" sideOffset={4}>
         {items.map((item, i) =>
           item === "separator" ? (
-            <DropdownMenuSeparator key={i} className="my-1 bg-[#1e1e1e]" />
+            <DropdownMenuSeparator key={i} />
           ) : (
             <DropdownMenuItem
               key={i}
               onClick={item.onClick}
-              className={`flex cursor-pointer items-center gap-2.5 px-3 py-2 text-xs focus:bg-[#1a1a1a] ${
-                item.destructive ? "text-[#f43f5e] focus:text-[#f43f5e]" : "text-[#888888] focus:text-white"
+              className={`flex cursor-pointer items-center gap-2.5 px-3 py-2 text-xs ${
+                item.destructive ? "text-destructive focus:text-destructive" : "text-muted-foreground"
               }`}
             >
               {item.icon && <item.icon className="h-3.5 w-3.5 shrink-0" />}

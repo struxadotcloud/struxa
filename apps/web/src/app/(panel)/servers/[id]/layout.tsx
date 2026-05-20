@@ -2,7 +2,6 @@
 
 import { use } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Lock, HardDriveDownload } from "lucide-react";
 import { orpc } from "@/utils/orpc";
 import { SidebarTrigger } from "@struxa/ui/components/sidebar";
 
@@ -13,78 +12,56 @@ function BlockedPage({
   name: string;
   state: "installing" | "suspended";
 }) {
-  const installing = state === "installing";
+  const suspended = state === "suspended";
 
   return (
-    <div className="flex flex-1 flex-col bg-[#0a0a0a]">
-      {/* Matches the header bar height of other server pages */}
-      <header className="flex h-14 shrink-0 items-center gap-3 border-b border-[#222222] px-4">
-        <SidebarTrigger className="-ml-1 text-[#888888] hover:text-white" />
-        <span className="text-sm text-white">{name}</span>
+    <div className="flex flex-1 flex-col bg-background">
+      <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border bg-card px-4">
+        <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
+        <span className="text-sm font-medium text-foreground">{name}</span>
         <span
-          className={`ml-1 border px-1.5 py-0.5 text-[10px] uppercase tracking-wider ${
-            installing
-              ? "border-[#555555]/40 text-[#555555]"
-              : "border-[#f43f5e]/40 text-[#f43f5e]"
+          className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+            suspended
+              ? "bg-red-500/10 text-red-500"
+              : "bg-amber-500/10 text-amber-500"
           }`}
         >
-          {installing ? "Installing" : "Suspended"}
+          {suspended ? "Suspended" : "Installing"}
         </span>
       </header>
 
-      {/* Body */}
-      <div className="flex flex-1 items-center justify-center">
-        <div className="flex flex-col items-center gap-5 text-center">
-          {/* Icon */}
-          <div
-            className={`flex h-14 w-14 items-center justify-center border ${
-              installing ? "border-[#222222]" : "border-[#f43f5e]/20"
+      <div className="flex flex-1 items-center justify-center p-6">
+        <div
+          className={`flex w-full max-w-md flex-col items-center gap-5 rounded-2xl border p-8 text-center shadow-sm ${
+            suspended
+              ? "border-red-500/20 bg-red-500/5"
+              : "border-amber-500/20 bg-amber-500/5"
+          }`}
+        >
+          <span
+            className={`flex h-12 w-12 items-center justify-center rounded-full ${
+              suspended ? "bg-red-500/10" : "bg-amber-500/10"
             }`}
           >
-            {installing ? (
-              <HardDriveDownload
-                className="h-6 w-6 text-[#555555]"
-                strokeWidth={1.5}
-              />
-            ) : (
-              <Lock className="h-6 w-6 text-[#f43f5e]/50" strokeWidth={1.5} />
-            )}
-          </div>
-
-          {/* Text */}
-          <div className="flex flex-col gap-1.5">
-            <p className="text-sm font-medium text-white">{name}</p>
-            {installing ? (
-              <>
-                <p className="text-xs text-[#555555]">
-                  Installation in progress — this page will update automatically.
-                </p>
-              </>
-            ) : (
-              <>
-                <p className="text-xs text-[#555555]">
-                  This server has been suspended by an administrator.
-                </p>
-                <p className="text-xs text-[#333333]">
-                  Contact support if you believe this is a mistake.
-                </p>
-              </>
-            )}
-          </div>
-
-          {/* Status dot */}
-          <div className="flex items-center gap-2">
             <span
-              className={`h-1.5 w-1.5 rounded-full ${
-                installing
-                  ? "animate-pulse bg-[#555555]"
-                  : "bg-[#f43f5e]/50"
+              className={`h-3 w-3 rounded-full ${suspended ? "" : "animate-pulse"} ${
+                suspended ? "bg-red-500/50" : "bg-amber-500"
               }`}
             />
-            <span className="text-[10px] uppercase tracking-widest text-[#333333]">
-              {installing ? "Installing" : "Suspended"}
-            </span>
+          </span>
+
+          <div className="flex flex-col gap-1.5">
+            <p className="text-base font-semibold text-foreground">{name}</p>
+            <p className={`text-sm font-medium ${suspended ? "text-red-500" : "text-amber-500"}`}>
+              {suspended ? "Server Suspended" : "Installing…"}
+            </p>
           </div>
+
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            {suspended
+              ? "Access to this server has been restricted by an administrator. Contact support if you believe this is a mistake."
+              : "Your server is being set up. This page will refresh automatically once it's ready."}
+          </p>
         </div>
       </div>
     </div>

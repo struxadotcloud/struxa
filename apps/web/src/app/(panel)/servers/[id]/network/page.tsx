@@ -6,7 +6,7 @@ import { use } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { SidebarTrigger } from "@struxa/ui/components/sidebar";
-import { Globe, Copy, Star } from "lucide-react";
+import { Globe, Copy, Star, ChevronRight } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
@@ -22,10 +22,10 @@ function StatRow({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col border-b border-[#222222]">
-      <div className="flex flex-col gap-2 px-4 pt-4 pb-3">
-        <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-[#555555]">
-          <Icon className="h-3.5 w-3.5" />
+    <div className="flex flex-col border-b border-border last:border-b-0">
+      <div className="flex flex-col gap-1.5 px-4 pt-3 pb-2.5">
+        <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+          <Icon className="h-3 w-3" />
           {label}
         </div>
         {children}
@@ -57,66 +57,79 @@ export default function NetworkPage({ params }: { params: Promise<{ id: string }
 
   return (
     <>
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#222222] px-4">
-        <div className="flex items-center gap-2 text-xs">
-          <SidebarTrigger className="-ml-1 text-[#888888] hover:text-white" />
-          <Link href="/" className="text-[#555555] transition-colors hover:text-white">
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4">
+        <div className="flex items-center gap-2 text-sm">
+          <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
+          <Link href="/" className="text-muted-foreground transition-colors hover:text-foreground">
             Game Servers
           </Link>
-          <span className="text-[#333333]">/</span>
-          <Link href={`/servers/${id}`} className="text-[#555555] transition-colors hover:text-white">
+          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+          <Link href={`/servers/${id}`} className="text-muted-foreground transition-colors hover:text-foreground">
             {server?.name ?? id}
           </Link>
-          <span className="text-[#333333]">/</span>
-          <span className="text-white">Network</span>
+          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+          <span className="font-medium text-foreground">Network</span>
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
-        <div className="flex flex-1 flex-col overflow-y-auto">
-          <div className="border-l border-[#222222]">
-            <div className="grid grid-cols-[28px_180px_80px_1fr] border-b border-r border-[#222222] px-3 py-2">
-              <span />
-              <span className="text-[10px] uppercase tracking-widest text-[#555555]">IP Address</span>
-              <span className="text-[10px] uppercase tracking-widest text-[#555555]">Port</span>
-              <span className="text-[10px] uppercase tracking-widest text-[#555555]">Alias / Notes</span>
-            </div>
+      <div className="flex flex-1 gap-3 overflow-hidden p-3">
+        <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+          <div className="grid grid-cols-[32px_1fr_100px_120px] border-b border-border bg-muted/40 px-4 py-2.5">
+            <span />
+            <span className="text-xs font-medium text-muted-foreground">IP Address</span>
+            <span className="text-xs font-medium text-muted-foreground">Port</span>
+            <span className="text-xs font-medium text-muted-foreground">Type</span>
+          </div>
+          <div className="flex-1 overflow-y-auto">
             {serverPending ? (
-              <div className="flex items-center justify-center py-12 text-sm text-[#555555]">Loading…</div>
+              <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">Loading…</div>
             ) : !alloc ? (
-              <div className="flex items-center justify-center py-12 text-sm text-[#555555]">No allocation assigned</div>
+              <div className="flex flex-col items-center justify-center py-12 gap-2">
+                <Globe className="h-8 w-8 text-muted-foreground/30" />
+                <p className="text-sm text-muted-foreground">No allocation assigned</p>
+              </div>
             ) : (
-              <div className="grid grid-cols-[28px_180px_80px_1fr] items-center border-b border-r border-[#222222] px-3 py-3 hover:bg-[#111111] transition-colors">
+              <div className="grid grid-cols-[32px_1fr_100px_120px] items-center px-4 py-3 hover:bg-muted/40 transition-colors">
                 <span className="flex items-center justify-center">
-                  <Star className="h-3.5 w-3.5 fill-white text-white" />
+                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
                 </span>
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-sm text-white">{alloc.ip}</span>
-                  <button type="button" onClick={() => copy(alloc.ip)} className="text-[#444444] hover:text-white transition-colors">
-                    <Copy className="h-3 w-3" />
+                  <span className="font-mono text-sm text-foreground">{alloc.ip}</span>
+                  <button
+                    type="button"
+                    onClick={() => copy(alloc.ip)}
+                    className="rounded p-0.5 text-muted-foreground/50 hover:bg-muted hover:text-foreground transition-colors"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
                   </button>
                 </div>
-                <span className="font-mono text-sm text-white">{alloc.port}</span>
-                <span className="text-sm text-[#555555]">Primary</span>
+                <span className="font-mono text-sm text-foreground">{alloc.port}</span>
+                <span>
+                  <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-[11px] font-medium text-green-600 dark:text-green-400">
+                    Primary
+                  </span>
+                </span>
               </div>
             )}
           </div>
         </div>
 
-        <aside className="flex w-[280px] shrink-0 flex-col overflow-y-auto border-l border-[#222222]">
-          <StatRow icon={Globe} label="PRIMARY">
-            <span className="font-mono text-base font-bold text-white">
-              {alloc ? `${alloc.ip}:${alloc.port}` : "—"}
-            </span>
-          </StatRow>
-          <StatRow icon={Globe} label="ALLOCATIONS">
-            <span className="text-2xl font-bold text-white">{alloc ? 1 : 0}</span>
-          </StatRow>
-          <StatRow icon={Globe} label="NOTE">
-            <p className="text-xs text-[#555555] leading-relaxed">
-              The primary allocation is used as the server&apos;s connection address.
-            </p>
-          </StatRow>
+        <aside className="flex w-[220px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+          <div className="overflow-y-auto">
+            <StatRow icon={Globe} label="Primary">
+              <span className="font-mono text-sm font-semibold text-foreground leading-snug">
+                {alloc ? `${alloc.ip}:${alloc.port}` : "—"}
+              </span>
+            </StatRow>
+            <StatRow icon={Globe} label="Allocations">
+              <span className="text-xl font-bold text-foreground">{alloc ? 1 : 0}</span>
+            </StatRow>
+            <StatRow icon={Globe} label="Note">
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                The primary allocation is used as the server&apos;s connection address.
+              </p>
+            </StatRow>
+          </div>
         </aside>
       </div>
     </>

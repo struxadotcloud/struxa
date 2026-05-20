@@ -65,8 +65,8 @@ export function UserCombobox({
   return (
     <div ref={ref} className="relative">
       {selectedLabel && !open ? (
-        <div className="flex items-center gap-2 border border-[#333333] bg-[#141414] px-3 py-2">
-          <span className="flex-1 text-sm text-white">{selectedLabel}</span>
+        <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2">
+          <span className="flex-1 text-sm text-foreground">{selectedLabel}</span>
           <button
             type="button"
             onClick={() => {
@@ -74,7 +74,7 @@ export function UserCombobox({
               setSelectedLabel("");
               setOpen(true);
             }}
-            className="text-[10px] text-[#555555] hover:text-white"
+            className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
           >
             change
           </button>
@@ -82,7 +82,7 @@ export function UserCombobox({
       ) : (
         <input
           autoFocus={open}
-          className="w-full border border-[#333333] bg-[#141414] px-3 py-2 text-sm text-white outline-none placeholder:text-[#444444] focus:border-[#555555]"
+          className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
           placeholder="Search by name or email…"
           value={query}
           onChange={(e) => {
@@ -93,11 +93,11 @@ export function UserCombobox({
         />
       )}
       {open && query.trim().length > 0 && (
-        <div className="absolute left-0 right-0 top-full z-50 border border-[#333333] bg-[#0d0d0d]">
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded-xl border border-border bg-card shadow-lg overflow-hidden">
           {isFetching && debouncedQuery !== query.trim() ? (
-            <div className="px-3 py-2 text-xs text-[#555555]">Searching…</div>
+            <div className="px-3 py-2.5 text-xs text-muted-foreground">Searching…</div>
           ) : results.length === 0 ? (
-            <div className="px-3 py-2 text-xs text-[#555555]">
+            <div className="px-3 py-2.5 text-xs text-muted-foreground">
               {debouncedQuery.length > 0 ? "No users found" : "Type to search…"}
             </div>
           ) : (
@@ -109,10 +109,10 @@ export function UserCombobox({
                   e.preventDefault();
                   select(u);
                 }}
-                className="flex w-full flex-col px-3 py-2 text-left hover:bg-[#1a1a1a]"
+                className="flex w-full flex-col px-3 py-2.5 text-left hover:bg-muted transition-colors"
               >
-                <span className="text-sm text-white">{u.name}</span>
-                <span className="text-xs text-[#555555]">{u.email}</span>
+                <span className="text-sm font-medium text-foreground">{u.name}</span>
+                <span className="text-xs text-muted-foreground">{u.email}</span>
               </button>
             ))
           )}

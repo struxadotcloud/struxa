@@ -44,7 +44,7 @@ export function ConfirmDialog({
         {children && <div className="px-5 py-3">{children}</div>}
         <DialogFooter>
           <DialogClose
-            className="px-4 py-1.5 text-xs font-medium text-[#888888] transition-colors hover:text-white"
+            className="rounded-lg px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
             disabled={loading}
           >
             Cancel
@@ -53,8 +53,10 @@ export function ConfirmDialog({
             type="button"
             onClick={onConfirm}
             disabled={loading}
-            className={`px-4 py-1.5 text-xs font-medium text-white transition-opacity disabled:opacity-50 ${
-              destructive ? "bg-[#f43f5e]" : "bg-white text-black"
+            className={`rounded-lg px-4 py-1.5 text-xs font-medium transition-opacity disabled:opacity-50 ${
+              destructive
+                ? "bg-destructive text-destructive-foreground hover:opacity-80"
+                : "bg-foreground text-background hover:opacity-80"
             }`}
           >
             {loading ? "…" : confirmLabel}

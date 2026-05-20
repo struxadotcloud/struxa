@@ -5,9 +5,14 @@ import { ORPCError } from "@orpc/server";
 import { db } from "@struxa/db";
 import { databaseHosts } from "@struxa/db";
 import { encrypt, decrypt } from "../lib/crypto";
-import { adminProcedure } from "../index";
+import { adminProcedure, protectedProcedure } from "../index";
 
 export const databaseHostsRouter = {
+  listAvailable: protectedProcedure.handler(async () => {
+    const rows = await db.select({ id: databaseHosts.id, name: databaseHosts.name, host: databaseHosts.host, port: databaseHosts.port }).from(databaseHosts);
+    return rows;
+  }),
+
   list: adminProcedure.handler(async () => {
     const rows = await db.select().from(databaseHosts);
     return rows.map((h) => ({ ...h, password: "***" }));

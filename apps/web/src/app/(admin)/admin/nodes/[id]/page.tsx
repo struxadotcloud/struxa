@@ -4,11 +4,24 @@ import { use, useState } from "react";
 import Link from "next/link";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { SidebarTrigger } from "@struxa/ui/components/sidebar";
-import { Server, Plus, Trash2, Copy, RefreshCw } from "lucide-react";
+import { Server, Plus, Trash2, Copy, RefreshCw, ChevronRight } from "lucide-react";
 import { orpc, queryClient } from "@/utils/orpc";
 
 function invalidateNode(id: string) {
   void queryClient.invalidateQueries(orpc.nodes.get.queryOptions({ input: { id } }));
+}
+
+function InfoCard({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1.5 rounded-xl border border-border bg-card p-4 shadow-sm">
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      <span className="font-mono text-sm font-semibold text-foreground">{value}</span>
+    </div>
+  );
+}
+
+function inputClass() {
+  return "w-full rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors";
 }
 
 export default function NodeDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -50,7 +63,7 @@ export default function NodeDetailPage({ params }: { params: Promise<{ id: strin
 
   if (isLoading) {
     return (
-      <div className="flex flex-1 items-center justify-center text-sm text-[#555555]">
+      <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
         Loading...
       </div>
     );
@@ -58,7 +71,7 @@ export default function NodeDetailPage({ params }: { params: Promise<{ id: strin
 
   if (!node) {
     return (
-      <div className="flex flex-1 items-center justify-center text-sm text-[#555555]">
+      <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
         Node not found.
       </div>
     );
@@ -70,53 +83,53 @@ export default function NodeDetailPage({ params }: { params: Promise<{ id: strin
 
   return (
     <>
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#222222] px-4">
-        <div className="flex items-center gap-2 text-xs">
-          <SidebarTrigger className="-ml-1 text-[#888888] hover:text-white" />
-          <Link href={"/admin/nodes" as never} className="text-[#555555] transition-colors hover:text-white">
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4">
+        <div className="flex items-center gap-2 text-sm">
+          <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
+          <Link href={"/admin/nodes" as never} className="text-muted-foreground transition-colors hover:text-foreground">
             Nodes
           </Link>
-          <span className="text-[#333333]">/</span>
-          <Server className="h-3.5 w-3.5 text-[#555555]" />
-          <span className="text-white">{node.name}</span>
+          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+          <Server className="h-3.5 w-3.5 text-muted-foreground" />
+          <span className="font-medium text-foreground">{node.name}</span>
         </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => testConnMutation.mutate({ id })}
             disabled={testConnMutation.isPending}
-            className="bg-neutral-700 px-4 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-80 disabled:opacity-40"
+            className="rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-40"
           >
             {testConnMutation.isPending ? "Testing..." : "Test Connection"}
           </button>
           {testConnMutation.isSuccess && (
-            <span className="text-xs text-[#22c55e]">
+            <span className={`text-xs font-medium ${testConnMutation.data.online ? "text-green-500" : "text-destructive"}`}>
               {testConnMutation.data.online ? "Connected" : "Offline"}
             </span>
           )}
           {testConnMutation.isError && (
-            <span className="text-xs text-[#f43f5e]">Failed</span>
+            <span className="text-xs font-medium text-destructive">Failed</span>
           )}
           <button
             type="button"
             onClick={() => setShowConfig((v) => !v)}
-            className="bg-neutral-700 px-4 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-80"
+            className="rounded-lg bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80"
           >
             {showConfig ? "Hide Config" : "Wings Config"}
           </button>
         </div>
       </header>
 
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto p-4">
         {showConfig && deployConfig?.yaml && (
-          <div className="border-b border-[#222222] bg-[#141414] p-4">
-            <div className="mb-2 flex items-center justify-between">
-              <p className="text-xs uppercase tracking-widest text-[#555555]">Wings config.yml</p>
+          <div className="mb-4 rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between border-b border-border px-4 py-3">
+              <p className="text-xs font-medium text-muted-foreground">Wings config.yml</p>
               <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={handleCopyConfig}
-                  className="flex items-center gap-1 text-xs text-[#555555] transition-colors hover:text-white"
+                  className="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                 >
                   <Copy className="h-3 w-3" />
                   {copiedConfig ? "Copied!" : "Copy"}
@@ -125,66 +138,44 @@ export default function NodeDetailPage({ params }: { params: Promise<{ id: strin
                   type="button"
                   onClick={() => regenTokenMutation.mutate({ id })}
                   disabled={regenTokenMutation.isPending}
-                  className="flex items-center gap-1 text-xs text-[#888888] transition-opacity hover:text-white hover:opacity-80 disabled:opacity-40"
+                  className="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-40"
                 >
                   <RefreshCw className="h-3 w-3" />
                   Regen Token
                 </button>
               </div>
             </div>
-            <pre className="overflow-x-auto border border-[#222222] bg-[#0a0a0a] p-3 font-mono text-xs text-[#22c55e]">
+            <pre className="overflow-x-auto bg-[#0f0f0f] p-4 font-mono text-xs text-green-400">
               {deployConfig.yaml}
             </pre>
           </div>
         )}
 
-        <div className="grid grid-cols-2 border-l border-[#222222]">
-          <div className="flex flex-col gap-1 border-r border-b border-[#222222] p-4">
-            <span className="text-[10px] uppercase tracking-widest text-[#555555]">FQDN</span>
-            <span className="font-mono text-sm text-white">{node.fqdn}</span>
-          </div>
-          <div className="flex flex-col gap-1 border-r border-b border-[#222222] p-4">
-            <span className="text-[10px] uppercase tracking-widest text-[#555555]">Daemon Port</span>
-            <span className="font-mono text-sm text-white">{node.daemonListen}</span>
-          </div>
-          <div className="flex flex-col gap-1 border-r border-b border-[#222222] p-4">
-            <span className="text-[10px] uppercase tracking-widest text-[#555555]">Memory</span>
-            <span className="font-mono text-sm text-white">
-              {node.memory} MB
-              {node.memoryOverallocate > 0 && (
-                <span className="text-[#555555]"> (+{node.memoryOverallocate}% overallocate)</span>
-              )}
-            </span>
-          </div>
-          <div className="flex flex-col gap-1 border-r border-b border-[#222222] p-4">
-            <span className="text-[10px] uppercase tracking-widest text-[#555555]">Disk</span>
-            <span className="font-mono text-sm text-white">
-              {node.disk} MB
-              {node.diskOverallocate > 0 && (
-                <span className="text-[#555555]"> (+{node.diskOverallocate}% overallocate)</span>
-              )}
-            </span>
-          </div>
+        <div className="mb-4 grid grid-cols-4 gap-3">
+          <InfoCard label="FQDN" value={node.fqdn} />
+          <InfoCard label="Daemon Port" value={node.daemonListen} />
+          <InfoCard label="Memory" value={`${node.memory} MB${node.memoryOverallocate > 0 ? ` (+${node.memoryOverallocate}%)` : ""}`} />
+          <InfoCard label="Disk" value={`${node.disk} MB${node.diskOverallocate > 0 ? ` (+${node.diskOverallocate}%)` : ""}`} />
         </div>
 
-        <div className="mt-6">
-          <div className="flex items-center justify-between border-b border-[#222222] px-4 py-3">
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-white">Allocations</span>
-              <span className="border border-[#333333] px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-[#555555]">
+        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between border-b border-border px-4 py-3">
+            <div className="flex items-center gap-2.5">
+              <span className="text-sm font-medium text-foreground">Allocations</span>
+              <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
                 {allocations.length} total
               </span>
-              <span className="border border-[#22c55e]/30 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-[#22c55e]">
+              <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-[11px] font-medium text-green-600 dark:text-green-400">
                 {freeAllocations.length} free
               </span>
-              <span className="border border-[#555555]/30 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-[#555555]">
+              <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
                 {usedAllocations.length} used
               </span>
             </div>
             <button
               type="button"
               onClick={() => setAddingAlloc(true)}
-              className="flex items-center gap-1.5 bg-white px-3 py-1 text-xs font-medium text-black transition-opacity hover:opacity-80"
+              className="flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80"
             >
               <Plus className="h-3 w-3" />
               Add Allocation
@@ -192,23 +183,21 @@ export default function NodeDetailPage({ params }: { params: Promise<{ id: strin
           </div>
 
           {addingAlloc && (
-            <div className="border-b border-[#222222] bg-[#141414] p-4">
+            <div className="border-b border-border bg-muted/20 p-4">
               <div className="grid grid-cols-2 gap-3">
-                <div className="flex flex-col gap-1">
-                  <label className="text-[10px] uppercase tracking-wider text-[#555555]">IP Address *</label>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium text-foreground">IP Address <span className="text-destructive">*</span></label>
                   <input
-                    className="border border-[#333333] bg-[#0a0a0a] px-3 py-1.5 text-sm text-white outline-none placeholder:text-[#444444] focus:border-[#555555]"
+                    className={inputClass()}
                     placeholder="0.0.0.0"
                     value={allocForm.ip}
                     onChange={(e) => setAllocForm((f) => ({ ...f, ip: e.target.value }))}
                   />
                 </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-[10px] uppercase tracking-wider text-[#555555]">
-                    Ports (range or comma-separated) *
-                  </label>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium text-foreground">Ports (range or comma-separated) <span className="text-destructive">*</span></label>
                   <input
-                    className="border border-[#333333] bg-[#0a0a0a] px-3 py-1.5 text-sm text-white outline-none placeholder:text-[#444444] focus:border-[#555555]"
+                    className={inputClass()}
                     placeholder="25565-25600 or 25565,25566"
                     value={allocForm.ports}
                     onChange={(e) => setAllocForm((f) => ({ ...f, ports: e.target.value }))}
@@ -220,14 +209,14 @@ export default function NodeDetailPage({ params }: { params: Promise<{ id: strin
                   type="button"
                   onClick={handleAddAlloc}
                   disabled={addAllocMutation.isPending}
-                  className="bg-white px-4 py-1.5 text-sm font-medium text-black transition-opacity hover:opacity-80 disabled:opacity-40"
+                  className="rounded-lg bg-foreground px-4 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
                 >
                   {addAllocMutation.isPending ? "Adding..." : "Add"}
                 </button>
                 <button
                   type="button"
                   onClick={() => setAddingAlloc(false)}
-                  className="bg-neutral-700 px-4 py-1.5 text-sm font-medium text-white"
+                  className="rounded-lg border border-border px-4 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                 >
                   Cancel
                 </button>
@@ -235,49 +224,51 @@ export default function NodeDetailPage({ params }: { params: Promise<{ id: strin
             </div>
           )}
 
-          <div className="grid grid-cols-1 border-l border-[#222222]">
+          <div className="divide-y divide-border">
             {allocations.length === 0 && (
-              <div className="border-r border-b border-[#222222] px-4 py-3 text-sm text-[#555555]">
+              <div className="px-4 py-8 text-center text-sm text-muted-foreground">
                 No allocations. Add some to create servers on this node.
               </div>
             )}
             {allocations.map((alloc) => (
               <div
                 key={alloc.id}
-                className="flex items-center justify-between border-r border-b border-[#222222] px-4 py-2.5 hover:bg-[#111111]"
+                className="flex items-center justify-between px-4 py-3 hover:bg-muted/40 transition-colors"
               >
-                <div className="flex items-center gap-4">
-                  <div
-                    className="h-1.5 w-1.5 rounded-full"
-                    style={{ backgroundColor: alloc.serverId ? "#555555" : "#22c55e" }}
+                <div className="flex items-center gap-3">
+                  <span
+                    className="h-2 w-2 rounded-full"
+                    style={{ backgroundColor: alloc.serverId ? "rgb(var(--muted-foreground) / 0.4)" : "#22c55e" }}
                   />
-                  <span className="font-mono text-sm text-white">
+                  <span className="font-mono text-sm text-foreground">
                     {alloc.ip}:{alloc.port}
                   </span>
                   {alloc.ipAlias && (
-                    <span className="font-mono text-xs text-[#555555]">{alloc.ipAlias}</span>
+                    <span className="font-mono text-xs text-muted-foreground">{alloc.ipAlias}</span>
                   )}
                   {alloc.serverId && (
-                    <span className="text-xs text-[#555555]">assigned</span>
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                      assigned
+                    </span>
                   )}
                 </div>
                 {!alloc.serverId && (
                   confirmDelete === alloc.id ? (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       <button
                         type="button"
                         onClick={async () => {
                           await deleteAllocMutation.mutateAsync({ id: alloc.id });
                           setConfirmDelete(null);
                         }}
-                        className="bg-[#f43f5e] px-3 py-1 text-xs font-medium text-white"
+                        className="rounded-lg bg-destructive px-2 py-1 text-xs font-medium text-destructive-foreground"
                       >
                         Delete
                       </button>
                       <button
                         type="button"
                         onClick={() => setConfirmDelete(null)}
-                        className="bg-neutral-700 px-3 py-1 text-xs font-medium text-white"
+                        className="rounded-lg border border-border px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-muted"
                       >
                         Cancel
                       </button>
@@ -286,7 +277,7 @@ export default function NodeDetailPage({ params }: { params: Promise<{ id: strin
                     <button
                       type="button"
                       onClick={() => setConfirmDelete(alloc.id)}
-                      className="text-[#555555] transition-colors hover:text-[#f43f5e]"
+                      className="rounded p-0.5 text-muted-foreground/50 hover:bg-muted hover:text-destructive transition-colors"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>

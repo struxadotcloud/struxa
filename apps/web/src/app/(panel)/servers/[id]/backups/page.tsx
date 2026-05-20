@@ -6,8 +6,17 @@ import { use } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { SidebarTrigger } from "@struxa/ui/components/sidebar";
-import { Archive, HardDrive, Clock, RotateCcw, Trash2, Download } from "lucide-react";
+import { Archive, HardDrive, Clock, RotateCcw, Trash2, Download, ChevronRight } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import {
+  Dialog,
+  DialogPopup,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+} from "@struxa/ui/components/dialog";
 import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
 import Loader from "@/components/loader";
@@ -24,20 +33,12 @@ function fmtDate(d: Date | string | null): string {
   return new Date(d).toLocaleString();
 }
 
-function StatRow({
-  icon: Icon,
-  label,
-  children,
-}: {
-  icon: LucideIcon;
-  label: string;
-  children: React.ReactNode;
-}) {
+function StatRow({ icon: Icon, label, children }: { icon: LucideIcon; label: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col border-b border-[#222222]">
-      <div className="flex flex-col gap-2 px-4 pt-4 pb-3">
-        <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-[#555555]">
-          <Icon className="h-3.5 w-3.5" />
+    <div className="flex flex-col border-b border-border last:border-b-0">
+      <div className="flex flex-col gap-1.5 px-4 pt-3 pb-2.5">
+        <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+          <Icon className="h-3 w-3" />
           {label}
         </div>
         {children}
@@ -47,9 +48,9 @@ function StatRow({
 }
 
 function StatusDot({ backup }: { backup: { isSuccessful: boolean; completedAt: Date | string | null } }) {
-  if (backup.completedAt === null) return <span className="h-2 w-2 shrink-0 rounded-full bg-[#888888] animate-pulse" />;
-  if (backup.isSuccessful) return <span className="h-2 w-2 shrink-0 rounded-full bg-[#22c55e]" />;
-  return <span className="h-2 w-2 shrink-0 rounded-full bg-[#f43f5e]" />;
+  if (backup.completedAt === null) return <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500 animate-pulse" />;
+  if (backup.isSuccessful) return <span className="h-2 w-2 shrink-0 rounded-full bg-green-500" />;
+  return <span className="h-2 w-2 shrink-0 rounded-full bg-destructive" />;
 }
 
 export default function BackupsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -57,8 +58,8 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
   const { data: session, isPending } = authClient.useSession();
   const { id } = use(params);
   const queryClient = useQueryClient();
-  const [createName, setCreateName] = useState("");
   const [showCreate, setShowCreate] = useState(false);
+  const [createName, setCreateName] = useState("");
 
   useEffect(() => {
     if (!isPending && !session) router.replace("/login");
@@ -73,24 +74,27 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
   });
 
   const createMutation = useMutation(orpc.backups.create.mutationOptions());
-
   const deleteMutation = useMutation({
     ...orpc.backups.delete.mutationOptions(),
-    onSuccess: () => {
-      void queryClient.invalidateQueries(orpc.backups.list.queryOptions({ input: { serverId: serverId ?? "" } }));
-    },
+    onSuccess: () => void queryClient.invalidateQueries(orpc.backups.list.queryOptions({ input: { serverId: serverId ?? "" } })),
   });
-
   const downloadMutation = useMutation({
     ...orpc.backups.getDownloadUrl.mutationOptions(),
-    onSuccess: ({ url }) => {
-      window.open(url, "_blank");
-    },
+    onSuccess: ({ url }) => window.open(url, "_blank"),
   });
+  const restoreMutation = useMutation(orpc.backups.restore.mutationOptions());
 
-  const restoreMutation = useMutation({
-    ...orpc.backups.restore.mutationOptions(),
-  });
+  function closeCreate() {
+    setShowCreate(false);
+    setCreateName("");
+  }
+
+  async function handleCreate() {
+    if (!serverId || !createName.trim()) return;
+    await createMutation.mutateAsync({ serverId, name: createName.trim() });
+    void queryClient.invalidateQueries(orpc.backups.list.queryOptions({ input: { serverId } }));
+    closeCreate();
+  }
 
   if (isPending || !session) return <Loader />;
 
@@ -99,159 +103,160 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
 
   return (
     <>
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#222222] px-4">
-        <div className="flex items-center gap-2 text-xs">
-          <SidebarTrigger className="-ml-1 text-[#888888] hover:text-white" />
-          <Link href="/" className="text-[#555555] transition-colors hover:text-white">
-            Game Servers
-          </Link>
-          <span className="text-[#333333]">/</span>
-          <Link
-            href={`/servers/${id}`}
-            className="text-[#555555] transition-colors hover:text-white"
-          >
-            {server?.name ?? id}
-          </Link>
-          <span className="text-[#333333]">/</span>
-          <span className="text-white">Backups</span>
+      <Dialog open={showCreate} onOpenChange={(open) => { if (!open) closeCreate(); }}>
+        <DialogPopup showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Create Backup</DialogTitle>
+            <DialogDescription>Give this backup a name to identify it later.</DialogDescription>
+          </DialogHeader>
+          <div className="px-5 py-4">
+            <label className="mb-1.5 block text-xs font-medium text-foreground">Backup Name</label>
+            <input
+              autoFocus
+              value={createName}
+              onChange={(e) => setCreateName(e.target.value)}
+              placeholder="my-backup"
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") void handleCreate();
+                if (e.key === "Escape") closeCreate();
+              }}
+            />
+            {createMutation.isError && (
+              <p className="mt-2 text-xs text-destructive">{createMutation.error.message}</p>
+            )}
+          </div>
+          <DialogFooter>
+            <DialogClose
+              className="rounded-lg px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              disabled={createMutation.isPending}
+            >
+              Cancel
+            </DialogClose>
+            <button
+              type="button"
+              onClick={() => void handleCreate()}
+              disabled={!createName.trim() || createMutation.isPending}
+              className="rounded-lg bg-foreground px-4 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
+            >
+              {createMutation.isPending ? "Creating…" : "Create Backup"}
+            </button>
+          </DialogFooter>
+        </DialogPopup>
+      </Dialog>
+
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4">
+        <div className="flex items-center gap-2 text-sm">
+          <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground" />
+          <Link href="/" className="text-muted-foreground transition-colors hover:text-foreground">Game Servers</Link>
+          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+          <Link href={`/servers/${id}`} className="text-muted-foreground transition-colors hover:text-foreground">{server?.name ?? id}</Link>
+          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+          <span className="font-medium text-foreground">Backups</span>
         </div>
         <button
           type="button"
           onClick={() => setShowCreate(true)}
-          className="px-4 py-1.5 text-sm font-medium bg-white text-black hover:opacity-80 transition-opacity"
+          className="rounded-lg bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80"
         >
           Create Backup
         </button>
       </header>
 
-      {showCreate && (
-        <div className="border-b border-[#222222] bg-[#0d0d0d] px-4 py-3 flex items-center gap-3">
-          <input
-            autoFocus
-            value={createName}
-            onChange={(e) => setCreateName(e.target.value)}
-            placeholder="Backup name..."
-            className="flex-1 bg-[#141414] border border-[#333333] px-2 py-1.5 text-sm text-white outline-none focus:border-[#555555] font-mono"
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && serverId && createName.trim()) {
-                createMutation.mutate({ serverId, name: createName.trim() }, {
-                  onSuccess: () => {
-                    void queryClient.invalidateQueries(orpc.backups.list.queryOptions({ input: { serverId } }));
-                    setShowCreate(false);
-                    setCreateName("");
-                  },
-                });
-              }
-              if (e.key === "Escape") setShowCreate(false);
-            }}
-          />
-          <button
-            type="button"
-            disabled={!serverId || !createName.trim() || createMutation.isPending}
-            onClick={() => {
-              if (serverId && createName.trim()) {
-                createMutation.mutate({ serverId, name: createName.trim() }, {
-                  onSuccess: () => {
-                    void queryClient.invalidateQueries(orpc.backups.list.queryOptions({ input: { serverId } }));
-                    setShowCreate(false);
-                    setCreateName("");
-                  },
-                });
-              }
-            }}
-            className="px-4 py-1.5 text-sm font-medium bg-[#f59e0b] text-black disabled:opacity-40 hover:opacity-80 transition-opacity"
-          >
-            {createMutation.isPending ? "Creating..." : "Create"}
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowCreate(false)}
-            className="px-3 py-1.5 text-sm text-[#555555] hover:text-white transition-colors"
-          >
-            Cancel
-          </button>
-        </div>
-      )}
-
-      <div className="flex flex-1 overflow-hidden">
-        <div className="flex flex-1 flex-col overflow-y-auto">
-          <div className="border-l border-[#222222]">
-            <div className="grid grid-cols-[28px_1fr_100px_200px_100px] border-b border-r border-[#222222] px-3 py-2">
-              <span />
-              <span className="text-[10px] uppercase tracking-widest text-[#555555]">Name</span>
-              <span className="text-[10px] uppercase tracking-widest text-[#555555]">Size</span>
-              <span className="text-[10px] uppercase tracking-widest text-[#555555]">Created</span>
-              <span />
-            </div>
+      <div className="flex flex-1 gap-3 overflow-hidden p-3">
+        <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+          <div className="grid grid-cols-[28px_1fr_100px_200px_100px] border-b border-border bg-muted/40 px-4 py-2.5">
+            <span />
+            <span className="text-xs font-medium text-muted-foreground">Name</span>
+            <span className="text-xs font-medium text-muted-foreground">Size</span>
+            <span className="text-xs font-medium text-muted-foreground">Created</span>
+            <span />
+          </div>
+          <div className="flex-1 overflow-y-auto">
             {backupsPending ? (
-              <div className="flex items-center justify-center py-12 text-sm text-[#555555]">Loading…</div>
+              <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">Loading…</div>
             ) : backups.length === 0 ? (
-              <div className="flex items-center justify-center py-12 text-sm text-[#555555]">No backups yet</div>
-            ) : (
-              backups.map((backup) => (
-                <div
-                  key={backup.id}
-                  className="grid grid-cols-[28px_1fr_100px_200px_100px] items-center border-b border-r border-[#222222] px-3 py-3 hover:bg-[#111111] transition-colors"
+              <div className="flex flex-col items-center justify-center py-12 gap-2">
+                <Archive className="h-8 w-8 text-muted-foreground/30" />
+                <p className="text-sm text-muted-foreground">No backups yet</p>
+                <button
+                  type="button"
+                  onClick={() => setShowCreate(true)}
+                  className="mt-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                 >
-                  <StatusDot backup={backup} />
-                  <span className="font-mono text-sm text-white truncate pr-4">{backup.name}</span>
-                  <span className="text-sm text-[#888888]">
-                    {fmtBytes(Number(backup.bytes ?? 0))}
-                  </span>
-                  <span className="text-xs text-[#555555]">{fmtDate(backup.createdAt)}</span>
-                  <div className="flex items-center gap-3 justify-end pr-1">
-                    {backup.isSuccessful && (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => serverId && downloadMutation.mutate({ serverId, backupId: backup.id })}
-                          className="text-[#444444] hover:text-[#3b82f6] transition-colors"
-                          title="Download"
-                        >
-                          <Download className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => serverId && restoreMutation.mutate({ serverId, backupId: backup.id })}
-                          className="text-[#444444] hover:text-[#22c55e] transition-colors"
-                          title="Restore"
-                        >
-                          <RotateCcw className="h-3.5 w-3.5" />
-                        </button>
-                      </>
-                    )}
-                    <button
-                      type="button"
-                      disabled={backup.isLocked || deleteMutation.isPending}
-                      onClick={() => serverId && deleteMutation.mutate({ serverId, backupId: backup.id })}
-                      className="text-[#444444] hover:text-[#f43f5e] disabled:opacity-30 transition-colors"
-                      title="Delete"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                  Create first backup
+                </button>
+              </div>
+            ) : (
+              backups.map((backup, i) => {
+                const isLast = i === backups.length - 1;
+                return (
+                  <div
+                    key={backup.id}
+                    className={`grid grid-cols-[28px_1fr_100px_200px_100px] items-center px-4 py-3 transition-colors hover:bg-muted/40 ${!isLast ? "border-b border-border" : ""}`}
+                  >
+                    <StatusDot backup={backup} />
+                    <span className="font-mono text-sm text-foreground truncate pr-4">{backup.name}</span>
+                    <span className="text-sm text-muted-foreground">{fmtBytes(Number(backup.bytes ?? 0))}</span>
+                    <span className="text-xs text-muted-foreground">{fmtDate(backup.createdAt)}</span>
+                    <div className="flex items-center gap-2 justify-end pr-1">
+                      {backup.isSuccessful && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => serverId && downloadMutation.mutate({ serverId, backupId: backup.id })}
+                            className="rounded p-0.5 text-muted-foreground/50 hover:bg-muted hover:text-blue-500 transition-colors"
+                            title="Download"
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => serverId && restoreMutation.mutate({ serverId, backupId: backup.id })}
+                            className="rounded p-0.5 text-muted-foreground/50 hover:bg-muted hover:text-green-500 transition-colors"
+                            title="Restore"
+                          >
+                            <RotateCcw className="h-3.5 w-3.5" />
+                          </button>
+                        </>
+                      )}
+                      <button
+                        type="button"
+                        disabled={backup.isLocked || deleteMutation.isPending}
+                        onClick={() => serverId && deleteMutation.mutate({ serverId, backupId: backup.id })}
+                        className="rounded p-0.5 text-muted-foreground/50 hover:bg-muted hover:text-destructive disabled:opacity-30 transition-colors"
+                        title="Delete"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
 
-        <aside className="flex w-[280px] shrink-0 flex-col overflow-y-auto border-l border-[#222222]">
-          <StatRow icon={Archive} label="BACKUPS">
-            <span className="text-2xl font-bold text-white">{backups.length}</span>
-          </StatRow>
-          <StatRow icon={HardDrive} label="TOTAL SIZE">
-            <span className="text-2xl font-bold text-white">{fmtBytes(totalBytes)}</span>
-          </StatRow>
-          <StatRow icon={Clock} label="LAST BACKUP">
-            <span className="text-sm font-bold text-white leading-snug">
-              {lastBackup ? fmtDate(lastBackup.createdAt) : "—"}
-            </span>
-          </StatRow>
-          <StatRow icon={Clock} label="RETENTION">
-            <span className="text-2xl font-bold text-white">7</span>
-            <span className="text-xs text-[#555555]">days</span>
-          </StatRow>
+        <aside className="flex w-[220px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+          <div className="overflow-y-auto">
+            <StatRow icon={Archive} label="Backups">
+              <span className="text-xl font-bold text-foreground">{backups.length}</span>
+            </StatRow>
+            <StatRow icon={HardDrive} label="Total Size">
+              <span className="text-xl font-bold text-foreground">{fmtBytes(totalBytes)}</span>
+            </StatRow>
+            <StatRow icon={Clock} label="Last Backup">
+              <span className="text-sm font-semibold text-foreground leading-snug">
+                {lastBackup ? fmtDate(lastBackup.createdAt) : "—"}
+              </span>
+            </StatRow>
+            <StatRow icon={Clock} label="Retention">
+              <div className="flex items-baseline gap-1">
+                <span className="text-xl font-bold text-foreground">7</span>
+                <span className="text-xs text-muted-foreground">days</span>
+              </div>
+            </StatRow>
+          </div>
         </aside>
       </div>
     </>

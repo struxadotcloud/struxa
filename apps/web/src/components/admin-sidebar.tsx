@@ -57,27 +57,18 @@ export function AdminSidebar() {
   }
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-[#222222] bg-[#0a0a0a]">
-      <SidebarHeader className="flex items-center justify-center border-b border-[#222222] px-4 py-4">
-        <div className="flex items-center gap-2">
-          <Image
-            src="/logo-white.svg"
-            alt="Logo"
-            width={96}
-            height={28}
-            priority
-            className="h-6 w-auto"
-          />
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
+      <SidebarHeader className="border-b border-sidebar-border px-3 py-3">
+        <div className="flex items-center gap-2 px-1">
+          <Image src="/logo-dark.svg" alt="Struxa" width={80} height={24} priority className="h-5 w-auto dark:hidden" />
+          <Image src="/logo-white.svg" alt="Struxa" width={80} height={24} priority className="hidden h-5 w-auto dark:block" />
           {state === "expanded" && (
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold text-white">struxa</span>
-              <span className="text-[10px] uppercase tracking-widest text-[#555555]">admin</span>
-            </div>
+            <span className="rounded-full bg-destructive/10 px-1.5 py-0.5 text-[10px] font-medium text-destructive">admin</span>
           )}
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="py-2">
+      <SidebarContent className="px-2 py-2">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -86,7 +77,7 @@ export function AdminSidebar() {
                   <SidebarMenuButton
                     render={<Link href={item.href as never} />}
                     isActive={isActive(item.href)}
-                    className="gap-2.5 text-xs"
+                    className="gap-2.5 rounded-lg text-sm"
                   >
                     <item.icon className="h-4 w-4" />
                     {item.label}
@@ -98,20 +89,20 @@ export function AdminSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <div className="flex shrink-0 items-center border-t border-[#222222] px-3 py-2.5">
+      <div className="flex shrink-0 items-center border-t border-sidebar-border px-3 py-3">
         {state === "expanded" ? (
           <div className="flex w-full items-center gap-2.5">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#333333] bg-[#1a1a1a] text-xs font-semibold text-white">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
               {initials}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-medium text-white">{user?.name ?? "—"}</p>
-              <p className="truncate text-[10px] text-[#555555]">{user?.email ?? ""}</p>
+              <p className="truncate text-sm font-medium text-foreground">{user?.name ?? "—"}</p>
+              <p className="truncate text-xs text-muted-foreground">{user?.email ?? ""}</p>
             </div>
             <button
               type="button"
               onClick={handleLogout}
-              className="text-[#555555] transition-colors hover:text-white"
+              className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               title="Sign out"
             >
               <LogOut className="h-3.5 w-3.5" />
@@ -119,7 +110,7 @@ export function AdminSidebar() {
           </div>
         ) : (
           <div className="flex w-full justify-center">
-            <div className="flex h-7 w-7 items-center justify-center rounded-full border border-[#333333] bg-[#1a1a1a] text-xs font-semibold text-white">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
               {initials}
             </div>
           </div>
