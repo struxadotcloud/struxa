@@ -51,6 +51,28 @@ export async function signWsToken(
     .sign(secret);
 }
 
+export async function signBackupDownloadToken(
+  userId: string,
+  serverUuid: string,
+  backupUuid: string,
+  nodeToken: string,
+): Promise<string> {
+  const secret = new TextEncoder().encode(nodeToken);
+  return new jose.SignJWT({
+    user_uuid: toUuid(userId),
+    server_uuid: serverUuid,
+    backup_uuid: backupUuid,
+    unique_id: randomUUID(),
+  })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("15m")
+    .setIssuer(env.APP_URL)
+    .setAudience(["*"])
+    .setJti(randomUUID())
+    .sign(secret);
+}
+
 export async function getPublicKeyJwk(): Promise<jose.JWK> {
   const key = await getPublicKey();
   return jose.exportJWK(key);

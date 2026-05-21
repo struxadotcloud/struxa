@@ -58,6 +58,8 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
   const queryClient = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
   const [createName, setCreateName] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [restoreTarget, setRestoreTarget] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     if (!isPending && !session) router.replace("/login");
@@ -80,7 +82,10 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
     ...orpc.backups.getDownloadUrl.mutationOptions(),
     onSuccess: ({ url }) => window.open(url, "_blank"),
   });
-  const restoreMutation = useMutation(orpc.backups.restore.mutationOptions());
+  const restoreMutation = useMutation({
+    ...orpc.backups.restore.mutationOptions(),
+    onSuccess: () => setRestoreTarget(null),
+  });
 
   function closeCreate() {
     setShowCreate(false);
@@ -101,6 +106,69 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
 
   return (
     <>
+      <Dialog open={!!restoreTarget} onOpenChange={(open) => { if (!open) setRestoreTarget(null); }}>
+        <DialogPopup showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Restore Backup</DialogTitle>
+            <DialogDescription>
+              Restoring <span className="font-medium text-foreground">{restoreTarget?.name}</span> will overwrite the server&apos;s current files. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose
+              className="rounded-lg px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              disabled={restoreMutation.isPending}
+            >
+              Cancel
+            </DialogClose>
+            <button
+              type="button"
+              disabled={restoreMutation.isPending}
+              onClick={() => {
+                if (!serverId || !restoreTarget) return;
+                restoreMutation.mutate({ serverId, backupId: restoreTarget.id });
+              }}
+              className="rounded-lg bg-foreground px-4 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
+            >
+              {restoreMutation.isPending ? "Restoring…" : "Restore Backup"}
+            </button>
+          </DialogFooter>
+        </DialogPopup>
+      </Dialog>
+
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <DialogPopup showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Delete Backup</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete <span className="font-medium text-foreground">{deleteTarget?.name}</span>? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose
+              className="rounded-lg px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              disabled={deleteMutation.isPending}
+            >
+              Cancel
+            </DialogClose>
+            <button
+              type="button"
+              disabled={deleteMutation.isPending}
+              onClick={() => {
+                if (!serverId || !deleteTarget) return;
+                deleteMutation.mutate(
+                  { serverId, backupId: deleteTarget.id },
+                  { onSuccess: () => setDeleteTarget(null) },
+                );
+              }}
+              className="rounded-lg bg-destructive px-4 py-1.5 text-xs font-medium text-destructive-foreground transition-opacity hover:opacity-80 disabled:opacity-40"
+            >
+              {deleteMutation.isPending ? "Deleting…" : "Delete Backup"}
+            </button>
+          </DialogFooter>
+        </DialogPopup>
+      </Dialog>
+
       <Dialog open={showCreate} onOpenChange={(open) => { if (!open) closeCreate(); }}>
         <DialogPopup showCloseButton={false}>
           <DialogHeader>
@@ -202,7 +270,7 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
                           </button>
                           <button
                             type="button"
-                            onClick={() => serverId && restoreMutation.mutate({ serverId, backupId: backup.id })}
+                            onClick={() => setRestoreTarget({ id: backup.id, name: backup.name })}
                             className="rounded p-0.5 text-muted-foreground/50 hover:bg-muted hover:text-green-500 transition-colors"
                             title="Restore"
                           >
@@ -212,8 +280,8 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
                       )}
                       <button
                         type="button"
-                        disabled={backup.isLocked || deleteMutation.isPending}
-                        onClick={() => serverId && deleteMutation.mutate({ serverId, backupId: backup.id })}
+                        disabled={backup.isLocked}
+                        onClick={() => setDeleteTarget({ id: backup.id, name: backup.name })}
                         className="rounded p-0.5 text-muted-foreground/50 hover:bg-muted hover:text-destructive disabled:opacity-30 transition-colors"
                         title="Delete"
                       >
@@ -239,12 +307,6 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
               <span className="text-sm font-semibold text-foreground leading-snug">
                 {lastBackup ? fmtDate(lastBackup.createdAt) : "—"}
               </span>
-            </StatRow>
-            <StatRow icon={Clock} label="Retention">
-              <div className="flex items-baseline gap-1">
-                <span className="text-xl font-bold text-foreground">7</span>
-                <span className="text-xs text-muted-foreground">days</span>
-              </div>
             </StatRow>
           </div>
         </aside>

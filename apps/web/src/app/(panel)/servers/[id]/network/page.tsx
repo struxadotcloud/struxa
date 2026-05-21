@@ -47,7 +47,8 @@ export default function NetworkPage({ params }: { params: Promise<{ id: string }
 
   if (isPending || !session) return <Loader />;
 
-  const alloc = server?.allocation;
+  const alloc = server?.allocation as { ip: string; ipAlias: string | null; port: number } | null | undefined;
+  const allocIp = alloc ? (alloc.ipAlias ?? alloc.ip) : null;
 
   function copy(text: string) {
     void navigator.clipboard.writeText(text);
@@ -77,10 +78,10 @@ export default function NetworkPage({ params }: { params: Promise<{ id: string }
                   <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
                 </span>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-foreground">{alloc.ip}</span>
+                  <span className="text-sm text-foreground">{allocIp}</span>
                   <button
                     type="button"
-                    onClick={() => copy(alloc.ip)}
+                    onClick={() => copy(allocIp!)}
                     className="rounded p-0.5 text-muted-foreground/50 hover:bg-muted hover:text-foreground transition-colors"
                   >
                     <Copy className="h-3.5 w-3.5" />
@@ -101,7 +102,7 @@ export default function NetworkPage({ params }: { params: Promise<{ id: string }
           <div className="overflow-y-auto">
             <StatRow icon={Globe} label="Primary">
               <span className="text-sm font-semibold text-foreground leading-snug">
-                {alloc ? `${alloc.ip}:${alloc.port}` : "—"}
+                {alloc ? `${allocIp}:${alloc.port}` : "—"}
               </span>
             </StatRow>
             <StatRow icon={Globe} label="Allocations">

@@ -120,8 +120,17 @@ export default function UsersPage({ params }: { params: Promise<{ id: string }> 
               />
             </div>
             <div>
-              <label className="mb-2 block text-xs font-medium text-foreground">Permissions</label>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="mb-2 flex items-center justify-between">
+                <label className="text-xs font-medium text-foreground">Permissions</label>
+                <button
+                  type="button"
+                  onClick={() => setInvitePermissions(invitePermissions.length === ALL_PERMISSIONS.length ? [] : [...ALL_PERMISSIONS])}
+                  className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {invitePermissions.length === ALL_PERMISSIONS.length ? "Deselect all" : "Select all"}
+                </button>
+              </div>
+              <div className="grid grid-cols-3 gap-1">
                 {ALL_PERMISSIONS.map((perm) => {
                   const active = invitePermissions.includes(perm);
                   return (
@@ -129,18 +138,18 @@ export default function UsersPage({ params }: { params: Promise<{ id: string }> 
                       key={perm}
                       type="button"
                       onClick={() => togglePerm(perm)}
-                      className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+                      className={`flex items-center justify-between rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
                         active
-                          ? "bg-green-500/10 text-green-600 ring-1 ring-green-500/30 dark:text-green-400"
-                          : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+                          ? "border-green-500/30 bg-green-500/10 text-green-600 dark:text-green-400"
+                          : "border-border bg-muted/30 text-muted-foreground hover:bg-muted hover:text-foreground"
                       }`}
                     >
-                      {perm}
+                      <span className="capitalize">{perm}</span>
+                      <span className={`h-2 w-2 shrink-0 rounded-full ${active ? "bg-green-500" : "bg-muted-foreground/30"}`} />
                     </button>
                   );
                 })}
               </div>
-              <p className="mt-2 text-xs text-muted-foreground">Click to toggle. Leave blank for view-only access.</p>
             </div>
             {createMutation.isError && (
               <p className="text-xs text-destructive">{createMutation.error.message}</p>

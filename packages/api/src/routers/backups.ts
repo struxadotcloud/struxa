@@ -5,7 +5,7 @@ import { ORPCError } from "@orpc/server";
 import { db } from "@struxa/db";
 import { backups, nodes, servers, subusers } from "@struxa/db";
 import { createWingsClient } from "../lib/wings-client";
-import { signWsToken } from "../lib/jwt";
+import { signBackupDownloadToken } from "../lib/jwt";
 import { protectedProcedure } from "../index";
 
 async function requireServerAccess(userId: string, serverId: string, role: string | null | undefined) {
@@ -63,7 +63,7 @@ export const backupsRouter = {
       await client.createBackup(server.uuid, {
         uuid,
         ignore: input.ignoredFiles ?? "",
-        adapter: "local",
+        adapter: "wings",
       });
 
       return db.query.backups.findFirst({ where: eq(backups.id, id) });
@@ -105,11 +105,12 @@ export const backupsRouter = {
       if (!backup || !backup.isSuccessful) throw new ORPCError("NOT_FOUND");
 
       const node = server.node as typeof nodes.$inferSelect;
-      const token = await signWsToken({
-        user_uuid: context.session.user.id,
-        server_uuid: server.uuid,
-        permissions: ["backup.download"],
-      }, node.token);
+      const token = await signBackupDownloadToken(
+        context.session.user.id,
+        server.uuid,
+        backup.uuid,
+        node.token,
+      );
       const url = `${node.scheme}://${node.fqdn}:${node.daemonListen}/download/backup?token=${token}`;
       return { url };
     }),

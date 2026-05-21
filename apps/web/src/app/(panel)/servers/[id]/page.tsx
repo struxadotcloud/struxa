@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Globe,
-  Clock,
   Cpu,
   HardDrive,
   ArrowDown,
@@ -14,12 +13,28 @@ import {
   Copy,
   SendHorizontal,
   MemoryStick,
+  Timer,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import Loader from "@/components/loader";
+
+function fmtUptime(ms: number): string {
+  if (ms <= 0) return "—";
+  const secs = Math.floor(ms / 1000);
+  const d = Math.floor(secs / 86400);
+  const h = Math.floor((secs % 86400) / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  const s = secs % 60;
+  const parts: string[] = [];
+  if (d > 0) parts.push(`${d}d`);
+  if (h > 0 || d > 0) parts.push(`${h}h`);
+  if (m > 0 || h > 0 || d > 0) parts.push(`${m}m`);
+  parts.push(`${s}s`);
+  return parts.join(" ");
+}
 
 function fmtMb(mb: number) {
   return mb >= 1024 ? `${(mb / 1024).toFixed(2)} GB` : `${mb.toFixed(1)} MB`;
@@ -159,7 +174,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
   const [command, setCommand] = useState("");
   const [wsStatus, setWsStatus] = useState<WsStatus>("offline");
   const [connected, setConnected] = useState(false);
-  const ZERO_STATS = { cpu: 0, memBytes: 0, memLimitBytes: 0, diskMb: 0, rxBytes: 0, txBytes: 0 };
+  const ZERO_STATS = { cpu: 0, memBytes: 0, memLimitBytes: 0, diskMb: 0, rxBytes: 0, txBytes: 0, uptimeMs: 0 };
   const [stats, setStats] = useState(ZERO_STATS);
   const statsRef = useRef(ZERO_STATS);
   const [cpuHistory, setCpuHistory] = useState<number[]>(EMPTY_HISTORY);
@@ -176,7 +191,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
     let cancelled = false;
     intentionalClose.current = false;
 
-    const ZERO = { cpu: 0, memBytes: 0, memLimitBytes: 0, diskMb: 0, rxBytes: 0, txBytes: 0 };
+    const ZERO = { cpu: 0, memBytes: 0, memLimitBytes: 0, diskMb: 0, rxBytes: 0, txBytes: 0, uptimeMs: 0 };
 
     void queryClient
       .fetchQuery({
@@ -211,6 +226,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                 memory_bytes?: number;
                 memory_limit_bytes?: number;
                 disk_bytes?: number;
+                uptime?: number;
                 network?: { rx_bytes?: number; tx_bytes?: number };
               };
               const cpu = raw.cpu_absolute ?? 0;
@@ -219,8 +235,9 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
               const diskMb = (raw.disk_bytes ?? 0) / (1024 * 1024);
               const rxBytes = raw.network?.rx_bytes ?? 0;
               const txBytes = raw.network?.tx_bytes ?? 0;
-              statsRef.current = { cpu, memBytes, memLimitBytes, diskMb, rxBytes, txBytes };
-              setStats({ cpu, memBytes, memLimitBytes, diskMb, rxBytes, txBytes });
+              const uptimeMs = raw.uptime ?? 0;
+              statsRef.current = { cpu, memBytes, memLimitBytes, diskMb, rxBytes, txBytes, uptimeMs };
+              setStats({ cpu, memBytes, memLimitBytes, diskMb, rxBytes, txBytes, uptimeMs });
             } catch {}
           } else if (msg.event === "status") {
             const status = (msg.args?.[0] as WsStatus) ?? "offline";
@@ -299,7 +316,8 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
 
   if (isPending || !session) return <Loader />;
 
-  const alloc = server?.allocation as { ip: string; port: number } | null | undefined;
+  const alloc = server?.allocation as { ip: string; ipAlias: string | null; port: number } | null | undefined;
+  const allocDisplay = alloc ? `${alloc.ipAlias ?? alloc.ip}:${alloc.port}` : "—";
   const canStart = wsStatus === "offline";
   const canStop = wsStatus === "running";
   const canKill = wsStatus === "starting" || wsStatus === "stopping";
@@ -413,12 +431,12 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
             <StatRow icon={Globe} label="Address">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold text-foreground">
-                  {alloc ? `${alloc.ip}:${alloc.port}` : "—"}
+                  {allocDisplay}
                 </span>
                 {alloc && (
                   <button
                     type="button"
-                    onClick={() => copy(`${alloc.ip}:${alloc.port}`)}
+                    onClick={() => copy(allocDisplay)}
                     className="rounded p-0.5 text-muted-foreground/50 transition-colors hover:bg-muted hover:text-foreground"
                   >
                     <Copy className="h-3.5 w-3.5" />
@@ -426,13 +444,8 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                 )}
               </div>
             </StatRow>
-            <StatRow icon={Clock} label="Status">
-              <span
-                className="rounded-full px-2 py-0.5 text-xs font-semibold capitalize"
-                style={{ color: wsStatusColor, backgroundColor: `${wsStatusColor}18` }}
-              >
-                {wsStatus}
-              </span>
+            <StatRow icon={Timer} label="Uptime">
+              <span className="text-sm font-semibold text-foreground">{fmtUptime(stats.uptimeMs)}</span>
             </StatRow>
             <StatRow icon={Cpu} label="CPU" chart={<Sparkline data={cpuHistory} color="#3b82f6" />}>
               <div className="flex items-baseline gap-1">

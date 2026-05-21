@@ -39,7 +39,7 @@ export default function NodeDetailPage({ params }: { params: Promise<{ id: strin
   );
   const testConnMutation = useMutation(orpc.nodes.testConnection.mutationOptions());
 
-  const [allocForm, setAllocForm] = useState({ ip: "", ports: "" });
+  const [allocForm, setAllocForm] = useState({ ip: "", ports: "", ipAlias: "" });
   const [addingAlloc, setAddingAlloc] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [showConfig, setShowConfig] = useState(false);
@@ -47,8 +47,13 @@ export default function NodeDetailPage({ params }: { params: Promise<{ id: strin
 
   async function handleAddAlloc() {
     if (!allocForm.ip.trim() || !allocForm.ports.trim()) return;
-    await addAllocMutation.mutateAsync({ nodeId: id, ip: allocForm.ip, ports: allocForm.ports });
-    setAllocForm({ ip: "", ports: "" });
+    await addAllocMutation.mutateAsync({
+      nodeId: id,
+      ip: allocForm.ip,
+      ports: allocForm.ports,
+      ...(allocForm.ipAlias.trim() ? { ipAlias: allocForm.ipAlias.trim() } : {}),
+    });
+    setAllocForm({ ip: "", ports: "", ipAlias: "" });
     setAddingAlloc(false);
   }
 
@@ -170,7 +175,7 @@ export default function NodeDetailPage({ params }: { params: Promise<{ id: strin
 
           {addingAlloc && (
             <div className="border-b border-border bg-muted/20 p-4">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-medium text-foreground">IP Address <span className="text-destructive">*</span></label>
                   <input
@@ -187,6 +192,15 @@ export default function NodeDetailPage({ params }: { params: Promise<{ id: strin
                     placeholder="25565-25600 or 25565,25566"
                     value={allocForm.ports}
                     onChange={(e) => setAllocForm((f) => ({ ...f, ports: e.target.value }))}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium text-foreground">IP Alias <span className="text-muted-foreground font-normal">(optional)</span></label>
+                  <input
+                    className={inputClass()}
+                    placeholder="play.example.com"
+                    value={allocForm.ipAlias}
+                    onChange={(e) => setAllocForm((f) => ({ ...f, ipAlias: e.target.value }))}
                   />
                 </div>
               </div>

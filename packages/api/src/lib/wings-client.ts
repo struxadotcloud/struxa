@@ -103,7 +103,7 @@ export class WingsClient {
     await this.request(
       "POST",
       `/api/servers/${uuid}/backup/${backupUuid}/restore`,
-      options ?? {},
+      { adapter: "wings", truncate_directory: options?.truncate_directory ?? false },
     );
   }
 
