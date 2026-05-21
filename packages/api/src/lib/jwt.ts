@@ -82,6 +82,6 @@ export async function verifyWsToken(
   token: string,
 ): Promise<jose.JWTPayload & WsTokenPayload> {
   const key = await getPublicKey();
-  const { payload } = await jose.jwtVerify(token, key);
+  const { payload } = await jose.jwtVerify(token, key, { algorithms: ["RS256"] });
   return payload as jose.JWTPayload & WsTokenPayload;
 }

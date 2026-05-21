@@ -128,17 +128,13 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const newFileInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: fileToken } = useQuery(
-    orpc.files.getToken.queryOptions({ input: { serverId: id } }),
-  );
+  const filesBase = `/api/servers/${id}/files`;
 
   const fetchDir = useCallback(async (dir: string): Promise<WingsFile[]> => {
-    if (!fileToken) return [];
     setLoadingDir(true);
     try {
       const res = await fetch(
-        `${fileToken.baseUrl}/files/list-directory?directory=${encodeURIComponent(dir)}`,
-        { headers: { Authorization: `Bearer ${fileToken.token}` } },
+        `${filesBase}/list-directory?directory=${encodeURIComponent(dir)}`,
       );
       if (!res.ok) return [];
       const raw = (await res.json()) as Record<string, WingsFile>;
@@ -153,15 +149,15 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
     } finally {
       setLoadingDir(false);
     }
-  }, [fileToken]);
+  }, [filesBase]);
 
   useEffect(() => {
-    if (fileToken) void fetchDir("/");
-  }, [fileToken, fetchDir]);
+    void fetchDir("/");
+  }, [fetchDir]);
 
   async function openFile(file: WingsFile) {
     const filePath = dirPath === "/" ? `/${file.name}` : `${dirPath}/${file.name}`;
-    if (!fileToken || !file.file || !isText(file)) {
+    if (!file.file || !isText(file)) {
       setSelectedFile(file);
       setOpenFilePath(filePath);
       setEditContent("");
@@ -169,8 +165,7 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
       return;
     }
     const res = await fetch(
-      `${fileToken.baseUrl}/files/contents?file=${encodeURIComponent(filePath)}`,
-      { headers: { Authorization: `Bearer ${fileToken.token}` } },
+      `${filesBase}/contents?file=${encodeURIComponent(filePath)}`,
     );
     const text = res.ok ? await res.text() : "";
     setSelectedFile(file);
@@ -180,18 +175,15 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
   }
 
   async function handleSave() {
-    if (!fileToken || !selectedFile || !openFilePath) return;
+    if (!selectedFile || !openFilePath) return;
     const filePath = openFilePath;
     setSaving(true);
     try {
       await fetch(
-        `${fileToken.baseUrl}/files/write?file=${encodeURIComponent(filePath)}`,
+        `${filesBase}/write?file=${encodeURIComponent(filePath)}`,
         {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${fileToken.token}`,
-            "Content-Type": "text/plain",
-          },
+          headers: { "Content-Type": "text/plain" },
           body: editContent,
         },
       );
@@ -203,16 +195,13 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
 
   async function createFile() {
     const name = newFileName.trim();
-    if (!fileToken || !name) return;
+    if (!name) return;
     const filePath = dirPath === "/" ? `/${name}` : `${dirPath}/${name}`;
     await fetch(
-      `${fileToken.baseUrl}/files/write?file=${encodeURIComponent(filePath)}`,
+      `${filesBase}/write?file=${encodeURIComponent(filePath)}`,
       {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${fileToken.token}`,
-          "Content-Type": "text/plain",
-        },
+        headers: { "Content-Type": "text/plain" },
         body: "",
       },
     );
@@ -226,7 +215,7 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
   }
 
   async function handleUpload(files: FileList | null) {
-    if (!fileToken || !files || files.length === 0) return;
+    if (!files || files.length === 0) return;
     setUploading(true);
     try {
       await Promise.all(
@@ -234,13 +223,10 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
           const filePath = dirPath === "/" ? `/${file.name}` : `${dirPath}/${file.name}`;
           const buffer = await file.arrayBuffer();
           await fetch(
-            `${fileToken.baseUrl}/files/write?file=${encodeURIComponent(filePath)}`,
+            `${filesBase}/write?file=${encodeURIComponent(filePath)}`,
             {
               method: "POST",
-              headers: {
-                Authorization: `Bearer ${fileToken.token}`,
-                "Content-Type": "application/octet-stream",
-              },
+              headers: { "Content-Type": "application/octet-stream" },
               body: buffer,
             },
           );
