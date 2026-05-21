@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import Image from "next/image";
 import {
   Check,
   ChevronDown,
@@ -35,29 +36,28 @@ const STEPS: { num: Step; label: string }[] = [
   { num: 5, label: "Complete" },
 ];
 
-// ─── Header step bar ──────────────────────────────────────────────────────────
+// ─── Step indicator ───────────────────────────────────────────────────────────
 
 function StepBar({ current, completed }: { current: Step; completed: Set<number> }) {
   return (
-    <div className="flex items-center gap-0">
+    <div className="flex items-center gap-1">
       {STEPS.map((s, i) => {
         const isDone = completed.has(s.num);
         const isActive = current === s.num;
         return (
-          <div key={s.num} className="flex items-center gap-0">
-            <span
-              className={`px-2 text-[10px] uppercase tracking-wider ${
-                isDone
-                  ? "text-[#22c55e]"
-                  : isActive
-                    ? "text-white"
-                    : "text-[#333333]"
-              }`}
-            >
-              {isDone ? "✓" : s.num}&nbsp;{s.label}
-            </span>
+          <div key={s.num} className="flex items-center gap-1">
+            <div className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+              isDone
+                ? "bg-green-500/10 text-green-600 dark:text-green-400"
+                : isActive
+                  ? "bg-foreground text-background"
+                  : "text-muted-foreground"
+            }`}>
+              {isDone ? <Check className="h-3 w-3" /> : <span>{s.num}</span>}
+              {s.label}
+            </div>
             {i < STEPS.length - 1 && (
-              <span className="text-[#2a2a2a]">/</span>
+              <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground/40" />
             )}
           </div>
         );
@@ -66,15 +66,16 @@ function StepBar({ current, completed }: { current: Step; completed: Set<number>
   );
 }
 
-// ─── Shared input style ───────────────────────────────────────────────────────
+// ─── Shared helpers ───────────────────────────────────────────────────────────
 
-const input =
-  "w-full border border-[#2a2a2a] bg-[#0d0d0d] px-3 py-2 text-sm text-white outline-none placeholder:text-[#3a3a3a] focus:border-[#555555]";
+function inputClass() {
+  return "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors";
+}
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-[10px] uppercase tracking-wider text-[#555555]">{label}</label>
+      <label className="text-xs font-medium text-foreground">{label}</label>
       {children}
     </div>
   );
@@ -82,9 +83,50 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function ErrorBanner({ msg }: { msg: string }) {
   return (
-    <div className="border-l-2 border-[#f43f5e] bg-[#f43f5e]/5 px-3 py-2 text-xs text-[#f43f5e]">
+    <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive">
       {msg}
     </div>
+  );
+}
+
+function SuccessBanner({ msg }: { msg: string }) {
+  return (
+    <div className="rounded-lg border border-green-500/30 bg-green-500/5 px-3 py-2 text-xs text-green-600 dark:text-green-400">
+      {msg}
+    </div>
+  );
+}
+
+function PrimaryButton({ children, disabled, type = "button", onClick }: {
+  children: React.ReactNode;
+  disabled?: boolean;
+  type?: "button" | "submit";
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      type={type}
+      disabled={disabled}
+      onClick={onClick}
+      className="flex items-center gap-2 rounded-lg bg-foreground px-5 py-2 text-sm font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
+    >
+      {children}
+    </button>
+  );
+}
+
+function SecondaryButton({ children, onClick }: {
+  children: React.ReactNode;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+    >
+      {children}
+    </button>
   );
 }
 
@@ -100,23 +142,19 @@ function FlatSelect<T extends string>({
   const selected = options.find((o) => o.value === value);
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex w-full items-center justify-between border border-[#2a2a2a] bg-[#0d0d0d] px-3 py-2 text-sm text-white outline-none transition-colors hover:border-[#555555] data-[popup-open]:border-[#555555]">
+      <DropdownMenuTrigger className="flex w-full items-center justify-between rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors hover:border-ring data-[popup-open]:border-ring">
         <span>{selected?.label ?? value}</span>
-        <ChevronDown className="ml-2 h-3.5 w-3.5 shrink-0 text-[#555555]" />
+        <ChevronDown className="ml-2 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="start"
-        sideOffset={2}
-        className="border border-[#222222] bg-[#0d0d0d] p-0 shadow-xl"
-      >
+      <DropdownMenuContent align="start" sideOffset={2}>
         {options.map((opt) => (
           <DropdownMenuItem
             key={opt.value}
             onClick={() => onChange(opt.value)}
-            className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm text-[#888888] focus:bg-[#1a1a1a] focus:text-white"
+            className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm"
           >
             <span
-              className={`h-1.5 w-1.5 shrink-0 rounded-full ${opt.value === value ? "bg-[#22c55e]" : "bg-transparent"}`}
+              className={`h-1.5 w-1.5 shrink-0 rounded-full ${opt.value === value ? "bg-green-500" : "bg-transparent"}`}
             />
             {opt.label}
           </DropdownMenuItem>
@@ -163,49 +201,30 @@ function Step1({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <form onSubmit={submit} className="flex flex-col gap-0">
-      <div className="border-b border-[#1a1a1a] py-4">
-        <p className="text-xs text-[#555555]">
-          Create the primary administrator account for this panel. No other users exist yet.
-        </p>
-      </div>
-
-      {err && (
-        <div className="border-b border-[#1a1a1a] py-4">
-          <ErrorBanner msg={err} />
-        </div>
-      )}
-
-      <div className="border-b border-[#1a1a1a] py-4">
-        <Field label="Display Name (optional)">
-          <input className={input} placeholder="Admin" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
-        </Field>
-      </div>
-
-      <div className="border-b border-[#1a1a1a] py-4">
-        <Field label="Email *">
-          <input type="email" className={input} placeholder="admin@example.com" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
-        </Field>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4 border-b border-[#1a1a1a] py-4">
+    <form onSubmit={submit} className="flex flex-col gap-4">
+      <p className="text-sm text-muted-foreground">
+        Create the primary administrator account for this panel. No other users exist yet.
+      </p>
+      {err && <ErrorBanner msg={err} />}
+      <Field label="Display Name (optional)">
+        <input className={inputClass()} placeholder="Admin" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+      </Field>
+      <Field label="Email *">
+        <input type="email" className={inputClass()} placeholder="admin@example.com" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
+      </Field>
+      <div className="grid grid-cols-2 gap-3">
         <Field label="Password *">
-          <input type="password" className={input} placeholder="At least 8 characters" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} />
+          <input type="password" className={inputClass()} placeholder="At least 8 characters" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} />
         </Field>
         <Field label="Confirm Password *">
-          <input type="password" className={input} placeholder="Repeat password" value={form.confirm} onChange={e => setForm(f => ({ ...f, confirm: e.target.value }))} />
+          <input type="password" className={inputClass()} placeholder="Repeat password" value={form.confirm} onChange={e => setForm(f => ({ ...f, confirm: e.target.value }))} />
         </Field>
       </div>
-
-      <div className="pt-4">
-        <button
-          type="submit"
-          disabled={busy}
-          className="flex items-center gap-2 bg-white px-5 py-2 text-sm font-medium text-black transition-opacity hover:opacity-80 disabled:opacity-40"
-        >
+      <div className="pt-1">
+        <PrimaryButton type="submit" disabled={busy}>
           {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-          {busy ? "Creating account..." : "Create Account →"}
-        </button>
+          {busy ? "Creating account..." : "Create Account"}
+        </PrimaryButton>
       </div>
     </form>
   );
@@ -253,86 +272,66 @@ function Step2({ onDone }: { onDone: () => void }) {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-0">
-        <div className="border-b border-[#1a1a1a] py-4">
-          <p className="text-xs text-[#555555]">Fetching egg repositories from GitHub...</p>
-        </div>
-        <div className="flex items-center gap-2 py-6 text-xs text-[#555555]">
+      <div className="flex flex-col gap-4">
+        <p className="text-sm text-muted-foreground">Fetching egg repositories from GitHub...</p>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
           Loading...
         </div>
-        <div className="pt-2">
-          <button onClick={onDone} className="bg-neutral-800 px-5 py-2 text-sm font-medium text-white transition-opacity hover:opacity-80">
-            Skip →
-          </button>
-        </div>
+        <SecondaryButton onClick={onDone}>Skip</SecondaryButton>
       </div>
     );
   }
 
   if (isError) {
     return (
-      <div className="flex flex-col gap-0">
-        <div className="border-b border-[#1a1a1a] py-4">
-          <ErrorBanner msg="Could not reach GitHub. Check your internet connection or skip this step." />
-        </div>
-        <div className="pt-4">
-          <button onClick={onDone} className="bg-neutral-800 px-5 py-2 text-sm font-medium text-white transition-opacity hover:opacity-80">
-            Skip →
-          </button>
-        </div>
+      <div className="flex flex-col gap-4">
+        <ErrorBanner msg="Could not reach GitHub. Check your internet connection or skip this step." />
+        <SecondaryButton onClick={onDone}>Skip →</SecondaryButton>
       </div>
     );
   }
 
   if (result) {
     return (
-      <div className="flex flex-col gap-0">
-        <div className="border-b border-[#1a1a1a] py-4">
-          <div className="border-l-2 border-[#22c55e] bg-[#22c55e]/5 px-3 py-2 text-xs text-[#22c55e]">
-            Imported {result.imported} egg{result.imported !== 1 ? "s" : ""} successfully.
-          </div>
-        </div>
-        <div className="pt-4">
-          <button onClick={onDone} className="flex items-center gap-2 bg-white px-5 py-2 text-sm font-medium text-black transition-opacity hover:opacity-80">
-            <Check className="h-3.5 w-3.5" /> Continue →
-          </button>
-        </div>
+      <div className="flex flex-col gap-4">
+        <SuccessBanner msg={`Imported ${result.imported} egg${result.imported !== 1 ? "s" : ""} successfully.`} />
+        <PrimaryButton onClick={onDone}>
+          <Check className="h-3.5 w-3.5" /> Continue
+        </PrimaryButton>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-0">
-      <div className="border-b border-[#1a1a1a] py-4">
-        <p className="text-xs text-[#555555]">
-          Eggs are server configuration templates from the Pterodactyl ecosystem. Select which to import — you can add more later from the admin panel.
-        </p>
-      </div>
+    <div className="flex flex-col gap-4">
+      <p className="text-sm text-muted-foreground">
+        Eggs are server configuration templates from the Pterodactyl ecosystem. Select which to import — you can add more later from the admin panel.
+      </p>
 
-      {/* Repo list */}
-      <div className="border-b border-[#1a1a1a] py-2">
+      <div className="rounded-xl border border-border bg-muted/20 overflow-hidden">
         {repos?.map((repo: RepoResult) => {
           const allEggs = repo.categories.flatMap(c => c.eggs);
           const selectedCount = allEggs.filter(e => selected.has(e.rawUrl)).length;
           const open = expandedRepos.has(repo.id);
 
           return (
-            <div key={repo.id} className="border-b border-[#1a1a1a] last:border-b-0">
-              {/* Repo row */}
-              <div className="flex items-center justify-between py-2">
+            <div key={repo.id} className="border-b border-border last:border-b-0">
+              <div className="flex items-center justify-between px-3 py-2.5">
                 <button
                   type="button"
                   onClick={() => setExpandedRepos(s => { const n = new Set(s); n.has(repo.id) ? n.delete(repo.id) : n.add(repo.id); return n; })}
-                  className="flex items-center gap-2 text-xs text-white hover:text-[#888888] transition-colors"
+                  className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-muted-foreground transition-colors"
                 >
-                  {open ? <ChevronDown className="h-3 w-3 text-[#444444]" /> : <ChevronRight className="h-3 w-3 text-[#444444]" />}
-                  <span className="uppercase tracking-wider">{repo.label}</span>
-                  <span className="text-[#444444]">{selectedCount}/{allEggs.length}</span>
+                  {open ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+                  {repo.label}
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                    {selectedCount}/{allEggs.length}
+                  </span>
                 </button>
-                <div className="flex items-center gap-3">
-                  <button type="button" onClick={() => toggleRepo(repo, true)} className="text-[10px] text-[#555555] hover:text-white transition-colors">Select all</button>
-                  <button type="button" onClick={() => toggleRepo(repo, false)} className="text-[10px] text-[#555555] hover:text-white transition-colors">None</button>
+                <div className="flex items-center gap-2">
+                  <button type="button" onClick={() => toggleRepo(repo, true)} className="text-[11px] text-muted-foreground hover:text-foreground transition-colors">Select all</button>
+                  <button type="button" onClick={() => toggleRepo(repo, false)} className="text-[11px] text-muted-foreground hover:text-foreground transition-colors">None</button>
                 </div>
               </div>
 
@@ -341,25 +340,25 @@ function Step2({ onDone }: { onDone: () => void }) {
                 const catOpen = expandedCats.has(key);
 
                 return (
-                  <div key={cat.category}>
+                  <div key={cat.category} className="border-t border-border/50">
                     <button
                       type="button"
                       onClick={() => setExpandedCats(s => { const n = new Set(s); n.has(key) ? n.delete(key) : n.add(key); return n; })}
-                      className="flex w-full items-center gap-2 px-4 py-1.5 text-[11px] text-[#666666] hover:text-white transition-colors"
+                      className="flex w-full items-center gap-2 px-5 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
                     >
-                      {catOpen ? <ChevronDown className="h-2.5 w-2.5" /> : <ChevronRight className="h-2.5 w-2.5" />}
-                      <span className="font-mono text-[#888888]">{cat.category}</span>
-                      <span className="ml-auto text-[#333333]">{cat.eggs.length}</span>
+                      {catOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                      <span className="font-mono">{cat.category}</span>
+                      <span className="ml-auto text-muted-foreground/60">{cat.eggs.length}</span>
                     </button>
                     {catOpen && cat.eggs.map(egg => (
-                      <label key={egg.rawUrl} className="flex cursor-pointer items-center gap-3 py-1 pl-8 pr-4 hover:bg-[#0f0f0f]">
+                      <label key={egg.rawUrl} className="flex cursor-pointer items-center gap-3 py-1.5 pl-10 pr-4 hover:bg-muted/40 transition-colors">
                         <input
                           type="checkbox"
-                          className="accent-[#22c55e]"
+                          className="accent-green-500"
                           checked={selected.has(egg.rawUrl)}
                           onChange={() => toggleEgg(egg, repo.label)}
                         />
-                        <span className="text-xs text-[#cccccc]">{egg.name}</span>
+                        <span className="text-xs text-foreground">{egg.name}</span>
                       </label>
                     ))}
                   </div>
@@ -370,21 +369,14 @@ function Step2({ onDone }: { onDone: () => void }) {
         })}
       </div>
 
-      <div className="flex items-center justify-between pt-4">
-        <span className="text-[10px] text-[#444444]">{selected.size} selected</span>
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-muted-foreground">{selected.size} selected</span>
         <div className="flex items-center gap-2">
-          <button type="button" onClick={onDone} className="bg-neutral-800 px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-80">
-            Skip
-          </button>
-          <button
-            type="button"
-            disabled={selected.size === 0 || importMut.isPending}
-            onClick={doImport}
-            className="flex items-center gap-2 bg-white px-5 py-2 text-sm font-medium text-black transition-opacity hover:opacity-80 disabled:opacity-40"
-          >
+          <SecondaryButton onClick={onDone}>Skip</SecondaryButton>
+          <PrimaryButton disabled={selected.size === 0 || importMut.isPending} onClick={doImport}>
             {importMut.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-            {importMut.isPending ? "Importing..." : `Import ${selected.size} Eggs →`}
-          </button>
+            {importMut.isPending ? "Importing..." : `Import ${selected.size} Eggs`}
+          </PrimaryButton>
         </div>
       </div>
     </div>
@@ -411,31 +403,27 @@ function Step3({ onDone }: { onDone: (id: string) => void }) {
   }
 
   return (
-    <form onSubmit={submit} className="flex flex-col gap-0">
-      <div className="border-b border-[#1a1a1a] py-4">
-        <p className="text-xs text-[#555555]">
-          Locations group your nodes by datacenter or region.
-        </p>
-      </div>
-      {err && <div className="border-b border-[#1a1a1a] py-4"><ErrorBanner msg={err} /></div>}
-      <div className="grid grid-cols-2 gap-4 border-b border-[#1a1a1a] py-4">
+    <form onSubmit={submit} className="flex flex-col gap-4">
+      <p className="text-sm text-muted-foreground">
+        Locations group your nodes by datacenter or region.
+      </p>
+      {err && <ErrorBanner msg={err} />}
+      <div className="grid grid-cols-2 gap-3">
         <Field label="Name *">
-          <input className={input} placeholder="US East" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+          <input className={inputClass()} placeholder="US East" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
         </Field>
         <Field label="Short Code *">
-          <input className={input} placeholder="us-east" value={form.short} onChange={e => setForm(f => ({ ...f, short: e.target.value }))} />
+          <input className={inputClass()} placeholder="us-east" value={form.short} onChange={e => setForm(f => ({ ...f, short: e.target.value }))} />
         </Field>
       </div>
-      <div className="border-b border-[#1a1a1a] py-4">
-        <Field label="Description (optional)">
-          <input className={input} placeholder="New York datacenter" value={form.long} onChange={e => setForm(f => ({ ...f, long: e.target.value }))} />
-        </Field>
-      </div>
-      <div className="pt-4">
-        <button type="submit" disabled={create.isPending} className="flex items-center gap-2 bg-white px-5 py-2 text-sm font-medium text-black transition-opacity hover:opacity-80 disabled:opacity-40">
+      <Field label="Description (optional)">
+        <input className={inputClass()} placeholder="New York datacenter" value={form.long} onChange={e => setForm(f => ({ ...f, long: e.target.value }))} />
+      </Field>
+      <div className="pt-1">
+        <PrimaryButton type="submit" disabled={create.isPending}>
           {create.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-          {create.isPending ? "Creating..." : "Create Location →"}
-        </button>
+          {create.isPending ? "Creating..." : "Create Location"}
+        </PrimaryButton>
       </div>
     </form>
   );
@@ -473,22 +461,20 @@ function Step4({ locationId, onDone }: { locationId: string; onDone: () => void 
   }
 
   return (
-    <form onSubmit={submit} className="flex flex-col gap-0">
-      <div className="border-b border-[#1a1a1a] py-4">
-        <p className="text-xs text-[#555555]">
-          Nodes are physical servers running the Wings daemon. You can add more later.
-        </p>
-      </div>
-      {err && <div className="border-b border-[#1a1a1a] py-4"><ErrorBanner msg={err} /></div>}
-      <div className="grid grid-cols-2 gap-4 border-b border-[#1a1a1a] py-4">
+    <form onSubmit={submit} className="flex flex-col gap-4">
+      <p className="text-sm text-muted-foreground">
+        Nodes are physical servers running the Wings daemon. You can add more later.
+      </p>
+      {err && <ErrorBanner msg={err} />}
+      <div className="grid grid-cols-2 gap-3">
         <Field label="Node Name *">
-          <input className={input} placeholder="Node 1" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+          <input className={inputClass()} placeholder="Node 1" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
         </Field>
         <Field label="FQDN *">
-          <input className={input} placeholder="node1.example.com" value={form.fqdn} onChange={e => setForm(f => ({ ...f, fqdn: e.target.value }))} />
+          <input className={inputClass()} placeholder="node1.example.com" value={form.fqdn} onChange={e => setForm(f => ({ ...f, fqdn: e.target.value }))} />
         </Field>
       </div>
-      <div className="grid grid-cols-3 gap-4 border-b border-[#1a1a1a] py-4">
+      <div className="grid grid-cols-3 gap-3">
         <Field label="Scheme">
           <FlatSelect
             value={form.scheme}
@@ -497,25 +483,25 @@ function Step4({ locationId, onDone }: { locationId: string; onDone: () => void 
           />
         </Field>
         <Field label="Memory (MB) *">
-          <input type="number" min={1} className={input} value={form.memory} onChange={e => setForm(f => ({ ...f, memory: e.target.value }))} />
+          <input type="number" min={1} className={inputClass()} value={form.memory} onChange={e => setForm(f => ({ ...f, memory: e.target.value }))} />
         </Field>
         <Field label="Disk (MB) *">
-          <input type="number" min={1} className={input} value={form.disk} onChange={e => setForm(f => ({ ...f, disk: e.target.value }))} />
+          <input type="number" min={1} className={inputClass()} value={form.disk} onChange={e => setForm(f => ({ ...f, disk: e.target.value }))} />
         </Field>
       </div>
-      <div className="grid grid-cols-2 gap-4 border-b border-[#1a1a1a] py-4">
+      <div className="grid grid-cols-2 gap-3">
         <Field label="Daemon Port">
-          <input type="number" className={input} value={form.daemonListen} onChange={e => setForm(f => ({ ...f, daemonListen: e.target.value }))} />
+          <input type="number" className={inputClass()} value={form.daemonListen} onChange={e => setForm(f => ({ ...f, daemonListen: e.target.value }))} />
         </Field>
         <Field label="SFTP Port">
-          <input type="number" className={input} value={form.daemonSFTP} onChange={e => setForm(f => ({ ...f, daemonSFTP: e.target.value }))} />
+          <input type="number" className={inputClass()} value={form.daemonSFTP} onChange={e => setForm(f => ({ ...f, daemonSFTP: e.target.value }))} />
         </Field>
       </div>
-      <div className="pt-4">
-        <button type="submit" disabled={create.isPending} className="flex items-center gap-2 bg-white px-5 py-2 text-sm font-medium text-black transition-opacity hover:opacity-80 disabled:opacity-40">
+      <div className="pt-1">
+        <PrimaryButton type="submit" disabled={create.isPending}>
           {create.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-          {create.isPending ? "Creating node..." : "Create Node →"}
-        </button>
+          {create.isPending ? "Creating node..." : "Create Node"}
+        </PrimaryButton>
       </div>
     </form>
   );
@@ -525,45 +511,34 @@ function Step4({ locationId, onDone }: { locationId: string; onDone: () => void 
 
 function Step5({ onDone, busy, error }: { onDone: () => void; busy: boolean; error: string | null }) {
   return (
-    <div className="flex flex-col gap-0">
-      <div className="border-b border-[#1a1a1a] py-4">
-        <p className="text-xs text-[#555555]">
-          Your panel is ready. Head to the admin dashboard to create servers and manage your infrastructure.
-        </p>
-      </div>
-      {error && (
-        <div className="border-b border-[#1a1a1a] py-4">
-          <ErrorBanner msg={error} />
-        </div>
-      )}
+    <div className="flex flex-col gap-4">
+      <p className="text-sm text-muted-foreground">
+        Your panel is ready. Head to the admin dashboard to create servers and manage your infrastructure.
+      </p>
+      {error && <ErrorBanner msg={error} />}
 
-      <div className="border-b border-[#1a1a1a] py-4">
-        <p className="mb-3 text-[10px] uppercase tracking-widest text-[#555555]">What's Next</p>
-        <div className="flex flex-col">
-          {[
-            ["Add Allocations", "Assign IP:port pairs to your node before creating servers"],
-            ["Create Servers", "Deploy game servers from the admin panel"],
-            ["Invite Users", "Add users and assign them servers"],
-            ["Configure Settings", "Adjust registration, limits and app branding"],
-          ].map(([title, desc]) => (
-            <div key={title} className="border-b border-[#1a1a1a] py-3 last:border-b-0">
-              <div className="text-sm text-white">{title}</div>
-              <div className="mt-0.5 text-[11px] text-[#555555]">{desc}</div>
-            </div>
-          ))}
+      <div className="rounded-xl border border-border bg-muted/20 overflow-hidden">
+        <div className="border-b border-border px-4 py-2.5">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">What&apos;s Next</p>
         </div>
+        {[
+          ["Add Allocations", "Assign IP:port pairs to your node before creating servers"],
+          ["Create Servers", "Deploy game servers from the admin panel"],
+          ["Invite Users", "Add users and assign them servers"],
+          ["Configure Settings", "Adjust registration, limits and app branding"],
+        ].map(([title, desc]) => (
+          <div key={title} className="flex flex-col gap-0.5 border-b border-border px-4 py-3 last:border-b-0">
+            <div className="text-sm font-medium text-foreground">{title}</div>
+            <div className="text-xs text-muted-foreground">{desc}</div>
+          </div>
+        ))}
       </div>
 
-      <div className="pt-4">
-        <button
-          type="button"
-          onClick={onDone}
-          disabled={busy}
-          className="flex items-center gap-2 bg-white px-5 py-2 text-sm font-medium text-black transition-opacity hover:opacity-80 disabled:opacity-40"
-        >
+      <div className="pt-1">
+        <PrimaryButton disabled={busy} onClick={onDone}>
           {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-          {busy ? "Finishing setup..." : "Go to Admin Dashboard →"}
-        </button>
+          {busy ? "Finishing setup..." : "Go to Admin Dashboard"}
+        </PrimaryButton>
       </div>
     </div>
   );
@@ -609,27 +584,34 @@ export default function SetupPage() {
   const [title, subtitle] = TITLES[step];
 
   return (
-    <main className="flex min-h-svh items-center justify-center bg-[#0a0a0a] px-4 py-10">
+    <main className="flex min-h-svh items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-[600px]">
+        {/* Logo */}
+        <div className="mb-8">
+          <Image src="/logo-dark.svg" alt="Struxa" width={96} height={28} priority className="h-7 w-auto dark:hidden" />
+          <Image src="/logo-white.svg" alt="Struxa" width={96} height={28} priority className="hidden h-7 w-auto dark:block" />
+        </div>
+
         {/* Step bar */}
-        <div className="mb-6 border-b border-[#1e1e1e] pb-4">
+        <div className="mb-6">
           <StepBar current={step} completed={completed} />
         </div>
 
-        {/* Step heading */}
-        <div className="mb-1 border-b border-[#1a1a1a] pb-4">
-          <h2 className="text-[10px] uppercase tracking-widest text-[#555555]">
-            Step {step} of {STEPS.length}
-          </h2>
-          <p className="mt-1 text-lg font-semibold text-white">{title}</p>
-          <p className="mt-0.5 text-xs text-[#555555]">{subtitle}</p>
-        </div>
+        {/* Card */}
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+          {/* Step heading */}
+          <div className="mb-5 border-b border-border pb-5">
+            <p className="text-xs font-medium text-muted-foreground">Step {step} of {STEPS.length}</p>
+            <h2 className="mt-1 text-xl font-semibold text-foreground">{title}</h2>
+            <p className="mt-0.5 text-sm text-muted-foreground">{subtitle}</p>
+          </div>
 
-        {step === 1 && <Step1 onDone={() => advance(1)} />}
-        {step === 2 && <Step2 onDone={() => advance(2)} />}
-        {step === 3 && <Step3 onDone={id => { setLocationId(id); advance(3); }} />}
-        {step === 4 && <Step4 locationId={locationId} onDone={() => advance(4)} />}
-        {step === 5 && <Step5 onDone={finish} busy={finishing} error={finishError} />}
+          {step === 1 && <Step1 onDone={() => advance(1)} />}
+          {step === 2 && <Step2 onDone={() => advance(2)} />}
+          {step === 3 && <Step3 onDone={id => { setLocationId(id); advance(3); }} />}
+          {step === 4 && <Step4 locationId={locationId} onDone={() => advance(4)} />}
+          {step === 5 && <Step5 onDone={finish} busy={finishing} error={finishError} />}
+        </div>
       </div>
     </main>
   );

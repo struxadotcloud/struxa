@@ -25,7 +25,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       <div className="h-svh overflow-hidden">
         <SidebarProvider open={open} onOpenChange={handleOpenChange} className="h-svh overflow-hidden">
           <AdminSidebar />
-          <SidebarInset className="flex flex-col overflow-hidden bg-[#0a0a0a]">
+          <SidebarInset className="flex flex-col overflow-hidden bg-background">
             {children}
           </SidebarInset>
         </SidebarProvider>

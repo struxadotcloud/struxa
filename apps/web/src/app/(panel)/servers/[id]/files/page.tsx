@@ -2,11 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { use } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import Editor from "@monaco-editor/react";
-import { SidebarTrigger } from "@struxa/ui/components/sidebar";
 import {
   ChevronRight,
   Folder,
@@ -101,10 +99,10 @@ function isImage(file: WingsFile): boolean {
 }
 
 function FileIcon({ file, className = "h-4 w-4 shrink-0" }: { file: WingsFile; className?: string }) {
-  if (file.directory) return <Folder className={`${className} text-[#888888]`} />;
-  if (isImage(file)) return <FileImage className={`${className} text-[#a855f7]`} />;
-  if (isText(file)) return <FileCode2 className={`${className} text-[#3b82f6]`} />;
-  return <File className={`${className} text-[#555555]`} />;
+  if (file.directory) return <Folder className={`${className} text-muted-foreground`} />;
+  if (isImage(file)) return <FileImage className={`${className} text-purple-500`} />;
+  if (isText(file)) return <FileCode2 className={`${className} text-blue-500`} />;
+  return <File className={`${className} text-muted-foreground/60`} />;
 }
 
 export default function FilesPage({ params }: { params: Promise<{ id: string }> }) {
@@ -120,6 +118,7 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
   const [entries, setEntries] = useState<WingsFile[]>([]);
   const [loadingDir, setLoadingDir] = useState(false);
   const [selectedFile, setSelectedFile] = useState<WingsFile | null>(null);
+  const [openFilePath, setOpenFilePath] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
   const [unsaved, setUnsaved] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -129,17 +128,13 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const newFileInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: fileToken } = useQuery(
-    orpc.files.getToken.queryOptions({ input: { serverId: id } }),
-  );
+  const filesBase = `/api/servers/${id}/files`;
 
   const fetchDir = useCallback(async (dir: string): Promise<WingsFile[]> => {
-    if (!fileToken) return [];
     setLoadingDir(true);
     try {
       const res = await fetch(
-        `${fileToken.baseUrl}/files/list-directory?directory=${encodeURIComponent(dir)}`,
-        { headers: { Authorization: `Bearer ${fileToken.token}` } },
+        `${filesBase}/list-directory?directory=${encodeURIComponent(dir)}`,
       );
       if (!res.ok) return [];
       const raw = (await res.json()) as Record<string, WingsFile>;
@@ -150,50 +145,45 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
       });
       setEntries(sorted);
       setDirPath(dir);
-      setSelectedFile(null);
-      setEditContent("");
-      setUnsaved(false);
       return sorted;
     } finally {
       setLoadingDir(false);
     }
-  }, [fileToken]);
+  }, [filesBase]);
 
   useEffect(() => {
-    if (fileToken) void fetchDir("/");
-  }, [fileToken, fetchDir]);
+    void fetchDir("/");
+  }, [fetchDir]);
 
   async function openFile(file: WingsFile) {
-    if (!fileToken || !file.file || !isText(file)) {
+    const filePath = dirPath === "/" ? `/${file.name}` : `${dirPath}/${file.name}`;
+    if (!file.file || !isText(file)) {
       setSelectedFile(file);
+      setOpenFilePath(filePath);
       setEditContent("");
       setUnsaved(false);
       return;
     }
-    const filePath = dirPath === "/" ? `/${file.name}` : `${dirPath}/${file.name}`;
     const res = await fetch(
-      `${fileToken.baseUrl}/files/contents?file=${encodeURIComponent(filePath)}`,
-      { headers: { Authorization: `Bearer ${fileToken.token}` } },
+      `${filesBase}/contents?file=${encodeURIComponent(filePath)}`,
     );
     const text = res.ok ? await res.text() : "";
     setSelectedFile(file);
+    setOpenFilePath(filePath);
     setEditContent(text);
     setUnsaved(false);
   }
 
   async function handleSave() {
-    if (!fileToken || !selectedFile) return;
-    const filePath = dirPath === "/" ? `/${selectedFile.name}` : `${dirPath}/${selectedFile.name}`;
+    if (!selectedFile || !openFilePath) return;
+    const filePath = openFilePath;
     setSaving(true);
     try {
       await fetch(
-        `${fileToken.baseUrl}/files/write?file=${encodeURIComponent(filePath)}`,
+        `${filesBase}/write?file=${encodeURIComponent(filePath)}`,
         {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${fileToken.token}`,
-            "Content-Type": "text/plain",
-          },
+          headers: { "Content-Type": "text/plain" },
           body: editContent,
         },
       );
@@ -205,16 +195,13 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
 
   async function createFile() {
     const name = newFileName.trim();
-    if (!fileToken || !name) return;
+    if (!name) return;
     const filePath = dirPath === "/" ? `/${name}` : `${dirPath}/${name}`;
     await fetch(
-      `${fileToken.baseUrl}/files/write?file=${encodeURIComponent(filePath)}`,
+      `${filesBase}/write?file=${encodeURIComponent(filePath)}`,
       {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${fileToken.token}`,
-          "Content-Type": "text/plain",
-        },
+        headers: { "Content-Type": "text/plain" },
         body: "",
       },
     );
@@ -228,7 +215,7 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
   }
 
   async function handleUpload(files: FileList | null) {
-    if (!fileToken || !files || files.length === 0) return;
+    if (!files || files.length === 0) return;
     setUploading(true);
     try {
       await Promise.all(
@@ -236,13 +223,10 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
           const filePath = dirPath === "/" ? `/${file.name}` : `${dirPath}/${file.name}`;
           const buffer = await file.arrayBuffer();
           await fetch(
-            `${fileToken.baseUrl}/files/write?file=${encodeURIComponent(filePath)}`,
+            `${filesBase}/write?file=${encodeURIComponent(filePath)}`,
             {
               method: "POST",
-              headers: {
-                Authorization: `Bearer ${fileToken.token}`,
-                "Content-Type": "application/octet-stream",
-              },
+              headers: { "Content-Type": "application/octet-stream" },
               body: buffer,
             },
           );
@@ -274,25 +258,10 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
 
   return (
     <>
-      <header className="flex h-14 shrink-0 items-center border-b border-[#222222] px-4">
-        <div className="flex items-center gap-2 text-xs">
-          <SidebarTrigger className="-ml-1 text-[#888888] hover:text-white" />
-          <Link href="/" className="text-[#555555] transition-colors hover:text-white">
-            Game Servers
-          </Link>
-          <span className="text-[#333333]">/</span>
-          <Link href={`/servers/${id}`} className="text-[#555555] transition-colors hover:text-white">
-            {server?.name ?? id}
-          </Link>
-          <span className="text-[#333333]">/</span>
-          <span className="text-white">Files</span>
-        </div>
-      </header>
-
-      <div className="flex flex-1 overflow-hidden">
-        <div className="flex w-60 shrink-0 flex-col border-r border-[#222222]">
-          <div className="flex h-10 shrink-0 items-center justify-between border-b border-[#222222] px-3">
-            <span className="truncate font-mono text-[11px] text-[#555555]">{dirPath}</span>
+      <div className="flex flex-1 gap-3 overflow-hidden px-4 py-4">
+        <div className="flex w-60 shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+          <div className="flex h-10 shrink-0 items-center justify-between border-b border-border px-3">
+            <span className="truncate font-mono text-[11px] text-muted-foreground">{dirPath}</span>
             <div className="flex shrink-0 items-center gap-1">
               <button
                 type="button"
@@ -301,7 +270,7 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
                   setShowNewFile(true);
                   setTimeout(() => newFileInputRef.current?.focus(), 0);
                 }}
-                className="rounded p-1 text-[#555555] transition-colors hover:bg-[#1a1a1a] hover:text-white"
+                className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 <Plus className="h-3.5 w-3.5" />
               </button>
@@ -310,7 +279,7 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
                 title="Upload files"
                 disabled={uploading}
                 onClick={() => uploadInputRef.current?.click()}
-                className="rounded p-1 text-[#555555] transition-colors hover:bg-[#1a1a1a] hover:text-white disabled:opacity-40"
+                className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40"
               >
                 <Upload className="h-3.5 w-3.5" />
               </button>
@@ -324,8 +293,8 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
             onChange={(e) => void handleUpload(e.target.files)}
           />
           {showNewFile && (
-            <div className="flex items-center gap-1 border-b border-[#222222] px-2 py-1.5">
-              <Plus className="h-3.5 w-3.5 shrink-0 text-[#555555]" />
+            <div className="flex items-center gap-1 border-b border-border px-2 py-1.5">
+              <Plus className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
               <input
                 ref={newFileInputRef}
                 type="text"
@@ -336,12 +305,12 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
                   if (e.key === "Escape") { setShowNewFile(false); setNewFileName(""); }
                 }}
                 placeholder="filename.ext"
-                className="flex-1 bg-transparent font-mono text-xs text-white placeholder-[#444444] outline-none"
+                className="flex-1 bg-transparent font-mono text-xs text-foreground placeholder:text-muted-foreground outline-none"
               />
               <button
                 type="button"
                 onClick={() => { setShowNewFile(false); setNewFileName(""); }}
-                className="text-[#444444] hover:text-white"
+                className="text-muted-foreground hover:text-foreground"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -352,62 +321,65 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
               <button
                 type="button"
                 onClick={navigateUp}
-                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-[#555555] transition-colors hover:bg-[#111111] hover:text-white"
+                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 <ChevronLeft className="h-3.5 w-3.5 shrink-0" />
                 <span className="font-mono">..</span>
               </button>
             )}
             {loadingDir ? (
-              <div className="px-3 py-4 text-xs text-[#555555]">Loading…</div>
+              <div className="px-3 py-4 text-xs text-muted-foreground">Loading…</div>
             ) : (
-              entries.map((file) => (
-                <button
-                  key={file.name}
-                  type="button"
-                  onClick={() => {
-                    if (file.directory) {
-                      navigateInto(file.name);
-                    } else {
-                      void openFile(file);
-                    }
-                  }}
-                  className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors hover:bg-[#111111] ${
-                    selectedFile?.name === file.name ? "bg-[#111111] text-white" : "text-[#888888]"
-                  }`}
-                >
-                  <FileIcon file={file} />
-                  <span className="flex-1 truncate font-mono">{file.name}</span>
-                  {file.directory && (
-                    <ChevronRight className="h-3 w-3 shrink-0 text-[#333333]" />
-                  )}
-                  {file.file && (
-                    <span className="shrink-0 text-[10px] text-[#444444]">{fmtBytes(file.size)}</span>
-                  )}
-                </button>
-              ))
+              entries.map((file) => {
+                const itemPath = dirPath === "/" ? `/${file.name}` : `${dirPath}/${file.name}`;
+                return (
+                  <button
+                    key={file.name}
+                    type="button"
+                    onClick={() => {
+                      if (file.directory) {
+                        navigateInto(file.name);
+                      } else {
+                        void openFile(file);
+                      }
+                    }}
+                    className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors hover:bg-muted ${
+                      openFilePath === itemPath ? "bg-muted text-foreground" : "text-muted-foreground"
+                    }`}
+                  >
+                    <FileIcon file={file} />
+                    <span className="flex-1 truncate font-mono">{file.name}</span>
+                    {file.directory && (
+                      <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground/50" />
+                    )}
+                    {file.file && (
+                      <span className="shrink-0 text-[10px] text-muted-foreground/60">{fmtBytes(file.size)}</span>
+                    )}
+                  </button>
+                );
+              })
             )}
           </div>
         </div>
 
-        <div className="flex flex-1 flex-col overflow-hidden">
+        <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           {selectedFile ? (
             <>
-              <div className="flex h-10 shrink-0 items-center justify-between border-b border-[#222222] px-4">
+              <div className="flex h-10 shrink-0 items-center justify-between border-b border-border px-4">
                 <div className="flex items-center gap-2">
                   <FileIcon file={selectedFile} />
-                  <span className="font-mono text-xs text-white">{selectedFile.name}</span>
-                  {unsaved && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+                  <span className="font-mono text-xs text-foreground">{selectedFile.name}</span>
+                  {unsaved && <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />}
                 </div>
                 {isText(selectedFile) && (
                   <button
                     type="button"
                     onClick={() => void handleSave()}
                     disabled={saving}
-                    className={`flex items-center gap-1.5 px-3 py-1 text-xs font-medium transition-colors ${
+                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-medium transition-all ${
                       unsaved && !saving
-                        ? "bg-[#22c55e] text-black hover:opacity-90"
-                        : "bg-[#1a1a1a] text-[#555555] cursor-default"
+                        ? "bg-green-500 text-white hover:bg-green-600"
+                        : "bg-muted text-muted-foreground cursor-default"
                     }`}
                   >
                     <Save className="h-3.5 w-3.5" />
@@ -418,17 +390,11 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
 
               <div className="flex-1 overflow-hidden">
                 {isImage(selectedFile) ? (
-                  <div
-                    className="flex h-full items-center justify-center"
-                    style={{
-                      backgroundImage: "repeating-conic-gradient(#111111 0% 25%, #0a0a0a 0% 50%)",
-                      backgroundSize: "24px 24px",
-                    }}
-                  >
-                    <div className="flex flex-col items-center gap-3 bg-[#0a0a0a]/80 px-8 py-6">
-                      <FileImage className="h-12 w-12 text-[#333333]" />
-                      <span className="font-mono text-sm text-[#555555]">{selectedFile.name}</span>
-                      <span className="text-xs text-[#333333]">{fmtBytes(selectedFile.size)}</span>
+                  <div className="flex h-full items-center justify-center bg-muted/30">
+                    <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-card px-8 py-6 shadow-sm">
+                      <FileImage className="h-12 w-12 text-muted-foreground/30" />
+                      <span className="font-mono text-sm text-foreground">{selectedFile.name}</span>
+                      <span className="text-xs text-muted-foreground">{fmtBytes(selectedFile.size)}</span>
                     </div>
                   </div>
                 ) : isText(selectedFile) ? (
@@ -457,17 +423,19 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
                   />
                 ) : (
                   <div className="flex h-full flex-col items-center justify-center gap-3">
-                    <File className="h-10 w-10 text-[#333333]" />
-                    <span className="text-sm text-[#555555]">Binary file — cannot be edited</span>
-                    <span className="font-mono text-xs text-[#333333]">{selectedFile.mime}</span>
+                    <File className="h-10 w-10 text-muted-foreground/30" />
+                    <p className="text-sm font-medium text-foreground">Binary file</p>
+                    <span className="text-xs text-muted-foreground">Cannot be edited in the browser</span>
+                    <span className="font-mono text-xs text-muted-foreground/60">{selectedFile.mime}</span>
                   </div>
                 )}
               </div>
             </>
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-3">
-              <FolderOpen className="h-10 w-10 text-[#222222]" />
-              <span className="text-sm text-[#444444]">Select a file to view or edit</span>
+              <FolderOpen className="h-10 w-10 text-muted-foreground/20" />
+              <p className="text-sm font-medium text-foreground">No file selected</p>
+              <span className="text-xs text-muted-foreground">Select a file from the panel to view or edit</span>
             </div>
           )}
         </div>

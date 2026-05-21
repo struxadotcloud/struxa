@@ -1,8 +1,20 @@
+import { scrypt, timingSafeEqual } from "node:crypto";
+import { promisify } from "node:util";
 import { and, eq, like } from "drizzle-orm";
-import { compare } from "bcryptjs";
 import { db } from "@struxa/db";
 import { account, servers, subusers, user } from "@struxa/db";
 import { toUuid } from "../lib/jwt";
+
+const scryptAsync = promisify(scrypt);
+
+async function verifyBetterAuthPassword(hash: string, password: string): Promise<boolean> {
+  const [salt, key] = hash.split(":");
+  if (!salt || !key) return false;
+  const derived = await scryptAsync(password.normalize("NFKC"), salt, 64, {
+    N: 16384, r: 16, p: 1, maxmem: 128 * 16384 * 16 * 2,
+  }) as Buffer;
+  return timingSafeEqual(Buffer.from(key, "hex"), derived);
+}
 
 export interface SftpAuthResult {
   user: string;
@@ -47,7 +59,7 @@ export async function authenticateSftp(
     return null;
   }
 
-  const valid = await compare(password, credential.password);
+  const valid = await verifyBetterAuthPassword(credential.password, password);
   if (!valid) {
     console.log("[sftp] wrong password for user:", userRecord.email);
     return null;

@@ -85,16 +85,9 @@ Because running the project is disallowed by default:
 - Treat `.env` files as sensitive; use `.env.example` patterns.
 - Avoid destructive commands (`rm -rf`, hard resets, force pushes) unless explicitly requested.
 
-## Design Reference
-
-- Visual design language: `DESIGN.md` — all UI work must follow these patterns.
-- When building or modifying any UI, read `DESIGN.md` before writing components.
-- Key traits: dark ops panel aesthetic, three-column layout, muted gray labels with bold white values, monochrome white/black primary, accent green for status/charts, monospace terminal surfaces.
-
 ## Paths and Conventions
 
 - Root task orchestration: `turbo.json`, `package.json`.
-- Design reference: `DESIGN.md`.
 - Main docs: `README.md`.
 - MCP settings: `.mcp.json`.
 

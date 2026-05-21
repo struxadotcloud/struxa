@@ -30,7 +30,7 @@ export const serversRouter = {
     const userListSelect = {
       columns: baseColumns,
       with: {
-        allocation: { columns: { ip: true, port: true } },
+        allocation: { columns: { ip: true, ipAlias: true, port: true } },
         egg: { columns: { id: true, uuid: true, name: true } },
       },
     } as const;
@@ -38,7 +38,7 @@ export const serversRouter = {
     const adminListSelect = {
       columns: baseColumns,
       with: {
-        allocation: { columns: { ip: true, port: true } },
+        allocation: { columns: { ip: true, ipAlias: true, port: true } },
         egg: { columns: { id: true, uuid: true, name: true } },
         node: { columns: { id: true, name: true } },
       },
@@ -376,7 +376,7 @@ export const serversRouter = {
       let validImages: string[] = [];
       try {
         const parsed = JSON.parse(server.egg.dockerImages ?? "{}") as Record<string, string>;
-        validImages = Object.keys(parsed);
+        validImages = Object.values(parsed);
       } catch {}
 
       if (validImages.length > 0 && !validImages.includes(input.image)) {
@@ -421,7 +421,7 @@ export const serversRouter = {
           image: true, startup: true, invocation: true, skipScripts: true, userId: true,
         },
         with: {
-          allocation: { columns: { ip: true, port: true } },
+          allocation: { columns: { ip: true, ipAlias: true, port: true } },
           node: { columns: { name: true, fqdn: true, daemonSFTP: true } },
           egg: {
             columns: { id: true, uuid: true, name: true, startup: true, dockerImages: true },
@@ -480,7 +480,7 @@ export const serversRouter = {
           userId: true, nodeId: true, allocationId: true,
         },
         with: {
-          allocation: { columns: { id: true, ip: true, port: true } },
+          allocation: { columns: { id: true, ip: true, ipAlias: true, port: true } },
           node: { columns: { id: true, name: true, fqdn: true, daemonSFTP: true } },
           egg: {
             columns: { id: true, uuid: true, name: true, startup: true, dockerImages: true },
@@ -561,13 +561,23 @@ export const serversRouter = {
         throw new ORPCError("FORBIDDEN");
       }
 
+      const previousStatus = server.status;
+
       await db
         .update(servers)
         .set({ status: "installing" })
         .where(eq(servers.id, server.id));
 
-      const client = createWingsClient(server.node as typeof nodes.$inferSelect);
-      await client.reinstallServer(server.uuid);
+      try {
+        const client = createWingsClient(server.node as typeof nodes.$inferSelect);
+        await client.reinstallServer(server.uuid);
+      } catch (e) {
+        await db
+          .update(servers)
+          .set({ status: previousStatus })
+          .where(eq(servers.id, server.id));
+        throw e;
+      }
     }),
 
   create: adminProcedure

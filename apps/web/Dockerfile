@@ -37,6 +37,11 @@ ENV NODE_ENV=production
 # Prevents @t3-oss/env-core from failing during build without runtime secrets
 ENV SKIP_ENV_VALIDATION=1
 
+ARG APP_VERSION=""
+ARG COMMIT_SHA=""
+ENV NEXT_PUBLIC_APP_VERSION=$APP_VERSION
+ENV NEXT_PUBLIC_COMMIT_SHA=$COMMIT_SHA
+
 RUN cd apps/web && bun run build
 
 # ── runner: minimal Node image for standalone Next.js ────────────────────────
