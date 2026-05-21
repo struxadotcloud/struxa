@@ -125,7 +125,9 @@ export const schedulesRouter = {
       const id = randomUUID();
       const { serverId, ...taskData } = input;
       await db.insert(scheduleTasks).values({ id, ...taskData });
-      return db.query.scheduleTasks.findFirst({ where: eq(scheduleTasks.id, id) });
+      const task = await db.query.scheduleTasks.findFirst({ where: eq(scheduleTasks.id, id) });
+      if (!task) throw new Error("Failed to create task");
+      return task;
     }),
 
   updateTask: protectedProcedure

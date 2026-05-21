@@ -40,7 +40,6 @@ async function proxy(req: NextRequest, { params }: Params) {
   const upstream = await fetch(daemonUrl, {
     method: req.method,
     headers,
-    // @ts-expect-error - Node.js fetch requires duplex for streaming POST bodies
     ...(req.body ? { body: req.body, duplex: "half" } : {}),
   });
 

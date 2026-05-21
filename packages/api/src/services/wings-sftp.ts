@@ -1,18 +1,20 @@
 import { scrypt, timingSafeEqual } from "node:crypto";
-import { promisify } from "node:util";
 import { and, eq, like } from "drizzle-orm";
 import { db } from "@struxa/db";
 import { account, servers, subusers, user } from "@struxa/db";
 import { toUuid } from "../lib/jwt";
 
-const scryptAsync = promisify(scrypt);
+const scryptAsync = (password: string, salt: string, keylen: number, options: Parameters<typeof scrypt>[3]) =>
+  new Promise<Buffer>((resolve, reject) =>
+    scrypt(password, salt, keylen, options!, (err, key) => (err ? reject(err) : resolve(key as Buffer))),
+  );
 
 async function verifyBetterAuthPassword(hash: string, password: string): Promise<boolean> {
   const [salt, key] = hash.split(":");
   if (!salt || !key) return false;
   const derived = await scryptAsync(password.normalize("NFKC"), salt, 64, {
     N: 16384, r: 16, p: 1, maxmem: 128 * 16384 * 16 * 2,
-  }) as Buffer;
+  });
   return timingSafeEqual(Buffer.from(key, "hex"), derived);
 }
 
