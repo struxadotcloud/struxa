@@ -133,8 +133,22 @@ function parseAnsi(raw: string): AnsiSpan[] {
   return spans;
 }
 
+function processConsoleLine(raw: string): string {
+  // Split on cursor-horizontal-absolute (\x1b[nG) — spinner animations emit
+  // \x1b[1G\x1b[0K<char> in a loop to overwrite the same position. Treat each
+  // G-delimited segment as a "frame" and keep the last one with visible content.
+  const frames = raw.split(/\x1b\[\d*G/);
+  let result = frames[0] ?? '';
+  for (let i = 1; i < frames.length; i++) {
+    const frame = (frames[i] ?? '').replace(/^\x1b\[\d*[JK]/g, '');
+    if (frame.replace(/\x1b\[[\d;]*m/g, '').trim()) result = frame;
+  }
+  // Strip any remaining non-SGR escape sequences (erase, cursor, etc.)
+  return result.replace(/\x1b\[[\d;]*[a-ln-zA-Z]/g, '');
+}
+
 function AnsiLine({ raw }: { raw: string }) {
-  const spans = parseAnsi(raw);
+  const spans = parseAnsi(processConsoleLine(raw));
   return (
     <>
       {spans.map((s, i) => (
