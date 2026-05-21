@@ -376,7 +376,7 @@ export const serversRouter = {
       let validImages: string[] = [];
       try {
         const parsed = JSON.parse(server.egg.dockerImages ?? "{}") as Record<string, string>;
-        validImages = Object.keys(parsed);
+        validImages = Object.values(parsed);
       } catch {}
 
       if (validImages.length > 0 && !validImages.includes(input.image)) {
