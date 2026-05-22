@@ -22,6 +22,68 @@ import {
 import { orpc, queryClient } from "@/utils/orpc";
 import { ContextMenu, RowMenu, type ActionItem } from "@/components/context-menu";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipPopup,
+  TooltipProvider,
+} from "@struxa/ui/components/tooltip";
+
+function NodeStatusDot({
+  fqdn,
+  daemonListen,
+  scheme,
+  maintenanceMode,
+}: {
+  fqdn: string;
+  daemonListen: number;
+  scheme: string;
+  maintenanceMode: boolean;
+}) {
+  const { data, isPending } = useQuery({
+    queryKey: ["node-status", scheme, fqdn, daemonListen],
+    queryFn: async () => {
+      try {
+        await fetch(`${scheme}://${fqdn}:${daemonListen}/`, {
+          mode: "no-cors",
+          signal: AbortSignal.timeout(5000),
+        });
+        return { online: true };
+      } catch {
+        return { online: false };
+      }
+    },
+    staleTime: 30_000,
+    retry: false,
+  });
+
+  const label = maintenanceMode
+    ? "Maintenance"
+    : isPending
+      ? "Checking…"
+      : data?.online
+        ? "Online"
+        : "Offline";
+
+  const dotColor = maintenanceMode
+    ? "bg-amber-500/60"
+    : isPending
+      ? "bg-muted-foreground/30 animate-pulse"
+      : data?.online
+        ? "bg-green-500"
+        : "bg-red-500";
+
+  return (
+    <Tooltip>
+      <TooltipTrigger className="flex items-center">
+        <span className={`h-2 w-2 rounded-full ${dotColor}`} />
+      </TooltipTrigger>
+      <TooltipPopup side="right" sideOffset={6}>
+        {label}
+      </TooltipPopup>
+    </Tooltip>
+  );
+}
 
 function invalidate() {
   void queryClient.invalidateQueries({ queryKey: orpc.nodes.key() });
@@ -230,6 +292,7 @@ export default function NodesPage() {
           }}
         />
 
+        <TooltipProvider>
         <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
           <div className="grid grid-cols-[24px_1fr_200px_160px_48px] border-b border-border bg-muted/40 px-4 py-2.5">
             <span />
@@ -257,10 +320,7 @@ export default function NodesPage() {
                     onContextMenu={onContextMenu}
                     className={`grid grid-cols-[24px_1fr_200px_160px_48px] items-center px-4 py-3 hover:bg-muted/40 transition-colors ${!isLast ? "border-b border-border" : ""}`}
                   >
-                    <span
-                      className="h-2 w-2 rounded-full"
-                      style={{ backgroundColor: node.maintenanceMode ? "rgb(var(--muted-foreground) / 0.4)" : "#22c55e" }}
-                    />
+                    <NodeStatusDot fqdn={node.fqdn} daemonListen={node.daemonListen} scheme={node.scheme} maintenanceMode={node.maintenanceMode} />
                     <div className="flex items-center gap-2">
                       <Link
                         href={`/admin/nodes/${node.id}` as never}
@@ -290,6 +350,7 @@ export default function NodesPage() {
             );
           })}
         </div>
+        </TooltipProvider>
         </div>
       </div>
     </>
