@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@struxa/db";
 import { settings } from "@struxa/db";
+import { recordActivity } from "../services/activity";
 import { adminProcedure, publicProcedure } from "../index";
 
 export const settingsRouter = {
@@ -23,11 +24,12 @@ export const settingsRouter = {
 
   set: adminProcedure
     .input(z.object({ key: z.string().max(255), value: z.string() }))
-    .handler(async ({ input }) => {
+    .handler(async ({ context, input }) => {
       await db
         .insert(settings)
         .values({ key: input.key, value: input.value, updatedAt: new Date() })
         .onDuplicateKeyUpdate({ set: { value: input.value, updatedAt: new Date() } });
+      recordActivity({ eventType: "admin:settings.update", userId: context.session.user.id, ip: context.ip, properties: { key: input.key } });
     }),
 
   getAll: adminProcedure.handler(async () => {

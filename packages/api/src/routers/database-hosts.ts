@@ -5,6 +5,7 @@ import { ORPCError } from "@orpc/server";
 import { db } from "@struxa/db";
 import { databaseHosts } from "@struxa/db";
 import { encrypt, decrypt } from "../lib/crypto";
+import { recordActivity } from "../services/activity";
 import { adminProcedure, protectedProcedure } from "../index";
 
 export const databaseHostsRouter = {
@@ -39,7 +40,7 @@ export const databaseHostsRouter = {
         maxDatabases: z.number().int().min(0).default(0),
       }),
     )
-    .handler(async ({ input }) => {
+    .handler(async ({ context, input }) => {
       const id = randomUUID();
       await db.insert(databaseHosts).values({
         id,
@@ -49,6 +50,7 @@ export const databaseHostsRouter = {
       const host = await db.query.databaseHosts.findFirst({
         where: eq(databaseHosts.id, id),
       });
+      recordActivity({ eventType: "admin:database-host.create", userId: context.session.user.id, ip: context.ip, properties: { name: input.name } });
       return { ...host!, password: "***" };
     }),
 
@@ -64,7 +66,7 @@ export const databaseHostsRouter = {
         maxDatabases: z.number().int().min(0).optional(),
       }),
     )
-    .handler(async ({ input }) => {
+    .handler(async ({ context, input }) => {
       const { id, password, ...data } = input;
       await db
         .update(databaseHosts)
@@ -76,13 +78,16 @@ export const databaseHostsRouter = {
       const host = await db.query.databaseHosts.findFirst({
         where: eq(databaseHosts.id, id),
       });
+      recordActivity({ eventType: "admin:database-host.update", userId: context.session.user.id, ip: context.ip, properties: { name: host?.name } });
       return { ...host!, password: "***" };
     }),
 
   delete: adminProcedure
     .input(z.object({ id: z.string().uuid() }))
-    .handler(async ({ input }) => {
+    .handler(async ({ context, input }) => {
+      const host = await db.query.databaseHosts.findFirst({ where: eq(databaseHosts.id, input.id) });
       await db.delete(databaseHosts).where(eq(databaseHosts.id, input.id));
+      recordActivity({ eventType: "admin:database-host.delete", userId: context.session.user.id, ip: context.ip, properties: { name: host?.name } });
     }),
 
   testConnection: adminProcedure

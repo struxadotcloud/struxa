@@ -4,6 +4,7 @@ import { z } from "zod";
 import { ORPCError } from "@orpc/server";
 import { db } from "@struxa/db";
 import { nodeAllocations } from "@struxa/db";
+import { recordActivity } from "../services/activity";
 import { adminProcedure } from "../index";
 
 export const allocationsRouter = {
@@ -24,7 +25,7 @@ export const allocationsRouter = {
         ports: z.string().min(1),
       }),
     )
-    .handler(async ({ input }) => {
+    .handler(async ({ context, input }) => {
       const ports = expandPortRange(input.ports);
       if (ports.length === 0) {
         throw new ORPCError("BAD_REQUEST", { message: "No valid ports specified" });
@@ -39,12 +40,13 @@ export const allocationsRouter = {
       }));
 
       await db.insert(nodeAllocations).values(rows);
+      recordActivity({ eventType: "admin:allocation.create", userId: context.session.user.id, nodeId: input.nodeId, ip: context.ip, properties: { ip: input.ip, ports: input.ports } });
       return { created: rows.length };
     }),
 
   delete: adminProcedure
     .input(z.object({ id: z.string().uuid() }))
-    .handler(async ({ input }) => {
+    .handler(async ({ context, input }) => {
       const allocation = await db.query.nodeAllocations.findFirst({
         where: eq(nodeAllocations.id, input.id),
       });
@@ -55,6 +57,7 @@ export const allocationsRouter = {
         });
       }
       await db.delete(nodeAllocations).where(eq(nodeAllocations.id, input.id));
+      recordActivity({ eventType: "admin:allocation.delete", userId: context.session.user.id, nodeId: allocation.nodeId, ip: context.ip, properties: { ip: allocation.ip, port: allocation.port } });
     }),
 };
 

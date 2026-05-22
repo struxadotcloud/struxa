@@ -16,6 +16,8 @@ import { backups } from "./backups";
 import { schedules, scheduleTasks } from "./schedules";
 import { subusers } from "./subusers";
 import { activityLogs } from "./activity-logs";
+import { servers as serversTable } from "./servers";
+import { nodes as nodesTable } from "./nodes";
 
 export const locationsRelations = relations(locations, ({ many }) => ({
   nodes: many(nodes),
@@ -169,5 +171,13 @@ export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
   user: one(user, {
     fields: [activityLogs.userId],
     references: [user.id],
+  }),
+  server: one(serversTable, {
+    fields: [activityLogs.serverId],
+    references: [serversTable.id],
+  }),
+  node: one(nodesTable, {
+    fields: [activityLogs.nodeId],
+    references: [nodesTable.id],
   }),
 }));

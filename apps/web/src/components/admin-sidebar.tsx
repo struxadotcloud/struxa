@@ -30,6 +30,7 @@ import {
   Settings2,
   LogOut,
   ChevronLeft,
+  Activity,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -43,6 +44,7 @@ const NAV_ITEMS = [
   { key: "database-hosts", label: "Database Hosts", icon: Database, href: "/admin/database-hosts" },
   { key: "servers", label: "Servers", icon: Monitor, href: "/admin/servers" },
   { key: "users", label: "Users", icon: Users, href: "/admin/users" },
+  { key: "activity", label: "Activity", icon: Activity, href: "/admin/activity" },
   { key: "settings", label: "Settings", icon: Settings2, href: "/admin/settings" },
 ];
 

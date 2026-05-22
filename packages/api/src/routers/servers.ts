@@ -159,7 +159,7 @@ export const serversRouter = {
         allocationId: z.string().uuid().optional(),
       }),
     )
-    .handler(async ({ input }) => {
+    .handler(async ({ context, input }) => {
       const {
         id, startup,
         name, description, memory, disk, cpu, swap, io, threads, oomDisabled, image,
@@ -224,11 +224,12 @@ export const serversRouter = {
       if (Object.keys(updates).length > 0) {
         await db.update(servers).set(updates).where(eq(servers.uuid, id));
       }
+      recordActivity({ eventType: "admin:server.update", userId: context.session.user.id, serverId: server.id, ip: context.ip, properties: name !== undefined ? { name } : {} });
     }),
 
   suspend: adminProcedure
     .input(z.object({ id: z.string(), suspended: z.boolean() }))
-    .handler(async ({ input }) => {
+    .handler(async ({ context, input }) => {
       const server = await db.query.servers.findFirst({
         where: eq(servers.uuid, input.id),
         with: { node: true },
@@ -246,6 +247,7 @@ export const serversRouter = {
         }
       }
 
+      recordActivity({ eventType: input.suspended ? "admin:server.suspend" : "admin:server.unsuspend", userId: context.session.user.id, serverId: server.id, ip: context.ip });
     }),
 
   updateVariables: adminProcedure
@@ -256,7 +258,7 @@ export const serversRouter = {
         startup: z.string().optional(),
       }),
     )
-    .handler(async ({ input }) => {
+    .handler(async ({ context, input }) => {
       const server = await db.query.servers.findFirst({
         where: eq(servers.uuid, input.id),
       });
@@ -294,6 +296,7 @@ export const serversRouter = {
       if (input.startup) serverUpdates.startup = input.startup;
 
       await db.update(servers).set(serverUpdates).where(eq(servers.uuid, input.id));
+      recordActivity({ eventType: "admin:server.variables", userId: context.session.user.id, serverId: server.id, ip: context.ip });
     }),
 
   updateStartupVariable: protectedProcedure
@@ -642,7 +645,7 @@ export const serversRouter = {
         variableValues: z.record(z.string(), z.string()).optional(),
       }),
     )
-    .handler(async ({ input }) => {
+    .handler(async ({ context, input }) => {
       const allocation = await db.query.nodeAllocations.findFirst({
         where: eq(nodeAllocations.id, input.allocationId),
       });
@@ -752,6 +755,8 @@ export const serversRouter = {
         throw err;
       }
 
+      recordActivity({ eventType: "admin:server.create", userId: context.session.user.id, serverId: id, ip: context.ip, properties: { name: input.name } });
+
       return db.query.servers.findFirst({ where: eq(servers.id, id) });
     }),
 
@@ -762,7 +767,7 @@ export const serversRouter = {
         purgeData: z.boolean().default(false),
       }),
     )
-    .handler(async ({ input }) => {
+    .handler(async ({ context, input }) => {
       const server = await db.query.servers.findFirst({
         where: eq(servers.uuid, input.id),
         with: { node: true },
@@ -782,6 +787,7 @@ export const serversRouter = {
         .where(eq(nodeAllocations.id, server.allocationId));
 
       await db.delete(servers).where(eq(servers.id, server.id));
+      recordActivity({ eventType: "admin:server.delete", userId: context.session.user.id, ip: context.ip, properties: { name: server.name } });
     }),
 
   getWebSocketToken: protectedProcedure

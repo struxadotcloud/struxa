@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@struxa/db";
 import { locations } from "@struxa/db";
+import { recordActivity } from "../services/activity";
 import { adminProcedure, protectedProcedure } from "../index";
 
 export const locationsRouter = {
@@ -18,9 +19,10 @@ export const locationsRouter = {
         long: z.string().optional(),
       }),
     )
-    .handler(async ({ input }) => {
+    .handler(async ({ context, input }) => {
       const id = randomUUID();
       await db.insert(locations).values({ id, ...input });
+      recordActivity({ eventType: "admin:location.create", userId: context.session.user.id, ip: context.ip, properties: { short: input.short, long: input.long } });
       return db.query.locations.findFirst({ where: eq(locations.id, id) });
     }),
 
@@ -33,15 +35,19 @@ export const locationsRouter = {
         long: z.string().optional(),
       }),
     )
-    .handler(async ({ input }) => {
+    .handler(async ({ context, input }) => {
       const { id, ...data } = input;
       await db.update(locations).set(data).where(eq(locations.id, id));
-      return db.query.locations.findFirst({ where: eq(locations.id, id) });
+      const location = await db.query.locations.findFirst({ where: eq(locations.id, id) });
+      recordActivity({ eventType: "admin:location.update", userId: context.session.user.id, ip: context.ip, properties: { short: location?.short } });
+      return location;
     }),
 
   delete: adminProcedure
     .input(z.object({ id: z.string().uuid() }))
-    .handler(async ({ input }) => {
+    .handler(async ({ context, input }) => {
+      const location = await db.query.locations.findFirst({ where: eq(locations.id, input.id) });
       await db.delete(locations).where(eq(locations.id, input.id));
+      recordActivity({ eventType: "admin:location.delete", userId: context.session.user.id, ip: context.ip, properties: { short: location?.short } });
     }),
 };

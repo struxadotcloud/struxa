@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@struxa/db";
 import { nodes } from "@struxa/db";
+import { recordActivity } from "../services/activity";
 import { adminProcedure } from "../index";
 import { env } from "@struxa/env/server";
 
@@ -38,7 +39,7 @@ export const nodesRouter = {
         daemonBase: z.string().default("/var/lib/pterodactyl"),
       }),
     )
-    .handler(async ({ input }) => {
+    .handler(async ({ context, input }) => {
       const id = randomUUID();
       const uuid = randomUUID();
       const tokenId = randomUUID();
@@ -51,6 +52,8 @@ export const nodesRouter = {
         token,
         ...input,
       });
+
+      recordActivity({ eventType: "admin:node.create", userId: context.session.user.id, nodeId: id, ip: context.ip, properties: { name: input.name } });
 
       return db.query.nodes.findFirst({ where: eq(nodes.id, id) });
     }),
@@ -74,7 +77,7 @@ export const nodesRouter = {
         maintenanceMode: z.boolean().optional(),
       }),
     )
-    .handler(async ({ input }) => {
+    .handler(async ({ context, input }) => {
       const { id, ...data } = input;
       await db.update(nodes).set(data).where(eq(nodes.id, id));
       const node = await db.query.nodes.findFirst({ where: eq(nodes.id, id) });
@@ -109,21 +112,27 @@ export const nodesRouter = {
         }
       }
 
+      recordActivity({ eventType: "admin:node.update", userId: context.session.user.id, nodeId: id, ip: context.ip, properties: { name: node?.name } });
+
       return { node, wingsUpdated };
     }),
 
   delete: adminProcedure
     .input(z.object({ id: z.string().uuid() }))
-    .handler(async ({ input }) => {
+    .handler(async ({ context, input }) => {
+      const node = await db.query.nodes.findFirst({ where: eq(nodes.id, input.id) });
       await db.delete(nodes).where(eq(nodes.id, input.id));
+      recordActivity({ eventType: "admin:node.delete", userId: context.session.user.id, nodeId: input.id, ip: context.ip, properties: { name: node?.name } });
     }),
 
   regenerateToken: adminProcedure
     .input(z.object({ id: z.string().uuid() }))
-    .handler(async ({ input }) => {
+    .handler(async ({ context, input }) => {
+      const node = await db.query.nodes.findFirst({ where: eq(nodes.id, input.id) });
       const tokenId = randomUUID();
       const token = randomBytes(32).toString("hex");
       await db.update(nodes).set({ tokenId, token }).where(eq(nodes.id, input.id));
+      recordActivity({ eventType: "admin:node.token-regenerate", userId: context.session.user.id, nodeId: input.id, ip: context.ip, properties: { name: node?.name } });
       return { tokenId, token };
     }),
 

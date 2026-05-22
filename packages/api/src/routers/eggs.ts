@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@struxa/db";
 import { eggVariables, eggs } from "@struxa/db";
+import { recordActivity } from "../services/activity";
 import { adminProcedure, protectedProcedure } from "../index";
 
 const EggVariableSchema = z.object({
@@ -55,7 +56,7 @@ export const eggsRouter = {
         variables: z.array(EggVariableSchema).optional(),
       }),
     )
-    .handler(async ({ input }) => {
+    .handler(async ({ context, input }) => {
       const { variables, dockerImages, features, ...eggData } = input;
       const id = randomUUID();
       const uuid = randomUUID();
@@ -73,6 +74,8 @@ export const eggsRouter = {
           variables.map((v) => ({ id: randomUUID(), eggId: id, ...v })),
         );
       }
+
+      recordActivity({ eventType: "admin:egg.create", userId: context.session.user.id, ip: context.ip, properties: { name: input.name } });
 
       return db.query.eggs.findFirst({
         where: eq(eggs.id, id),
@@ -97,7 +100,7 @@ export const eggsRouter = {
         scriptExtension: z.string().optional(),
       }),
     )
-    .handler(async ({ input }) => {
+    .handler(async ({ context, input }) => {
       const { id, dockerImages, features, ...data } = input;
       await db
         .update(eggs)
@@ -107,16 +110,20 @@ export const eggsRouter = {
           ...(features !== undefined ? { features: JSON.stringify(features) } : {}),
         })
         .where(eq(eggs.id, id));
-      return db.query.eggs.findFirst({
+      const egg = await db.query.eggs.findFirst({
         where: eq(eggs.id, id),
         with: { variables: true },
       });
+      recordActivity({ eventType: "admin:egg.update", userId: context.session.user.id, ip: context.ip, properties: { name: egg?.name } });
+      return egg;
     }),
 
   delete: adminProcedure
     .input(z.object({ id: z.string().uuid() }))
-    .handler(async ({ input }) => {
+    .handler(async ({ context, input }) => {
+      const egg = await db.query.eggs.findFirst({ where: eq(eggs.id, input.id) });
       await db.delete(eggs).where(eq(eggs.id, input.id));
+      recordActivity({ eventType: "admin:egg.delete", userId: context.session.user.id, ip: context.ip, properties: { name: egg?.name } });
     }),
 
   addVariable: adminProcedure
@@ -132,10 +139,11 @@ export const eggsRouter = {
         rules: z.string().optional(),
       }),
     )
-    .handler(async ({ input }) => {
+    .handler(async ({ context, input }) => {
       const { eggId, ...variableData } = input;
       const id = randomUUID();
       await db.insert(eggVariables).values({ id, eggId, ...variableData });
+      recordActivity({ eventType: "admin:egg.variable-add", userId: context.session.user.id, ip: context.ip, properties: { variable: input.envVariable } });
       return db.query.eggVariables.findFirst({ where: eq(eggVariables.id, id) });
     }),
 
@@ -152,7 +160,7 @@ export const eggsRouter = {
         rules: z.string().optional(),
       }),
     )
-    .handler(async ({ input }) => {
+    .handler(async ({ context, input }) => {
       const { variableId, name, description, envVariable, defaultValue, userViewable, userEditable, rules } = input;
       const updates: {
         name?: string;
@@ -173,18 +181,22 @@ export const eggsRouter = {
       if (Object.keys(updates).length > 0) {
         await db.update(eggVariables).set(updates).where(eq(eggVariables.id, variableId));
       }
-      return db.query.eggVariables.findFirst({ where: eq(eggVariables.id, variableId) });
+      const variable = await db.query.eggVariables.findFirst({ where: eq(eggVariables.id, variableId) });
+      recordActivity({ eventType: "admin:egg.variable-update", userId: context.session.user.id, ip: context.ip, properties: { variable: variable?.envVariable } });
+      return variable;
     }),
 
   deleteVariable: adminProcedure
     .input(z.object({ variableId: z.string().uuid() }))
-    .handler(async ({ input }) => {
+    .handler(async ({ context, input }) => {
+      const variable = await db.query.eggVariables.findFirst({ where: eq(eggVariables.id, input.variableId) });
       await db.delete(eggVariables).where(eq(eggVariables.id, input.variableId));
+      recordActivity({ eventType: "admin:egg.variable-delete", userId: context.session.user.id, ip: context.ip, properties: { variable: variable?.envVariable } });
     }),
 
   importJson: adminProcedure
     .input(z.object({ nestId: z.string().uuid(), json: z.string() }))
-    .handler(async ({ input }) => {
+    .handler(async ({ context, input }) => {
       const raw = JSON.parse(input.json) as {
         name: string;
         description?: string;
@@ -249,6 +261,8 @@ export const eggsRouter = {
           })),
         );
       }
+
+      recordActivity({ eventType: "admin:egg.import", userId: context.session.user.id, ip: context.ip, properties: { name: raw.name } });
 
       return db.query.eggs.findFirst({
         where: eq(eggs.id, id),

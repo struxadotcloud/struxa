@@ -1,9 +1,9 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, like } from "drizzle-orm";
 import { z } from "zod";
 import { ORPCError } from "@orpc/server";
 import { db } from "@struxa/db";
 import { activityLogs, servers, subusers } from "@struxa/db";
-import { protectedProcedure } from "../index";
+import { adminProcedure, protectedProcedure } from "../index";
 
 export const activityRouter = {
   list: protectedProcedure
@@ -42,6 +42,29 @@ export const activityRouter = {
         },
       });
 
+      return { data: rows, meta: { page: input.page, perPage: input.perPage } };
+    }),
+
+  adminList: adminProcedure
+    .input(
+      z.object({
+        page: z.number().int().min(1).default(1),
+        perPage: z.number().int().min(1).max(50).default(25),
+      }),
+    )
+    .handler(async ({ input }) => {
+      const offset = (input.page - 1) * input.perPage;
+      const rows = await db.query.activityLogs.findMany({
+        where: like(activityLogs.eventType, "admin:%"),
+        orderBy: [desc(activityLogs.timestamp)],
+        limit: input.perPage,
+        offset,
+        with: {
+          user:   { columns: { name: true, email: true, image: true } },
+          server: { columns: { name: true } },
+          node:   { columns: { name: true } },
+        },
+      });
       return { data: rows, meta: { page: input.page, perPage: input.perPage } };
     }),
 };

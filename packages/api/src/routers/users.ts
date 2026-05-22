@@ -2,6 +2,7 @@ import { count, eq, like, or } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@struxa/db";
 import { user } from "@struxa/db";
+import { recordActivity } from "../services/activity";
 import { adminProcedure } from "../index";
 
 export const usersRouter = {
@@ -61,6 +62,7 @@ export const usersRouter = {
         throw new Error("Cannot change your own role.");
       }
       await db.update(user).set({ role: input.role }).where(eq(user.id, input.userId));
+      recordActivity({ eventType: "admin:user.set-role", userId: context.session.user.id, ip: context.ip, properties: { targetUserId: input.userId, role: input.role } });
     }),
 
   ban: adminProcedure
@@ -83,15 +85,17 @@ export const usersRouter = {
           banExpires: input.expiresAt ? new Date(input.expiresAt) : null,
         })
         .where(eq(user.id, input.userId));
+      recordActivity({ eventType: "admin:user.ban", userId: context.session.user.id, ip: context.ip, properties: { targetUserId: input.userId, reason: input.reason, expiresAt: input.expiresAt } });
     }),
 
   unban: adminProcedure
     .input(z.object({ userId: z.string() }))
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
       await db
         .update(user)
         .set({ banned: false, banReason: null, banExpires: null })
         .where(eq(user.id, input.userId));
+      recordActivity({ eventType: "admin:user.unban", userId: context.session.user.id, ip: context.ip, properties: { targetUserId: input.userId } });
     }),
 
   delete: adminProcedure
@@ -101,5 +105,6 @@ export const usersRouter = {
         throw new Error("Cannot delete your own account.");
       }
       await db.delete(user).where(eq(user.id, input.userId));
+      recordActivity({ eventType: "admin:user.delete", userId: context.session.user.id, ip: context.ip, properties: { targetUserId: input.userId } });
     }),
 };
