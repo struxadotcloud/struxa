@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { auth } from "@struxa/auth";
 import { db } from "@struxa/db";
 import { nodes, servers, subusers } from "@struxa/db";
+import { recordActivity } from "@struxa/api/services/activity";
 
 type Params = { params: Promise<{ id: string; path: string[] }> };
 
@@ -46,6 +47,33 @@ async function proxy(req: NextRequest, { params }: Params) {
   const resHeaders: Record<string, string> = {};
   const resContentType = upstream.headers.get("Content-Type");
   if (resContentType) resHeaders["Content-Type"] = resContentType;
+
+  if (upstream.ok) {
+    const action = path[path.length - 1];
+    const filePath = req.nextUrl.searchParams.get("file");
+    const ip =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+      req.headers.get("x-real-ip") ??
+      null;
+
+    if (req.method === "POST" && action === "write") {
+      recordActivity({
+        eventType: "server:files.write",
+        userId: session.user.id,
+        serverId: server.id,
+        ip,
+        properties: filePath ? { file: filePath } : undefined,
+      });
+    } else if (req.method === "GET" && action === "contents") {
+      recordActivity({
+        eventType: "server:files.read",
+        userId: session.user.id,
+        serverId: server.id,
+        ip,
+        properties: filePath ? { file: filePath } : undefined,
+      });
+    }
+  }
 
   return new Response(upstream.body, { status: upstream.status, headers: resHeaders });
 }

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { ORPCError } from "@orpc/server";
 import { db } from "@struxa/db";
 import { servers, subusers, user } from "@struxa/db";
+import { recordActivity } from "../services/activity";
 import { protectedProcedure } from "../index";
 
 export const subusersRouter = {
@@ -66,6 +67,14 @@ export const subusersRouter = {
         permissions: JSON.stringify(input.permissions),
       });
 
+      recordActivity({
+        eventType: "user:subuser-create",
+        userId: context.session.user.id,
+        serverId: input.serverId,
+        ip: context.ip,
+        properties: { targetEmail: input.email },
+      });
+
       return db.query.subusers.findFirst({ where: eq(subusers.id, id), with: { user: true } });
     }),
 
@@ -92,6 +101,14 @@ export const subusersRouter = {
         .where(
           and(eq(subusers.userId, input.userId), eq(subusers.serverId, input.serverId)),
         );
+
+      recordActivity({
+        eventType: "user:subuser-update",
+        userId: context.session.user.id,
+        serverId: input.serverId,
+        ip: context.ip,
+        properties: { targetUserId: input.userId },
+      });
     }),
 
   delete: protectedProcedure
@@ -110,5 +127,13 @@ export const subusersRouter = {
         .where(
           and(eq(subusers.userId, input.userId), eq(subusers.serverId, input.serverId)),
         );
+
+      recordActivity({
+        eventType: "user:subuser-delete",
+        userId: context.session.user.id,
+        serverId: input.serverId,
+        ip: context.ip,
+        properties: { targetUserId: input.userId },
+      });
     }),
 };

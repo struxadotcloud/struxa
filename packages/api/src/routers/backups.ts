@@ -6,6 +6,7 @@ import { db } from "@struxa/db";
 import { backups, nodes, servers, subusers } from "@struxa/db";
 import { createWingsClient } from "../lib/wings-client";
 import { signBackupDownloadToken } from "../lib/jwt";
+import { recordActivity } from "../services/activity";
 import { protectedProcedure } from "../index";
 
 async function requireServerAccess(userId: string, serverId: string, role: string | null | undefined) {
@@ -66,6 +67,14 @@ export const backupsRouter = {
         adapter: "wings",
       });
 
+      recordActivity({
+        eventType: "server:backup.start",
+        userId: context.session.user.id,
+        serverId: input.serverId,
+        ip: context.ip,
+        properties: { name: input.name },
+      });
+
       return db.query.backups.findFirst({ where: eq(backups.id, id) });
     }),
 
@@ -88,6 +97,14 @@ export const backupsRouter = {
       await client.deleteBackup(server.uuid, backup.uuid);
 
       await db.delete(backups).where(eq(backups.id, input.backupId));
+
+      recordActivity({
+        eventType: "server:backup.delete",
+        userId: context.session.user.id,
+        serverId: input.serverId,
+        ip: context.ip,
+        properties: { name: backup.name },
+      });
     }),
 
   getDownloadUrl: protectedProcedure
@@ -131,5 +148,13 @@ export const backupsRouter = {
 
       const client = createWingsClient(server.node as typeof nodes.$inferSelect);
       await client.restoreBackup(server.uuid, backup.uuid);
+
+      recordActivity({
+        eventType: "server:backup.restore",
+        userId: context.session.user.id,
+        serverId: input.serverId,
+        ip: context.ip,
+        properties: { name: backup.name },
+      });
     }),
 };

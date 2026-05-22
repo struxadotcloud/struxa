@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Activity, Power, FileText, HardDrive } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import Image from "next/image";
 import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
 import Loader from "@/components/loader";
@@ -48,14 +49,71 @@ function getEventStyle(event: string) {
   if (event.startsWith("server:backup")) return EVENT_STYLES.backup!;
   if (event.startsWith("server:files")) return EVENT_STYLES.files!;
   if (event.startsWith("server:console")) return EVENT_STYLES.console!;
+  if (event === "server:reinstall") return { color: "#3b82f6", bg: "rgba(59,130,246,0.12)" };
+  if (event.startsWith("server:database")) return { color: "#f59e0b", bg: "rgba(245,158,11,0.12)" };
   if (event.startsWith("user:")) return EVENT_STYLES.user!;
   return { color: "#71717a", bg: "rgba(113,113,122,0.10)" };
 }
 
+const EVENT_LABELS: Record<string, string> = {
+  "server:power.start":            "Power: Start",
+  "server:power.stop":             "Power: Stop",
+  "server:power.restart":          "Power: Restart",
+  "server:power.kill":             "Power: Kill",
+  "server:backup.start":           "Backup: Create",
+  "server:backup.delete":          "Backup: Delete",
+  "server:backup.restore":         "Backup: Restore",
+  "server:files.read":             "Files: Read",
+  "server:files.write":            "Files: Write",
+  "server:settings":               "Settings: Update",
+  "server:reinstall":              "Server: Reinstall",
+  "server:database.create":        "Database: Create",
+  "server:database.delete":        "Database: Delete",
+  "server:database.rotate-password": "Database: Rotate Password",
+  "server:schedule.create":        "Schedule: Create",
+  "server:schedule.update":        "Schedule: Update",
+  "server:schedule.delete":        "Schedule: Delete",
+  "user:subuser-create":           "Users: Add",
+  "user:subuser-update":           "Users: Update",
+  "user:subuser-delete":           "Users: Remove",
+};
+
 function getEventLabel(event: string): string {
-  const parts = event.split(":");
-  if (parts.length >= 2) return (parts[1] ?? event).replace(".", " ");
-  return event;
+  return EVENT_LABELS[event] ?? event;
+}
+
+function ActorCell({ user }: { user: { name: string | null; email: string; image: string | null } | null | undefined }) {
+  if (!user) return <span className="text-sm text-muted-foreground">System</span>;
+  const displayName = user.name ?? user.email;
+  const initials = displayName[0]!.toUpperCase();
+  return (
+    <div className="flex items-center gap-2 min-w-0">
+      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-muted text-xs font-semibold text-foreground overflow-hidden">
+        {user.image ? (
+          <Image src={user.image} alt={displayName} width={24} height={24} className="h-6 w-6 object-cover" />
+        ) : initials}
+      </div>
+      <span className="truncate text-sm text-foreground">{displayName}</span>
+    </div>
+  );
+}
+
+function getEventDetails(eventType: string, propertiesJson: string | null): string | null {
+  if (!propertiesJson) return null;
+  let props: Record<string, unknown>;
+  try { props = JSON.parse(propertiesJson) as Record<string, unknown>; } catch { return null; }
+
+  if (eventType.startsWith("server:files") && typeof props.file === "string") return props.file;
+  if (eventType.startsWith("server:backup") && typeof props.name === "string") return props.name;
+  if (eventType.startsWith("server:database") && typeof props.database === "string") return props.database;
+  if (eventType.startsWith("server:schedule") && typeof props.name === "string") return props.name;
+  if (eventType === "server:settings") {
+    if (typeof props.name === "string") return `Renamed → ${props.name}`;
+    if (typeof props.image === "string") return `Image → ${props.image}`;
+    if (typeof props.envVariable === "string") return `Variable: ${props.envVariable}`;
+  }
+  if (eventType === "user:subuser-create" && typeof props.targetEmail === "string") return props.targetEmail;
+  return null;
 }
 
 function fmtDate(d: Date | string | null): string {
@@ -92,10 +150,11 @@ export default function ActivityPage({ params }: { params: Promise<{ id: string 
       <div className="flex flex-1 gap-3 overflow-hidden px-4 py-4">
         <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           {/* Table header */}
-          <div className="grid grid-cols-[180px_200px_1fr_140px] border-b border-border bg-muted/40 px-4 py-2.5">
+          <div className="grid grid-cols-[160px_180px_200px_1fr_130px] border-b border-border bg-muted/40 px-4 py-2.5">
             <span className="text-xs font-medium text-muted-foreground">Timestamp</span>
             <span className="text-xs font-medium text-muted-foreground">Event</span>
             <span className="text-xs font-medium text-muted-foreground">Actor</span>
+            <span className="text-xs font-medium text-muted-foreground">Details</span>
             <span className="text-xs font-medium text-muted-foreground">IP Address</span>
           </div>
 
@@ -114,7 +173,7 @@ export default function ActivityPage({ params }: { params: Promise<{ id: string 
                 return (
                   <div
                     key={entry.id}
-                    className={`grid grid-cols-[180px_200px_1fr_140px] items-center px-4 py-3 transition-colors hover:bg-muted/40 ${!isLast ? "border-b border-border" : ""}`}
+                    className={`grid grid-cols-[160px_180px_200px_1fr_130px] items-center px-4 py-3 transition-colors hover:bg-muted/40 ${!isLast ? "border-b border-border" : ""}`}
                   >
                     <span className="font-mono text-xs text-muted-foreground">{fmtDate(entry.timestamp)}</span>
                     <span>
@@ -125,8 +184,11 @@ export default function ActivityPage({ params }: { params: Promise<{ id: string 
                         {getEventLabel(entry.eventType)}
                       </span>
                     </span>
-                    <span className="truncate pr-4 text-sm text-foreground">
-                      {entry.userId ?? "system"}
+                    <div className="min-w-0 pr-4">
+                      <ActorCell user={entry.user} />
+                    </div>
+                    <span className="truncate pr-4 font-mono text-xs text-muted-foreground">
+                      {getEventDetails(entry.eventType, entry.properties) ?? "—"}
                     </span>
                     <span className="font-mono text-xs text-muted-foreground">{entry.ip ?? "—"}</span>
                   </div>

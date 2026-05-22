@@ -5,6 +5,7 @@ import { ORPCError } from "@orpc/server";
 import { db } from "@struxa/db";
 import { scheduleTasks, schedules, servers, subusers } from "@struxa/db";
 import { computeNextRun } from "../services/schedules";
+import { recordActivity } from "../services/activity";
 import { protectedProcedure } from "../index";
 
 async function requireServerAccess(userId: string, serverId: string, role: string | null | undefined) {
@@ -60,6 +61,15 @@ export const schedulesRouter = {
 
       const id = randomUUID();
       await db.insert(schedules).values({ id, ...input, nextRunAt });
+
+      recordActivity({
+        eventType: "server:schedule.create",
+        userId: context.session.user.id,
+        serverId: input.serverId,
+        ip: context.ip,
+        properties: { name: input.name },
+      });
+
       return db.query.schedules.findFirst({ where: eq(schedules.id, id), with: { tasks: true } });
     }),
 
@@ -96,6 +106,15 @@ export const schedulesRouter = {
       );
 
       await db.update(schedules).set({ ...data, nextRunAt }).where(eq(schedules.id, scheduleId));
+
+      recordActivity({
+        eventType: "server:schedule.update",
+        userId: context.session.user.id,
+        serverId: input.serverId,
+        ip: context.ip,
+        properties: { name: merged.name },
+      });
+
       return db.query.schedules.findFirst({ where: eq(schedules.id, scheduleId), with: { tasks: true } });
     }),
 
@@ -103,9 +122,22 @@ export const schedulesRouter = {
     .input(z.object({ serverId: z.string().uuid(), scheduleId: z.string().uuid() }))
     .handler(async ({ context, input }) => {
       await requireServerAccess(context.session.user.id, input.serverId, context.session.user.role);
+
+      const schedule = await db.query.schedules.findFirst({
+        where: and(eq(schedules.id, input.scheduleId), eq(schedules.serverId, input.serverId)),
+      });
+
       await db.delete(schedules).where(
         and(eq(schedules.id, input.scheduleId), eq(schedules.serverId, input.serverId)),
       );
+
+      recordActivity({
+        eventType: "server:schedule.delete",
+        userId: context.session.user.id,
+        serverId: input.serverId,
+        ip: context.ip,
+        properties: { name: schedule?.name },
+      });
     }),
 
   createTask: protectedProcedure

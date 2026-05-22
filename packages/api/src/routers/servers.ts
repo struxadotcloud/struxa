@@ -15,6 +15,7 @@ import {
 import { createWingsClient } from "../lib/wings-client";
 import { signWsToken } from "../lib/jwt";
 import { buildInvocation } from "../services/wings-servers";
+import { recordActivity } from "../services/activity";
 import { adminProcedure, protectedProcedure } from "../index";
 
 export const serversRouter = {
@@ -244,6 +245,7 @@ export const serversRouter = {
           // Wings unreachable — DB flag is set; enforcement happens at next Wings contact
         }
       }
+
     }),
 
   updateVariables: adminProcedure
@@ -348,6 +350,14 @@ export const serversRouter = {
         .update(servers)
         .set({ invocation: buildInvocation(server.startup, varMap) })
         .where(eq(servers.id, server.id));
+
+      recordActivity({
+        eventType: "server:settings",
+        userId: context.session.user.id,
+        serverId: server.id,
+        ip: context.ip,
+        properties: { envVariable: input.envVariable },
+      });
     }),
 
   updateDockerImage: protectedProcedure
@@ -387,6 +397,14 @@ export const serversRouter = {
         .update(servers)
         .set({ image: input.image })
         .where(eq(servers.uuid, input.serverId));
+
+      recordActivity({
+        eventType: "server:settings",
+        userId: context.session.user.id,
+        serverId: server.id,
+        ip: context.ip,
+        properties: { image: input.image },
+      });
     }),
 
   rename: protectedProcedure
@@ -407,6 +425,14 @@ export const serversRouter = {
       }
 
       await db.update(servers).set({ name: input.name }).where(eq(servers.uuid, input.serverId));
+
+      recordActivity({
+        eventType: "server:settings",
+        userId: context.session.user.id,
+        serverId: server.id,
+        ip: context.ip,
+        properties: { name: input.name },
+      });
     }),
 
   get: protectedProcedure
@@ -545,6 +571,13 @@ export const serversRouter = {
 
       const client = createWingsClient(server.node as typeof nodes.$inferSelect);
       await client.sendPowerAction(server.uuid, input.action);
+
+      recordActivity({
+        eventType: `server:power.${input.action}`,
+        userId: context.session.user.id,
+        serverId: server.id,
+        ip: context.ip,
+      });
     }),
 
   reinstall: protectedProcedure
@@ -578,6 +611,13 @@ export const serversRouter = {
           .where(eq(servers.id, server.id));
         throw e;
       }
+
+      recordActivity({
+        eventType: "server:reinstall",
+        userId: context.session.user.id,
+        serverId: server.id,
+        ip: context.ip,
+      });
     }),
 
   create: adminProcedure

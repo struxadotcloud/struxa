@@ -5,6 +5,7 @@ import { ORPCError } from "@orpc/server";
 import { db } from "@struxa/db";
 import { databaseHosts, serverDatabases, servers } from "@struxa/db";
 import { encrypt, decrypt } from "../lib/crypto";
+import { recordActivity } from "../services/activity";
 import { protectedProcedure } from "../index";
 
 function generatePassword(length = 24): string {
@@ -103,6 +104,14 @@ export const databasesRouter = {
         password: encrypt(password),
       });
 
+      recordActivity({
+        eventType: "server:database.create",
+        userId: context.session.user.id,
+        serverId: input.serverId,
+        ip: context.ip,
+        properties: { database: dbName },
+      });
+
       return db.query.serverDatabases.findFirst({
         where: eq(serverDatabases.id, id),
         with: { host: true },
@@ -153,6 +162,14 @@ export const databasesRouter = {
         .set({ password: encrypt(newPassword) })
         .where(eq(serverDatabases.id, input.databaseId));
 
+      recordActivity({
+        eventType: "server:database.rotate-password",
+        userId: context.session.user.id,
+        serverId: input.serverId,
+        ip: context.ip,
+        properties: { database: dbRecord.database },
+      });
+
       return { password: newPassword };
     }),
 
@@ -197,5 +214,13 @@ export const databasesRouter = {
       await db
         .delete(serverDatabases)
         .where(eq(serverDatabases.id, input.databaseId));
+
+      recordActivity({
+        eventType: "server:database.delete",
+        userId: context.session.user.id,
+        serverId: input.serverId,
+        ip: context.ip,
+        properties: { database: dbRecord.database },
+      });
     }),
 };

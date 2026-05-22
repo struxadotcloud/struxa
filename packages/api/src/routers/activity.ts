@@ -35,6 +35,11 @@ export const activityRouter = {
         orderBy: [desc(activityLogs.timestamp)],
         limit: input.perPage,
         offset,
+        with: {
+          user: {
+            columns: { name: true, email: true, image: true },
+          },
+        },
       });
 
       return { data: rows, meta: { page: input.page, perPage: input.perPage } };
