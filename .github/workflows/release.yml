@@ -128,10 +128,27 @@ jobs:
             echo ""
             echo "## Deploy"
             echo ""
-            echo "Set \`IMAGE_TAG=${{ inputs.version }}\` in \`.env.prod\`, then:"
-            echo '```sh'
-            echo "docker compose -f docker-compose.prod.yml --env-file .env.prod up -d"
-            echo '```'
+            if [ "${{ inputs.prerelease }}" = "true" ]; then
+              echo "### Install"
+              echo '```sh'
+              echo "bash <(curl -fsSL https://install.struxa.cloud) --nightly"
+              echo '```'
+              echo ""
+              echo "### Update"
+              echo '```sh'
+              echo "bash <(curl -fsSL https://install.struxa.cloud) update --nightly"
+              echo '```'
+            else
+              echo "### Install"
+              echo '```sh'
+              echo "bash <(curl -fsSL https://install.struxa.cloud)"
+              echo '```'
+              echo ""
+              echo "### Update"
+              echo '```sh'
+              echo "bash <(curl -fsSL https://install.struxa.cloud) update"
+              echo '```'
+            fi
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
