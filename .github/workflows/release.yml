@@ -87,7 +87,14 @@ jobs:
       - name: Generate changelog
         id: changelog
         run: |
-          PREV_TAG=$(git describe --tags --abbrev=0 HEAD 2>/dev/null || echo "")
+          if [ "${{ inputs.prerelease }}" = "true" ]; then
+            # For pre-releases, diff against the immediately preceding tag (stable or pre-release)
+            PREV_TAG=$(git describe --tags --abbrev=0 HEAD 2>/dev/null || echo "")
+          else
+            # For stable releases, diff against the last stable tag so that commits
+            # already summarised in pre-releases are included in the full release notes.
+            PREV_TAG=$(git tag --sort=-version:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1 || echo "")
+          fi
 
           if [ -z "$PREV_TAG" ]; then
             RANGE="HEAD"
