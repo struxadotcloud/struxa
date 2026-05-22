@@ -31,6 +31,7 @@ import {
   LogOut,
   ChevronLeft,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
 
@@ -51,6 +52,7 @@ export function AdminSidebar() {
   const { data: session } = authClient.useSession();
   const user = session?.user;
   const initials = user?.name ? user.name[0]!.toUpperCase() : "?";
+  const avatarImage = user?.image ?? null;
 
   async function handleLogout() {
     await authClient.signOut();
@@ -67,8 +69,10 @@ export function AdminSidebar() {
       <SidebarHeader className="p-0">
         <div className="hidden group-data-[collapsible=icon]:flex justify-center py-2">
           <DropdownMenu>
-            <DropdownMenuTrigger className="flex h-8 w-8 items-center justify-center rounded-lg text-xs font-semibold text-foreground transition-colors hover:bg-sidebar-accent">
-              {initials}
+            <DropdownMenuTrigger className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted text-xs font-semibold text-foreground transition-colors hover:bg-sidebar-accent overflow-hidden">
+              {avatarImage ? (
+                <Image src={avatarImage} alt={user?.name ?? "avatar"} width={32} height={32} className="h-8 w-8 object-cover" />
+              ) : initials}
             </DropdownMenuTrigger>
             <DropdownMenuContent side="right" align="start" className="w-48 rounded-xl border border-border bg-card p-1 shadow-lg">
               <DropdownMenuItem
@@ -93,8 +97,10 @@ export function AdminSidebar() {
         <div className="group-data-[collapsible=icon]:hidden px-2 py-1.5">
           <DropdownMenu>
             <DropdownMenuTrigger className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-sidebar-accent">
-              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-muted text-xs font-semibold text-foreground">
-                {initials}
+              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-muted text-xs font-semibold text-foreground overflow-hidden">
+                {avatarImage ? (
+                  <Image src={avatarImage} alt={user?.name ?? "avatar"} width={24} height={24} className="h-6 w-6 object-cover" />
+                ) : initials}
               </div>
               <div className="min-w-0 flex-1 text-left">
                 <p className="truncate text-sm font-medium text-foreground">{user?.name ?? "—"}</p>
