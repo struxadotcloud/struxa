@@ -3,6 +3,7 @@
 import { use, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Copy, RefreshCw } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Editor from "@monaco-editor/react";
 import type { Monaco } from "@monaco-editor/react";
 import { orpc, queryClient } from "@/utils/orpc";
@@ -48,6 +49,8 @@ function invalidateNode(id: string) {
 
 export default function NodeConfigurationPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const t = useTranslations("admin.nodes");
+  const tc = useTranslations("common");
   const { data: deployConfig } = useQuery(
     orpc.nodes.getDeploymentConfig.queryOptions({ input: { id } }),
   );
@@ -75,12 +78,12 @@ export default function NodeConfigurationPage({ params }: { params: Promise<{ id
   return (
     <div className="flex flex-col gap-3">
       <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-xs text-amber-500/80">
-        <span className="font-semibold">This is a generated example.</span> If Wings is already running and configured on this node, do not paste the entire file — only update <span className="font-mono">uuid</span>, <span className="font-mono">token_id</span>, and <span className="font-mono">token</span> to match the values above.
+        <span className="font-semibold">{t("configNotice")}</span> {t("configNoticeBody")} <span className="font-mono">uuid</span>, <span className="font-mono">token_id</span>, and <span className="font-mono">token</span> {t("configNoticeBody2")}
       </div>
 
       <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
-          <p className="text-xs font-medium text-muted-foreground">Wings config.yml</p>
+          <p className="text-xs font-medium text-muted-foreground">{t("configFileLabel")}</p>
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -88,7 +91,7 @@ export default function NodeConfigurationPage({ params }: { params: Promise<{ id
               className="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
             >
               <Copy className="h-3 w-3" />
-              {copiedConfig ? "Copied!" : "Copy"}
+              {copiedConfig ? tc("copied") : tc("copy")}
             </button>
             <button
               type="button"
@@ -97,7 +100,7 @@ export default function NodeConfigurationPage({ params }: { params: Promise<{ id
               className="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-40"
             >
               <RefreshCw className="h-3 w-3" />
-              Regen Token
+              {t("regenToken")}
             </button>
           </div>
         </div>

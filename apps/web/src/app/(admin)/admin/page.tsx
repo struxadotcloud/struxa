@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { Server, Monitor, Activity } from "lucide-react";
 import Link from "next/link";
 import { orpc } from "@/utils/orpc";
@@ -37,45 +38,46 @@ function StatCard({
   );
 }
 
-const QUICK_LINKS = [
-  { href: "/admin/locations", label: "Manage Locations", description: "Add and configure Wings nodes" },
-  { href: "/admin/nodes", label: "Manage Nodes", description: "View and edit your nodes" },
-  { href: "/admin/nests", label: "Nests & Eggs", description: "Configure server templates" },
-  { href: "/admin/servers/new", label: "Create Server", description: "Provision a new game server" },
-];
-
 export default function AdminDashboard() {
+  const t = useTranslations("admin.dashboard");
   const { data: nodes } = useQuery(orpc.nodes.list.queryOptions());
   const { data: servers } = useQuery(orpc.servers.list.queryOptions());
 
   const onlineNodes = nodes?.filter((n) => !n.maintenanceMode).length ?? 0;
 
+  const QUICK_LINKS = [
+    { href: "/admin/locations", label: t("manageLocations"), description: t("manageLocationsDesc") },
+    { href: "/admin/nodes", label: t("manageNodes"), description: t("manageNodesDesc") },
+    { href: "/admin/nests", label: t("nestsAndEggs"), description: t("nestsAndEggsDesc") },
+    { href: "/admin/servers/new", label: t("createServer"), description: t("createServerDesc") },
+  ];
+
   return (
     <div className="flex-1 overflow-auto px-6 py-5">
       <div className="mx-auto max-w-5xl">
         <div className="mb-5 flex items-center gap-2.5">
-          <h1 className="text-sm font-semibold text-foreground">Dashboard</h1>
+          <h1 className="text-sm font-semibold text-foreground">{t("title")}</h1>
         </div>
 
         <div className="mb-6">
-          <h2 className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">Overview</h2>
+          <h2 className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">{t("overview")}</h2>
           <div className="grid grid-cols-3 gap-3">
             <StatCard
               icon={Server}
-              label="Nodes"
+              label={t("nodesLabel")}
               value={nodes?.length ?? "—"}
-              sub={`${onlineNodes} online`}
+              sub={t("nodesOnline", { count: onlineNodes })}
               color="#22c55e"
             />
             <StatCard
               icon={Monitor}
-              label="Servers"
+              label={t("serversLabel")}
               value={servers?.length ?? "—"}
               color="#3b82f6"
             />
             <StatCard
               icon={Activity}
-              label="Active Nodes"
+              label={t("activeNodesLabel")}
               value={onlineNodes}
               color="#f59e0b"
             />
@@ -83,7 +85,7 @@ export default function AdminDashboard() {
         </div>
 
         <div>
-          <h2 className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">Quick Links</h2>
+          <h2 className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">{t("quickLinks")}</h2>
           <div className="grid grid-cols-2 gap-3">
             {QUICK_LINKS.map((link) => (
               <Link

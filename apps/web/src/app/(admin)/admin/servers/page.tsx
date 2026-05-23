@@ -1,8 +1,9 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { Plus, ExternalLink, Trash2, Search } from "lucide-react";
 import { orpc, queryClient } from "@/utils/orpc";
 import { ContextMenu, RowMenu, type ActionItem } from "@/components/context-menu";
@@ -12,14 +13,17 @@ function invalidate() {
   void queryClient.invalidateQueries({ queryKey: orpc.servers.key() });
 }
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  "":               { label: "Installed",     color: "#22c55e", bg: "rgba(34,197,94,0.12)" },
-  installing:       { label: "Installing",    color: "#f59e0b", bg: "rgba(245,158,11,0.12)" },
-  install_failed:   { label: "Install Failed",color: "#ef4444", bg: "rgba(239,68,68,0.12)" },
-  restoring_backup: { label: "Restoring",     color: "#6366f1", bg: "rgba(99,102,241,0.12)" },
-};
-
 export default function AdminServersPage() {
+  const t = useTranslations("admin.servers");
+  const tc = useTranslations("common");
+
+  const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
+    "":               { label: t("installed"),    color: "#22c55e", bg: "rgba(34,197,94,0.12)" },
+    installing:       { label: t("installing"),   color: "#f59e0b", bg: "rgba(245,158,11,0.12)" },
+    install_failed:   { label: t("installFailed"), color: "#ef4444", bg: "rgba(239,68,68,0.12)" },
+    restoring_backup: { label: t("restoring"),    color: "#6366f1", bg: "rgba(99,102,241,0.12)" },
+  };
+
   const { data: servers, isLoading } = useQuery(orpc.servers.list.queryOptions());
   const deleteMutation = useMutation(orpc.servers.delete.mutationOptions({ onSuccess: invalidate }));
 
@@ -45,7 +49,7 @@ export default function AdminServersPage() {
       },
       "separator",
       {
-        label: "Delete",
+        label: tc("delete"),
         icon: Trash2,
         onClick: () => { setConfirmDelete(server.uuid); setPurge(false); },
         destructive: true,
@@ -58,9 +62,9 @@ export default function AdminServersPage() {
       <ConfirmDialog
         open={confirmDelete !== null}
         onOpenChange={(open) => { if (!open) { setConfirmDelete(null); setPurge(false); } }}
-        title="Delete server?"
-        description="This action cannot be undone."
-        confirmLabel="Delete"
+        title={t("deleteTitle")}
+        description={t("deleteDesc")}
+        confirmLabel={tc("delete")}
         destructive
         loading={deleteMutation.isPending}
         onConfirm={async () => {
@@ -77,7 +81,7 @@ export default function AdminServersPage() {
             onChange={(e) => setPurge(e.target.checked)}
             className="h-3.5 w-3.5 rounded"
           />
-          Purge files from node
+          {tc("purgeFromNode")}
         </label>
       </ConfirmDialog>
 
@@ -85,14 +89,14 @@ export default function AdminServersPage() {
         <div className="mx-auto max-w-5xl">
         <div className="mb-5 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-              <h1 className="text-sm font-semibold text-foreground">Servers</h1>
+              <h1 className="text-sm font-semibold text-foreground">{t("title")}</h1>
           </div>
           <div className="flex items-center gap-2">
             <div className="relative flex items-center">
               <Search className="absolute left-2.5 h-3.5 w-3.5 text-muted-foreground/50" />
               <input
                 className="rounded-lg border border-border bg-background py-1.5 pl-8 pr-3 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
-                placeholder="Search servers..."
+                placeholder={t("searchPlaceholder")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -102,32 +106,32 @@ export default function AdminServersPage() {
               className="flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80"
             >
               <Plus className="h-3.5 w-3.5" />
-              New Server
+              {t("newServer")}
             </Link>
           </div>
         </div>
         <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
           <div className="grid grid-cols-[24px_1fr_180px_120px_120px_48px] border-b border-border bg-muted/40 px-4 py-2.5">
             <span />
-            <span className="text-xs font-medium text-muted-foreground">Name</span>
-            <span className="text-xs font-medium text-muted-foreground">Address</span>
-            <span className="text-xs font-medium text-muted-foreground">Node</span>
-            <span className="text-xs font-medium text-muted-foreground">Status</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("nameColumn")}</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("addressColumn")}</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("nodeColumn")}</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("statusColumn")}</span>
             <span />
           </div>
 
           {isLoading && (
-            <div className="px-4 py-8 text-center text-sm text-muted-foreground">Loading...</div>
+            <div className="px-4 py-8 text-center text-sm text-muted-foreground">{tc("loading")}</div>
           )}
           {!isLoading && filtered.length === 0 && (
             <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-              {search ? "No servers match your search." : "No servers yet."}
+              {search ? t("emptySearch") : t("empty")}
             </div>
           )}
           {filtered.map((server, i) => {
             const isSuspended = (server as { suspended?: boolean }).suspended;
             const cfg = isSuspended
-              ? { label: "Suspended", color: "#71717a", bg: "rgba(113,113,122,0.10)" }
+              ? { label: t("suspended"), color: "#71717a", bg: "rgba(113,113,122,0.10)" }
               : (STATUS_CONFIG[server.status] ?? { label: server.status, color: "#71717a", bg: "rgba(113,113,122,0.10)" });
             const actions = serverActions({ uuid: server.uuid, name: server.name });
             const isLast = i === filtered.length - 1;
@@ -153,7 +157,7 @@ export default function AdminServersPage() {
                       {server.allocation.ip}:{server.allocation.port}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      {(server as { node?: { name: string } }).node?.name ?? "â€”"}
+                      {(server as { node?: { name: string } }).node?.name ?? "—"}
                     </span>
                     <span>
                       <span

@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   Sidebar,
   SidebarHeader,
@@ -35,19 +36,9 @@ import {
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
 
-const NAV_ITEMS = [
-  { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/admin" },
-  { key: "locations", label: "Locations", icon: MapPin, href: "/admin/locations" },
-  { key: "nodes", label: "Nodes", icon: Server, href: "/admin/nodes" },
-  { key: "nests", label: "Nests & Eggs", icon: Package, href: "/admin/nests" },
-  { key: "database-hosts", label: "Database Hosts", icon: Database, href: "/admin/database-hosts" },
-  { key: "servers", label: "Servers", icon: Monitor, href: "/admin/servers" },
-  { key: "users", label: "Users", icon: Users, href: "/admin/users" },
-  { key: "activity", label: "Activity", icon: Activity, href: "/admin/activity" },
-  { key: "settings", label: "Settings", icon: Settings2, href: "/admin/settings" },
-];
-
 export function AdminSidebar() {
+  const t = useTranslations("nav.admin");
+  const tc = useTranslations("common");
   const pathname = usePathname();
   const router = useRouter();
   const { data: session } = authClient.useSession();
@@ -64,6 +55,18 @@ export function AdminSidebar() {
     if (href === "/admin") return pathname === "/admin";
     return pathname.startsWith(href);
   }
+
+  const NAV_ITEMS = [
+    { key: "dashboard", label: t("dashboard"), icon: LayoutDashboard, href: "/admin" },
+    { key: "locations", label: t("locations"), icon: MapPin, href: "/admin/locations" },
+    { key: "nodes", label: t("nodes"), icon: Server, href: "/admin/nodes" },
+    { key: "nests", label: t("nestsAndEggs"), icon: Package, href: "/admin/nests" },
+    { key: "database-hosts", label: t("databaseHosts"), icon: Database, href: "/admin/database-hosts" },
+    { key: "servers", label: t("servers"), icon: Monitor, href: "/admin/servers" },
+    { key: "users", label: t("users"), icon: Users, href: "/admin/users" },
+    { key: "activity", label: t("activity"), icon: Activity, href: "/admin/activity" },
+    { key: "settings", label: t("settings"), icon: Settings2, href: "/admin/settings" },
+  ];
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
@@ -82,7 +85,7 @@ export function AdminSidebar() {
                 className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground"
               >
                 <ChevronLeft className="h-4 w-4" />
-                Back to Panel
+                {tc("backToPanel")}
               </DropdownMenuItem>
               <DropdownMenuSeparator className="my-1 border-border" />
               <DropdownMenuItem
@@ -90,7 +93,7 @@ export function AdminSidebar() {
                 className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground"
               >
                 <LogOut className="h-4 w-4" />
-                Sign out
+                {tc("signOut")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -115,7 +118,7 @@ export function AdminSidebar() {
                 className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground"
               >
                 <ChevronLeft className="h-4 w-4" />
-                Back to Panel
+                {tc("backToPanel")}
               </DropdownMenuItem>
               <DropdownMenuSeparator className="my-1 border-border" />
               <DropdownMenuItem
@@ -123,7 +126,7 @@ export function AdminSidebar() {
                 className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground"
               >
                 <LogOut className="h-4 w-4" />
-                Sign out
+                {tc("signOut")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

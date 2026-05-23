@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Cal_Sans, Geist, Geist_Mono } from "next/font/google";
+import { getLocale, getMessages } from "next-intl/server";
 
 import "../index.css";
 import Providers from "@/components/providers";
@@ -38,15 +39,20 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <body className={`${calSans.variable} ${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <Providers>{children}</Providers>
+        <Providers locale={locale} messages={messages}>
+          {children}
+        </Providers>
       </body>
     </html>
   );

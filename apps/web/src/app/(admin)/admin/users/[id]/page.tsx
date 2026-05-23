@@ -4,6 +4,7 @@ import { use, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { ChevronRight, Server, Shield, ShieldOff, Ban, UserCheck, Monitor } from "lucide-react";
 import {
   Dialog,
@@ -18,13 +19,6 @@ import { orpc, queryClient } from "@/utils/orpc";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 
 type Tab = "overview" | "servers" | "security" | "actions";
-
-const TABS: { id: Tab; label: string }[] = [
-  { id: "overview", label: "Overview" },
-  { id: "servers", label: "Servers" },
-  { id: "security", label: "Security" },
-  { id: "actions", label: "Admin Actions" },
-];
 
 function parseUserAgent(ua: string | null | undefined): string {
   if (!ua) return "Unknown device";
@@ -56,9 +50,18 @@ function InfoRow({ label, children }: { label: string; children: React.ReactNode
 }
 
 export default function AdminUserDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const t = useTranslations("admin.users");
+  const tc = useTranslations("common");
   const { id: userId } = use(params);
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("overview");
+
+  const TABS: { id: Tab; label: string }[] = [
+    { id: "overview", label: t("tabOverview") },
+    { id: "servers", label: t("tabServers") },
+    { id: "security", label: t("tabSecurity") },
+    { id: "actions", label: t("tabActions") },
+  ];
 
   const { data: user, isLoading, refetch } = useQuery(
     orpc.users.adminGet.queryOptions({ input: { userId } }),
@@ -93,7 +96,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-        Loading…
+        {t("detailLoading")}
       </div>
     );
   }
@@ -101,7 +104,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
   if (!user) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-        User not found.
+        {t("detailNotFound")}
       </div>
     );
   }
@@ -115,17 +118,17 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
       <Dialog open={banDialog} onOpenChange={(open) => { setBanDialog(open); if (!open) setBanReason(""); }}>
         <DialogPopup showCloseButton={false}>
           <DialogHeader>
-            <DialogTitle>Ban {displayName}</DialogTitle>
-            <DialogDescription>This user will be locked out of their account.</DialogDescription>
+            <DialogTitle>{t("banDialogTitle", { name: displayName })}</DialogTitle>
+            <DialogDescription>{t("banDialogDesc")}</DialogDescription>
           </DialogHeader>
           <div className="px-5 py-4">
             <label className="mb-1.5 block text-xs font-medium text-foreground">
-              Reason <span className="text-muted-foreground font-normal">(optional)</span>
+              {t("banReasonLabel")} <span className="text-muted-foreground font-normal">{t("banReasonOptional")}</span>
             </label>
             <input
               autoFocus
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
-              placeholder="e.g. ToS violation"
+              placeholder={t("banReasonPlaceholder")}
               value={banReason}
               onChange={(e) => setBanReason(e.target.value)}
             />
@@ -138,7 +141,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
               className="rounded-lg px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               disabled={banMutation.isPending}
             >
-              Cancel
+              {tc("cancel")}
             </DialogClose>
             <button
               type="button"
@@ -150,7 +153,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
               }}
               className="rounded-lg bg-destructive px-4 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-40"
             >
-              {banMutation.isPending ? "Banning…" : "Ban User"}
+              {banMutation.isPending ? t("banning") : t("banUser")}
             </button>
           </DialogFooter>
         </DialogPopup>
@@ -159,9 +162,9 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
       <ConfirmDialog
         open={deleteDialog}
         onOpenChange={setDeleteDialog}
-        title={`Delete ${displayName}?`}
-        description="This action is permanent and cannot be undone. All servers owned by this user will remain but become ownerless."
-        confirmLabel="Delete User"
+        title={t("deleteDialogTitle", { name: displayName })}
+        description={t("deleteDialogDesc")}
+        confirmLabel={t("deleteUser")}
         destructive
         onConfirm={() => deleteMutation.mutate({ userId })}
         loading={deleteMutation.isPending}
@@ -170,7 +173,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
       {/* Header breadcrumb */}
       <div className="flex shrink-0 items-center gap-1.5 border-b border-border bg-card px-4 py-2.5">
         <Link href="/admin/users" className="text-xs text-muted-foreground transition-colors hover:text-foreground">
-          Users
+          {t("usersLink")}
         </Link>
         <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
         <span className="text-xs font-medium text-foreground">{displayName}</span>
@@ -178,24 +181,24 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
 
       {/* Tabs */}
       <div className="flex shrink-0 items-center gap-1 border-b border-border bg-card px-4">
-        {TABS.map((t) => (
+        {TABS.map((tab_item) => (
           <button
-            key={t.id}
+            key={tab_item.id}
             type="button"
-            onClick={() => setTab(t.id)}
+            onClick={() => setTab(tab_item.id)}
             className={`flex items-center gap-1.5 border-b-2 px-3 py-3 text-sm font-medium transition-colors ${
-              tab === t.id
+              tab === tab_item.id
                 ? "border-foreground text-foreground"
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            {t.label}
-            {t.id === "servers" && (serversData?.total ?? 0) > 0 && (
+            {tab_item.label}
+            {tab_item.id === "servers" && (serversData?.total ?? 0) > 0 && (
               <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
                 {serversData!.total}
               </span>
             )}
-            {t.id === "actions" && (
+            {tab_item.id === "actions" && (
               <span className="rounded-full bg-destructive/10 px-1.5 py-0.5 text-[10px] text-destructive">!</span>
             )}
           </button>
@@ -209,7 +212,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
           {/* ── Overview ── */}
           {tab === "overview" && (
             <>
-              <SectionCard title="Identity">
+              <SectionCard title={t("identityTitle")}>
                 <div className="flex items-center gap-4 mb-4">
                   <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full bg-muted">
                     {user.image ? (
@@ -227,33 +230,33 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
                   </div>
                 </div>
                 <div className="flex flex-col divide-y divide-border">
-                  <InfoRow label="Role">
+                  <InfoRow label={t("roleLabel")}>
                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${user.role === "admin" ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" : "bg-muted text-muted-foreground"}`}>
                       {user.role ?? "user"}
                     </span>
                   </InfoRow>
-                  <InfoRow label="Status">
+                  <InfoRow label={t("statusLabel")}>
                     {user.banned ? (
-                      <span className="rounded-full bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-600 dark:text-red-400">Banned</span>
+                      <span className="rounded-full bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-600 dark:text-red-400">{t("banned")}</span>
                     ) : (
-                      <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-600 dark:text-green-400">Active</span>
+                      <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-600 dark:text-green-400">{t("active")}</span>
                     )}
                   </InfoRow>
-                  <InfoRow label="2FA">
+                  <InfoRow label={t("twoFactorLabel")}>
                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${user.twoFactorEnabled ? "bg-green-500/10 text-green-600 dark:text-green-400" : "bg-muted text-muted-foreground"}`}>
-                      {user.twoFactorEnabled ? "Enabled" : "Disabled"}
+                      {user.twoFactorEnabled ? t("tfaEnabled") : t("tfaNotEnabled")}
                     </span>
                   </InfoRow>
-                  <InfoRow label="Joined">
+                  <InfoRow label={t("joinedLabel")}>
                     {user.createdAt ? new Date(user.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : "—"}
                   </InfoRow>
-                  <InfoRow label="Servers">
+                  <InfoRow label={t("serversLabel")}>
                     <button
                       type="button"
                       onClick={() => setTab("servers")}
                       className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
                     >
-                      {user.serverCount} server{user.serverCount !== 1 ? "s" : ""}
+                      {t("serverCountPlural", { count: user.serverCount })}
                     </button>
                   </InfoRow>
                 </div>
@@ -261,28 +264,28 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
 
               {user.banned && user.banReason && (
                 <div className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3">
-                  <p className="text-xs font-semibold text-destructive">Ban Reason</p>
+                  <p className="text-xs font-semibold text-destructive">{t("banReasonTitle")}</p>
                   <p className="mt-1 text-sm text-foreground">{user.banReason}</p>
                   {user.banExpires && (
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Expires {new Date(user.banExpires).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                      {t("banExpiresPrefix")} {new Date(user.banExpires).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                     </p>
                   )}
                 </div>
               )}
 
-              <SectionCard title="Billing Address">
+              <SectionCard title={t("billingTitle")}>
                 {user.billingAddressLine1 ? (
                   <div className="flex flex-col divide-y divide-border">
                     {user.billingName && <InfoRow label="Name">{user.billingName}</InfoRow>}
-                    <InfoRow label="Address">{user.billingAddressLine1}{user.billingAddressLine2 ? `, ${user.billingAddressLine2}` : ""}</InfoRow>
-                    <InfoRow label="City / State">{[user.billingCity, user.billingState].filter(Boolean).join(", ")}</InfoRow>
-                    <InfoRow label="Postal Code">{user.billingPostalCode ?? "—"}</InfoRow>
-                    <InfoRow label="Country">{user.billingCountry ?? "—"}</InfoRow>
-                    {user.vatNumber && <InfoRow label="VAT">{user.vatNumber} ({user.vatCountry})</InfoRow>}
+                    <InfoRow label={t("addressLabel")}>{user.billingAddressLine1}{user.billingAddressLine2 ? `, ${user.billingAddressLine2}` : ""}</InfoRow>
+                    <InfoRow label={t("cityStateLabel")}>{[user.billingCity, user.billingState].filter(Boolean).join(", ")}</InfoRow>
+                    <InfoRow label={t("postalCodeLabel")}>{user.billingPostalCode ?? "—"}</InfoRow>
+                    <InfoRow label={t("countryLabel")}>{user.billingCountry ?? "—"}</InfoRow>
+                    {user.vatNumber && <InfoRow label={t("vatLabel")}>{user.vatNumber} ({user.vatCountry})</InfoRow>}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No billing address on file.</p>
+                  <p className="text-sm text-muted-foreground">{t("noBilling")}</p>
                 )}
               </SectionCard>
             </>
@@ -290,9 +293,9 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
 
           {/* ── Servers ── */}
           {tab === "servers" && (
-            <SectionCard title="Servers">
+            <SectionCard title={t("serversTitle")}>
               {!serversData || serversData.servers.length === 0 ? (
-                <div className="py-4 text-center text-sm text-muted-foreground">No servers owned by this user.</div>
+                <div className="py-4 text-center text-sm text-muted-foreground">{t("noServers")}</div>
               ) : (
                 <div className="overflow-hidden rounded-lg border border-border">
                   <div className="grid grid-cols-[1fr_120px_100px_90px] border-b border-border bg-muted/40 px-4 py-2">
@@ -316,9 +319,9 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
                         {s.allocationIp}:{s.allocationPort}
                       </span>
                       {s.suspended ? (
-                        <span className="w-fit rounded-full bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-600 dark:text-red-400">Suspended</span>
+                        <span className="w-fit rounded-full bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-600 dark:text-red-400">{t("suspendedStatus")}</span>
                       ) : (
-                        <span className="w-fit rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-600 dark:text-green-400">Active</span>
+                        <span className="w-fit rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-600 dark:text-green-400">{t("activeStatus")}</span>
                       )}
                     </Link>
                   ))}
@@ -330,18 +333,18 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
           {/* ── Security ── */}
           {tab === "security" && (
             <>
-              <SectionCard title="Two-Factor Authentication">
+              <SectionCard title={t("tfaTitle")}>
                 <div className="flex items-center justify-between">
-                  <p className="text-sm text-foreground">TOTP authenticator</p>
+                  <p className="text-sm text-foreground">{t("tfaTotp")}</p>
                   <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${user.twoFactorEnabled ? "bg-green-500/10 text-green-600 dark:text-green-400" : "bg-muted text-muted-foreground"}`}>
-                    {user.twoFactorEnabled ? "Enabled" : "Not enabled"}
+                    {user.twoFactorEnabled ? t("tfaEnabled") : t("tfaNotEnabled")}
                   </span>
                 </div>
               </SectionCard>
 
-              <SectionCard title="Active Sessions">
+              <SectionCard title={t("sessionsTitle")}>
                 {!sessions || sessions.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No active sessions.</p>
+                  <p className="text-sm text-muted-foreground">{t("noSessions")}</p>
                 ) : (
                   <div className="flex flex-col divide-y divide-border">
                     {sessions.map((s) => (
@@ -354,7 +357,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
                           </p>
                         </div>
                         <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${new Date(s.expiresAt) > new Date() ? "bg-green-500/10 text-green-600 dark:text-green-400" : "bg-muted text-muted-foreground"}`}>
-                          {new Date(s.expiresAt) > new Date() ? "active" : "expired"}
+                          {new Date(s.expiresAt) > new Date() ? t("sessionActive") : t("sessionExpired")}
                         </span>
                       </div>
                     ))}
@@ -367,19 +370,17 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
           {/* ── Admin Actions ── */}
           {tab === "actions" && (
             <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4">
-              <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-destructive/60">Admin Actions</p>
+              <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-destructive/60">{t("actionsTitle")}</p>
               <div className="flex flex-col gap-3">
 
                 {/* Role */}
                 <div className="flex items-center justify-between rounded-lg border border-border bg-card p-4">
                   <div>
                     <p className="text-sm font-medium text-foreground">
-                      {user.role === "admin" ? "Demote to User" : "Promote to Admin"}
+                      {user.role === "admin" ? t("demoteTitle") : t("promoteTitle")}
                     </p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      {user.role === "admin"
-                        ? "Remove admin privileges from this user."
-                        : "Grant this user full admin access to the panel."}
+                      {user.role === "admin" ? t("demoteDesc") : t("promoteDesc")}
                     </p>
                   </div>
                   <button
@@ -393,7 +394,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
                     }`}
                   >
                     {user.role === "admin" ? <ShieldOff className="h-3.5 w-3.5" /> : <Shield className="h-3.5 w-3.5" />}
-                    {setRoleMutation.isPending ? "…" : user.role === "admin" ? "Demote" : "Promote"}
+                    {setRoleMutation.isPending ? "…" : user.role === "admin" ? t("demote") : t("promote")}
                   </button>
                 </div>
 
@@ -401,15 +402,13 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
                 <div className="flex items-center justify-between rounded-lg border border-border bg-card p-4">
                   <div>
                     <p className="text-sm font-medium text-foreground">
-                      {user.banned ? "Unban User" : "Ban User"}
+                      {user.banned ? t("unbanTitle") : t("banActionTitle")}
                     </p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      {user.banned
-                        ? "Allow this user to sign in again."
-                        : "Prevent this user from signing in."}
+                      {user.banned ? t("unbanDesc") : t("banActionDesc")}
                     </p>
                     {user.banned && user.banReason && (
-                      <p className="mt-1 text-xs text-destructive/80">Reason: {user.banReason}</p>
+                      <p className="mt-1 text-xs text-destructive/80">{t("banReasonPrefix")} {user.banReason}</p>
                     )}
                   </div>
                   {user.banned ? (
@@ -420,7 +419,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
                       className="flex items-center gap-1.5 rounded-lg bg-foreground px-4 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
                     >
                       <UserCheck className="h-3.5 w-3.5" />
-                      {unbanMutation.isPending ? "…" : "Unban"}
+                      {unbanMutation.isPending ? "…" : t("unban")}
                     </button>
                   ) : (
                     <button
@@ -429,7 +428,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
                       className="flex items-center gap-1.5 rounded-lg border border-destructive/40 px-4 py-1.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
                     >
                       <Ban className="h-3.5 w-3.5" />
-                      Ban
+                      {t("ban")}
                     </button>
                   )}
                 </div>
@@ -437,9 +436,9 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
                 {/* Delete */}
                 <div className="flex items-center justify-between rounded-lg border border-destructive/30 bg-card p-4">
                   <div>
-                    <p className="text-sm font-medium text-foreground">Delete User</p>
+                    <p className="text-sm font-medium text-foreground">{t("deleteUserTitle")}</p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      Permanently remove this account. This cannot be undone.
+                      {t("deleteUserDesc")}
                     </p>
                   </div>
                   <button
@@ -447,7 +446,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
                     onClick={() => setDeleteDialog(true)}
                     className="rounded-lg border border-destructive/40 px-4 py-1.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
                   >
-                    Delete
+                    {tc("delete")}
                   </button>
                 </div>
               </div>

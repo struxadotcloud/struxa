@@ -1,8 +1,9 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Pencil, Plus, Trash2, Check, X, Search } from "lucide-react";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogPopup,
@@ -25,6 +26,9 @@ function inputClass(small?: boolean) {
 }
 
 export default function LocationsPage() {
+  const t = useTranslations("admin.locations");
+  const tc = useTranslations("common");
+
   const { data: locations, isLoading } = useQuery(orpc.locations.list.queryOptions());
   const createMutation = useMutation(orpc.locations.create.mutationOptions({ onSuccess: invalidate }));
   const updateMutation = useMutation(orpc.locations.update.mutationOptions({ onSuccess: invalidate }));
@@ -67,9 +71,9 @@ export default function LocationsPage() {
 
   function rowActions(loc: { id: string; name: string; short: string; long: string | null }): ActionItem[] {
     return [
-      { label: "Edit", icon: Pencil, onClick: () => startEdit(loc) },
+      { label: tc("edit"), icon: Pencil, onClick: () => startEdit(loc) },
       "separator",
-      { label: "Delete", icon: Trash2, onClick: () => setConfirmDelete(loc.id), destructive: true },
+      { label: tc("delete"), icon: Trash2, onClick: () => setConfirmDelete(loc.id), destructive: true },
     ];
   }
 
@@ -78,36 +82,36 @@ export default function LocationsPage() {
       <Dialog open={showCreate} onOpenChange={(open) => { if (!open) closeCreate(); }}>
         <DialogPopup showCloseButton={false}>
           <DialogHeader>
-            <DialogTitle>New Location</DialogTitle>
-            <DialogDescription>Add a new geographic location for grouping nodes.</DialogDescription>
+            <DialogTitle>{t("dialogTitle")}</DialogTitle>
+            <DialogDescription>{t("dialogDesc")}</DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4 px-5 py-4">
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-foreground">Name <span className="text-destructive">*</span></label>
+              <label className="mb-1.5 block text-xs font-medium text-foreground">{t("nameLabel")} <span className="text-destructive">*</span></label>
               <input
                 autoFocus
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
-                placeholder="US East"
+                placeholder={t("namePlaceholder")}
                 value={form.name}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                 onKeyDown={(e) => { if (e.key === "Enter") void handleCreate(); if (e.key === "Escape") closeCreate(); }}
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-foreground">Short Code <span className="text-destructive">*</span></label>
+              <label className="mb-1.5 block text-xs font-medium text-foreground">{t("shortCodeLabel")} <span className="text-destructive">*</span></label>
               <input
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
-                placeholder="us-east"
+                placeholder={t("shortCodePlaceholder")}
                 value={form.short}
                 onChange={(e) => setForm((f) => ({ ...f, short: e.target.value }))}
                 onKeyDown={(e) => { if (e.key === "Enter") void handleCreate(); if (e.key === "Escape") closeCreate(); }}
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-foreground">Description</label>
+              <label className="mb-1.5 block text-xs font-medium text-foreground">{t("descriptionLabel")}</label>
               <input
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
-                placeholder="Optional description"
+                placeholder={t("descriptionPlaceholder")}
                 value={form.long}
                 onChange={(e) => setForm((f) => ({ ...f, long: e.target.value }))}
                 onKeyDown={(e) => { if (e.key === "Enter") void handleCreate(); if (e.key === "Escape") closeCreate(); }}
@@ -122,7 +126,7 @@ export default function LocationsPage() {
               className="rounded-lg px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               disabled={createMutation.isPending}
             >
-              Cancel
+              {tc("cancel")}
             </DialogClose>
             <button
               type="button"
@@ -130,7 +134,7 @@ export default function LocationsPage() {
               disabled={!form.name.trim() || !form.short.trim() || createMutation.isPending}
               className="rounded-lg bg-foreground px-4 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
             >
-              {createMutation.isPending ? "Creating…" : "Create Location"}
+              {createMutation.isPending ? tc("creating") : t("newLocation")}
             </button>
           </DialogFooter>
         </DialogPopup>
@@ -139,9 +143,9 @@ export default function LocationsPage() {
       <ConfirmDialog
         open={confirmDelete !== null}
         onOpenChange={(open) => { if (!open) setConfirmDelete(null); }}
-        title="Delete location?"
-        description="This will permanently remove the location. Nodes assigned to it may be affected."
-        confirmLabel="Delete"
+        title={t("deleteTitle")}
+        description={t("deleteDesc")}
+        confirmLabel={tc("delete")}
         destructive
         loading={deleteMutation.isPending}
         onConfirm={async () => {
@@ -155,14 +159,14 @@ export default function LocationsPage() {
         <div className="mx-auto max-w-5xl">
         <div className="mb-5 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-              <h1 className="text-sm font-semibold text-foreground">Locations</h1>
+              <h1 className="text-sm font-semibold text-foreground">{t("title")}</h1>
           </div>
           <div className="flex items-center gap-2">
             <div className="relative flex items-center">
               <Search className="absolute left-2.5 h-3.5 w-3.5 text-muted-foreground/50" />
               <input
                 className="rounded-lg border border-border bg-background py-1.5 pl-8 pr-3 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
-                placeholder="Search locations..."
+                placeholder={t("searchPlaceholder")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -173,25 +177,25 @@ export default function LocationsPage() {
               className="flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80"
             >
               <Plus className="h-3.5 w-3.5" />
-              New Location
+              {t("newLocation")}
             </button>
           </div>
         </div>
 
         <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
           <div className="grid grid-cols-[120px_1fr_1fr_48px] border-b border-border bg-muted/40 px-4 py-2.5">
-            <span className="text-xs font-medium text-muted-foreground">Short</span>
-            <span className="text-xs font-medium text-muted-foreground">Name</span>
-            <span className="text-xs font-medium text-muted-foreground">Description</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("shortColumn")}</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("nameColumn")}</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("descriptionColumn")}</span>
             <span />
           </div>
 
           {isLoading && (
-            <div className="px-4 py-8 text-center text-sm text-muted-foreground">Loading...</div>
+            <div className="px-4 py-8 text-center text-sm text-muted-foreground">{tc("loading")}</div>
           )}
           {!isLoading && filtered.length === 0 && (
             <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-              {search ? "No locations match your search." : "No locations yet. Create one to start adding nodes."}
+              {search ? t("emptySearch") : t("empty")}
             </div>
           )}
           {filtered.map((loc, i) => {
@@ -213,7 +217,7 @@ export default function LocationsPage() {
                 />
                 <input
                   className={inputClass(true)}
-                  placeholder="Description"
+                  placeholder={t("descriptionPlaceholder")}
                   value={editForm.long}
                   onChange={(e) => setEditForm((f) => ({ ...f, long: e.target.value }))}
                   onKeyDown={(e) => { if (e.key === "Enter") void handleUpdate(); if (e.key === "Escape") setEditingId(null); }}

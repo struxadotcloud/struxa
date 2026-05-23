@@ -3,6 +3,7 @@
 import { use, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Plus, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { orpc, queryClient } from "@/utils/orpc";
 
 function invalidateNode(id: string) {
@@ -15,6 +16,8 @@ function inputClass() {
 
 export default function NodeAllocationsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const t = useTranslations("admin.nodes");
+  const tc = useTranslations("common");
   const { data: node, isLoading } = useQuery(orpc.nodes.get.queryOptions({ input: { id } }));
 
   const addAllocMutation = useMutation(
@@ -43,7 +46,7 @@ export default function NodeAllocationsPage({ params }: { params: Promise<{ id: 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
-        Loading...
+        {tc("loading")}
       </div>
     );
   }
@@ -51,7 +54,7 @@ export default function NodeAllocationsPage({ params }: { params: Promise<{ id: 
   if (!node) {
     return (
       <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
-        Node not found.
+        {t("notFound")}
       </div>
     );
   }
@@ -61,14 +64,14 @@ export default function NodeAllocationsPage({ params }: { params: Promise<{ id: 
   return (
     <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
-        <span className="text-sm font-medium text-foreground">Allocations</span>
+        <span className="text-sm font-medium text-foreground">{t("allocationsTitle")}</span>
         <button
           type="button"
           onClick={() => setAddingAlloc(true)}
           className="flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80"
         >
           <Plus className="h-3 w-3" />
-          Add Allocation
+          {t("addAllocation")}
         </button>
       </div>
 
@@ -77,7 +80,7 @@ export default function NodeAllocationsPage({ params }: { params: Promise<{ id: 
           <div className="grid grid-cols-3 gap-3">
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-medium text-foreground">
-                IP Address <span className="text-destructive">*</span>
+                {t("ipLabel")} <span className="text-destructive">*</span>
               </label>
               <input
                 className={inputClass()}
@@ -88,23 +91,23 @@ export default function NodeAllocationsPage({ params }: { params: Promise<{ id: 
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-medium text-foreground">
-                Ports (range or comma-separated) <span className="text-destructive">*</span>
+                {t("portsLabel")} <span className="text-destructive">*</span>
               </label>
               <input
                 className={inputClass()}
-                placeholder="25565-25600 or 25565,25566"
+                placeholder={t("portsPlaceholder")}
                 value={allocForm.ports}
                 onChange={(e) => setAllocForm((f) => ({ ...f, ports: e.target.value }))}
               />
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-medium text-foreground">
-                IP Alias{" "}
-                <span className="font-normal text-muted-foreground">(optional)</span>
+                {t("ipAliasLabel")}{" "}
+                <span className="font-normal text-muted-foreground">{t("ipAliasOptional")}</span>
               </label>
               <input
                 className={inputClass()}
-                placeholder="play.example.com"
+                placeholder={t("ipAliasPlaceholder")}
                 value={allocForm.ipAlias}
                 onChange={(e) => setAllocForm((f) => ({ ...f, ipAlias: e.target.value }))}
               />
@@ -117,14 +120,14 @@ export default function NodeAllocationsPage({ params }: { params: Promise<{ id: 
               disabled={addAllocMutation.isPending}
               className="rounded-lg bg-foreground px-4 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
             >
-              {addAllocMutation.isPending ? "Adding..." : "Add"}
+              {addAllocMutation.isPending ? tc("adding") : tc("add")}
             </button>
             <button
               type="button"
               onClick={() => setAddingAlloc(false)}
               className="rounded-lg border border-border px-4 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
             >
-              Cancel
+              {tc("cancel")}
             </button>
           </div>
         </div>
@@ -133,7 +136,7 @@ export default function NodeAllocationsPage({ params }: { params: Promise<{ id: 
       <div className="divide-y divide-border">
         {allocations.length === 0 && (
           <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-            No allocations. Add some to create servers on this node.
+            {t("noAllocations")}
           </div>
         )}
         {allocations.map((alloc) => (
@@ -158,7 +161,7 @@ export default function NodeAllocationsPage({ params }: { params: Promise<{ id: 
               )}
               {alloc.serverId && (
                 <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                  assigned
+                  {t("assigned")}
                 </span>
               )}
             </div>
@@ -173,14 +176,14 @@ export default function NodeAllocationsPage({ params }: { params: Promise<{ id: 
                     }}
                     className="rounded-lg bg-destructive px-2 py-1 text-xs font-medium text-destructive-foreground"
                   >
-                    Delete
+                    {tc("delete")}
                   </button>
                   <button
                     type="button"
                     onClick={() => setConfirmDelete(null)}
                     className="rounded-lg border border-border px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-muted"
                   >
-                    Cancel
+                    {tc("cancel")}
                   </button>
                 </div>
               ) : (

@@ -3,6 +3,7 @@
 import { use, useEffect, useRef, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { TriangleAlert } from "lucide-react";
+import { useTranslations } from "next-intl";
 import {
   Tooltip,
   TooltipTrigger,
@@ -39,11 +40,13 @@ function SettingRow({
   label,
   description,
   requiresRestart,
+  requiresRestartText,
   children,
 }: {
   label: string;
   description?: string;
   requiresRestart?: boolean;
+  requiresRestartText?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -57,7 +60,7 @@ function SettingRow({
                 <TriangleAlert className="h-3.5 w-3.5" />
               </TooltipTrigger>
               <TooltipPopup side="top" sideOffset={4}>
-                Requires Wings daemon restart to take effect
+                {requiresRestartText}
               </TooltipPopup>
             </Tooltip>
           )}
@@ -121,6 +124,8 @@ type FormState = {
 
 export default function NodeSettingsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const t = useTranslations("admin.nodes");
+  const tc = useTranslations("common");
   const { data: node, isLoading } = useQuery(orpc.nodes.get.queryOptions({ input: { id } }));
 
   const updateMutation = useMutation(
@@ -190,7 +195,7 @@ export default function NodeSettingsPage({ params }: { params: Promise<{ id: str
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
-        Loading...
+        {tc("loading")}
       </div>
     );
   }
@@ -198,7 +203,7 @@ export default function NodeSettingsPage({ params }: { params: Promise<{ id: str
   if (!node) {
     return (
       <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
-        Node not found.
+        {t("notFound")}
       </div>
     );
   }
@@ -206,8 +211,8 @@ export default function NodeSettingsPage({ params }: { params: Promise<{ id: str
   return (
     <TooltipProvider>
     <div className="flex flex-col gap-3">
-      <SectionCard title="General">
-        <SettingRow label="Name">
+      <SectionCard title={t("generalSection")}>
+        <SettingRow label={t("nameLabel")}>
           <input
             className={inputClass()}
             value={form.name}
@@ -215,33 +220,33 @@ export default function NodeSettingsPage({ params }: { params: Promise<{ id: str
             placeholder="My Node"
           />
         </SettingRow>
-        <SettingRow label="Description" description="Optional note about this node.">
+        <SettingRow label={t("descriptionLabel")} description={t("descriptionDesc")}>
           <textarea
             className={`${inputClass()} resize-none`}
             rows={2}
             value={form.description}
             onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-            placeholder="Optional description"
+            placeholder={t("descriptionPlaceholder")}
           />
         </SettingRow>
       </SectionCard>
 
-      <SectionCard title="Network" description="Connection details for the Wings daemon.">
-        <SettingRow label="FQDN" description="Fully qualified domain name or IP.">
+      <SectionCard title={t("networkSection")} description={t("networkDesc")}>
+        <SettingRow label={t("fqdnLabel")} description={t("fqdnDesc")}>
           <input
             className={inputClass()}
             value={form.fqdn}
             onChange={(e) => setForm((f) => ({ ...f, fqdn: e.target.value }))}
-            placeholder="node.example.com"
+            placeholder={t("fqdnSettingsPlaceholder")}
           />
         </SettingRow>
-        <SettingRow label="Secure" description="Use HTTPS to communicate with Wings.">
+        <SettingRow label={t("secureLabel")} description={t("secureDesc")}>
           <Toggle
             checked={form.scheme === "https"}
             onChange={(v) => setForm((f) => ({ ...f, scheme: v ? "https" : "http" }))}
           />
         </SettingRow>
-        <SettingRow label="Daemon Port" description="Port Wings listens on." requiresRestart>
+        <SettingRow label={t("daemonPortLabel")} description={t("daemonPortDesc")} requiresRestart requiresRestartText={t("requiresRestart")}>
           <input
             type="number"
             className={inputClass("w-32")}
@@ -249,7 +254,7 @@ export default function NodeSettingsPage({ params }: { params: Promise<{ id: str
             onChange={(e) => setForm((f) => ({ ...f, daemonListen: Number(e.target.value) }))}
           />
         </SettingRow>
-        <SettingRow label="SFTP Port" description="Port the SFTP server listens on." requiresRestart>
+        <SettingRow label={t("sftpPortLabel")} description={t("sftpPortDesc")} requiresRestart requiresRestartText={t("requiresRestart")}>
           <input
             type="number"
             className={inputClass("w-32")}
@@ -257,18 +262,18 @@ export default function NodeSettingsPage({ params }: { params: Promise<{ id: str
             onChange={(e) => setForm((f) => ({ ...f, daemonSFTP: Number(e.target.value) }))}
           />
         </SettingRow>
-        <SettingRow label="Daemon Base Path" description="Directory where server files are stored." requiresRestart>
+        <SettingRow label={t("daemonBaseLabel")} description={t("daemonBaseDesc")} requiresRestart requiresRestartText={t("requiresRestart")}>
           <input
             className={inputClass()}
             value={form.daemonBase}
             onChange={(e) => setForm((f) => ({ ...f, daemonBase: e.target.value }))}
-            placeholder="/var/lib/pterodactyl"
+            placeholder={t("daemonBasePlaceholder")}
           />
         </SettingRow>
       </SectionCard>
 
-      <SectionCard title="Resources" description="Memory and disk limits for servers on this node.">
-        <SettingRow label="Memory (MB)">
+      <SectionCard title={t("resourcesSection")} description={t("resourcesDesc")}>
+        <SettingRow label={t("memoryLabel")}>
           <input
             type="number"
             className={inputClass("w-32")}
@@ -277,8 +282,8 @@ export default function NodeSettingsPage({ params }: { params: Promise<{ id: str
           />
         </SettingRow>
         <SettingRow
-          label="Memory Overallocate (%)"
-          description="Allow allocating beyond physical limit."
+          label={t("memoryOverallocateLabel")}
+          description={t("overallocateDesc")}
         >
           <input
             type="number"
@@ -289,7 +294,7 @@ export default function NodeSettingsPage({ params }: { params: Promise<{ id: str
             }
           />
         </SettingRow>
-        <SettingRow label="Disk (MB)">
+        <SettingRow label={t("diskLabel")}>
           <input
             type="number"
             className={inputClass("w-32")}
@@ -298,8 +303,8 @@ export default function NodeSettingsPage({ params }: { params: Promise<{ id: str
           />
         </SettingRow>
         <SettingRow
-          label="Disk Overallocate (%)"
-          description="Allow allocating beyond physical limit."
+          label={t("diskOverallocateLabel")}
+          description={t("overallocateDesc")}
         >
           <input
             type="number"
@@ -308,7 +313,7 @@ export default function NodeSettingsPage({ params }: { params: Promise<{ id: str
             onChange={(e) => setForm((f) => ({ ...f, diskOverallocate: Number(e.target.value) }))}
           />
         </SettingRow>
-        <SettingRow label="Upload Size (MB)" description="Maximum file upload size via SFTP.">
+        <SettingRow label={t("uploadSizeLabel")} description={t("uploadSizeDesc")}>
           <input
             type="number"
             className={inputClass("w-32")}
@@ -318,10 +323,10 @@ export default function NodeSettingsPage({ params }: { params: Promise<{ id: str
         </SettingRow>
       </SectionCard>
 
-      <SectionCard title="Status">
+      <SectionCard title={t("statusSection")}>
         <SettingRow
-          label="Maintenance Mode"
-          description="Prevents new servers from being deployed to this node."
+          label={t("maintenanceLabel")}
+          description={t("maintenanceDesc")}
         >
           <Toggle
             checked={form.maintenanceMode}
@@ -336,7 +341,7 @@ export default function NodeSettingsPage({ params }: { params: Promise<{ id: str
             <span className="text-xs text-destructive">{updateMutation.error.message}</span>
           )}
           {updateMutation.isSuccess && (
-            <span className="text-xs text-green-500">Saved</span>
+            <span className="text-xs text-green-500">{tc("saved")}</span>
           )}
         </div>
         <button
@@ -345,7 +350,7 @@ export default function NodeSettingsPage({ params }: { params: Promise<{ id: str
           disabled={updateMutation.isPending}
           className="rounded-lg bg-foreground px-4 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
         >
-          {updateMutation.isPending ? "Saving…" : "Save Changes"}
+          {updateMutation.isPending ? tc("saving") : t("saveChanges")}
         </button>
       </div>
     </div>

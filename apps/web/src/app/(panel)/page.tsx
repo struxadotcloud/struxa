@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { Server } from "lucide-react";
 import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
@@ -11,24 +12,26 @@ import Loader from "@/components/loader";
 
 type DbStatus = "" | "installing" | "install_failed" | "suspended" | "restoring_backup" | string;
 
-const STATUS_CONFIG: Record<string, { color: string; bg: string; label: string; pulse: boolean }> = {
-  installing:       { color: "#71717a", bg: "rgba(113,113,122,0.12)", label: "Installing",       pulse: true  },
-  install_failed:   { color: "#f43f5e", bg: "rgba(244,63,94,0.12)",   label: "Failed",           pulse: false },
-  suspended:        { color: "#f43f5e", bg: "rgba(244,63,94,0.12)",   label: "Suspended",        pulse: false },
-  restoring_backup: { color: "#71717a", bg: "rgba(113,113,122,0.12)", label: "Restoring",        pulse: true  },
-  running:          { color: "#22c55e", bg: "rgba(34,197,94,0.12)",   label: "Running",          pulse: false },
-  starting:         { color: "#f59e0b", bg: "rgba(245,158,11,0.12)",  label: "Starting",         pulse: true  },
-  stopping:         { color: "#f59e0b", bg: "rgba(245,158,11,0.12)",  label: "Stopping",         pulse: true  },
-  offline:          { color: "#71717a", bg: "rgba(113,113,122,0.12)", label: "Offline",          pulse: false },
+type StatusConfig = { color: string; bg: string; labelKey: string; pulse: boolean };
+
+const STATUS_CONFIG: Record<string, StatusConfig> = {
+  installing:       { color: "#71717a", bg: "rgba(113,113,122,0.12)", labelKey: "installing",        pulse: true  },
+  install_failed:   { color: "#f43f5e", bg: "rgba(244,63,94,0.12)",   labelKey: "install_failed",    pulse: false },
+  suspended:        { color: "#f43f5e", bg: "rgba(244,63,94,0.12)",   labelKey: "suspended",         pulse: false },
+  restoring_backup: { color: "#71717a", bg: "rgba(113,113,122,0.12)", labelKey: "restoring_backup",  pulse: true  },
+  running:          { color: "#22c55e", bg: "rgba(34,197,94,0.12)",   labelKey: "running",           pulse: false },
+  starting:         { color: "#f59e0b", bg: "rgba(245,158,11,0.12)",  labelKey: "starting",          pulse: true  },
+  stopping:         { color: "#f59e0b", bg: "rgba(245,158,11,0.12)",  labelKey: "stopping",          pulse: true  },
+  offline:          { color: "#71717a", bg: "rgba(113,113,122,0.12)", labelKey: "offline",           pulse: false },
 };
 
 function getStatus(dbStatus: DbStatus, powerState: string | undefined, loading: boolean) {
-  if (dbStatus !== "") return STATUS_CONFIG[dbStatus] ?? { color: "#71717a", bg: "rgba(113,113,122,0.12)", label: dbStatus, pulse: false };
-  if (loading) return { color: "#71717a", bg: "rgba(113,113,122,0.08)", label: "—", pulse: true };
+  if (dbStatus !== "") return STATUS_CONFIG[dbStatus] ?? { color: "#71717a", bg: "rgba(113,113,122,0.12)", labelKey: dbStatus, pulse: false };
+  if (loading) return { color: "#71717a", bg: "rgba(113,113,122,0.08)", labelKey: "—", pulse: true };
   return STATUS_CONFIG[powerState ?? "offline"] ?? STATUS_CONFIG.offline!;
 }
 
-type Server = {
+type ServerItem = {
   uuid: string;
   name: string;
   status: string;
@@ -37,11 +40,14 @@ type Server = {
 };
 
 function ServerCard({ server, powerState, statusLoading }: {
-  server: Server;
+  server: ServerItem;
   powerState: string | undefined;
   statusLoading: boolean;
 }) {
+  const ts = useTranslations("panel.serverStatus");
+  const tp = useTranslations("panel.servers");
   const status = getStatus(server.status, powerState, statusLoading);
+  const label = status.labelKey in (ts as unknown as Record<string, unknown>) ? ts(status.labelKey as never) : status.labelKey;
 
   return (
     <Link href={`/servers/${server.uuid}`} className="group block">
@@ -65,13 +71,13 @@ function ServerCard({ server, powerState, statusLoading }: {
 
         <div className="flex items-center justify-between">
           <span className="text-xs text-muted-foreground">
-            {server.allocation ? `${server.allocation.ip}:${server.allocation.port}` : "No allocation"}
+            {server.allocation ? `${server.allocation.ip}:${server.allocation.port}` : tp("noAllocation")}
           </span>
           <span
             className="rounded-full px-2 py-0.5 text-[11px] font-medium"
             style={{ color: status.color, backgroundColor: status.bg }}
           >
-            {status.label}
+            {label}
           </span>
         </div>
       </div>
@@ -80,6 +86,7 @@ function ServerCard({ server, powerState, statusLoading }: {
 }
 
 export default function ServersPage() {
+  const t = useTranslations("panel.servers");
   const router = useRouter();
   const { data: session, isPending: sessionPending } = authClient.useSession();
 
@@ -100,7 +107,6 @@ export default function ServersPage() {
   if (sessionPending || !session) return <Loader />;
 
   const list = servers ?? [];
-  const online = statuses ? list.filter((s) => statuses[s.uuid] === "running").length : 0;
 
   return (
     <>
@@ -113,8 +119,8 @@ export default function ServersPage() {
               <Server className="h-6 w-6 text-muted-foreground" />
             </div>
             <div className="text-center">
-              <p className="text-sm font-medium text-foreground">No servers yet</p>
-              <p className="text-xs text-muted-foreground">Your servers will appear here once created.</p>
+              <p className="text-sm font-medium text-foreground">{t("noServersTitle")}</p>
+              <p className="text-xs text-muted-foreground">{t("noServersDescription")}</p>
             </div>
           </div>
         ) : (
@@ -122,7 +128,7 @@ export default function ServersPage() {
             {list.map((server) => (
               <ServerCard
                 key={server.uuid}
-                server={server as Server}
+                server={server as ServerItem}
                 powerState={statuses?.[server.uuid]}
                 statusLoading={statusesPending}
               />

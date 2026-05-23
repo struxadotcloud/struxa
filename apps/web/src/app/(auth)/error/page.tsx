@@ -1,75 +1,39 @@
 import Image from "next/image";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { getInstanceSettings } from "@/lib/instance-settings";
 
-const ERROR_MESSAGES: Record<string, { title: string; description: string }> = {
-  email_doesnt_match: {
-    title: "Email mismatch",
-    description: "The social account's email doesn't match your profile. Try linking from your account settings instead.",
-  },
-  "email_doesn't_match": {
-    title: "Email mismatch",
-    description: "The social account's email doesn't match your profile. Try linking from your account settings instead.",
-  },
-  account_not_linked: {
-    title: "Account not linked",
-    description: "This social account isn't linked to any user. Sign in with your email and password, then link it from account settings.",
-  },
-  account_already_linked_to_different_user: {
-    title: "Account already linked",
-    description: "This social account is already connected to a different user.",
-  },
-  signup_disabled: {
-    title: "Registration disabled",
-    description: "New account registration is currently disabled. Contact your administrator.",
-  },
-  oauth_provider_not_found: {
-    title: "Provider not found",
-    description: "This sign-in provider is not configured. Contact your administrator.",
-  },
-  unable_to_create_user: {
-    title: "Could not create account",
-    description: "An error occurred while creating your account. Please try again.",
-  },
-  unable_to_create_session: {
-    title: "Session error",
-    description: "An error occurred while creating your session. Please try again.",
-  },
-  unable_to_link_account: {
-    title: "Could not link account",
-    description: "An error occurred while linking your account. Please try again.",
-  },
-  state_mismatch: {
-    title: "Request expired",
-    description: "The sign-in request expired or was tampered with. Please try again.",
-  },
-  state_not_found: {
-    title: "Request not found",
-    description: "The sign-in request could not be found. Please try again.",
-  },
-  invalid_code: {
-    title: "Invalid code",
-    description: "The authorization code was invalid or already used. Please try again.",
-  },
-  please_restart_the_process: {
-    title: "Please try again",
-    description: "Something went wrong during sign-in. Please start the process again.",
-  },
-};
-
-const FALLBACK = {
-  title: "Authentication error",
-  description: "Something went wrong during sign-in. Please try again.",
-};
+const KNOWN_ERROR_KEYS = new Set([
+  "email_doesnt_match",
+  "email_doesn't_match",
+  "account_not_linked",
+  "account_already_linked_to_different_user",
+  "signup_disabled",
+  "oauth_provider_not_found",
+  "unable_to_create_user",
+  "unable_to_create_session",
+  "unable_to_link_account",
+  "state_mismatch",
+  "state_not_found",
+  "invalid_code",
+  "please_restart_the_process",
+]);
 
 type Props = {
   searchParams: Promise<{ error?: string }>;
 };
 
 export default async function AuthErrorPage({ searchParams }: Props) {
+  const t = await getTranslations("auth.errors");
   const { error } = await searchParams;
   const { appName, logoUrl } = await getInstanceSettings();
-  const { title, description } = (error ? ERROR_MESSAGES[error] : undefined) ?? FALLBACK;
+
+  const normalizedKey = error?.replace(/'/g, "") ?? null;
+  const knownKey = normalizedKey && KNOWN_ERROR_KEYS.has(normalizedKey) ? normalizedKey : null;
+  const lookupKey = knownKey === "email_doesn't_match" ? "email_doesnt_match" : knownKey;
+
+  const title = lookupKey ? t(`${lookupKey}.title` as never) : t("fallbackTitle");
+  const description = lookupKey ? t(`${lookupKey}.description` as never) : t("fallbackDescription");
 
   return (
     <main className="min-h-svh bg-background">
@@ -107,7 +71,7 @@ export default async function AuthErrorPage({ searchParams }: Props) {
                 href="/login"
                 className="rounded-lg bg-foreground px-4 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80"
               >
-                Back to login
+                {t("backToLogin")}
               </Link>
             </div>
           </div>

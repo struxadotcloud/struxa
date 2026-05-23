@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useParams, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   Sidebar,
   SidebarHeader,
@@ -40,28 +41,9 @@ import {
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 
-const NAV_PRIMARY = [
-  { key: "servers", label: "Game Servers", icon: Server, href: "/" },
-  { key: "account", label: "Account", icon: User, href: "/account" },
-];
-
-const NAV_SECONDARY = [
-  { key: "support", label: "Support", icon: LifeBuoy, href: "/support" },
-];
-
-const NAV_SERVER = [
-  { key: "console", label: "Console", icon: Terminal },
-  { key: "files", label: "Files", icon: FolderOpen },
-  { key: "databases", label: "Databases", icon: Database },
-  { key: "schedules", label: "Schedules", icon: Clock },
-  { key: "users", label: "Users", icon: Users },
-  { key: "backups", label: "Backups", icon: Archive },
-  { key: "network", label: "Network", icon: Globe },
-  { key: "settings", label: "Settings", icon: Settings },
-  { key: "activity", label: "Activity", icon: Activity },
-];
-
 export function PanelSidebar() {
+  const t = useTranslations("nav");
+  const tc = useTranslations("common");
   const { state } = useSidebar();
   const pathname = usePathname();
   const params = useParams();
@@ -79,6 +61,27 @@ export function PanelSidebar() {
   const isServerPage = pathname.startsWith("/servers/");
   const serverId = isServerPage ? (params.id as string) : null;
   const activeServerTab = pathname.split("/servers/")[1]?.split("/")[1] ?? "console";
+
+  const NAV_PRIMARY = [
+    { key: "servers", label: t("panel.gameServers"), icon: Server, href: "/" },
+    { key: "account", label: t("panel.account"), icon: User, href: "/account" },
+  ];
+
+  const NAV_SECONDARY = [
+    { key: "support", label: t("panel.support"), icon: LifeBuoy, href: "/support" },
+  ];
+
+  const NAV_SERVER = [
+    { key: "console", label: t("server.console"), icon: Terminal },
+    { key: "files", label: t("server.files"), icon: FolderOpen },
+    { key: "databases", label: t("server.databases"), icon: Database },
+    { key: "schedules", label: t("server.schedules"), icon: Clock },
+    { key: "users", label: t("server.users"), icon: Users },
+    { key: "backups", label: t("server.backups"), icon: Archive },
+    { key: "network", label: t("server.network"), icon: Globe },
+    { key: "settings", label: t("server.settings"), icon: Settings },
+    { key: "activity", label: t("server.activity"), icon: Activity },
+  ];
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
@@ -100,7 +103,7 @@ export function PanelSidebar() {
                   className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground"
                 >
                   <ShieldCheck className="h-4 w-4" />
-                  Admin Panel
+                  {tc("adminPanel")}
                 </DropdownMenuItem>
               )}
               {user?.role === "admin" && <DropdownMenuSeparator className="my-1 border-border" />}
@@ -109,7 +112,7 @@ export function PanelSidebar() {
                 className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground"
               >
                 <LogOut className="h-4 w-4" />
-                Sign out
+                {tc("signOut")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -137,7 +140,7 @@ export function PanelSidebar() {
                   className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground"
                 >
                   <ShieldCheck className="h-4 w-4" />
-                  Admin Panel
+                  {tc("adminPanel")}
                 </DropdownMenuItem>
               )}
               {user?.role === "admin" && <DropdownMenuSeparator className="my-1 border-border" />}
@@ -146,7 +149,7 @@ export function PanelSidebar() {
                 className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground"
               >
                 <LogOut className="h-4 w-4" />
-                Sign out
+                {tc("signOut")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -162,7 +165,7 @@ export function PanelSidebar() {
                 className="mb-1 flex items-center gap-1.5 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
               >
                 <ChevronLeft className="h-3 w-3" />
-                All Servers
+                {t("panel.allServers")}
               </Link>
             )}
             <SidebarGroupContent>

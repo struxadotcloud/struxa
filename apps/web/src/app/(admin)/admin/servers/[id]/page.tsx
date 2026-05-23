@@ -12,18 +12,12 @@ import {
   DropdownMenuTrigger,
 } from "@struxa/ui/components/dropdown-menu";
 import { ChevronDown } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { orpc, queryClient } from "@/utils/orpc";
 import { UserCombobox } from "@/components/user-combobox";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 
 type Tab = "general" | "resources" | "startup" | "danger";
-
-const TABS: { id: Tab; label: string }[] = [
-  { id: "general", label: "General" },
-  { id: "resources", label: "Resources" },
-  { id: "startup", label: "Startup" },
-  { id: "danger", label: "Danger" },
-];
 
 function invalidateServer(id: string) {
   void queryClient.invalidateQueries(orpc.servers.adminGet.queryOptions({ input: { id } }));
@@ -52,6 +46,15 @@ function SectionCard({ title, children }: { title: string; children: React.React
 export default function AdminServerDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: serverId } = use(params);
   const router = useRouter();
+  const t = useTranslations("admin.servers");
+  const tc = useTranslations("common");
+
+  const TABS: { id: Tab; label: string }[] = [
+    { id: "general", label: t("tabGeneral") },
+    { id: "resources", label: t("tabResources") },
+    { id: "startup", label: t("tabStartup") },
+    { id: "danger", label: t("tabDanger") },
+  ];
 
   const [tab, setTab] = useState<Tab>("general");
 
@@ -151,7 +154,7 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-        Loading...
+        {tc("loading")}
       </div>
     );
   }
@@ -159,7 +162,7 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
   if (!server) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-        Server not found.
+        {t("detailNotFound")}
       </div>
     );
   }
@@ -201,28 +204,28 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
       <div className="flex-1 overflow-auto px-6 py-5">
         {tab === "general" && (
           <div className="mx-auto max-w-2xl flex flex-col gap-4">
-            <SectionCard title="Identity">
+            <SectionCard title={t("identityTitle")}>
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-foreground">Name</label>
+                  <label className="text-xs font-medium text-foreground">{t("nameLabel")}</label>
                   <input className={inputClass()} value={name} onChange={(e) => setName(e.target.value)} />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-foreground">Description</label>
+                  <label className="text-xs font-medium text-foreground">{t("descriptionDetailLabel")}</label>
                   <input className={inputClass()} value={description} onChange={(e) => setDescription(e.target.value)} />
                 </div>
               </div>
               <div className="mt-3">
-                <label className="mb-1.5 block text-xs font-medium text-foreground">Owner</label>
+                <label className="mb-1.5 block text-xs font-medium text-foreground">{t("ownerDetailLabel")}</label>
                 <UserCombobox value={ownerId} onChange={setOwnerId} initialLabel={server.userId} />
               </div>
               <div className="mt-3 grid grid-cols-2 gap-3">
                 <div>
-                  <p className="mb-1 text-xs font-medium text-muted-foreground">UUID</p>
+                  <p className="mb-1 text-xs font-medium text-muted-foreground">{t("uuidLabel")}</p>
                   <p className="font-mono text-xs text-muted-foreground">{server.uuid}</p>
                 </div>
                 <div>
-                  <p className="mb-1 text-xs font-medium text-muted-foreground">Egg</p>
+                  <p className="mb-1 text-xs font-medium text-muted-foreground">{t("eggDetailLabel")}</p>
                   <p className="text-sm text-foreground">{server.egg?.name ?? "—"}</p>
                 </div>
               </div>
@@ -233,25 +236,25 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
                   disabled={updateMutation.isPending}
                   className="rounded-lg bg-foreground px-4 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
                 >
-                  {updateMutation.isPending ? "Saving..." : "Save"}
+                  {updateMutation.isPending ? tc("saving") : tc("save")}
                 </button>
-                {updateMutation.isSuccess && <span className="text-xs font-medium text-green-500">Saved</span>}
+                {updateMutation.isSuccess && <span className="text-xs font-medium text-green-500">{tc("saved")}</span>}
                 {updateMutation.isError && <span className="text-xs text-destructive">{updateMutation.error.message}</span>}
               </div>
             </SectionCard>
 
-            <SectionCard title="Node & Allocation">
+            <SectionCard title={t("nodeAllocationTitle")}>
               {nodeChanged && (
                 <div className="mb-3 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-amber-600 dark:text-amber-400">
-                  Warning: changing the node does not migrate data on Wings. Ensure the server exists on the target node.
+                  {t("nodeChangedWarning")}
                 </div>
               )}
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-foreground">Node</label>
+                  <label className="text-xs font-medium text-foreground">{t("nodeLabel")}</label>
                   <DropdownMenu>
                     <DropdownMenuTrigger className="flex w-full items-center justify-between rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-foreground outline-none transition-colors hover:border-ring data-[popup-open]:border-ring">
-                      <span>{nodesList?.find((n) => n.id === selectedNodeId)?.name ?? "Select node"}</span>
+                      <span>{nodesList?.find((n) => n.id === selectedNodeId)?.name ?? t("selectNode")}</span>
                       <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="rounded-xl border border-border bg-card p-1 shadow-lg">
@@ -268,7 +271,7 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
                   </DropdownMenu>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-foreground">Allocation</label>
+                  <label className="text-xs font-medium text-foreground">{t("allocationLabel")}</label>
                   <DropdownMenu>
                     <DropdownMenuTrigger className="flex w-full items-center justify-between rounded-lg border border-border bg-background px-3 py-1.5 font-mono text-sm text-foreground outline-none transition-colors hover:border-ring data-[popup-open]:border-ring">
                       <span>
@@ -283,7 +286,7 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
                     <DropdownMenuContent className="rounded-xl border border-border bg-card p-1 shadow-lg">
                       {filteredAllocations.length === 0 ? (
                         <div className="px-3 py-2 text-xs text-muted-foreground">
-                          {selectedNodeId ? "No free allocations" : "Select a node first"}
+                          {selectedNodeId ? t("noFreeAllocationsShort") : t("selectNodeFirst")}
                         </div>
                       ) : (
                         filteredAllocations.map((a) => (
@@ -294,7 +297,7 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
                           >
                             {a.ip}:{a.port}
                             {a.id === server.allocationId && (
-                              <span className="ml-2 rounded-full bg-muted px-1.5 py-0.5 font-sans text-[10px] normal-case text-muted-foreground">current</span>
+                              <span className="ml-2 rounded-full bg-muted px-1.5 py-0.5 font-sans text-[10px] normal-case text-muted-foreground">{t("currentBadge")}</span>
                             )}
                           </DropdownMenuItem>
                         ))
@@ -314,7 +317,7 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
                   disabled={updateMutation.isPending}
                   className="rounded-lg bg-foreground px-4 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
                 >
-                  {updateMutation.isPending ? "Saving..." : "Save"}
+                  {updateMutation.isPending ? tc("saving") : tc("save")}
                 </button>
               </div>
             </SectionCard>
@@ -323,14 +326,14 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
 
         {tab === "resources" && (
           <div className="mx-auto max-w-2xl">
-            <SectionCard title="Resource Limits">
+            <SectionCard title={t("resourcesTitle")}>
               <div className="grid grid-cols-4 gap-3">
                 {[
-                  { label: "Memory (MB)", value: memory, set: setMemory },
-                  { label: "Disk (MB)", value: disk, set: setDisk },
-                  { label: "CPU (%)", value: cpu, set: setCpu },
-                  { label: "Swap (MB)", value: swap, set: setSwap },
-                  { label: "IO Weight", value: io, set: setIo },
+                  { label: t("memoryLabel"), value: memory, set: setMemory },
+                  { label: t("diskLabel"), value: disk, set: setDisk },
+                  { label: t("cpuShortLabel"), value: cpu, set: setCpu },
+                  { label: t("swapShortLabel"), value: swap, set: setSwap },
+                  { label: t("ioShortLabel"), value: io, set: setIo },
                 ].map(({ label, value, set }) => (
                   <div key={label} className="flex flex-col gap-1.5">
                     <label className="text-xs font-medium text-foreground">{label}</label>
@@ -343,16 +346,16 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
                   </div>
                 ))}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-foreground">CPU Threads</label>
+                  <label className="text-xs font-medium text-foreground">{t("cpuThreadsLabel")}</label>
                   <input
                     className={inputClass(true)}
-                    placeholder="0,1,2 (blank = all)"
+                    placeholder={t("cpuThreadsPlaceholder")}
                     value={threads}
                     onChange={(e) => setThreads(e.target.value)}
                   />
                 </div>
                 <div className="col-span-2 flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-foreground">Docker Image</label>
+                  <label className="text-xs font-medium text-foreground">{t("dockerImageLabel")}</label>
                   <input className={inputClass(true)} value={image} onChange={(e) => setImage(e.target.value)} />
                 </div>
               </div>
@@ -363,7 +366,7 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
                   onChange={(e) => setOomDisabled(e.target.checked)}
                   className="h-3.5 w-3.5 rounded"
                 />
-                Disable OOM Killer
+                {t("disableOomLabel")}
               </label>
               <div className="mt-4 flex items-center gap-2">
                 <button
@@ -372,9 +375,9 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
                   disabled={updateMutation.isPending}
                   className="rounded-lg bg-foreground px-4 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
                 >
-                  {updateMutation.isPending ? "Saving..." : "Save Resources"}
+                  {updateMutation.isPending ? tc("saving") : t("saveResources")}
                 </button>
-                {updateMutation.isSuccess && <span className="text-xs font-medium text-green-500">Saved</span>}
+                {updateMutation.isSuccess && <span className="text-xs font-medium text-green-500">{tc("saved")}</span>}
                 {updateMutation.isError && <span className="text-xs text-destructive">{updateMutation.error.message}</span>}
               </div>
             </SectionCard>
@@ -383,15 +386,15 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
 
         {tab === "startup" && (
           <div className="mx-auto max-w-2xl flex flex-col gap-4">
-            <SectionCard title="Startup Command">
+            <SectionCard title={t("startupTitle")}>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-foreground">Command</label>
+                <label className="text-xs font-medium text-foreground">{t("commandLabel")}</label>
                 <input className={inputClass(true)} value={startup} onChange={(e) => setStartup(e.target.value)} />
               </div>
             </SectionCard>
 
             {server.serverVariables.length > 0 && (
-              <SectionCard title="Environment Variables">
+              <SectionCard title={t("envVarsTitle")}>
                 <div className="grid grid-cols-2 gap-3">
                   {server.serverVariables.map((sv) => (
                     <div key={sv.variableId} className="flex flex-col gap-1.5">
@@ -425,9 +428,9 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
                 disabled={updateVarsMutation.isPending}
                 className="rounded-lg bg-foreground px-4 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
               >
-                {updateVarsMutation.isPending ? "Saving..." : "Save Startup"}
+                {updateVarsMutation.isPending ? tc("saving") : t("saveStartup")}
               </button>
-              {updateVarsMutation.isSuccess && <span className="text-xs font-medium text-green-500">Saved — invocation recomputed</span>}
+              {updateVarsMutation.isSuccess && <span className="text-xs font-medium text-green-500">{t("savedRecomputed")}</span>}
               {updateVarsMutation.isError && <span className="text-xs text-destructive">{updateVarsMutation.error.message}</span>}
             </div>
           </div>
@@ -436,17 +439,15 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
         {tab === "danger" && (
           <div className="mx-auto max-w-2xl flex flex-col gap-3">
             <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4">
-              <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-destructive/60">Danger Zone</p>
+              <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-destructive/60">{t("dangerZone")}</p>
               <div className="flex flex-col gap-3">
                 <div className="flex items-center justify-between rounded-lg border border-border bg-card p-4">
                   <div>
                     <p className="text-sm font-medium text-foreground">
-                      {isSuspended ? "Unsuspend Server" : "Suspend Server"}
+                      {isSuspended ? t("unsuspendTitle") : t("suspendTitle")}
                     </p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      {isSuspended
-                        ? "Allow users to access and start this server again."
-                        : "Immediately stop the server and prevent user access."}
+                      {isSuspended ? t("unsuspendDesc") : t("suspendDesc")}
                     </p>
                   </div>
                   <button
@@ -459,15 +460,15 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
                         : "border border-destructive/40 text-destructive hover:bg-destructive/10"
                     }`}
                   >
-                    {suspendMutation.isPending ? "..." : isSuspended ? "Unsuspend" : "Suspend"}
+                    {suspendMutation.isPending ? "..." : isSuspended ? t("unsuspend") : t("suspend")}
                   </button>
                 </div>
 
                 <div className="flex items-center justify-between rounded-lg border border-border bg-card p-4">
                   <div>
-                    <p className="text-sm font-medium text-foreground">Reinstall Server</p>
+                    <p className="text-sm font-medium text-foreground">{t("reinstallTitle")}</p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      Wipe and re-run the install script. Server data may be lost.
+                      {t("reinstallDesc")}
                     </p>
                   </div>
                   <button
@@ -476,11 +477,11 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
                     disabled={reinstallMutation.isPending}
                     className="rounded-lg border border-border px-4 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-40"
                   >
-                    {reinstallMutation.isPending ? "Reinstalling..." : "Reinstall"}
+                    {reinstallMutation.isPending ? t("reinstalling") : t("reinstall")}
                   </button>
                 </div>
                 {reinstallMutation.isSuccess && (
-                  <p className="text-xs font-medium text-green-500">Reinstall triggered.</p>
+                  <p className="text-xs font-medium text-green-500">{t("reinstallTriggered")}</p>
                 )}
                 {reinstallMutation.isError && (
                   <p className="text-xs text-destructive">{reinstallMutation.error.message}</p>
@@ -488,9 +489,9 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
 
                 <div className="flex items-center justify-between rounded-lg border border-destructive/30 bg-card p-4">
                   <div>
-                    <p className="text-sm font-medium text-foreground">Delete Server</p>
+                    <p className="text-sm font-medium text-foreground">{t("deleteServerTitle")}</p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      Permanently remove this server. This cannot be undone.
+                      {t("deleteServerDesc")}
                     </p>
                   </div>
                   <button
@@ -498,7 +499,7 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
                     onClick={() => setConfirmDelete(true)}
                     className="rounded-lg border border-destructive/40 px-4 py-1.5 text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
                   >
-                    Delete
+                    {tc("delete")}
                   </button>
                 </div>
               </div>
@@ -507,9 +508,9 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
             <ConfirmDialog
               open={confirmDelete}
               onOpenChange={(open) => { setConfirmDelete(open); if (!open) setPurge(false); }}
-              title="Delete server?"
-              description={`This will permanently delete "${server.name}". This action cannot be undone.`}
-              confirmLabel="Delete"
+              title={t("deleteConfirmTitle")}
+              description={t("deleteConfirmDesc", { name: server.name })}
+              confirmLabel={tc("delete")}
               destructive
               onConfirm={() => deleteMutation.mutate({ id: serverId, purgeData: purge })}
               loading={deleteMutation.isPending}
@@ -521,7 +522,7 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
                   onChange={(e) => setPurge(e.target.checked)}
                   className="h-3.5 w-3.5 rounded"
                 />
-                Purge data from node
+                {t("purgeData")}
               </label>
             </ConfirmDialog>
           </div>

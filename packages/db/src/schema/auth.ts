@@ -38,6 +38,8 @@ export const user = mysqlTable("user", {
   // VAT
   vatNumber: varchar("vat_number", { length: 50 }),
   vatCountry: varchar("vat_country", { length: 2 }),
+  // i18n
+  locale: varchar("locale", { length: 10 }).default("en").notNull(),
 });
 
 export const session = mysqlTable(

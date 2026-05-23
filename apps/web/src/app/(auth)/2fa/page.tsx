@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { authClient } from "@/lib/auth-client";
 import AuthShell from "@/components/auth-shell";
 import { AuthSettingsProvider } from "@/components/auth-settings-context";
@@ -17,6 +18,7 @@ export default function TwoFactorPage() {
 }
 
 function TwoFactorForm() {
+  const t = useTranslations("auth.twoFactor");
   const router = useRouter();
   const [code, setCode] = useState("");
   const [isBackupMode, setIsBackupMode] = useState(false);
@@ -37,7 +39,7 @@ function TwoFactorForm() {
       }
       router.push("/");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Invalid code. Please try again.");
+      setError(e instanceof Error ? e.message : t("invalidCode"));
       setPending(false);
     }
   }
@@ -56,24 +58,20 @@ function TwoFactorForm() {
 
   return (
     <AuthShell
-      title="Two-factor authentication"
-      subtitle={
-        isBackupMode
-          ? "Enter one of your backup codes to continue."
-          : "Enter the 6-digit code from your authenticator app."
-      }
+      title={t("title")}
+      subtitle={isBackupMode ? t("subtitleBackup") : t("subtitleTotp")}
     >
       <div className="flex flex-col gap-3.5">
         <div className="flex flex-col gap-2">
           <label className="text-xs font-medium text-foreground">
-            {isBackupMode ? "Backup code" : "Authentication code"}
+            {isBackupMode ? t("backupCodeLabel") : t("codeLabel")}
           </label>
           <input
             autoFocus
             autoComplete="one-time-code"
             inputMode={isBackupMode ? "text" : "numeric"}
             className="w-full rounded-lg border border-border bg-background px-3 py-2 text-center font-mono text-sm tracking-widest text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
-            placeholder={isBackupMode ? "xxxxxxxx-xxxx" : "000000"}
+            placeholder={isBackupMode ? t("backupCodePlaceholder") : t("codePlaceholder")}
             value={code}
             onChange={handleChange}
             onKeyDown={(e) => { if (e.key === "Enter") void handleVerify(code); }}
@@ -88,7 +86,7 @@ function TwoFactorForm() {
           onClick={() => void handleVerify(code)}
           className="w-full rounded-lg bg-foreground py-2 text-sm font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
         >
-          {pending ? "Verifying…" : "Verify"}
+          {pending ? t("verifying") : t("verify")}
         </button>
 
         <button
@@ -96,7 +94,7 @@ function TwoFactorForm() {
           onClick={switchMode}
           className="text-center text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
         >
-          {isBackupMode ? "Use authenticator app instead" : "Use a backup code instead"}
+          {isBackupMode ? t("useAuthenticator") : t("useBackupCode")}
         </button>
       </div>
     </AuthShell>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { skipToken } from "@tanstack/react-query";
 import {
   DropdownMenu,
@@ -14,18 +15,10 @@ import { ChevronRight, ChevronDown, Check } from "lucide-react";
 import { orpc } from "@/utils/orpc";
 import { UserCombobox } from "@/components/user-combobox";
 
-const STEPS = [
-  "Basic Info",
-  "Node & Allocation",
-  "Nest & Egg",
-  "Resources",
-  "Startup Variables",
-];
-
-function StepIndicator({ current }: { current: number }) {
+function StepIndicator({ current, steps }: { current: number; steps: string[] }) {
   return (
     <div className="flex items-center gap-2 border-b border-border bg-card px-6 py-4 overflow-x-auto">
-      {STEPS.map((label, i) => (
+      {steps.map((label, i) => (
         <div key={label} className="flex items-center gap-2 shrink-0">
           <div className="flex items-center gap-2">
             <div
@@ -47,7 +40,7 @@ function StepIndicator({ current }: { current: number }) {
               {label}
             </span>
           </div>
-          {i < STEPS.length - 1 && (
+          {i < steps.length - 1 && (
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 ml-1" />
           )}
         </div>
@@ -73,6 +66,17 @@ function inputClass(mono?: boolean) {
 }
 
 export default function NewServerPage() {
+  const t = useTranslations("admin.servers");
+  const tc = useTranslations("common");
+
+  const STEPS = [
+    t("stepBasicInfo"),
+    t("stepNodeAllocation"),
+    t("stepNestEgg"),
+    t("stepResources"),
+    t("stepStartupVariables"),
+  ];
+
   const router = useRouter();
   const [step, setStep] = useState(0);
 
@@ -164,32 +168,32 @@ export default function NewServerPage() {
 
   return (
     <>
-      <StepIndicator current={step} />
+      <StepIndicator current={step} steps={STEPS} />
 
       <div className="flex-1 overflow-auto p-6">
         <div className="mx-auto max-w-lg">
           {step === 0 && (
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-foreground">Server Name <span className="text-destructive">*</span></label>
+                <label className="text-xs font-medium text-foreground">{t("serverNameLabel")} <span className="text-destructive">*</span></label>
                 <input
                   className={inputClass()}
-                  placeholder="My Minecraft Server"
+                  placeholder={t("serverNamePlaceholder")}
                   value={basicInfo.name}
                   onChange={(e) => setBasicInfo((f) => ({ ...f, name: e.target.value }))}
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-foreground">Description</label>
+                <label className="text-xs font-medium text-foreground">{t("descriptionLabel")}</label>
                 <input
                   className={inputClass()}
-                  placeholder="Optional description"
+                  placeholder={t("descriptionPlaceholder")}
                   value={basicInfo.description}
                   onChange={(e) => setBasicInfo((f) => ({ ...f, description: e.target.value }))}
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-foreground">Owner <span className="text-destructive">*</span></label>
+                <label className="text-xs font-medium text-foreground">{t("ownerLabel")} <span className="text-destructive">*</span></label>
                 <UserCombobox
                   value={basicInfo.userId}
                   onChange={(id) => setBasicInfo((f) => ({ ...f, userId: id }))}
@@ -201,11 +205,11 @@ export default function NewServerPage() {
           {step === 1 && (
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-foreground">Node <span className="text-destructive">*</span></label>
+                <label className="text-xs font-medium text-foreground">{t("nodeLabel")} <span className="text-destructive">*</span></label>
                 <DropdownMenu>
                   <DropdownMenuTrigger className={dropdownTriggerClass()}>
                     <span className={nodeAlloc.nodeId ? "text-foreground" : "text-muted-foreground/50"}>
-                      {nodeAlloc.nodeId ? (nodes?.find((n) => n.id === nodeAlloc.nodeId)?.name ?? "Select a node...") : "Select a node..."}
+                      {nodeAlloc.nodeId ? (nodes?.find((n) => n.id === nodeAlloc.nodeId)?.name ?? t("nodePlaceholder")) : t("nodePlaceholder")}
                     </span>
                     <ChevronDown className="ml-2 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                   </DropdownMenuTrigger>
@@ -226,15 +230,15 @@ export default function NewServerPage() {
               {nodeAlloc.nodeId && (
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-medium text-foreground">
-                    Allocation <span className="text-destructive">*</span>
-                    <span className="ml-1.5 font-normal text-muted-foreground">({freeAllocations.length} available)</span>
+                    {t("allocationLabel")} <span className="text-destructive">*</span>
+                    <span className="ml-1.5 font-normal text-muted-foreground">{t("allocationAvailable", { count: freeAllocations.length })}</span>
                   </label>
                   <DropdownMenu>
                     <DropdownMenuTrigger className={`${dropdownTriggerClass()} font-mono`}>
                       <span className={nodeAlloc.allocationId ? "text-foreground" : "text-muted-foreground/50"}>
                         {nodeAlloc.allocationId
                           ? (() => { const a = freeAllocations.find((a) => a.id === nodeAlloc.allocationId); return a ? `${a.ip}:${a.port}` : "Select..."; })()
-                          : "Select an allocation..."}
+                          : t("allocationPlaceholder")}
                       </span>
                       <ChevronDown className="ml-2 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                     </DropdownMenuTrigger>
@@ -253,7 +257,7 @@ export default function NewServerPage() {
                   </DropdownMenu>
                   {freeAllocations.length === 0 && (
                     <p className="text-xs text-destructive">
-                      No free allocations. Add some in the node management page.
+                      {t("noFreeAllocations")}
                     </p>
                   )}
                 </div>
@@ -264,11 +268,11 @@ export default function NewServerPage() {
           {step === 2 && (
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-foreground">Nest <span className="text-destructive">*</span></label>
+                <label className="text-xs font-medium text-foreground">{t("nestLabel")} <span className="text-destructive">*</span></label>
                 <DropdownMenu>
                   <DropdownMenuTrigger className={dropdownTriggerClass()}>
                     <span className={nestEgg.nestId ? "text-foreground" : "text-muted-foreground/50"}>
-                      {nestEgg.nestId ? (nests?.find((n) => n.id === nestEgg.nestId)?.name ?? "Select a nest...") : "Select a nest..."}
+                      {nestEgg.nestId ? (nests?.find((n) => n.id === nestEgg.nestId)?.name ?? t("nestPlaceholder")) : t("nestPlaceholder")}
                     </span>
                     <ChevronDown className="ml-2 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                   </DropdownMenuTrigger>
@@ -284,11 +288,11 @@ export default function NewServerPage() {
               </div>
               {nestEgg.nestId && (
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-foreground">Egg <span className="text-destructive">*</span></label>
+                  <label className="text-xs font-medium text-foreground">{t("eggLabel")} <span className="text-destructive">*</span></label>
                   <DropdownMenu>
                     <DropdownMenuTrigger className={dropdownTriggerClass()}>
                       <span className={nestEgg.eggId ? "text-foreground" : "text-muted-foreground/50"}>
-                        {nestEgg.eggId ? (eggs?.find((e) => e.id === nestEgg.eggId)?.name ?? "Select an egg...") : "Select an egg..."}
+                        {nestEgg.eggId ? (eggs?.find((e) => e.id === nestEgg.eggId)?.name ?? t("eggPlaceholder")) : t("eggPlaceholder")}
                       </span>
                       <ChevronDown className="ml-2 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                     </DropdownMenuTrigger>
@@ -313,13 +317,13 @@ export default function NewServerPage() {
               )}
               {nestEgg.eggId && selectedEgg && (
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-foreground">Docker Image <span className="text-destructive">*</span></label>
+                  <label className="text-xs font-medium text-foreground">{t("dockerImageLabel")} <span className="text-destructive">*</span></label>
                   <DropdownMenu>
                     <DropdownMenuTrigger className={`${dropdownTriggerClass()} font-mono`}>
                       <span className={nestEgg.image ? "truncate text-foreground" : "text-muted-foreground/50"}>
                         {nestEgg.image
                           ? (Object.entries(JSON.parse(selectedEgg.dockerImages ?? "{}") as Record<string, string>).find(([, img]) => img === nestEgg.image)?.[0] || nestEgg.image)
-                          : "Select an image..."}
+                          : t("dockerImagePlaceholder")}
                       </span>
                       <ChevronDown className="ml-2 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                     </DropdownMenuTrigger>
@@ -344,11 +348,11 @@ export default function NewServerPage() {
             <div className="flex flex-col gap-4">
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { label: "Memory (MB)", key: "memory", value: resources.memory },
-                  { label: "Disk (MB)", key: "disk", value: resources.disk },
-                  { label: "CPU Limit (%)", key: "cpu", value: resources.cpu },
-                  { label: "Swap (MB, -1=unlimited)", key: "swap", value: resources.swap },
-                  { label: "Block IO Weight (10-1000)", key: "io", value: resources.io },
+                  { label: t("memoryLabel"), key: "memory", value: resources.memory },
+                  { label: t("diskLabel"), key: "disk", value: resources.disk },
+                  { label: t("cpuLabel"), key: "cpu", value: resources.cpu },
+                  { label: t("swapLabel"), key: "swap", value: resources.swap },
+                  { label: t("ioLabel"), key: "io", value: resources.io },
                 ].map(({ label, key, value }) => (
                   <div key={key} className="flex flex-col gap-1.5">
                     <label className="text-xs font-medium text-foreground">{label}</label>
@@ -361,10 +365,10 @@ export default function NewServerPage() {
                   </div>
                 ))}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-foreground">CPU Threads</label>
+                  <label className="text-xs font-medium text-foreground">{t("cpuThreadsLabel")}</label>
                   <input
                     className={inputClass(true)}
-                    placeholder="0,1,2 (blank = all)"
+                    placeholder={t("cpuThreadsPlaceholder")}
                     value={resources.threads}
                     onChange={(e) => setResources((r) => ({ ...r, threads: e.target.value }))}
                   />
@@ -372,17 +376,17 @@ export default function NewServerPage() {
               </div>
               <div className="flex flex-col gap-2">
                 {[
-                  { checked: resources.oomDisabled, key: "oomDisabled", label: "Disable OOM Killer" },
-                  { checked: startOnCompletion, label: "Start server on completion" },
-                  { checked: skipScripts, label: "Skip install scripts" },
+                  { checked: resources.oomDisabled, key: "oomDisabled", label: t("disableOomLabel") },
+                  { checked: startOnCompletion, key: "startOnCompletion", label: t("startOnCompletionLabel") },
+                  { checked: skipScripts, key: "skipScripts", label: t("skipScriptsLabel") },
                 ].map(({ checked, key, label }) => (
-                  <label key={label} className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
+                  <label key={key} className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
                     <input
                       type="checkbox"
                       checked={checked}
                       onChange={(e) => {
                         if (key === "oomDisabled") setResources((r) => ({ ...r, oomDisabled: e.target.checked }));
-                        else if (label.includes("Start")) setStartOnCompletion(e.target.checked);
+                        else if (key === "startOnCompletion") setStartOnCompletion(e.target.checked);
                         else setSkipScripts(e.target.checked);
                       }}
                       className="h-3.5 w-3.5 rounded"
@@ -398,12 +402,12 @@ export default function NewServerPage() {
             <div className="flex flex-col gap-4">
               {selectedEgg.startup && (
                 <div className="rounded-lg border border-border bg-muted/20 px-3 py-2">
-                  <p className="mb-1 text-xs font-medium text-muted-foreground">Startup Command</p>
+                  <p className="mb-1 text-xs font-medium text-muted-foreground">{t("startupCommandLabel")}</p>
                   <p className="font-mono text-xs text-foreground">{selectedEgg.startup}</p>
                 </div>
               )}
               {selectedEgg.variables.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No variables for this egg.</p>
+                <p className="text-sm text-muted-foreground">{t("noVariables")}</p>
               ) : (
                 <div className="grid grid-cols-2 gap-3">
                   {selectedEgg.variables.map((v) => (
@@ -427,7 +431,7 @@ export default function NewServerPage() {
           )}
 
           {step === 4 && !selectedEgg && (
-            <p className="text-sm text-muted-foreground">Loading egg variables...</p>
+            <p className="text-sm text-muted-foreground">{t("loadingEggVars")}</p>
           )}
 
           <div className="mt-8 flex items-center gap-3">
@@ -437,7 +441,7 @@ export default function NewServerPage() {
                 onClick={() => setStep((s) => s - 1)}
                 className="rounded-lg border border-border px-4 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
               >
-                Back
+                {tc("back")}
               </button>
             )}
             {step < STEPS.length - 1 ? (
@@ -447,7 +451,7 @@ export default function NewServerPage() {
                 disabled={!canProceed()}
                 className="flex items-center gap-1.5 rounded-lg bg-foreground px-4 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
               >
-                Next
+                {tc("next")}
                 <ChevronRight className="h-3.5 w-3.5" />
               </button>
             ) : (
@@ -457,7 +461,7 @@ export default function NewServerPage() {
                 disabled={createMutation.isPending}
                 className="rounded-lg bg-green-500 px-4 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-80 disabled:opacity-40"
               >
-                {createMutation.isPending ? "Creating..." : "Create Server"}
+                {createMutation.isPending ? tc("creating") : t("newServer")}
               </button>
             )}
             {createMutation.isError && (

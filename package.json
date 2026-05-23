@@ -26,7 +26,9 @@
       "croner": "^9.0.0",
       "@types/react": "^19.2.10",
       "@types/react-dom": "^19.2.3",
-      "tailwindcss": "^4.1.18"
+      "tailwindcss": "^4.1.18",
+      "next-intl": "^4.0.0",
+      "react-country-flag": "^3.1.0"
     }
   },
   "type": "module",

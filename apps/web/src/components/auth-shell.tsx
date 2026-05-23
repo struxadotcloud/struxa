@@ -3,6 +3,7 @@
 import type * as React from "react";
 import Image from "next/image";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useAuthSettings } from "./auth-settings-context";
 import { authClient } from "@/lib/auth-client";
 
@@ -34,6 +35,7 @@ const PROVIDER_META: Record<string, { label: string; icon: React.FC<{ className?
 };
 
 export default function AuthShell({ title, subtitle, children }: AuthShellProps) {
+  const t = useTranslations("auth.social");
   const { appName, logoUrl, socialProviders } = useAuthSettings();
   const [loadingProvider, setLoadingProvider] = useState<string | null>(null);
 
@@ -83,14 +85,14 @@ export default function AuthShell({ title, subtitle, children }: AuthShellProps)
                         className={`flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors disabled:opacity-50 ${meta.color}`}
                       >
                         <Icon className="h-4 w-4" />
-                        {loadingProvider === provider ? "Redirecting…" : `Continue with ${meta.label}`}
+                        {loadingProvider === provider ? t("redirecting") : t("continueWith", { provider: meta.label })}
                       </button>
                     );
                   })}
                 </div>
                 <div className="relative flex items-center gap-3">
                   <div className="flex-1 border-t border-border" />
-                  <span className="text-xs text-muted-foreground">or</span>
+                  <span className="text-xs text-muted-foreground">{t("or")}</span>
                   <div className="flex-1 border-t border-border" />
                 </div>
               </>

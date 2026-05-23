@@ -4,6 +4,7 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Plus, Trash2, Upload, Search, ChevronRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { orpc, queryClient } from "@/utils/orpc";
 import { ContextMenu, RowMenu, type ActionItem } from "@/components/context-menu";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -21,6 +22,9 @@ function inputClass() {
 }
 
 export default function NestDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const t = useTranslations("admin.nests");
+  const tc = useTranslations("common");
+
   const { id: nestId } = use(params);
   const { data: nests } = useQuery(orpc.nests.list.queryOptions());
   const { data: eggs, isLoading } = useQuery(
@@ -79,7 +83,7 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
   function eggActions(egg: { id: string; name: string }): ActionItem[] {
     return [
       {
-        label: "Delete",
+        label: tc("delete"),
         icon: Trash2,
         onClick: () => setConfirmDelete(egg.id),
         destructive: true,
@@ -92,9 +96,9 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
       <ConfirmDialog
         open={confirmDelete !== null}
         onOpenChange={(open) => { if (!open) setConfirmDelete(null); }}
-        title="Delete egg?"
-        description="This will permanently remove the egg and all its variables."
-        confirmLabel="Delete"
+        title={t("deleteEggTitle")}
+        description={t("deleteEggDesc")}
+        confirmLabel={tc("delete")}
         destructive
         loading={deleteMutation.isPending}
         onConfirm={async () => {
@@ -109,7 +113,7 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
         <div className="mb-1 flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm">
               <Link href={"/admin/nests" as never} className="text-muted-foreground transition-colors hover:text-foreground">
-              Nests
+              {t("nestsLink")}
             </Link>
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
             <span className="font-medium text-foreground">{nest?.name ?? nestId}</span>
@@ -120,25 +124,25 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
             className="flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80"
           >
             <Upload className="h-3.5 w-3.5" />
-            Import JSON
+            {t("importJson")}
           </button>
         </div>
           <div className="rounded-xl border border-border bg-card shadow-sm">
             <div className="border-b border-border px-4 py-3">
-              <h2 className="text-sm font-semibold text-foreground">Nest Settings</h2>
+              <h2 className="text-sm font-semibold text-foreground">{t("nestSettingsTitle")}</h2>
             </div>
             <div className="p-4">
               <div className="grid grid-cols-3 gap-3">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-foreground">Name</label>
+                  <label className="text-xs font-medium text-foreground">{t("nameLabel")}</label>
                   <input className={inputClass()} value={nestName} onChange={(e) => setNestName(e.target.value)} />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-foreground">Author</label>
+                  <label className="text-xs font-medium text-foreground">{t("authorLabel")}</label>
                   <input className={inputClass()} value={nestAuthor} onChange={(e) => setNestAuthor(e.target.value)} />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-foreground">Description</label>
+                  <label className="text-xs font-medium text-foreground">{t("descriptionLabel")}</label>
                   <input className={inputClass()} value={nestDescription} onChange={(e) => setNestDescription(e.target.value)} />
                 </div>
               </div>
@@ -149,9 +153,9 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
                   disabled={updateNestMutation.isPending}
                   className="rounded-lg bg-foreground px-4 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
                 >
-                  {updateNestMutation.isPending ? "Saving..." : "Save"}
+                  {updateNestMutation.isPending ? tc("saving") : tc("save")}
                 </button>
-                {updateNestMutation.isSuccess && <span className="text-xs font-medium text-green-500">Saved</span>}
+                {updateNestMutation.isSuccess && <span className="text-xs font-medium text-green-500">{tc("saved")}</span>}
                 {updateNestMutation.isError && <span className="text-xs text-destructive">{updateNestMutation.error.message}</span>}
               </div>
             </div>
@@ -160,7 +164,7 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
           {showImport && (
             <div className="rounded-xl border border-border bg-card shadow-sm">
               <div className="border-b border-border px-4 py-3">
-                <h2 className="text-sm font-semibold text-foreground">Import Pterodactyl Egg JSON</h2>
+                <h2 className="text-sm font-semibold text-foreground">{t("importTitle")}</h2>
               </div>
               <div className="p-4">
                 <textarea
@@ -178,14 +182,14 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
                     disabled={importMutation.isPending}
                     className="rounded-lg bg-foreground px-4 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
                   >
-                    {importMutation.isPending ? "Importing..." : "Import"}
+                    {importMutation.isPending ? tc("importing") : tc("import")}
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowImport(false)}
                     className="rounded-lg border border-border px-4 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                   >
-                    Cancel
+                    {tc("cancel")}
                   </button>
                   {importMutation.isError && (
                     <span className="text-xs text-destructive">{importMutation.error.message}</span>
@@ -197,13 +201,13 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
 
           <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
             <div className="flex items-center justify-between border-b border-border bg-muted/40 px-4 py-2.5">
-              <span className="text-xs font-medium text-muted-foreground">Eggs</span>
+              <span className="text-xs font-medium text-muted-foreground">{t("eggsTitle")}</span>
               <div className="flex items-center gap-2">
                 <div className="relative flex items-center">
                   <Search className="absolute left-2.5 h-3.5 w-3.5 text-muted-foreground/50" />
                   <input
                     className="rounded-lg border border-border bg-background py-1 pl-8 pr-3 text-xs text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
-                    placeholder="Search eggs..."
+                    placeholder={t("searchEggs")}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                   />
@@ -214,17 +218,17 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
                   className="flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                 >
                   <Plus className="h-3 w-3" />
-                  Import
+                  {tc("import")}
                 </button>
               </div>
             </div>
 
             {isLoading && (
-              <div className="px-4 py-8 text-center text-sm text-muted-foreground">Loading...</div>
+              <div className="px-4 py-8 text-center text-sm text-muted-foreground">{tc("loading")}</div>
             )}
             {!isLoading && filtered.length === 0 && (
               <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-                {search ? "No eggs match your search." : "No eggs yet. Import a Pterodactyl egg JSON to get started."}
+                {search ? t("noEggsSearch") : t("noEggs")}
               </div>
             )}
             {filtered.map((egg, i) => {

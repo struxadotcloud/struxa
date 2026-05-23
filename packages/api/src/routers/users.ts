@@ -26,6 +26,7 @@ export const usersRouter = {
         billingCountry: true,
         vatNumber: true,
         vatCountry: true,
+        locale: true,
       },
     });
   }),
@@ -65,6 +66,12 @@ export const usersRouter = {
           vatCountry: input.vatCountry ?? null,
         })
         .where(eq(user.id, context.session.user.id));
+    }),
+
+  updateLocale: protectedProcedure
+    .input(z.object({ locale: z.string().min(2).max(10) }))
+    .handler(async ({ input, context }) => {
+      await db.update(user).set({ locale: input.locale }).where(eq(user.id, context.session.user.id));
     }),
 
   listSessions: protectedProcedure.handler(async ({ context }) => {

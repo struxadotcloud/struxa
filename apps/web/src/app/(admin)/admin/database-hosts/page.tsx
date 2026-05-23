@@ -1,7 +1,8 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { Plus, Trash2 } from "lucide-react";
 import {
   Dialog,
@@ -19,6 +20,9 @@ function invalidate() {
 }
 
 export default function DatabaseHostsPage() {
+  const t = useTranslations("admin.databaseHosts");
+  const tc = useTranslations("common");
+
   const { data: hosts, isLoading } = useQuery(orpc.databaseHosts.list.queryOptions());
   const createMutation = useMutation(orpc.databaseHosts.create.mutationOptions({ onSuccess: invalidate }));
   const deleteMutation = useMutation(orpc.databaseHosts.delete.mutationOptions({ onSuccess: invalidate }));
@@ -61,32 +65,32 @@ export default function DatabaseHostsPage() {
       <Dialog open={showCreate} onOpenChange={(open) => { if (!open) closeCreate(); }}>
         <DialogPopup showCloseButton={false} className="max-w-md">
           <DialogHeader>
-            <DialogTitle>New Database Host</DialogTitle>
-            <DialogDescription>Add a MySQL host that servers can use to provision databases.</DialogDescription>
+            <DialogTitle>{t("dialogTitle")}</DialogTitle>
+            <DialogDescription>{t("dialogDesc")}</DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4 px-5 py-4">
             <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2">
-                <label className="mb-1.5 block text-xs font-medium text-foreground">Name <span className="text-destructive">*</span></label>
+                <label className="mb-1.5 block text-xs font-medium text-foreground">{t("nameLabel")} <span className="text-destructive">*</span></label>
                 <input
                   autoFocus
                   className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
-                  placeholder="Primary MySQL"
+                  placeholder={t("namePlaceholder")}
                   value={form.name}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-foreground">Host <span className="text-destructive">*</span></label>
+                <label className="mb-1.5 block text-xs font-medium text-foreground">{t("hostLabel")} <span className="text-destructive">*</span></label>
                 <input
                   className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
-                  placeholder="127.0.0.1"
+                  placeholder={t("hostPlaceholder")}
                   value={form.host}
                   onChange={(e) => setForm((f) => ({ ...f, host: e.target.value }))}
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-foreground">Port</label>
+                <label className="mb-1.5 block text-xs font-medium text-foreground">{t("portLabel")}</label>
                 <input
                   type="number"
                   className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
@@ -95,16 +99,16 @@ export default function DatabaseHostsPage() {
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-foreground">Username <span className="text-destructive">*</span></label>
+                <label className="mb-1.5 block text-xs font-medium text-foreground">{t("usernameLabel")} <span className="text-destructive">*</span></label>
                 <input
                   className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
-                  placeholder="root"
+                  placeholder={t("usernamePlaceholder")}
                   value={form.username}
                   onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))}
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-foreground">Password <span className="text-destructive">*</span></label>
+                <label className="mb-1.5 block text-xs font-medium text-foreground">{t("passwordLabel")} <span className="text-destructive">*</span></label>
                 <input
                   type="password"
                   className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
@@ -114,7 +118,7 @@ export default function DatabaseHostsPage() {
                 />
               </div>
               <div className="col-span-2">
-                <label className="mb-1.5 block text-xs font-medium text-foreground">Max Databases <span className="text-muted-foreground font-normal">(0 = unlimited)</span></label>
+                <label className="mb-1.5 block text-xs font-medium text-foreground">{t("maxDatabasesLabel")} <span className="text-muted-foreground font-normal">{t("maxDatabasesHint")}</span></label>
                 <input
                   type="number"
                   className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
@@ -132,7 +136,7 @@ export default function DatabaseHostsPage() {
               className="rounded-lg px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               disabled={createMutation.isPending}
             >
-              Cancel
+              {tc("cancel")}
             </DialogClose>
             <button
               type="button"
@@ -140,7 +144,7 @@ export default function DatabaseHostsPage() {
               disabled={!form.name.trim() || !form.host.trim() || !form.username.trim() || !form.password.trim() || createMutation.isPending}
               className="rounded-lg bg-foreground px-4 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
             >
-              {createMutation.isPending ? "Creating…" : "Create Host"}
+              {createMutation.isPending ? tc("creating") : t("newHost")}
             </button>
           </DialogFooter>
         </DialogPopup>
@@ -150,7 +154,7 @@ export default function DatabaseHostsPage() {
         <div className="mx-auto max-w-5xl">
         <div className="mb-5 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-              <h1 className="text-sm font-semibold text-foreground">Database Hosts</h1>
+              <h1 className="text-sm font-semibold text-foreground">{t("title")}</h1>
           </div>
           <button
             type="button"
@@ -158,24 +162,24 @@ export default function DatabaseHostsPage() {
             className="flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80"
           >
             <Plus className="h-3.5 w-3.5" />
-            New Host
+            {t("newHost")}
           </button>
         </div>
 
         <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
           <div className="grid grid-cols-[1fr_220px_80px_80px] border-b border-border bg-muted/40 px-4 py-2.5">
-            <span className="text-xs font-medium text-muted-foreground">Name</span>
-            <span className="text-xs font-medium text-muted-foreground">Connection</span>
-            <span className="text-xs font-medium text-muted-foreground">Status</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("nameColumn")}</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("connectionColumn")}</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("statusColumn")}</span>
             <span />
           </div>
 
           {isLoading && (
-            <div className="px-4 py-8 text-center text-sm text-muted-foreground">Loading...</div>
+            <div className="px-4 py-8 text-center text-sm text-muted-foreground">{tc("loading")}</div>
           )}
           {hosts?.length === 0 && !isLoading && (
             <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-              No database hosts configured.
+              {t("empty")}
             </div>
           )}
           {hosts?.map((host, i) => (
@@ -192,7 +196,7 @@ export default function DatabaseHostsPage() {
                   <span
                     className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${testResults[host.id] ? "bg-green-500/10 text-green-600 dark:text-green-400" : "bg-destructive/10 text-destructive"}`}
                   >
-                    {testResults[host.id] ? "OK" : "Failed"}
+                    {testResults[host.id] ? t("ok") : t("failed")}
                   </span>
                 )}
               </span>
@@ -203,7 +207,7 @@ export default function DatabaseHostsPage() {
                   disabled={testMutation.isPending}
                   className="text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
                 >
-                  Test
+                  {tc("test")}
                 </button>
                 {confirmDelete === host.id ? (
                   <div className="flex items-center gap-1.5">
@@ -215,14 +219,14 @@ export default function DatabaseHostsPage() {
                       }}
                       className="rounded-lg bg-destructive px-2 py-1 text-xs font-medium text-destructive-foreground"
                     >
-                      Delete
+                      {tc("delete")}
                     </button>
                     <button
                       type="button"
                       onClick={() => setConfirmDelete(null)}
                       className="rounded-lg border border-border px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-muted"
                     >
-                      Cancel
+                      {tc("cancel")}
                     </button>
                   </div>
                 ) : (

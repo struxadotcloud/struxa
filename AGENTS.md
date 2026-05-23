@@ -62,6 +62,16 @@ Use these as documentation for intent; avoid executing runtime/dev commands unle
 - Do not add new dependencies unless necessary and justified.
 - Prefer shared package reuse over duplication in apps.
 
+## Internationalization (i18n)
+
+This project uses **next-intl** for all user-visible strings in `apps/web`.
+
+- **Never hardcode English strings** in React components — labels, placeholders, validation messages, toast messages, button text, and empty states all go in `apps/web/messages/en.json`.
+- In server components (no `"use client"`), use `getTranslations` from `next-intl/server`. In client components (`"use client"`), use `useTranslations` from `next-intl`.
+- Follow the existing namespace hierarchy: `auth.*`, `nav.*`, `panel.*`, `account.*`, `admin.*`, `setup.*`, `common.*`.
+- All new strings must be added to `en.json` in the same commit as the feature code.
+- The locale is stored in the `NEXT_LOCALE` cookie (7-day) and synced to/from the `locale` column on the `user` table via `orpc.users.updateLocale`.
+
 ## Editing Guidelines
 
 - Keep changes consistent with existing TypeScript/React style.

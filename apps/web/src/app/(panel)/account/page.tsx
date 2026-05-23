@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { Copy, Check, Key, Plus, Trash2, Monitor, LogOut, Camera, Link2, Unlink, Download } from "lucide-react";
 import QRCode from "qrcode";
 import {
@@ -13,17 +14,13 @@ import {
   DialogDescription,
   DialogClose,
 } from "@struxa/ui/components/dialog";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@struxa/ui/components/select";
+import ReactCountryFlag from "react-country-flag";
 import { authClient } from "@/lib/auth-client";
 import { orpc, queryClient } from "@/utils/orpc";
 import { toast } from "sonner";
 
 type Tab = "profile" | "api-keys" | "billing";
-
-const TABS: { id: Tab; label: string }[] = [
-  { id: "profile", label: "Profile" },
-  { id: "api-keys", label: "API Keys" },
-  { id: "billing", label: "Billing" },
-];
 
 const COUNTRIES = [
   { code: "US", name: "United States" },
@@ -86,6 +83,7 @@ function SectionCard({ title, description, children }: { title: string; descript
 }
 
 function CopyButton({ text }: { text: string }) {
+  const t = useTranslations("common");
   const [copied, setCopied] = useState(false);
   function copy() {
     void navigator.clipboard.writeText(text);
@@ -99,7 +97,7 @@ function CopyButton({ text }: { text: string }) {
       className="flex items-center gap-1 rounded-lg border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
     >
       {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
-      {copied ? "Copied" : "Copy"}
+      {copied ? t("copied") : t("copy")}
     </button>
   );
 }
@@ -119,6 +117,8 @@ type LinkedAccount = { id: string; providerId: string; accountId: string };
 // Connected Accounts
 // ─────────────────────────────────────────────
 function ConnectedAccountsSection({ accounts, onRefresh }: { accounts: LinkedAccount[]; onRefresh: () => Promise<void> }) {
+  const t = useTranslations("account.connectedAccounts");
+  const tc = useTranslations("common");
   const { data: providers } = useQuery(orpc.settings.getActiveSocialProviders.queryOptions());
   const [pending, setPending] = useState<string | null>(null);
 
@@ -127,7 +127,7 @@ function ConnectedAccountsSection({ accounts, onRefresh }: { accounts: LinkedAcc
     try {
       await authClient.linkSocial({ provider: provider as never, callbackURL: "/account" });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to link account");
+      toast.error(e instanceof Error ? e.message : t("linkFailed"));
       setPending(null);
     }
   }
@@ -137,10 +137,10 @@ function ConnectedAccountsSection({ accounts, onRefresh }: { accounts: LinkedAcc
     try {
       const res = await authClient.unlinkAccount({ providerId });
       if (res.error) throw new Error(res.error.message);
-      toast.success("Account unlinked");
+      toast.success(t("unlinked"));
       await onRefresh();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to unlink account");
+      toast.error(e instanceof Error ? e.message : t("unlinkFailed"));
     } finally {
       setPending(null);
     }
@@ -149,7 +149,7 @@ function ConnectedAccountsSection({ accounts, onRefresh }: { accounts: LinkedAcc
   if (!providers || providers.length === 0) return null;
 
   return (
-    <SectionCard title="Connected Accounts" description="Link social login providers to your account.">
+    <SectionCard title={t("title")} description={t("description")}>
       <div className="flex flex-col gap-2">
         {providers.map((provider) => {
           const meta = PROVIDER_META[provider];
@@ -162,7 +162,7 @@ function ConnectedAccountsSection({ accounts, onRefresh }: { accounts: LinkedAcc
                 <Icon className="h-4 w-4 text-foreground" />
                 <span className="text-sm font-medium text-foreground">{meta.label}</span>
                 {linked && (
-                  <span className="rounded-full bg-green-500/10 px-1.5 py-0.5 text-[10px] font-medium text-green-600 dark:text-green-400">linked</span>
+                  <span className="rounded-full bg-green-500/10 px-1.5 py-0.5 text-[10px] font-medium text-green-600 dark:text-green-400">{t("linked")}</span>
                 )}
               </div>
               <button
@@ -174,9 +174,9 @@ function ConnectedAccountsSection({ accounts, onRefresh }: { accounts: LinkedAcc
                 {pending === provider ? (
                   "…"
                 ) : linked ? (
-                  <><Unlink className="h-3 w-3" />Unlink</>
+                  <><Unlink className="h-3 w-3" />{tc("unlink")}</>
                 ) : (
-                  <><Link2 className="h-3 w-3" />Link</>
+                  <><Link2 className="h-3 w-3" />{tc("link")}</>
                 )}
               </button>
             </div>
@@ -191,6 +191,7 @@ function ConnectedAccountsSection({ accounts, onRefresh }: { accounts: LinkedAcc
 // Password Section
 // ─────────────────────────────────────────────
 function PasswordSection({ hasPassword }: { hasPassword: boolean }) {
+  const t = useTranslations("account.password");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -199,8 +200,8 @@ function PasswordSection({ hasPassword }: { hasPassword: boolean }) {
   const [success, setSuccess] = useState(false);
 
   async function handleSubmit() {
-    if (newPassword !== confirmPassword) { setError("Passwords do not match."); return; }
-    if (newPassword.length < 8) { setError("Password must be at least 8 characters."); return; }
+    if (newPassword !== confirmPassword) { setError(t("passwordsDoNotMatch")); return; }
+    if (newPassword.length < 8) { setError(t("passwordTooShort")); return; }
     setError("");
     setPending(true);
     try {
@@ -217,7 +218,7 @@ function PasswordSection({ hasPassword }: { hasPassword: boolean }) {
       setConfirmPassword("");
       setTimeout(() => setSuccess(false), 2000);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to update password");
+      setError(e instanceof Error ? e.message : t("updateFailed"));
     } finally {
       setPending(false);
     }
@@ -225,38 +226,38 @@ function PasswordSection({ hasPassword }: { hasPassword: boolean }) {
 
   return (
     <SectionCard
-      title={hasPassword ? "Change Password" : "Set Password"}
-      description={hasPassword ? "Update your account password." : "Add a password to sign in without a social account."}
+      title={hasPassword ? t("changeTitle") : t("setTitle")}
+      description={hasPassword ? t("changeDescription") : t("setDescription")}
     >
       <div className="flex flex-col gap-3">
         {hasPassword && (
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-foreground">Current Password</label>
+            <label className="text-xs font-medium text-foreground">{t("currentPasswordLabel")}</label>
             <input
               type="password"
               className={inputClass()}
-              placeholder="Current password"
+              placeholder={t("currentPasswordPlaceholder")}
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
             />
           </div>
         )}
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-medium text-foreground">New Password</label>
+          <label className="text-xs font-medium text-foreground">{t("newPasswordLabel")}</label>
           <input
             type="password"
             className={inputClass()}
-            placeholder="New password"
+            placeholder={t("newPasswordPlaceholder")}
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-medium text-foreground">Confirm Password</label>
+          <label className="text-xs font-medium text-foreground">{t("confirmPasswordLabel")}</label>
           <input
             type="password"
             className={inputClass()}
-            placeholder="Confirm new password"
+            placeholder={t("confirmPasswordPlaceholder")}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") void handleSubmit(); }}
@@ -270,10 +271,81 @@ function PasswordSection({ hasPassword }: { hasPassword: boolean }) {
             onClick={() => void handleSubmit()}
             className="rounded-lg bg-foreground px-4 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
           >
-            {pending ? "Saving…" : hasPassword ? "Change Password" : "Set Password"}
+            {pending ? t("saving") : hasPassword ? t("changePassword") : t("setPassword")}
           </button>
-          {success && <span className="text-xs font-medium text-green-500">Saved</span>}
+          {success && <span className="text-xs font-medium text-green-500">{t("saved")}</span>}
         </div>
+      </div>
+    </SectionCard>
+  );
+}
+
+// ─────────────────────────────────────────────
+// Locale Section
+// ─────────────────────────────────────────────
+const LOCALES = [
+  { value: "en", label: "English", countryCode: "US" },
+] as const;
+
+function LocaleSection({ currentLocale }: { currentLocale: string }) {
+  const t = useTranslations("account.locale");
+  const [locale, setLocale] = useState(currentLocale);
+
+  useEffect(() => { setLocale(currentLocale); }, [currentLocale]);
+
+  const updateLocale = useMutation(
+    orpc.users.updateLocale.mutationOptions({
+      onSuccess: (_, { locale: newLocale }) => {
+        document.cookie = `NEXT_LOCALE=${newLocale}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+        toast.success(t("saveSuccess"));
+        void queryClient.invalidateQueries({ queryKey: orpc.users.key() });
+      },
+      onError: () => {
+        toast.error(t("saveFailed"));
+      },
+    }),
+  );
+
+  const selected = LOCALES.find((l) => l.value === locale) ?? LOCALES[0];
+
+  return (
+    <SectionCard title={t("sectionTitle")} description={t("sectionDescription")}>
+      <div className="flex items-end gap-3">
+        <div className="flex flex-col gap-1.5 flex-1 max-w-xs">
+          <label className="text-xs font-medium text-foreground">{t("label")}</label>
+          <Select value={locale} onValueChange={(value) => { if (value) setLocale(value); }}>
+            <SelectTrigger>
+              <SelectValue>
+                <ReactCountryFlag
+                  countryCode={selected!.countryCode}
+                  svg
+                  style={{ width: "1.1em", height: "1.1em", borderRadius: "2px" }}
+                />
+                {selected!.label}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {LOCALES.map((l) => (
+                <SelectItem key={l.value} value={l.value}>
+                  <ReactCountryFlag
+                    countryCode={l.countryCode}
+                    svg
+                    style={{ width: "1.1em", height: "1.1em", borderRadius: "2px" }}
+                  />
+                  {l.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <button
+          type="button"
+          disabled={updateLocale.isPending || locale === currentLocale}
+          onClick={() => updateLocale.mutate({ locale })}
+          className="rounded-lg bg-foreground px-4 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
+        >
+          {updateLocale.isPending ? "…" : t("save")}
+        </button>
       </div>
     </SectionCard>
   );
@@ -283,6 +355,7 @@ function PasswordSection({ hasPassword }: { hasPassword: boolean }) {
 // Profile Tab (includes security)
 // ─────────────────────────────────────────────
 function ProfileTab() {
+  const t = useTranslations("account.profile");
   const { data: self, isLoading } = useQuery(orpc.users.getSelf.queryOptions());
   const { data: session } = authClient.useSession();
   const [name, setName] = useState("");
@@ -318,11 +391,11 @@ function ProfileTab() {
 
     const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/gif"];
     if (!ALLOWED.includes(file.type)) {
-      setAvatarError("Only JPEG, PNG, WebP, or GIF images are allowed.");
+      setAvatarError(t("avatarOnlyImages"));
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      setAvatarError("Image must be smaller than 5 MB.");
+      setAvatarError(t("avatarTooLarge"));
       return;
     }
 
@@ -337,9 +410,8 @@ function ProfileTab() {
         throw new Error(body.error ?? "Upload failed");
       }
       await queryClient.invalidateQueries({ queryKey: orpc.users.key() });
-      // Refresh better-auth session so the sidebar avatar updates immediately
       await authClient.$fetch("/api/auth/get-session");
-      toast.success("Avatar updated");
+      toast.success(t("avatarUpdated"));
     } catch (err) {
       setAvatarError(err instanceof Error ? err.message : "Upload failed");
     } finally {
@@ -348,11 +420,11 @@ function ProfileTab() {
     }
   }
 
-  if (isLoading) return <div className="py-8 text-center text-sm text-muted-foreground">Loading…</div>;
+  if (isLoading) return <div className="py-8 text-center text-sm text-muted-foreground">{t("loading" as never) ?? "Loading…"}</div>;
 
   return (
     <div className="flex flex-col gap-4">
-      <SectionCard title="Personal Information">
+      <SectionCard title={t("personalInfoTitle")}>
         <div className="mb-4 flex items-center gap-3">
           <label htmlFor="avatar-upload" className={`group relative h-12 w-12 shrink-0 cursor-pointer overflow-hidden rounded-full bg-muted ${avatarUploading ? "pointer-events-none" : ""}`}>
             {self?.image ? (
@@ -381,16 +453,16 @@ function ProfileTab() {
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-foreground">Display Name</label>
+            <label className="text-xs font-medium text-foreground">{t("displayNameLabel")}</label>
             <input
               className={inputClass()}
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Your name"
+              placeholder={t("displayNamePlaceholder")}
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-foreground">Email</label>
+            <label className="text-xs font-medium text-foreground">{t("emailLabel")}</label>
             <input
               className={`${inputClass()} cursor-not-allowed opacity-60`}
               value={session?.user.email ?? ""}
@@ -405,15 +477,16 @@ function ProfileTab() {
             onClick={() => updateProfile.mutate({ name: name.trim() })}
             className="rounded-lg bg-foreground px-4 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
           >
-            {updateProfile.isPending ? "Saving…" : "Save"}
+            {updateProfile.isPending ? t("saving") : t("save")}
           </button>
-          {saved && <span className="text-xs font-medium text-green-500">Saved</span>}
+          {saved && <span className="text-xs font-medium text-green-500">{t("saved")}</span>}
           {updateProfile.isError && (
             <span className="text-xs text-destructive">{updateProfile.error.message}</span>
           )}
         </div>
       </SectionCard>
 
+      <LocaleSection currentLocale={self?.locale ?? "en"} />
       <SecurityContent twoFactorEnabled={self?.twoFactorEnabled ?? false} />
       <ConnectedAccountsSection accounts={linkedAccounts} onRefresh={loadLinkedAccounts} />
       <PasswordSection hasPassword={linkedAccounts.some((a) => a.providerId === "credential")} />
@@ -425,6 +498,8 @@ function ProfileTab() {
 // Security Content (embedded in Profile tab)
 // ─────────────────────────────────────────────
 function SecurityContent({ twoFactorEnabled }: { twoFactorEnabled: boolean }) {
+  const t = useTranslations("account.security");
+  const tc = useTranslations("common");
   const { data: session } = authClient.useSession();
   const { data: sessions, refetch: refetchSessions } = useQuery(orpc.users.listSessions.queryOptions());
   const revokeSession = useMutation(
@@ -460,7 +535,7 @@ function SecurityContent({ twoFactorEnabled }: { twoFactorEnabled: boolean }) {
 
   function copyAllBackupCodes(codes: string[]) {
     void navigator.clipboard.writeText(codes.join("\n"));
-    toast.success("Backup codes copied");
+    toast.success(t("backupCodesCopied"));
   }
 
   function resetTfaDialog() {
@@ -511,7 +586,7 @@ function SecurityContent({ twoFactorEnabled }: { twoFactorEnabled: boolean }) {
     try {
       const res = await authClient.twoFactor.disable({ password: tfaPassword });
       if (res.error) throw new Error(res.error.message);
-      toast.success("Two-factor authentication disabled");
+      toast.success(t("tfaDisabled"));
       resetTfaDialog();
     } catch (e) {
       setTfaError(e instanceof Error ? e.message : "Failed to disable 2FA");
@@ -549,11 +624,11 @@ function SecurityContent({ twoFactorEnabled }: { twoFactorEnabled: boolean }) {
   return (
     <div className="flex flex-col gap-4">
       {/* 2FA Section */}
-      <SectionCard title="Two-Factor Authentication" description="Add an extra layer of security to your account with TOTP.">
+      <SectionCard title={t("twoFactorTitle")} description={t("twoFactorDescription")}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${twoFactorEnabled ? "bg-green-500/10 text-green-600 dark:text-green-400" : "bg-muted text-muted-foreground"}`}>
-              {twoFactorEnabled ? "Enabled" : "Disabled"}
+              {twoFactorEnabled ? t("twoFactorEnabled") : t("twoFactorDisabled")}
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -563,7 +638,7 @@ function SecurityContent({ twoFactorEnabled }: { twoFactorEnabled: boolean }) {
                 onClick={() => { setTfaDialog("backup"); setTfaStep("password"); }}
                 className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
-                Backup Codes
+                {t("backupCodes")}
               </button>
             )}
             <button
@@ -571,7 +646,7 @@ function SecurityContent({ twoFactorEnabled }: { twoFactorEnabled: boolean }) {
               onClick={() => { setTfaDialog(twoFactorEnabled ? "disable" : "enable"); setTfaStep("password"); }}
               className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${twoFactorEnabled ? "border border-destructive/40 text-destructive hover:bg-destructive/10" : "bg-foreground text-background hover:opacity-80"}`}
             >
-              {twoFactorEnabled ? "Disable 2FA" : "Enable 2FA"}
+              {twoFactorEnabled ? t("disableTfa") : t("enableTfa")}
             </button>
           </div>
         </div>
@@ -581,22 +656,22 @@ function SecurityContent({ twoFactorEnabled }: { twoFactorEnabled: boolean }) {
       <Dialog open={tfaDialog === "enable"} onOpenChange={(open) => { if (!open) resetTfaDialog(); }}>
         <DialogPopup showCloseButton={false} className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Enable Two-Factor Authentication</DialogTitle>
+            <DialogTitle>{t("enableTfaDialogTitle")}</DialogTitle>
             <DialogDescription>
-              {tfaStep === "password" && "Enter your password to continue."}
-              {tfaStep === "scan" && "Scan the QR code with your authenticator app, then enter the code below."}
-              {tfaStep === "codes" && "Save your backup codes somewhere safe. Each code can only be used once."}
+              {tfaStep === "password" && t("enterPasswordDesc")}
+              {tfaStep === "scan" && t("scanDesc")}
+              {tfaStep === "codes" && t("codesDesc")}
             </DialogDescription>
           </DialogHeader>
 
           {tfaStep === "password" && (
             <div className="px-5 py-4">
-              <label className="mb-1.5 block text-xs font-medium text-foreground">Password</label>
+              <label className="mb-1.5 block text-xs font-medium text-foreground">{t("passwordLabel")}</label>
               <input
                 autoFocus
                 type="password"
                 className={inputClass()}
-                placeholder="Your account password"
+                placeholder={t("passwordPlaceholder")}
                 value={tfaPassword}
                 onChange={(e) => setTfaPassword(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") void handleEnableTfa(); }}
@@ -620,7 +695,7 @@ function SecurityContent({ twoFactorEnabled }: { twoFactorEnabled: boolean }) {
                 onClick={() => setShowManualKey((v) => !v)}
                 className="self-start text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
               >
-                Having issues? Enter key manually
+                {t("manualKeyToggle")}
               </button>
               {showManualKey && (
                 <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2">
@@ -629,11 +704,11 @@ function SecurityContent({ twoFactorEnabled }: { twoFactorEnabled: boolean }) {
                 </div>
               )}
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-foreground">Verification code</label>
+                <label className="mb-1.5 block text-xs font-medium text-foreground">{t("verificationCode")}</label>
                 <input
                   autoFocus
                   className={inputClass(true)}
-                  placeholder="6-digit code"
+                  placeholder={t("verificationCodePlaceholder")}
                   maxLength={6}
                   value={tfaCode}
                   onChange={(e) => setTfaCode(e.target.value.replace(/\D/g, ""))}
@@ -647,7 +722,7 @@ function SecurityContent({ twoFactorEnabled }: { twoFactorEnabled: boolean }) {
           {tfaStep === "codes" && (
             <div className="px-5 py-4 flex flex-col gap-3">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-medium text-foreground">Your backup codes</p>
+                <p className="text-xs font-medium text-foreground">{t("yourBackupCodes")}</p>
                 <div className="flex items-center gap-1.5">
                   <button
                     type="button"
@@ -655,7 +730,7 @@ function SecurityContent({ twoFactorEnabled }: { twoFactorEnabled: boolean }) {
                     className="flex items-center gap-1 rounded-md border border-border px-2 py-0.5 text-[10px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                   >
                     <Copy className="h-2.5 w-2.5" />
-                    Copy all
+                    {t("copyAll")}
                   </button>
                   <button
                     type="button"
@@ -663,7 +738,7 @@ function SecurityContent({ twoFactorEnabled }: { twoFactorEnabled: boolean }) {
                     className="flex items-center gap-1 rounded-md border border-border px-2 py-0.5 text-[10px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                   >
                     <Download className="h-2.5 w-2.5" />
-                    Download
+                    {tc("download")}
                   </button>
                 </div>
               </div>
@@ -682,7 +757,7 @@ function SecurityContent({ twoFactorEnabled }: { twoFactorEnabled: boolean }) {
                 disabled={tfaPending}
                 onClick={resetTfaDialog}
               >
-                Cancel
+                {tc("cancel")}
               </DialogClose>
             )}
             {tfaStep === "password" && (
@@ -692,7 +767,7 @@ function SecurityContent({ twoFactorEnabled }: { twoFactorEnabled: boolean }) {
                 onClick={() => void handleEnableTfa()}
                 className="rounded-lg bg-foreground px-4 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
               >
-                {tfaPending ? "Continuing…" : "Continue"}
+                {tfaPending ? t("continuing") : tc("continue")}
               </button>
             )}
             {tfaStep === "scan" && (
@@ -702,15 +777,15 @@ function SecurityContent({ twoFactorEnabled }: { twoFactorEnabled: boolean }) {
                 onClick={() => void handleVerifyTfa()}
                 className="rounded-lg bg-foreground px-4 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
               >
-                {tfaPending ? "Verifying…" : "Verify & Enable"}
+                {tfaPending ? t("verifying" as never) ?? "Verifying…" : t("verifyAndEnable")}
               </button>
             )}
             {tfaStep === "codes" && (
               <DialogClose
                 className="rounded-lg bg-foreground px-4 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80"
-                onClick={() => { toast.success("Two-factor authentication enabled"); resetTfaDialog(); }}
+                onClick={() => { toast.success(t("tfaEnabled")); resetTfaDialog(); }}
               >
-                Done
+                {tc("done")}
               </DialogClose>
             )}
           </DialogFooter>
@@ -721,15 +796,15 @@ function SecurityContent({ twoFactorEnabled }: { twoFactorEnabled: boolean }) {
       <Dialog open={tfaDialog === "disable"} onOpenChange={(open) => { if (!open) resetTfaDialog(); }}>
         <DialogPopup showCloseButton={false}>
           <DialogHeader>
-            <DialogTitle>Disable Two-Factor Authentication</DialogTitle>
-            <DialogDescription>Enter your password to confirm.</DialogDescription>
+            <DialogTitle>{t("disableTfaDialogTitle")}</DialogTitle>
+            <DialogDescription>{t("disableTfaDialogDesc")}</DialogDescription>
           </DialogHeader>
           <div className="px-5 py-4">
             <input
               autoFocus
               type="password"
               className={inputClass()}
-              placeholder="Your account password"
+              placeholder={t("passwordPlaceholder")}
               value={tfaPassword}
               onChange={(e) => setTfaPassword(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") void handleDisableTfa(); }}
@@ -742,7 +817,7 @@ function SecurityContent({ twoFactorEnabled }: { twoFactorEnabled: boolean }) {
               disabled={tfaPending}
               onClick={resetTfaDialog}
             >
-              Cancel
+              {tc("cancel")}
             </DialogClose>
             <button
               type="button"
@@ -750,7 +825,7 @@ function SecurityContent({ twoFactorEnabled }: { twoFactorEnabled: boolean }) {
               onClick={() => void handleDisableTfa()}
               className="rounded-lg bg-destructive px-4 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-40"
             >
-              {tfaPending ? "Disabling…" : "Disable 2FA"}
+              {tfaPending ? t("disabling") : t("disableTfa")}
             </button>
           </DialogFooter>
         </DialogPopup>
@@ -760,9 +835,9 @@ function SecurityContent({ twoFactorEnabled }: { twoFactorEnabled: boolean }) {
       <Dialog open={tfaDialog === "backup"} onOpenChange={(open) => { if (!open) resetTfaDialog(); }}>
         <DialogPopup showCloseButton={false} className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Backup Codes</DialogTitle>
+            <DialogTitle>{t("backupCodesDialogTitle")}</DialogTitle>
             <DialogDescription>
-              {tfaStep === "password" ? "Enter your password to generate new backup codes." : "Save these codes in a safe place. Each code can only be used once."}
+              {tfaStep === "password" ? t("backupCodesDialogDescPassword") : t("backupCodesDialogDescCodes")}
             </DialogDescription>
           </DialogHeader>
           {tfaStep === "password" && (
@@ -771,7 +846,7 @@ function SecurityContent({ twoFactorEnabled }: { twoFactorEnabled: boolean }) {
                 autoFocus
                 type="password"
                 className={inputClass()}
-                placeholder="Your account password"
+                placeholder={t("passwordPlaceholder")}
                 value={tfaPassword}
                 onChange={(e) => setTfaPassword(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") void handleGenerateBackupCodes(); }}
@@ -782,7 +857,7 @@ function SecurityContent({ twoFactorEnabled }: { twoFactorEnabled: boolean }) {
           {tfaStep === "scan" && (
             <div className="px-5 py-4">
               <div className="mb-2 flex items-center justify-between">
-                <p className="text-xs text-muted-foreground">Previous backup codes are now invalid.</p>
+                <p className="text-xs text-muted-foreground">{t("previousCodesInvalid")}</p>
                 <div className="flex items-center gap-1.5">
                   <button
                     type="button"
@@ -790,7 +865,7 @@ function SecurityContent({ twoFactorEnabled }: { twoFactorEnabled: boolean }) {
                     className="flex items-center gap-1 rounded-md border border-border px-2 py-0.5 text-[10px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                   >
                     <Copy className="h-2.5 w-2.5" />
-                    Copy all
+                    {t("copyAll")}
                   </button>
                   <button
                     type="button"
@@ -798,7 +873,7 @@ function SecurityContent({ twoFactorEnabled }: { twoFactorEnabled: boolean }) {
                     className="flex items-center gap-1 rounded-md border border-border px-2 py-0.5 text-[10px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                   >
                     <Download className="h-2.5 w-2.5" />
-                    Download
+                    {tc("download")}
                   </button>
                 </div>
               </div>
@@ -814,7 +889,7 @@ function SecurityContent({ twoFactorEnabled }: { twoFactorEnabled: boolean }) {
               className="rounded-lg px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               onClick={resetTfaDialog}
             >
-              {tfaStep === "scan" ? "Done" : "Cancel"}
+              {tfaStep === "scan" ? tc("done") : tc("cancel")}
             </DialogClose>
             {tfaStep === "password" && (
               <button
@@ -823,7 +898,7 @@ function SecurityContent({ twoFactorEnabled }: { twoFactorEnabled: boolean }) {
                 onClick={() => void handleGenerateBackupCodes()}
                 className="rounded-lg bg-foreground px-4 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
               >
-                {tfaPending ? "Generating…" : "Generate"}
+                {tfaPending ? t("generating") : tc("generate")}
               </button>
             )}
           </DialogFooter>
@@ -831,9 +906,9 @@ function SecurityContent({ twoFactorEnabled }: { twoFactorEnabled: boolean }) {
       </Dialog>
 
       {/* Active Sessions */}
-      <SectionCard title="Active Sessions" description="All devices currently signed in to your account.">
+      <SectionCard title={t("sessionsTitle")} description={t("sessionsDescription")}>
         {!sessions || sessions.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No sessions found.</p>
+          <p className="text-sm text-muted-foreground">{t("noSessions")}</p>
         ) : (
           <div className="flex flex-col divide-y divide-border">
             {sessions.map((s) => {
@@ -846,11 +921,11 @@ function SecurityContent({ twoFactorEnabled }: { twoFactorEnabled: boolean }) {
                       <p className="text-sm font-medium text-foreground">
                         {parseUserAgent(s.userAgent)}
                         {isCurrent && (
-                          <span className="ml-2 rounded-full bg-green-500/10 px-1.5 py-0.5 text-[10px] font-medium text-green-600 dark:text-green-400">current</span>
+                          <span className="ml-2 rounded-full bg-green-500/10 px-1.5 py-0.5 text-[10px] font-medium text-green-600 dark:text-green-400">{t("currentSession")}</span>
                         )}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {s.ipAddress ?? "Unknown IP"} · {new Date(s.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                        {s.ipAddress ?? t("unknownIp")} · {new Date(s.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                       </p>
                     </div>
                   </div>
@@ -862,7 +937,7 @@ function SecurityContent({ twoFactorEnabled }: { twoFactorEnabled: boolean }) {
                       className="flex items-center gap-1 rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-destructive/40 hover:text-destructive disabled:opacity-40"
                     >
                       <LogOut className="h-3 w-3" />
-                      Revoke
+                      {t("revokeSession")}
                     </button>
                   )}
                 </div>
@@ -879,6 +954,8 @@ function SecurityContent({ twoFactorEnabled }: { twoFactorEnabled: boolean }) {
 // API Keys Tab
 // ─────────────────────────────────────────────
 function ApiKeysTab() {
+  const t = useTranslations("account.apiKeys");
+  const tc = useTranslations("common");
   type ApiKey = { id: string; name: string | null; start: string | null; prefix: string | null; createdAt: Date; lastRequest: Date | null; enabled: boolean | null };
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [loadingKeys, setLoadingKeys] = useState(true);
@@ -911,7 +988,7 @@ function ApiKeysTab() {
       setNewKeyName("");
       await loadKeys();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to create API key");
+      toast.error(e instanceof Error ? e.message : t("createFailed"));
     } finally {
       setCreatingKey(false);
     }
@@ -925,7 +1002,7 @@ function ApiKeysTab() {
       await loadKeys();
       setDeleteKeyId(null);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to delete API key");
+      toast.error(e instanceof Error ? e.message : t("deleteFailed"));
     } finally {
       setDeletingKey(false);
     }
@@ -933,7 +1010,7 @@ function ApiKeysTab() {
 
   return (
     <div className="flex flex-col gap-4">
-      <SectionCard title="API Keys" description="Use API keys to authenticate programmatic access to the API.">
+      <SectionCard title={t("title")} description={t("description")}>
         <div className="mb-4 flex items-center justify-end">
           <button
             type="button"
@@ -941,29 +1018,29 @@ function ApiKeysTab() {
             className="flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80"
           >
             <Plus className="h-3.5 w-3.5" />
-            Create Key
+            {t("createKey")}
           </button>
         </div>
 
         {loadingKeys ? (
-          <p className="text-sm text-muted-foreground">Loading…</p>
+          <p className="text-sm text-muted-foreground">{tc("loading")}</p>
         ) : keys.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border px-4 py-8 text-center">
             <Key className="mx-auto mb-2 h-6 w-6 text-muted-foreground/50" />
-            <p className="text-sm text-muted-foreground">No API keys yet.</p>
+            <p className="text-sm text-muted-foreground">{t("noKeysTitle")}</p>
           </div>
         ) : (
           <div className="flex flex-col divide-y divide-border overflow-hidden rounded-lg border border-border">
             {keys.map((key) => (
               <div key={key.id} className="flex items-center justify-between px-4 py-3">
                 <div>
-                  <p className="text-sm font-medium text-foreground">{key.name ?? "Unnamed key"}</p>
+                  <p className="text-sm font-medium text-foreground">{key.name ?? t("unnamedKey")}</p>
                   <p className="font-mono text-xs text-muted-foreground">
                     {key.prefix ? `${key.prefix}_` : ""}{key.start ? `${key.start}…` : "•••"}
                   </p>
                   <p className="mt-0.5 text-[10px] text-muted-foreground">
-                    Created {new Date(key.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                    {key.lastRequest && ` · Last used ${new Date(key.lastRequest).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`}
+                    {new Date(key.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                    {key.lastRequest && ` · ${new Date(key.lastRequest).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`}
                   </p>
                 </div>
                 <button
@@ -983,11 +1060,9 @@ function ApiKeysTab() {
       <Dialog open={createDialog} onOpenChange={(open) => { if (!open) { setCreateDialog(false); setNewKeyName(""); setNewKeyValue(null); } }}>
         <DialogPopup showCloseButton={false}>
           <DialogHeader>
-            <DialogTitle>{newKeyValue ? "API Key Created" : "Create API Key"}</DialogTitle>
+            <DialogTitle>{newKeyValue ? t("createDialogTitleDone") : t("createDialogTitle")}</DialogTitle>
             <DialogDescription>
-              {newKeyValue
-                ? "Copy your key now — it won't be shown again."
-                : "Give your key a name to identify it later."}
+              {newKeyValue ? t("createDialogDescDone") : t("createDialogDesc")}
             </DialogDescription>
           </DialogHeader>
           {!newKeyValue ? (
@@ -995,7 +1070,7 @@ function ApiKeysTab() {
               <input
                 autoFocus
                 className={inputClass()}
-                placeholder="e.g. My App"
+                placeholder={t("keyNamePlaceholder")}
                 value={newKeyName}
                 onChange={(e) => setNewKeyName(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") void handleCreateKey(); }}
@@ -1016,7 +1091,7 @@ function ApiKeysTab() {
                   className="rounded-lg px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                   disabled={creatingKey}
                 >
-                  Cancel
+                  {tc("cancel")}
                 </DialogClose>
                 <button
                   type="button"
@@ -1024,7 +1099,7 @@ function ApiKeysTab() {
                   onClick={() => void handleCreateKey()}
                   className="rounded-lg bg-foreground px-4 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
                 >
-                  {creatingKey ? "Creating…" : "Create"}
+                  {creatingKey ? t("creating") : t("create")}
                 </button>
               </>
             ) : (
@@ -1032,7 +1107,7 @@ function ApiKeysTab() {
                 className="rounded-lg bg-foreground px-4 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80"
                 onClick={() => { setCreateDialog(false); setNewKeyValue(null); }}
               >
-                Done
+                {tc("done")}
               </DialogClose>
             )}
           </DialogFooter>
@@ -1043,15 +1118,15 @@ function ApiKeysTab() {
       <Dialog open={!!deleteKeyId} onOpenChange={(open) => { if (!open) setDeleteKeyId(null); }}>
         <DialogPopup showCloseButton={false}>
           <DialogHeader>
-            <DialogTitle>Delete API key?</DialogTitle>
-            <DialogDescription>Any applications using this key will stop working immediately.</DialogDescription>
+            <DialogTitle>{t("deleteDialogTitle")}</DialogTitle>
+            <DialogDescription>{t("deleteDialogDesc")}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <DialogClose
               className="rounded-lg px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               disabled={deletingKey}
             >
-              Cancel
+              {tc("cancel")}
             </DialogClose>
             <button
               type="button"
@@ -1059,7 +1134,7 @@ function ApiKeysTab() {
               onClick={() => { if (deleteKeyId) void handleDeleteKey(deleteKeyId); }}
               className="rounded-lg bg-destructive px-4 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-40"
             >
-              {deletingKey ? "Deleting…" : "Delete Key"}
+              {deletingKey ? t("deleting") : t("deleteKey")}
             </button>
           </DialogFooter>
         </DialogPopup>
@@ -1072,6 +1147,7 @@ function ApiKeysTab() {
 // Billing Tab
 // ─────────────────────────────────────────────
 function BillingTab() {
+  const t = useTranslations("account.billing");
   const { data: self, isLoading } = useQuery(orpc.users.getSelf.queryOptions());
   const [saved, setSaved] = useState(false);
 
@@ -1120,42 +1196,42 @@ function BillingTab() {
 
   return (
     <div className="flex flex-col gap-4">
-      <SectionCard title="Billing Address">
+      <SectionCard title={t("addressTitle")}>
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-foreground">Full Name / Company</label>
-            <input className={inputClass()} value={billing.billingName} onChange={(e) => set("billingName", e.target.value)} placeholder="Acme Inc." />
+            <label className="text-xs font-medium text-foreground">{t("fullNameLabel")}</label>
+            <input className={inputClass()} value={billing.billingName} onChange={(e) => set("billingName", e.target.value)} placeholder={t("fullNamePlaceholder")} />
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-foreground">Address Line 1</label>
-            <input className={inputClass()} value={billing.billingAddressLine1} onChange={(e) => set("billingAddressLine1", e.target.value)} placeholder="123 Main St" />
+            <label className="text-xs font-medium text-foreground">{t("addressLine1Label")}</label>
+            <input className={inputClass()} value={billing.billingAddressLine1} onChange={(e) => set("billingAddressLine1", e.target.value)} placeholder={t("addressLine1Placeholder")} />
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-foreground">Address Line 2 <span className="text-muted-foreground font-normal">(optional)</span></label>
-            <input className={inputClass()} value={billing.billingAddressLine2} onChange={(e) => set("billingAddressLine2", e.target.value)} placeholder="Suite 400" />
+            <label className="text-xs font-medium text-foreground">{t("addressLine2Label")} <span className="text-muted-foreground font-normal">{t("addressLine2Optional")}</span></label>
+            <input className={inputClass()} value={billing.billingAddressLine2} onChange={(e) => set("billingAddressLine2", e.target.value)} placeholder={t("addressLine2Placeholder")} />
           </div>
           <div className="grid grid-cols-3 gap-3">
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-foreground">City</label>
-              <input className={inputClass()} value={billing.billingCity} onChange={(e) => set("billingCity", e.target.value)} placeholder="New York" />
+              <label className="text-xs font-medium text-foreground">{t("cityLabel")}</label>
+              <input className={inputClass()} value={billing.billingCity} onChange={(e) => set("billingCity", e.target.value)} placeholder={t("cityPlaceholder")} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-foreground">State / Province</label>
-              <input className={inputClass()} value={billing.billingState} onChange={(e) => set("billingState", e.target.value)} placeholder="NY" />
+              <label className="text-xs font-medium text-foreground">{t("stateLabel")}</label>
+              <input className={inputClass()} value={billing.billingState} onChange={(e) => set("billingState", e.target.value)} placeholder={t("statePlaceholder")} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-foreground">Postal Code</label>
-              <input className={inputClass()} value={billing.billingPostalCode} onChange={(e) => set("billingPostalCode", e.target.value)} placeholder="10001" />
+              <label className="text-xs font-medium text-foreground">{t("postalCodeLabel")}</label>
+              <input className={inputClass()} value={billing.billingPostalCode} onChange={(e) => set("billingPostalCode", e.target.value)} placeholder={t("postalCodePlaceholder")} />
             </div>
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-foreground">Country</label>
+            <label className="text-xs font-medium text-foreground">{t("countryLabel")}</label>
             <select
               className={`${inputClass()} bg-background`}
               value={billing.billingCountry}
               onChange={(e) => set("billingCountry", e.target.value)}
             >
-              <option value="">Select country…</option>
+              <option value="">{t("selectCountry")}</option>
               {COUNTRIES.map((c) => (
                 <option key={c.code} value={c.code}>{c.name}</option>
               ))}
@@ -1164,20 +1240,20 @@ function BillingTab() {
         </div>
       </SectionCard>
 
-      <SectionCard title="VAT Information" description="Required for EU businesses to receive invoices without VAT.">
+      <SectionCard title={t("vatTitle")} description={t("vatDescription")}>
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-foreground">VAT Number</label>
-            <input className={inputClass(true)} value={billing.vatNumber} onChange={(e) => set("vatNumber", e.target.value)} placeholder="DE123456789" />
+            <label className="text-xs font-medium text-foreground">{t("vatNumberLabel")}</label>
+            <input className={inputClass(true)} value={billing.vatNumber} onChange={(e) => set("vatNumber", e.target.value)} placeholder={t("vatNumberPlaceholder")} />
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-foreground">VAT Country</label>
+            <label className="text-xs font-medium text-foreground">{t("vatCountryLabel")}</label>
             <select
               className={`${inputClass()} bg-background`}
               value={billing.vatCountry}
               onChange={(e) => set("vatCountry", e.target.value)}
             >
-              <option value="">Select country…</option>
+              <option value="">{t("selectCountry")}</option>
               {COUNTRIES.map((c) => (
                 <option key={c.code} value={c.code}>{c.name}</option>
               ))}
@@ -1203,9 +1279,9 @@ function BillingTab() {
           })}
           className="rounded-lg bg-foreground px-4 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
         >
-          {updateBilling.isPending ? "Saving…" : "Save Billing"}
+          {updateBilling.isPending ? t("saving") : t("saveBilling")}
         </button>
-        {saved && <span className="text-xs font-medium text-green-500">Saved</span>}
+        {saved && <span className="text-xs font-medium text-green-500">{t("saved")}</span>}
         {updateBilling.isError && <span className="text-xs text-destructive">{updateBilling.error.message}</span>}
       </div>
     </div>
@@ -1216,23 +1292,30 @@ function BillingTab() {
 // Page
 // ─────────────────────────────────────────────
 export default function AccountPage() {
+  const t = useTranslations("account.tabs");
   const [tab, setTab] = useState<Tab>("profile");
+
+  const TABS: { id: Tab; label: string }[] = [
+    { id: "profile", label: t("profile") },
+    { id: "api-keys", label: t("apiKeys") },
+    { id: "billing", label: t("billing") },
+  ];
 
   return (
     <>
       <div className="flex shrink-0 items-center gap-1 border-b border-border bg-card px-4">
-        {TABS.map((t) => (
+        {TABS.map((tb) => (
           <button
-            key={t.id}
+            key={tb.id}
             type="button"
-            onClick={() => setTab(t.id)}
+            onClick={() => setTab(tb.id)}
             className={`flex items-center gap-1.5 border-b-2 px-3 py-3 text-sm font-medium transition-colors ${
-              tab === t.id
+              tab === tb.id
                 ? "border-foreground text-foreground"
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            {t.label}
+            {tb.label}
           </button>
         ))}
       </div>

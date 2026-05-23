@@ -2,6 +2,7 @@
 
 import { useRef, useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { Check, Upload, X, Github, ChevronDown, RotateCcw, Copy } from "lucide-react";
 import { orpc, queryClient } from "@/utils/orpc";
 
@@ -42,13 +43,14 @@ function Toggle({ enabled, onChange }: { enabled: boolean; onChange: (v: boolean
 }
 
 function SaveButton({ saving, saved, disabled }: { saving: boolean; saved: boolean; disabled?: boolean }) {
+  const tc = useTranslations("common");
   return (
     <button
       type="button"
       disabled={saving || disabled}
       className="flex items-center gap-1.5 rounded-lg bg-foreground px-4 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
     >
-      {saved ? <><Check className="h-3.5 w-3.5" /> Saved</> : saving ? "Saving…" : "Save"}
+      {saved ? <><Check className="h-3.5 w-3.5" /> {tc("saved")}</> : saving ? tc("saving") : tc("save")}
     </button>
   );
 }
@@ -76,6 +78,7 @@ function ImageUploadField({
   onUpload: (file: File) => void;
   onRemove: () => void;
 }) {
+  const tc = useTranslations("common");
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -117,7 +120,7 @@ function ImageUploadField({
               className={`flex cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted${uploading ? " pointer-events-none opacity-50" : ""}`}
             >
               <Upload className="h-3.5 w-3.5" />
-              {uploading ? "Uploading…" : currentUrl ? "Replace" : "Upload"}
+              {uploading ? tc("uploading") : currentUrl ? tc("replace") : tc("upload")}
             </label>
             {currentUrl && (
               <button
@@ -126,7 +129,7 @@ function ImageUploadField({
                 className="flex items-center gap-1.5 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-1.5 text-sm font-medium text-destructive transition-opacity hover:opacity-80"
               >
                 <X className="h-3.5 w-3.5" />
-                Remove
+                {tc("remove")}
               </button>
             )}
           </div>
@@ -138,6 +141,8 @@ function ImageUploadField({
 }
 
 function CallbackUrl({ appUrl, provider }: { appUrl: string; provider: string }) {
+  const t = useTranslations("admin.settings");
+  const tc = useTranslations("common");
   const [copied, setCopied] = useState(false);
   const url = appUrl ? `${appUrl}/api/auth/callback/${provider}` : null;
 
@@ -151,10 +156,10 @@ function CallbackUrl({ appUrl, provider }: { appUrl: string; provider: string })
 
   return (
     <div className="flex flex-col gap-1.5 mb-4">
-      <label className="text-xs font-medium text-foreground">Callback URL</label>
+      <label className="text-xs font-medium text-foreground">{t("callbackUrlLabel")}</label>
       <div className="flex items-center gap-2">
         <div className="flex-1 rounded-lg border border-border bg-muted px-3 py-1.5 font-mono text-xs text-muted-foreground truncate select-all">
-          {url ?? <span className="italic">Set App URL in Branding → General first</span>}
+          {url ?? <span className="italic">{t("callbackSetAppUrl")}</span>}
         </div>
         {url && (
           <button
@@ -162,7 +167,7 @@ function CallbackUrl({ appUrl, provider }: { appUrl: string; provider: string })
             onClick={copy}
             className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
           >
-            {copied ? <><Check className="h-3 w-3" /> Copied</> : <><Copy className="h-3 w-3" /> Copy</>}
+            {copied ? <><Check className="h-3 w-3" /> {tc("copied")}</> : <><Copy className="h-3 w-3" /> {tc("copy")}</>}
           </button>
         )}
       </div>
@@ -182,6 +187,7 @@ const TABS = ["branding", "auth"] as const;
 type Tab = (typeof TABS)[number];
 
 export default function AdminSettingsPage() {
+  const t = useTranslations("admin.settings");
   const [tab, setTab] = useState<Tab>("branding");
   const [needsRestart, setNeedsRestart] = useState(false);
   const [githubExpanded, setGithubExpanded] = useState(false);
@@ -301,22 +307,22 @@ export default function AdminSettingsPage() {
   return (
     <div className="flex-1 overflow-auto px-6 py-5">
       <div className="mx-auto max-w-2xl flex flex-col gap-4">
-        <h1 className="text-sm font-semibold text-foreground">Settings</h1>
+        <h1 className="text-sm font-semibold text-foreground">{t("title")}</h1>
 
         {/* Tab bar */}
         <div className="flex gap-1 border-b border-border -mb-1">
-          {TABS.map((t) => (
+          {TABS.map((tab_item) => (
             <button
-              key={t}
+              key={tab_item}
               type="button"
-              onClick={() => setTab(t)}
+              onClick={() => setTab(tab_item)}
               className={`px-3 py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px ${
-                tab === t
+                tab === tab_item
                   ? "border-foreground text-foreground"
                   : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
-              {t}
+              {tab_item}
             </button>
           ))}
         </div>
@@ -326,9 +332,9 @@ export default function AdminSettingsPage() {
           <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3">
             <RotateCcw className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-amber-600 dark:text-amber-400">Restart required</p>
+              <p className="text-sm font-medium text-amber-600 dark:text-amber-400">{t("restartRequired")}</p>
               <p className="text-xs text-amber-600/80 dark:text-amber-400/80 mt-0.5">
-                Some changes take effect only after the panel is restarted. Please restart your panel instance manually.
+                {t("restartDesc")}
               </p>
             </div>
             <button
@@ -343,36 +349,36 @@ export default function AdminSettingsPage() {
 
         {tab === "branding" && (
           <>
-            <SectionCard title="General" description="App identity and SEO metadata.">
+            <SectionCard title={t("generalTitle")} description={t("generalDesc")}>
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-foreground">App Name</label>
+                  <label className="text-xs font-medium text-foreground">{t("appNameLabel")}</label>
                   <input
                     className={inputClass(data?.appNameFromEnv)}
                     value={gf.appName}
                     disabled={data?.appNameFromEnv}
                     onChange={(e) => setGeneral({ ...gf, appName: e.target.value })}
                   />
-                  {data?.appNameFromEnv && <p className="text-[11px] text-muted-foreground">Set via APP_NAME environment variable</p>}
+                  {data?.appNameFromEnv && <p className="text-[11px] text-muted-foreground">{t("appNameEnvNote")}</p>}
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-foreground">App URL</label>
+                  <label className="text-xs font-medium text-foreground">{t("appUrlLabel")}</label>
                   <input
                     className={inputClass(data?.appUrlFromEnv)}
-                    placeholder="https://panel.example.com"
+                    placeholder={t("appUrlPlaceholder")}
                     value={gf.appUrl}
                     disabled={data?.appUrlFromEnv}
                     onChange={(e) => setGeneral({ ...gf, appUrl: e.target.value })}
                   />
-                  {data?.appUrlFromEnv && <p className="text-[11px] text-muted-foreground">Set via APP_URL environment variable</p>}
+                  {data?.appUrlFromEnv && <p className="text-[11px] text-muted-foreground">{t("appUrlEnvNote")}</p>}
                 </div>
               </div>
               <div className="mt-3 flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-foreground">Meta Description</label>
+                <label className="text-xs font-medium text-foreground">{t("metaDescLabel")}</label>
                 <textarea
                   rows={2}
                   className={`${inputClass()} resize-none`}
-                  placeholder="A short description shown in search engine results."
+                  placeholder={t("metaDescPlaceholder")}
                   value={gf.metaDescription}
                   onChange={(e) => setGeneral({ ...gf, metaDescription: e.target.value })}
                 />
@@ -384,10 +390,10 @@ export default function AdminSettingsPage() {
               )}
             </SectionCard>
 
-            <SectionCard title="Logo / Icon" description="Displayed on auth pages and used as the browser favicon.">
+            <SectionCard title={t("logoTitle")} description={t("logoDesc")}>
               <ImageUploadField
-                label="Logo"
-                description="Recommended: SVG or PNG with transparent background."
+                label={t("logoLabel")}
+                description={t("logoHint")}
                 accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml"
                 maxSizeMb={5}
                 currentUrl={data?.logoUrl}
@@ -398,13 +404,13 @@ export default function AdminSettingsPage() {
               />
             </SectionCard>
 
-            <SectionCard title="OG Banner" description="Open Graph image shown when links are shared on social media. Recommended 1200×630 px.">
+            <SectionCard title={t("ogBannerTitle")} description={t("ogBannerDesc")}>
               <ImageUploadField
-                label="Banner"
-                description="Use JPEG, PNG, or WebP."
+                label={t("bannerLabel")}
+                description={t("bannerHint")}
                 accept="image/jpeg,image/png,image/webp"
                 maxSizeMb={8}
-                aspectHint="Recommended 1200×630 px."
+                aspectHint={t("bannerAspectHint")}
                 currentUrl={data?.ogBannerUrl}
                 uploading={bannerUploading}
                 error={bannerError}
@@ -417,11 +423,11 @@ export default function AdminSettingsPage() {
 
         {tab === "auth" && (
           <>
-            <SectionCard title="Registration">
+            <SectionCard title={t("registrationTitle")}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-foreground">Allow new user registrations</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">When disabled, only admins can create new accounts.</p>
+                  <p className="text-sm font-medium text-foreground">{t("allowRegistrationLabel")}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{t("allowRegistrationDesc")}</p>
                 </div>
                 <Toggle enabled={rf.enabled} onChange={(v) => setRegistration({ enabled: v })} />
               </div>
@@ -430,7 +436,7 @@ export default function AdminSettingsPage() {
               </div>
             </SectionCard>
 
-            <SectionCard title="Social Login" description="OAuth providers for sign-in. Requires a panel restart after saving.">
+            <SectionCard title={t("socialLoginTitle")} description={t("socialLoginDesc")}>
               <div className="flex flex-col gap-2">
                 {/* GitHub */}
                 <div className="rounded-lg border border-border overflow-hidden">
@@ -443,7 +449,7 @@ export default function AdminSettingsPage() {
                       <Github className="h-4 w-4 text-foreground" />
                       <span className="text-sm font-medium text-foreground">GitHub</span>
                       {(data?.githubEnabled || github.enabled) && (
-                        <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-[11px] font-medium text-green-600 dark:text-green-400">Enabled</span>
+                        <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-[11px] font-medium text-green-600 dark:text-green-400">{t("enabled")}</span>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
@@ -456,7 +462,7 @@ export default function AdminSettingsPage() {
                       <CallbackUrl appUrl={data?.appUrl ?? ""} provider="github" />
                       <div className="grid grid-cols-2 gap-3 mb-4">
                         <div className="flex flex-col gap-1.5">
-                          <label className="text-xs font-medium text-foreground">Client ID</label>
+                          <label className="text-xs font-medium text-foreground">{t("clientIdLabel")}</label>
                           <input
                             className={inputClass()}
                             placeholder="Iv1.xxxxxxxxxxxx"
@@ -465,11 +471,11 @@ export default function AdminSettingsPage() {
                           />
                         </div>
                         <div className="flex flex-col gap-1.5">
-                          <label className="text-xs font-medium text-foreground">Client Secret</label>
+                          <label className="text-xs font-medium text-foreground">{t("clientSecretLabel")}</label>
                           <input
                             className={inputClass()}
                             type="password"
-                            placeholder={data?.githubClientSecretSet ? "••••••••  (already set)" : "Enter secret"}
+                            placeholder={data?.githubClientSecretSet ? t("clientSecretSet") : t("enterSecret")}
                             value={github.clientSecret}
                             onChange={(e) => setGithub({ ...github, clientSecret: e.target.value })}
                             autoComplete="new-password"
@@ -494,7 +500,7 @@ export default function AdminSettingsPage() {
                       <DiscordIcon className="h-4 w-4 text-[#5865F2]" />
                       <span className="text-sm font-medium text-foreground">Discord</span>
                       {(data?.discordEnabled || discord.enabled) && (
-                        <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-[11px] font-medium text-green-600 dark:text-green-400">Enabled</span>
+                        <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-[11px] font-medium text-green-600 dark:text-green-400">{t("enabled")}</span>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
@@ -507,7 +513,7 @@ export default function AdminSettingsPage() {
                       <CallbackUrl appUrl={data?.appUrl ?? ""} provider="discord" />
                       <div className="grid grid-cols-2 gap-3 mb-4">
                         <div className="flex flex-col gap-1.5">
-                          <label className="text-xs font-medium text-foreground">Client ID</label>
+                          <label className="text-xs font-medium text-foreground">{t("clientIdLabel")}</label>
                           <input
                             className={inputClass()}
                             placeholder="000000000000000000"
@@ -516,11 +522,11 @@ export default function AdminSettingsPage() {
                           />
                         </div>
                         <div className="flex flex-col gap-1.5">
-                          <label className="text-xs font-medium text-foreground">Client Secret</label>
+                          <label className="text-xs font-medium text-foreground">{t("clientSecretLabel")}</label>
                           <input
                             className={inputClass()}
                             type="password"
-                            placeholder={data?.discordClientSecretSet ? "••••••••  (already set)" : "Enter secret"}
+                            placeholder={data?.discordClientSecretSet ? t("clientSecretSet") : t("enterSecret")}
                             value={discord.clientSecret}
                             onChange={(e) => setDiscord({ ...discord, clientSecret: e.target.value })}
                             autoComplete="new-password"

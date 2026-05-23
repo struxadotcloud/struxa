@@ -1,6 +1,7 @@
 "use client";
 
 import type React from "react";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogPopup,
@@ -29,11 +30,13 @@ export function ConfirmDialog({
   title,
   description,
   children,
-  confirmLabel = "Confirm",
+  confirmLabel,
   onConfirm,
   loading = false,
   destructive = false,
 }: ConfirmDialogProps) {
+  const t = useTranslations("common");
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogPopup showCloseButton={false}>
@@ -47,7 +50,7 @@ export function ConfirmDialog({
             className="rounded-lg px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
             disabled={loading}
           >
-            Cancel
+            {t("cancel")}
           </DialogClose>
           <button
             type="button"
@@ -59,7 +62,7 @@ export function ConfirmDialog({
                 : "bg-foreground text-background hover:opacity-80"
             }`}
           >
-            {loading ? "…" : confirmLabel}
+            {loading ? "…" : (confirmLabel ?? t("confirm"))}
           </button>
         </DialogFooter>
       </DialogPopup>

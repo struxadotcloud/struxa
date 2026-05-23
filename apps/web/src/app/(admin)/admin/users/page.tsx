@@ -1,10 +1,11 @@
-﻿/* eslint-disable @next/next/no-img-element */
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Search, ShieldCheck, ShieldOff, Ban, UserX, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogPopup,
@@ -27,6 +28,8 @@ type DialogState =
   | { type: "confirmDelete"; userId: string; name: string };
 
 export default function AdminUsersPage() {
+  const t = useTranslations("admin.users");
+  const tc = useTranslations("common");
   const router = useRouter();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -59,13 +62,13 @@ export default function AdminUsersPage() {
     const displayName = u.name ?? u.email;
     return [
       u.role !== "admin"
-        ? { label: "Promote to Admin", icon: ShieldCheck, onClick: () => setRoleMutation.mutate({ userId: u.id, role: "admin" }) }
-        : { label: "Demote to User", icon: ShieldOff, onClick: () => setRoleMutation.mutate({ userId: u.id, role: "user" }) },
+        ? { label: t("promoteToAdmin"), icon: ShieldCheck, onClick: () => setRoleMutation.mutate({ userId: u.id, role: "admin" }) }
+        : { label: t("demoteToUser"), icon: ShieldOff, onClick: () => setRoleMutation.mutate({ userId: u.id, role: "user" }) },
       u.banned
-        ? { label: "Unban", icon: UserX, onClick: () => unbanMutation.mutate({ userId: u.id }) }
-        : { label: "Ban", icon: Ban, onClick: () => { setDialog({ type: "ban", userId: u.id, name: displayName }); setBanReason(""); } },
+        ? { label: t("unban"), icon: UserX, onClick: () => unbanMutation.mutate({ userId: u.id }) }
+        : { label: t("ban"), icon: Ban, onClick: () => { setDialog({ type: "ban", userId: u.id, name: displayName }); setBanReason(""); } },
       "separator",
-      { label: "Delete", icon: Trash2, onClick: () => setDialog({ type: "confirmDelete", userId: u.id, name: displayName }), destructive: true },
+      { label: tc("delete"), icon: Trash2, onClick: () => setDialog({ type: "confirmDelete", userId: u.id, name: displayName }), destructive: true },
     ];
   }
 
@@ -74,15 +77,15 @@ export default function AdminUsersPage() {
       <Dialog open={dialog?.type === "ban"} onOpenChange={(open) => { if (!open) { setDialog(null); setBanReason(""); } }}>
         <DialogPopup showCloseButton={false}>
           <DialogHeader>
-            <DialogTitle>Ban {dialog?.type === "ban" ? dialog.name : ""}</DialogTitle>
-            <DialogDescription>This user will be locked out of their account.</DialogDescription>
+            <DialogTitle>{t("banTitle", { name: dialog?.type === "ban" ? dialog.name : "" })}</DialogTitle>
+            <DialogDescription>{t("banDesc")}</DialogDescription>
           </DialogHeader>
           <div className="px-5 py-4">
-            <label className="mb-1.5 block text-xs font-medium text-foreground">Reason <span className="text-muted-foreground font-normal">(optional)</span></label>
+            <label className="mb-1.5 block text-xs font-medium text-foreground">{t("banReasonLabel")} <span className="text-muted-foreground font-normal">{t("banReasonOptional")}</span></label>
             <input
               autoFocus
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
-              placeholder="e.g. ToS violation"
+              placeholder={t("banReasonPlaceholder")}
               value={banReason}
               onChange={(e) => setBanReason(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Escape") { setDialog(null); setBanReason(""); } }}
@@ -96,7 +99,7 @@ export default function AdminUsersPage() {
               className="rounded-lg px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               disabled={banMutation.isPending}
             >
-              Cancel
+              {tc("cancel")}
             </DialogClose>
             <button
               type="button"
@@ -109,7 +112,7 @@ export default function AdminUsersPage() {
               }}
               className="rounded-lg bg-destructive px-4 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-40"
             >
-              {banMutation.isPending ? "Banning…" : "Ban User"}
+              {banMutation.isPending ? t("banning") : t("banUser")}
             </button>
           </DialogFooter>
         </DialogPopup>
@@ -118,15 +121,15 @@ export default function AdminUsersPage() {
       <Dialog open={dialog?.type === "confirmDelete"} onOpenChange={(open) => { if (!open) setDialog(null); }}>
         <DialogPopup showCloseButton={false}>
           <DialogHeader>
-            <DialogTitle>Delete {dialog?.type === "confirmDelete" ? dialog.name : ""}?</DialogTitle>
-            <DialogDescription>This action is permanent and cannot be undone.</DialogDescription>
+            <DialogTitle>{t("deleteTitle", { name: dialog?.type === "confirmDelete" ? dialog.name : "" })}</DialogTitle>
+            <DialogDescription>{t("deleteDesc")}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <DialogClose
               className="rounded-lg px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               disabled={deleteMutation.isPending}
             >
-              Cancel
+              {tc("cancel")}
             </DialogClose>
             <button
               type="button"
@@ -138,7 +141,7 @@ export default function AdminUsersPage() {
               }}
               className="rounded-lg bg-destructive px-4 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-40"
             >
-              {deleteMutation.isPending ? "Deleting…" : "Delete User"}
+              {deleteMutation.isPending ? t("deleting") : t("deleteUser")}
             </button>
           </DialogFooter>
         </DialogPopup>
@@ -148,13 +151,13 @@ export default function AdminUsersPage() {
         <div className="mx-auto max-w-5xl">
         <div className="mb-5 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-              <h1 className="text-sm font-semibold text-foreground">Users</h1>
+              <h1 className="text-sm font-semibold text-foreground">{t("title")}</h1>
           </div>
           <div className="relative flex items-center">
             <Search className="absolute left-2.5 h-3.5 w-3.5 text-muted-foreground" />
             <input
               className="rounded-lg border border-border bg-background py-1.5 pl-8 pr-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-ring transition-colors"
-              placeholder="Search users…"
+              placeholder={t("searchPlaceholder")}
               value={search}
               onChange={(e) => handleSearch(e.target.value)}
             />
@@ -165,19 +168,19 @@ export default function AdminUsersPage() {
         <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           {/* Header */}
           <div className="grid grid-cols-[1fr_1fr_100px_80px_120px_36px] border-b border-border bg-muted/40 px-4 py-2.5">
-            <span className="text-xs font-medium text-muted-foreground">User</span>
-            <span className="text-xs font-medium text-muted-foreground">Email</span>
-            <span className="text-xs font-medium text-muted-foreground">Role</span>
-            <span className="text-xs font-medium text-muted-foreground">Status</span>
-            <span className="text-xs font-medium text-muted-foreground">Joined</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("userColumn")}</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("emailColumn")}</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("roleColumn")}</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("statusColumn")}</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("joinedColumn")}</span>
             <span />
           </div>
 
           {isLoading && (
-            <div className="px-4 py-3 text-sm text-muted-foreground">Loading…</div>
+            <div className="px-4 py-3 text-sm text-muted-foreground">{t("loading")}</div>
           )}
           {!isLoading && data?.users.length === 0 && (
-            <div className="px-4 py-8 text-center text-sm text-muted-foreground">No users found.</div>
+            <div className="px-4 py-8 text-center text-sm text-muted-foreground">{t("noUsers")}</div>
           )}
           {data?.users.map((u, i) => {
             const actions = userActions(u);
@@ -214,11 +217,11 @@ export default function AdminUsersPage() {
                     <div className="flex items-center gap-1.5">
                       {u.banned ? (
                         <span className="rounded-full bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-600 dark:text-red-400">
-                          Banned
+                          {t("banned")}
                         </span>
                       ) : (
                         <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-600 dark:text-green-400">
-                          Active
+                          {t("active")}
                         </span>
                       )}
                     </div>
@@ -240,7 +243,7 @@ export default function AdminUsersPage() {
         {data && totalPages > 1 && (
           <div className="mt-3 flex items-center justify-between">
             <span className="text-xs text-muted-foreground">
-              Page {page} of {totalPages} Â· {data.total} users
+              {t("pageInfo", { page, total: totalPages, count: data.total })}
             </span>
             <div className="flex items-center gap-1.5">
               <button
@@ -250,7 +253,7 @@ export default function AdminUsersPage() {
                 className="flex items-center gap-1 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-30"
               >
                 <ChevronLeft className="h-3 w-3" />
-                Prev
+                {tc("prev")}
               </button>
               <button
                 type="button"
@@ -258,7 +261,7 @@ export default function AdminUsersPage() {
                 onClick={() => setPage((p) => p + 1)}
                 className="flex items-center gap-1 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-30"
               >
-                Next
+                {tc("next")}
                 <ChevronRight className="h-3 w-3" />
               </button>
             </div>

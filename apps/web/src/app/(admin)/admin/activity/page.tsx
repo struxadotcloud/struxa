@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { Activity, Server, Users, Layers } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { orpc } from "@/utils/orpc";
@@ -97,7 +98,8 @@ function getEventLabel(event: string): string {
 }
 
 function ActorCell({ user }: { user: { name: string | null; email: string; image: string | null } | null | undefined }) {
-  if (!user) return <span className="text-sm text-muted-foreground">System</span>;
+  const t = useTranslations("admin.activity");
+  if (!user) return <span className="text-sm text-muted-foreground">{t("system")}</span>;
   const displayName = user.name ?? user.email;
   const initials = displayName[0]!.toUpperCase();
   return (
@@ -140,6 +142,7 @@ function fmtDate(d: Date | string | null): string {
 }
 
 export default function AdminActivityPage() {
+  const t = useTranslations("admin.activity");
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
 
@@ -173,21 +176,21 @@ export default function AdminActivityPage() {
       <div className="flex flex-1 gap-3 overflow-hidden px-4 py-4">
         <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           <div className="grid grid-cols-[160px_180px_200px_150px_1fr_130px] border-b border-border bg-muted/40 px-4 py-2.5">
-            <span className="text-xs font-medium text-muted-foreground">Timestamp</span>
-            <span className="text-xs font-medium text-muted-foreground">Event</span>
-            <span className="text-xs font-medium text-muted-foreground">Actor</span>
-            <span className="text-xs font-medium text-muted-foreground">Target</span>
-            <span className="text-xs font-medium text-muted-foreground">Details</span>
-            <span className="text-xs font-medium text-muted-foreground">IP Address</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("timestampColumn")}</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("eventColumn")}</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("actorColumn")}</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("targetColumn")}</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("detailsColumn")}</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("ipColumn")}</span>
           </div>
 
           <div className="flex-1 overflow-y-auto">
             {activityPending ? (
-              <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">Loading…</div>
+              <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">{t("loading")}</div>
             ) : entries.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 gap-2">
                 <Activity className="h-8 w-8 text-muted-foreground/30" />
-                <p className="text-sm text-muted-foreground">No admin activity yet</p>
+                <p className="text-sm text-muted-foreground">{t("noActivity")}</p>
               </div>
             ) : (
               entries.map((entry, i) => {
@@ -226,16 +229,16 @@ export default function AdminActivityPage() {
         </div>
 
         <aside className="flex w-[220px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-          <StatRow icon={Activity} label="Total Events">
+          <StatRow icon={Activity} label={t("totalEvents")}>
             <span className="text-xl font-bold text-foreground">{entries.length}</span>
           </StatRow>
-          <StatRow icon={Server} label="Server Events">
+          <StatRow icon={Server} label={t("serverEvents")}>
             <span className="text-xl font-bold" style={{ color: "#3b82f6" }}>{serverCount}</span>
           </StatRow>
-          <StatRow icon={Users} label="User Moderation">
+          <StatRow icon={Users} label={t("userModeration")}>
             <span className="text-xl font-bold" style={{ color: "#f43f5e" }}>{userCount}</span>
           </StatRow>
-          <StatRow icon={Layers} label="Infrastructure">
+          <StatRow icon={Layers} label={t("infrastructure")}>
             <span className="text-xl font-bold" style={{ color: "#f59e0b" }}>{infraCount}</span>
           </StatRow>
         </aside>

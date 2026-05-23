@@ -5,13 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { orpc } from "@/utils/orpc";
-
-const TABS = [
-  { key: "settings", label: "Settings", path: "" },
-  { key: "allocations", label: "Allocations", path: "/allocations" },
-  { key: "configuration", label: "Configuration", path: "/configuration" },
-];
 
 export default function NodeDetailLayout({
   children,
@@ -21,8 +16,15 @@ export default function NodeDetailLayout({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const t = useTranslations("admin.nodes");
   const pathname = usePathname();
   const { data: node } = useQuery(orpc.nodes.get.queryOptions({ input: { id } }));
+
+  const TABS = [
+    { key: "settings", label: t("tabSettings"), path: "" },
+    { key: "allocations", label: t("tabAllocations"), path: "/allocations" },
+    { key: "configuration", label: t("tabConfiguration"), path: "/configuration" },
+  ];
 
   const activeTab = pathname.endsWith("/allocations")
     ? "allocations"
@@ -38,7 +40,7 @@ export default function NodeDetailLayout({
             href={"/admin/nodes" as never}
             className="text-muted-foreground transition-colors hover:text-foreground"
           >
-            Nodes
+            {t("nodesLink")}
           </Link>
           <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
           <span className="font-medium text-foreground">{node?.name ?? "…"}</span>
