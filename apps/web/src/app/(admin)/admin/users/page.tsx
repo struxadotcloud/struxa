@@ -1,4 +1,5 @@
-﻿"use client";
+﻿/* eslint-disable @next/next/no-img-element */
+"use client";
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -173,7 +174,7 @@ export default function AdminUsersPage() {
           </div>
 
           {isLoading && (
-            <div className="px-4 py-3 text-sm text-muted-foreground">Loadingâ€¦</div>
+            <div className="px-4 py-3 text-sm text-muted-foreground">Loading…</div>
           )}
           {!isLoading && data?.users.length === 0 && (
             <div className="px-4 py-8 text-center text-sm text-muted-foreground">No users found.</div>
@@ -190,10 +191,12 @@ export default function AdminUsersPage() {
                     className={`grid grid-cols-[1fr_1fr_100px_80px_120px_36px] cursor-pointer items-center px-4 py-3 transition-colors hover:bg-muted/40 ${!isLast ? "border-b border-border" : ""}`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
-                        {(u.name ?? u.email).charAt(0).toUpperCase()}
+                      <div className="h-7 w-7 shrink-0 overflow-hidden rounded-full bg-muted flex items-center justify-center text-xs font-semibold text-foreground">
+                        {u.image ? (
+                          <img src={u.image} alt="" className="h-full w-full object-cover" />
+                        ) : (u.name ?? u.email).charAt(0).toUpperCase()}
                       </div>
-                      <span className="text-sm font-medium text-foreground">{u.name ?? "â€”"}</span>
+                      <span className="text-sm font-medium text-foreground">{u.name ?? "—"}</span>
                     </div>
 
                     <span className="font-mono text-xs text-muted-foreground">{u.email}</span>
@@ -223,7 +226,7 @@ export default function AdminUsersPage() {
                     <span className="text-xs text-muted-foreground">
                       {u.createdAt
                         ? new Date(u.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-                        : "â€”"}
+                        : "—"}
                     </span>
 
                     <RowMenu items={actions} />

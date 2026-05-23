@@ -16,6 +16,10 @@
 #   DATABASE_ENCRYPTION_KEY  — 64-char hex string
 #   APP_URL                  — public URL of the app
 #   TURNSTILE_SECRET_KEY     — (optional) Cloudflare Turnstile secret
+#   MINIO_ENDPOINT           — internal MinIO URL (e.g. http://minio:9000)
+#   MINIO_ACCESS_KEY         — MinIO root user / access key
+#   MINIO_SECRET_KEY         — MinIO root password / secret key
+#   MINIO_BUCKET             — storage bucket name (default: struxa)
 
 services:
   mysql:
@@ -34,6 +38,23 @@ services:
       timeout: 5s
       retries: 10
       start_period: 30s
+    networks:
+      - struxa
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     networks:
       - struxa
 
@@ -64,9 +85,15 @@ services:
       JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY}
       DATABASE_ENCRYPTION_KEY: ${DATABASE_ENCRYPTION_KEY}
       APP_URL: ${APP_URL}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-http://minio:9000}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET: ${MINIO_BUCKET:-struxa}
     depends_on:
       migrate:
         condition: service_completed_successfully
+      minio:
+        condition: service_healthy
     networks:
       - struxa
 
@@ -92,6 +119,7 @@ services:
 
 volumes:
   mysql_data:
+  minio_data:
 
 networks:
   struxa:

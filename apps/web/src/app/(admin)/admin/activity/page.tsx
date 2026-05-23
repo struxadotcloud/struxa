@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Activity, Server, Users, Layers } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import Image from "next/image";
 import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
 import Loader from "@/components/loader";
@@ -105,7 +104,8 @@ function ActorCell({ user }: { user: { name: string | null; email: string; image
     <div className="flex items-center gap-2 min-w-0">
       <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-muted text-xs font-semibold text-foreground overflow-hidden">
         {user.image ? (
-          <Image src={user.image} alt={displayName} width={24} height={24} className="h-6 w-6 object-cover" />
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={user.image} alt={displayName} className="h-6 w-6 object-cover" />
         ) : initials}
       </div>
       <span className="truncate text-sm text-foreground">{displayName}</span>

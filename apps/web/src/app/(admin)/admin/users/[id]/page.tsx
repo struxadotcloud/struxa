@@ -211,8 +211,15 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
             <>
               <SectionCard title="Identity">
                 <div className="flex items-center gap-4 mb-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-muted text-lg font-semibold text-foreground">
-                    {initials}
+                  <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full bg-muted">
+                    {user.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={user.image} alt="Avatar" className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="flex h-full w-full items-center justify-center text-lg font-semibold text-foreground">
+                        {initials}
+                      </span>
+                    )}
                   </div>
                   <div>
                     <p className="text-base font-semibold text-foreground">{user.name ?? "—"}</p>
@@ -297,7 +304,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
                   {serversData.servers.map((s, i) => (
                     <Link
                       key={s.id}
-                      href={`/admin/servers/${s.id}` as never}
+                      href={`/admin/servers/${s.uuid}` as never}
                       className={`grid grid-cols-[1fr_120px_100px_90px] items-center px-4 py-3 transition-colors hover:bg-muted/40 ${i < serversData.servers.length - 1 ? "border-b border-border" : ""}`}
                     >
                       <div className="flex items-center gap-2">

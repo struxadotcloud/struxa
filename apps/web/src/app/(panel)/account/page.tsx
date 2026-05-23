@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Copy, Check, Key, Plus, Trash2, Monitor, LogOut } from "lucide-react";
+import { Copy, Check, Key, Plus, Trash2, Monitor, LogOut, Camera } from "lucide-react";
 import {
   Dialog,
   DialogPopup,
@@ -99,6 +99,8 @@ function ProfileTab() {
   const { data: session } = authClient.useSession();
   const [name, setName] = useState("");
   const [saved, setSaved] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
 
   useEffect(() => {
     if (self) setName(self.name ?? "");
@@ -114,11 +116,73 @@ function ProfileTab() {
     }),
   );
 
+  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!ALLOWED.includes(file.type)) {
+      setAvatarError("Only JPEG, PNG, WebP, or GIF images are allowed.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarError("Image must be smaller than 5 MB.");
+      return;
+    }
+
+    setAvatarError(null);
+    setAvatarUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/files/upload/avatar", { method: "POST", body: fd, credentials: "include" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? "Upload failed");
+      }
+      await queryClient.invalidateQueries({ queryKey: orpc.users.key() });
+      // Refresh better-auth session so the sidebar avatar updates immediately
+      await authClient.$fetch("/api/auth/get-session");
+      toast.success("Avatar updated");
+    } catch (err) {
+      setAvatarError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setAvatarUploading(false);
+      e.target.value = "";
+    }
+  }
+
   if (isLoading) return <div className="py-8 text-center text-sm text-muted-foreground">Loading…</div>;
 
   return (
     <div className="flex flex-col gap-4">
       <SectionCard title="Personal Information">
+        <div className="mb-4 flex items-center gap-3">
+          <label htmlFor="avatar-upload" className={`group relative h-12 w-12 shrink-0 cursor-pointer overflow-hidden rounded-full bg-muted ${avatarUploading ? "pointer-events-none" : ""}`}>
+            {self?.image ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={self.image} alt="Avatar" className="h-full w-full object-cover" />
+            ) : (
+              <span className="flex h-full w-full items-center justify-center text-base font-semibold text-muted-foreground">
+                {self?.name?.[0]?.toUpperCase() ?? "?"}
+              </span>
+            )}
+            <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+              {avatarUploading
+                ? <span className="text-[10px] text-white">…</span>
+                : <Camera className="h-4 w-4 text-white" />}
+            </div>
+          </label>
+          <input
+            id="avatar-upload"
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            className="sr-only"
+            disabled={avatarUploading}
+            onChange={(e) => void handleAvatarChange(e)}
+          />
+          {avatarError && <p className="text-xs text-destructive">{avatarError}</p>}
+        </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-medium text-foreground">Display Name</label>

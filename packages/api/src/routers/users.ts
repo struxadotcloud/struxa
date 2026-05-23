@@ -128,6 +128,7 @@ export const usersRouter = {
             id: true,
             name: true,
             email: true,
+            image: true,
             role: true,
             banned: true,
             banReason: true,
@@ -206,6 +207,7 @@ export const usersRouter = {
         db
           .select({
             id: servers.id,
+            uuid: servers.uuid,
             name: servers.name,
             suspended: servers.suspended,
             createdAt: servers.createdAt,
