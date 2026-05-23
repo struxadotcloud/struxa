@@ -25,130 +25,46 @@ Built to replace Pterodactyl — modern stack, dark UI, fully self-hosted.
 
 <br />
 
-## What is Struxa?
-
-Struxa is a self-hosted server management panel designed to be a modern, open-source replacement for [Pterodactyl](https://pterodactyl.io). It is built with a fully typed TypeScript stack, a monorepo architecture, and a dark, operator-focused UI aesthetic.
-
-The immediate focus is game server management — create, configure, and control game servers from a single panel. The longer-term roadmap expands into VPS management, node orchestration, and infrastructure tooling.
-
-Struxa is **not** a fork of Pterodactyl. It is a clean-room implementation with a different architecture, a different design language, and a different set of priorities.
-
 > [!CAUTION]
-> **This project is in active, bare development.** There is no alpha, no stable release, and no deployment guide. The API surface changes without notice. Do not use Struxa for anything beyond local development and experimentation. It is not functional as a product yet.
+> **This project is in active, bare development.** There is no stable release or deployment guide. Do not use Struxa for anything beyond local development.
 
-## Planned Features
+Struxa is a self-hosted server management panel — a clean-room, modern replacement for [Pterodactyl](https://pterodactyl.io). Built on a fully typed TypeScript monorepo with a dark, operator-focused UI.
 
-These are goals, not guarantees. Nothing below is shipped.
+## Related repositories
 
-- [x] Game server lifecycle management (create, start, stop, restart, delete)
-- [x] Real-time console streaming
-- [x] Resource monitoring (CPU, RAM, disk, network)
-- [x] File manager with editor
-- [ ] Multi-user support with role-based access control
-- [x] Node management and agent communication
-- [ ] VPS provisioning and management
-- [ ] API key management
-- [ ] Activity and audit logs
-- [ ] Billing and resource quotas (future)
-- [ ] Egg/image marketplace (future)
+| Repository | Description |
+|---|---|
+| [struxadotcloud/struxa](https://github.com/struxadotcloud/struxa) | This repo — main panel (web UI, API, database) |
+| [struxadotcloud/wings](https://github.com/struxadotcloud/wings) | Node agent — server lifecycle, file management, SFTP |
+| [struxadotcloud/install](https://github.com/struxadotcloud/install) | One-command installer |
+| [struxadotcloud/docs](https://github.com/struxadotcloud/docs) | Documentation site |
 
+## Installation
 
-## Getting Started
-
-> These steps are for local development only. There is no production deployment guide yet.
-
-**Prerequisites:** [Bun](https://bun.sh) `>= 1.3.5` · MySQL (Docker recommended)
+Run on a fresh Linux server (Ubuntu 22.04+ recommended):
 
 ```bash
-# Clone the repo
-git clone https://github.com/struxadotcloud/struxa.git
-cd struxa
-
-# Install dependencies
-bun install
-
-# Set up environment variables
-cp apps/web/.env.example apps/web/.env
-# Edit apps/web/.env with your database credentials and auth secrets
-
-# Start the database (Docker)
-bun run db:start
-
-# Push the schema
-bun run db:push
-
-# Start the dev server
-bun run dev
+bash <(curl -fsSL https://install.struxa.cloud)
 ```
 
-Open [http://localhost:3001](http://localhost:3001) in your browser.
-
-<details>
-<summary>All available scripts</summary>
-
-| Command | Description |
-|---|---|
-| `bun run dev` | Start all apps in development mode |
-| `bun run build` | Build all apps |
-| `bun run check-types` | TypeScript type check across all packages |
-| `bun run check` | Lint and format with Oxlint/Oxfmt |
-| `bun run db:push` | Push schema changes to database |
-| `bun run db:generate` | Generate migration files |
-| `bun run db:migrate` | Run pending migrations |
-| `bun run db:studio` | Open Drizzle Studio |
-| `bun run db:start` | Start MySQL via Docker Compose |
-| `bun run db:stop` | Stop MySQL container |
-
-</details>
-
-## Tech Stack
-<details>
-    <summary>Current tech stack</summary>
-
-| Layer | Technology |
-|---|---|
-| Framework | [Next.js 16](https://nextjs.org) + [React 19](https://react.dev) |
-| Language | TypeScript (strict) |
-| API | [oRPC](https://orpc.unnoq.com) — end-to-end type-safe procedures |
-| Database | MySQL + [Drizzle ORM](https://orm.drizzle.team) |
-| Auth | [Better-Auth](https://better-auth.com) |
-| Data Fetching | [TanStack Query](https://tanstack.com/query) |
-| UI Primitives | [shadcn/ui](https://ui.shadcn.com) via shared `packages/ui` |
-| Styling | [Tailwind CSS 4](https://tailwindcss.com) |
-| Monorepo | [Turborepo](https://turbo.build) + [Bun workspaces](https://bun.sh) |
-| Runtime | [Bun](https://bun.sh) |
-| Linting | Oxlint + Oxfmt |
-
-</details>
-
-## Roadmap
-
-The roadmap is tracked via GitHub Issues and GitHub Projects. If you want to follow progress, watch the repository or check the Issues tab. There is no public timeline.
+For full installation and configuration instructions, see the [documentation](https://docs.struxa.cloud).
 
 ## Contributing
 
-Contributions are welcome — code, bug reports, design feedback, and documentation all count. See [CONTRIBUTING.md](./CONTRIBUTING.md) for how to get started.
-
-Note that because the project is in early development, large features may be deferred or redirected if they conflict with the current architecture direction.
+Contributions are welcome — code, bug reports, and design feedback. See [CONTRIBUTING.md](./CONTRIBUTING.md) to get started. Progress is tracked via [GitHub Issues](https://github.com/struxadotcloud/struxa/issues).
 
 ## License
 
-[Elastic License 2.0 (ELv2)](./LICENSE) — you can use, modify, and self-host Struxa freely. You may **not** offer it as a hosted or managed service to third parties.
+[Elastic License 2.0 (ELv2)](./LICENSE) — free to use, modify, and self-host. You may **not** offer it as a hosted service to third parties.
 
 <br />
-
-## Sponsors & Acknowledgements
 
 <div align="center">
 
 | Sponsor | Contribution |
 |:---:|:---|
-| <a href="https://pshost.pl" target="_blank"><img src="https://cdn.pejpal.cloud/psHost-banner.png" alt="psHost" height="48" /></a> | VPS for testing infrastructure |
+| <a href="https://pshost.pl" target="_blank"><img src="https://cdn.pejpal.cloud/psHost-banner.png" alt="psHost" height="48" /></a> | Development partner & infrastructure |
 
-</div>
+<sub>Part of the Struxa project.</sub>
 
-<br />
-
-<div align="center">
-  <sub>Struxa is not affiliated with Pterodactyl or any game server hosting provider.</sub>
 </div>
