@@ -1,4 +1,4 @@
-import { and, desc, eq, like } from "drizzle-orm";
+import { and, desc, eq, like, notLike } from "drizzle-orm";
 import { z } from "zod";
 import { ORPCError } from "@orpc/server";
 import { db } from "@struxa/db";
@@ -31,7 +31,7 @@ export const activityRouter = {
 
       const offset = (input.page - 1) * input.perPage;
       const rows = await db.query.activityLogs.findMany({
-        where: eq(activityLogs.serverId, input.serverId),
+        where: and(eq(activityLogs.serverId, input.serverId), notLike(activityLogs.eventType, "admin:%")),
         orderBy: [desc(activityLogs.timestamp)],
         limit: input.perPage,
         offset,
