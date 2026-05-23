@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Search, ShieldCheck, ShieldOff, Ban, UserX, Trash2 } from "lucide-react";
 import {
@@ -25,6 +26,7 @@ type DialogState =
   | { type: "confirmDelete"; userId: string; name: string };
 
 export default function AdminUsersPage() {
+  const router = useRouter();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -184,7 +186,8 @@ export default function AdminUsersPage() {
                 {({ onContextMenu }) => (
                   <div
                     onContextMenu={onContextMenu}
-                    className={`grid grid-cols-[1fr_1fr_100px_80px_120px_36px] items-center px-4 py-3 transition-colors hover:bg-muted/40 ${!isLast ? "border-b border-border" : ""}`}
+                    onClick={() => router.push(`/admin/users/${u.id}` as never)}
+                    className={`grid grid-cols-[1fr_1fr_100px_80px_120px_36px] cursor-pointer items-center px-4 py-3 transition-colors hover:bg-muted/40 ${!isLast ? "border-b border-border" : ""}`}
                   >
                     <div className="flex items-center gap-3">
                       <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">

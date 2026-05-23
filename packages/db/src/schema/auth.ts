@@ -27,6 +27,17 @@ export const user = mysqlTable("user", {
   banExpires: timestamp("ban_expires", { fsp: 3 }),
   // twoFactor plugin
   twoFactorEnabled: boolean("two_factor_enabled").default(false),
+  // billing address
+  billingName: varchar("billing_name", { length: 255 }),
+  billingAddressLine1: varchar("billing_address_line1", { length: 255 }),
+  billingAddressLine2: varchar("billing_address_line2", { length: 255 }),
+  billingCity: varchar("billing_city", { length: 100 }),
+  billingState: varchar("billing_state", { length: 100 }),
+  billingPostalCode: varchar("billing_postal_code", { length: 20 }),
+  billingCountry: varchar("billing_country", { length: 2 }),
+  // VAT
+  vatNumber: varchar("vat_number", { length: 50 }),
+  vatCountry: varchar("vat_country", { length: 2 }),
 });
 
 export const session = mysqlTable(

@@ -26,7 +26,6 @@ import {
   Server,
   User,
   Settings,
-  CreditCard,
   LifeBuoy,
   Terminal,
   FolderOpen,
@@ -45,7 +44,6 @@ import { authClient } from "@/lib/auth-client";
 const NAV_PRIMARY = [
   { key: "servers", label: "Game Servers", icon: Server, href: "/" },
   { key: "account", label: "Account", icon: User, href: "/account" },
-  { key: "billing", label: "Billing", icon: CreditCard, href: "/billing" },
 ];
 
 const NAV_SECONDARY = [
