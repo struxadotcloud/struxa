@@ -1,8 +1,10 @@
 import { eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
+import { revalidateTag } from "next/cache";
 import { getAuth } from "@struxa/auth";
-import { db, user } from "@struxa/db";
+import { db, settings } from "@struxa/db";
 import { uploadObject, deleteObject } from "@struxa/api/services/storage";
+import { INSTANCE_SETTINGS_TAG } from "@/lib/instance-settings";
 
 export const maxRequestBodySize = "6mb";
 
@@ -11,6 +13,7 @@ const ALLOWED_TYPES: Record<string, string> = {
   "image/png": "png",
   "image/webp": "webp",
   "image/gif": "gif",
+  "image/svg+xml": "svg",
 };
 
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -18,7 +21,9 @@ const MAX_BYTES = 5 * 1024 * 1024;
 export async function POST(req: NextRequest) {
   const auth = await getAuth();
   const session = await auth.api.getSession({ headers: req.headers });
-  if (!session) return new Response("Unauthorized", { status: 401 });
+  if (!session || session.user.role !== "admin") {
+    return new Response("Unauthorized", { status: 401 });
+  }
 
   const formData = await req.formData();
   const file = formData.get("file");
@@ -29,32 +34,31 @@ export async function POST(req: NextRequest) {
 
   const ext = ALLOWED_TYPES[file.type];
   if (!ext) {
-    return Response.json({ error: "File type not allowed. Use JPEG, PNG, WebP, or GIF." }, { status: 400 });
+    return Response.json({ error: "File type not allowed. Use JPEG, PNG, WebP, GIF, or SVG." }, { status: 400 });
   }
 
   if (file.size > MAX_BYTES) {
     return Response.json({ error: "File exceeds 5 MB limit." }, { status: 400 });
   }
 
-  const newKey = `avatars/${session.user.id}.${ext}`;
+  const newKey = `logos/app-logo.${ext}`;
 
-  // Clean up old avatar if extension changed
-  const existing = await db.query.user.findFirst({
-    where: eq(user.id, session.user.id),
-    columns: { image: true },
-  });
-  if (existing?.image) {
-    const oldKey = existing.image.replace(/^\/api\/files\//, "");
-    if (oldKey !== newKey) {
-      void deleteObject(oldKey);
-    }
+  const existing = await db.query.settings.findFirst({ where: eq(settings.key, "logo_url") });
+  if (existing?.value) {
+    const oldKey = existing.value.replace(/^\/api\/files\//, "");
+    if (oldKey !== newKey) void deleteObject(oldKey);
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
   await uploadObject(newKey, buffer, file.type);
 
   const proxyUrl = `/api/files/${newKey}`;
-  await db.update(user).set({ image: proxyUrl }).where(eq(user.id, session.user.id));
+  await db
+    .insert(settings)
+    .values({ key: "logo_url", value: proxyUrl, updatedAt: new Date() })
+    .onDuplicateKeyUpdate({ set: { value: proxyUrl, updatedAt: new Date() } });
+
+  revalidateTag(INSTANCE_SETTINGS_TAG, {});
 
   return Response.json({ url: proxyUrl });
 }

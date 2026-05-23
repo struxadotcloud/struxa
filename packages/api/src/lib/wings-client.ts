@@ -1,4 +1,5 @@
 import type { nodes } from "@struxa/db";
+import { safeDecrypt } from "./crypto";
 
 type NodeRecord = typeof nodes.$inferSelect;
 
@@ -43,7 +44,7 @@ export class WingsClient {
 
   constructor(node: NodeRecord) {
     this.baseUrl = `${node.scheme}://${node.fqdn}:${node.daemonListen}`;
-    this.authHeader = `Bearer ${node.token}`;
+    this.authHeader = `Bearer ${safeDecrypt(node.token)}`;
   }
 
   private async request(

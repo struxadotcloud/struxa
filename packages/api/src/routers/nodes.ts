@@ -4,8 +4,9 @@ import { z } from "zod";
 import { db } from "@struxa/db";
 import { nodes } from "@struxa/db";
 import { recordActivity } from "../services/activity";
+import { getEffectiveAppUrl } from "../services/instance";
+import { encrypt, safeDecrypt } from "../lib/crypto";
 import { adminProcedure } from "../index";
-import { env } from "@struxa/env/server";
 
 export const nodesRouter = {
   list: adminProcedure.handler(async () => {
@@ -49,7 +50,7 @@ export const nodesRouter = {
         id,
         uuid,
         tokenId,
-        token,
+        token: encrypt(token),
         ...input,
       });
 
@@ -90,7 +91,7 @@ export const nodesRouter = {
             {
               method: "POST",
               headers: {
-                Authorization: `Bearer ${node.token}`,
+                Authorization: `Bearer ${safeDecrypt(node.token)}`,
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
@@ -131,7 +132,7 @@ export const nodesRouter = {
       const node = await db.query.nodes.findFirst({ where: eq(nodes.id, input.id) });
       const tokenId = randomUUID();
       const token = randomBytes(32).toString("hex");
-      await db.update(nodes).set({ tokenId, token }).where(eq(nodes.id, input.id));
+      await db.update(nodes).set({ tokenId, token: encrypt(token) }).where(eq(nodes.id, input.id));
       recordActivity({ eventType: "admin:node.token-regenerate", userId: context.session.user.id, nodeId: input.id, ip: context.ip, properties: { name: node?.name } });
       return { tokenId, token };
     }),
@@ -144,6 +145,8 @@ export const nodesRouter = {
       });
       if (!node) return null;
 
+      const appUrl = await getEffectiveAppUrl();
+
       const base = node.daemonBase;
       const sslEnabled = node.scheme === "https";
 
@@ -152,7 +155,7 @@ export const nodesRouter = {
 app_name: Pterodactyl
 uuid: ${node.uuid}
 token_id: ${node.tokenId}
-token: ${node.token}
+token: ${safeDecrypt(node.token)}
 api:
   host: 0.0.0.0
   port: ${node.daemonListen}
@@ -314,7 +317,7 @@ throttles:
   enabled: true
   lines: 2000
   line_reset_interval: 100
-remote: ${env.APP_URL}
+remote: ${appUrl}
 remote_headers: {}
 remote_query:
   timeout: 30
@@ -322,7 +325,7 @@ remote_query:
   retry_limit: 10
 allowed_mounts: []
 allowed_origins:
-- ${env.APP_URL}
+- ${appUrl}
 allow_cors_private_network: false
 ignore_panel_config_updates: false
 ignore_panel_wings_upgrades: false`,

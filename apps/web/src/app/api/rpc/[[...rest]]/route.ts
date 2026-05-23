@@ -6,6 +6,8 @@ import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
 import { createContext } from "@struxa/api/context";
 import { appRouter } from "@struxa/api/routers/index";
 import { NextRequest } from "next/server";
+import { revalidateTag } from "next/cache";
+import { INSTANCE_SETTINGS_TAG } from "@/lib/instance-settings";
 
 import { withEvlog } from "@/lib/evlog";
 import { identifyEvlogUser } from "@/lib/evlog-auth";
@@ -32,15 +34,17 @@ const apiHandler = new OpenAPIHandler(appRouter, {
 
 async function handleRequest(req: NextRequest) {
   await identifyEvlogUser(req);
+  const ctx = await createContext(req);
+  ctx.revalidate = () => revalidateTag(INSTANCE_SETTINGS_TAG, {});
   const rpcResult = await rpcHandler.handle(req, {
     prefix: "/api/rpc",
-    context: await createContext(req),
+    context: ctx,
   });
   if (rpcResult.response) return rpcResult.response;
 
   const apiResult = await apiHandler.handle(req, {
     prefix: "/api/rpc/api-reference",
-    context: await createContext(req),
+    context: ctx,
   });
   if (apiResult.response) return apiResult.response;
 

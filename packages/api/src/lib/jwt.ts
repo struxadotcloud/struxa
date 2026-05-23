@@ -1,6 +1,7 @@
 import * as jose from "jose";
-import { env } from "@struxa/env/server";
 import { createHash, randomUUID } from "crypto";
+import { env } from "@struxa/env/server";
+import { getEffectiveAppUrl } from "../services/instance";
 
 let _privateKey: jose.KeyLike | null = null;
 let _publicKey: jose.KeyLike | null = null;
@@ -37,6 +38,7 @@ export async function signWsToken(
   nodeToken: string,
 ): Promise<string> {
   const secret = new TextEncoder().encode(nodeToken);
+  const appUrl = await getEffectiveAppUrl();
   return new jose.SignJWT({
     user_uuid: toUuid(payload.user_uuid),
     server_uuid: payload.server_uuid,
@@ -45,7 +47,7 @@ export async function signWsToken(
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("15m")
-    .setIssuer(env.APP_URL)
+    .setIssuer(appUrl)
     .setAudience(["*"])
     .setJti(randomUUID())
     .sign(secret);
@@ -58,6 +60,7 @@ export async function signBackupDownloadToken(
   nodeToken: string,
 ): Promise<string> {
   const secret = new TextEncoder().encode(nodeToken);
+  const appUrl = await getEffectiveAppUrl();
   return new jose.SignJWT({
     user_uuid: toUuid(userId),
     server_uuid: serverUuid,
@@ -67,7 +70,7 @@ export async function signBackupDownloadToken(
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("15m")
-    .setIssuer(env.APP_URL)
+    .setIssuer(appUrl)
     .setAudience(["*"])
     .setJti(randomUUID())
     .sign(secret);

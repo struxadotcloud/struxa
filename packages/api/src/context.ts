@@ -1,7 +1,8 @@
-import { auth } from "@struxa/auth";
+import { getAuth } from "@struxa/auth";
 import type { NextRequest } from "next/server";
 
 export async function createContext(req: NextRequest) {
+  const auth = await getAuth();
   const session = await auth.api.getSession({
     headers: req.headers,
   });
@@ -13,6 +14,7 @@ export async function createContext(req: NextRequest) {
     auth: null,
     session,
     ip,
+    revalidate: undefined as (() => void) | undefined,
   };
 }
 

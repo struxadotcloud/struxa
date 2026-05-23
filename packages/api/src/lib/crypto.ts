@@ -17,6 +17,14 @@ export function encrypt(plaintext: string): string {
   return `${iv.toString("hex")}:${tag.toString("hex")}:${encrypted.toString("hex")}`;
 }
 
+export function safeDecrypt(value: string): string {
+  try {
+    return decrypt(value);
+  } catch {
+    return value;
+  }
+}
+
 export function decrypt(ciphertext: string): string {
   const key = getKey();
   const [ivHex, tagHex, encHex] = ciphertext.split(":");

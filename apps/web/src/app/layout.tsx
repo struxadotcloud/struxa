@@ -3,6 +3,7 @@ import { Cal_Sans, Geist, Geist_Mono } from "next/font/google";
 
 import "../index.css";
 import Providers from "@/components/providers";
+import { getInstanceSettings } from "@/lib/instance-settings";
 
 const calSans = Cal_Sans({
   variable: "--font-cal-sans",
@@ -22,10 +23,20 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "struxa",
-  description: "struxa panel",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { appName, metaDescription, logoUrl, ogBannerUrl } = await getInstanceSettings();
+  const description = metaDescription || `${appName} panel`;
+  return {
+    title: appName,
+    description,
+    icons: { icon: logoUrl ?? "/favicon.ico" },
+    openGraph: {
+      title: appName,
+      description,
+      ...(ogBannerUrl ? { images: [{ url: ogBannerUrl }] } : {}),
+    },
+  };
+}
 
 export default function RootLayout({
   children,

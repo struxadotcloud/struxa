@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
-import { auth } from "@struxa/auth";
+import { getAuth } from "@struxa/auth";
 import { db } from "@struxa/db";
 import { nodeAllocations, nodes, servers, subusers } from "@struxa/db";
 import { signWsToken } from "@struxa/api/lib/jwt";
@@ -9,6 +9,7 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const auth = await getAuth();
   const session = await auth.api.getSession({ headers: req.headers });
   if (!session) return new Response("Unauthorized", { status: 401 });
 

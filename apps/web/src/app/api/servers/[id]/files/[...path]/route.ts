@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
-import { auth } from "@struxa/auth";
+import { getAuth } from "@struxa/auth";
 import { db } from "@struxa/db";
 import { nodes, servers, subusers } from "@struxa/db";
 import { recordActivity } from "@struxa/api/services/activity";
@@ -8,6 +8,7 @@ import { recordActivity } from "@struxa/api/services/activity";
 type Params = { params: Promise<{ id: string; path: string[] }> };
 
 async function proxy(req: NextRequest, { params }: Params) {
+  const auth = await getAuth();
   const session = await auth.api.getSession({ headers: req.headers });
   if (!session) return new Response("Unauthorized", { status: 401 });
 

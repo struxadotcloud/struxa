@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { auth } from "@struxa/auth";
+import { getAuth } from "@struxa/auth";
 import { getObject, headObject } from "@struxa/api/services/storage";
 
 const EXT_TO_MIME: Record<string, string> = {
@@ -8,10 +8,13 @@ const EXT_TO_MIME: Record<string, string> = {
   png: "image/png",
   webp: "image/webp",
   gif: "image/gif",
+  svg: "image/svg+xml",
 };
 
-// Cache avatars for 2 minutes; browser may serve stale for up to 10 while revalidating
-const CACHE_CONTROL = "private, max-age=120, stale-while-revalidate=600";
+const CACHE_PRIVATE = "private, max-age=120, stale-while-revalidate=600";
+const CACHE_PUBLIC = "public, max-age=3600, stale-while-revalidate=86400";
+
+const PUBLIC_PREFIXES = ["logos/", "banners/"];
 
 type Params = { params: Promise<{ path: string[] }> };
 
@@ -20,11 +23,17 @@ function normalizeETag(etag: string) {
 }
 
 export async function GET(req: NextRequest, { params }: Params) {
-  const session = await auth.api.getSession({ headers: req.headers });
-  if (!session) return new Response("Unauthorized", { status: 401 });
-
   const { path } = await params;
   const key = path.join("/");
+
+  const isPublic = PUBLIC_PREFIXES.some((p) => key.startsWith(p));
+  if (!isPublic) {
+    const auth = await getAuth();
+    const session = await auth.api.getSession({ headers: req.headers });
+    if (!session) return new Response("Unauthorized", { status: 401 });
+  }
+
+  const cacheControl = isPublic ? CACHE_PUBLIC : CACHE_PRIVATE;
 
   const lastSegment = path[path.length - 1] ?? "";
   const dotIdx = lastSegment.lastIndexOf(".");
@@ -40,11 +49,16 @@ export async function GET(req: NextRequest, { params }: Params) {
       if (etag && normalizeETag(etag) === normalizeETag(ifNoneMatch)) {
         return new Response(null, {
           status: 304,
-          headers: { "Cache-Control": CACHE_CONTROL, "ETag": etag },
+          headers: { "Cache-Control": cacheControl, "ETag": etag },
         });
       }
-    } catch {
-      // Object not found — fall through to the GET below for a proper 404
+    } catch (err: unknown) {
+      const e = err as { Code?: string; name?: string; $metadata?: { httpStatusCode?: number } };
+      const code = e.Code ?? e.name;
+      const httpStatus = e.$metadata?.httpStatusCode;
+      if (code !== "NoSuchKey" && code !== "NotFound" && httpStatus !== 404) {
+        console.error(`[files] headObject(${key}) failed:`, err);
+      }
     }
   }
 
@@ -53,16 +67,19 @@ export async function GET(req: NextRequest, { params }: Params) {
   try {
     ({ stream, etag } = await getObject(key));
   } catch (err: unknown) {
-    const code = (err as { Code?: string; name?: string }).Code ?? (err as { name?: string }).name;
-    if (code === "NoSuchKey" || code === "NotFound") {
+    const e = err as { Code?: string; name?: string; $metadata?: { httpStatusCode?: number } };
+    const code = e.Code ?? e.name;
+    const httpStatus = e.$metadata?.httpStatusCode;
+    if (code === "NoSuchKey" || code === "NotFound" || httpStatus === 404) {
       return new Response("Not Found", { status: 404 });
     }
+    console.error(`[files] getObject(${key}) failed:`, err);
     throw err;
   }
 
   const headers: Record<string, string> = {
     "Content-Type": contentType,
-    "Cache-Control": CACHE_CONTROL,
+    "Cache-Control": cacheControl,
   };
   if (etag) headers["ETag"] = etag;
 
