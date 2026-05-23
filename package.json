@@ -46,6 +46,8 @@
     "db:watch": "turbo -F @struxa/db db:watch",
     "db:stop": "turbo -F @struxa/db db:stop",
     "db:down": "turbo -F @struxa/db db:down",
+    "i18n:crowdin:upload": "bunx @crowdin/cli upload sources --config crowdin.yml",
+    "i18n:crowdin:pull": "bunx @crowdin/cli download --config crowdin.yml",
     "check": "oxlint && oxfmt --write",
     "prepare": "husky"
   },

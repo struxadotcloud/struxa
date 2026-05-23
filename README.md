@@ -53,6 +53,21 @@ For full installation and configuration instructions, see the [documentation](ht
 
 Contributions are welcome — code, bug reports, and design feedback. See [CONTRIBUTING.md](./CONTRIBUTING.md) to get started. Progress is tracked via [GitHub Issues](https://github.com/struxadotcloud/struxa/issues).
 
+## Translations (Crowdin)
+
+Struxa uses `next-intl` messages from `apps/web/messages/*.json`.
+
+1. Create a Crowdin project and add a personal access token.
+2. Set environment variables:
+   - `CROWDIN_PROJECT_ID`
+   - `CROWDIN_PERSONAL_TOKEN`
+3. Upload source strings:
+   - `bun run i18n:crowdin:upload`
+4. Download translated files:
+   - `bun run i18n:crowdin:pull`
+
+Crowdin configuration lives in [`crowdin.yml`](./crowdin.yml). Source locale is `en` from `apps/web/messages/en.json`, and translations are downloaded to `apps/web/messages/<locale>.json`.
+
 ## License
 
 [Elastic License 2.0 (ELv2)](./LICENSE) — free to use, modify, and self-host. You may **not** offer it as a hosted service to third parties.

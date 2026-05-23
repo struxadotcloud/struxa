@@ -284,7 +284,11 @@ function PasswordSection({ hasPassword }: { hasPassword: boolean }) {
 // Locale Section
 // ─────────────────────────────────────────────
 const LOCALES = [
-  { value: "en", label: "English", countryCode: "US" },
+  { value: "en", labelKey: "languages.en", countryCode: "US" },
+  { value: "pl", labelKey: "languages.pl", countryCode: "PL" },
+  { value: "de", labelKey: "languages.de", countryCode: "DE" },
+  { value: "es", labelKey: "languages.es", countryCode: "ES" },
+  { value: "fr", labelKey: "languages.fr", countryCode: "FR" },
 ] as const;
 
 function LocaleSection({ currentLocale }: { currentLocale: string }) {
@@ -321,7 +325,7 @@ function LocaleSection({ currentLocale }: { currentLocale: string }) {
                   svg
                   style={{ width: "1.1em", height: "1.1em", borderRadius: "2px" }}
                 />
-                {selected!.label}
+                {t(selected!.labelKey)}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -332,7 +336,7 @@ function LocaleSection({ currentLocale }: { currentLocale: string }) {
                     svg
                     style={{ width: "1.1em", height: "1.1em", borderRadius: "2px" }}
                   />
-                  {l.label}
+                  {t(l.labelKey)}
                 </SelectItem>
               ))}
             </SelectContent>
