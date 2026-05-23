@@ -15,6 +15,13 @@
       "when": 1779048569816,
       "tag": "0001_slippery_texas_twister",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1779540746555,
+      "tag": "0002_shocking_jazinda",
+      "breakpoints": true
     }
   ]
 }
