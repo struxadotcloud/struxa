@@ -276,7 +276,7 @@
       "setDescription": "Add a password to sign in without a social account.",
       "currentPasswordLabel": "Current Password",
       "currentPasswordPlaceholder": "Current password",
-      "newPasswordLabel": "New Password",
+      "newPasswordLabel": "New password",
       "newPasswordPlaceholder": "New password",
       "confirmPasswordLabel": "Confirm Password",
       "confirmPasswordPlaceholder": "Confirm new password",
