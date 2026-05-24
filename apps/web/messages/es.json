@@ -32,6 +32,7 @@
     "test": "Probar",
     "import": "Importar",
     "importing": "Importando?",
+    "export": "Exportar",
     "upload": "Subir",
     "uploading": "Subiendo?",
     "replace": "Reemplazar",
@@ -229,7 +230,8 @@
       "noFileSelected": "Ningún archivo seleccionado",
       "noFileSelectedHint": "Selecciona un archivo del panel para verlo o editarlo",
       "saving": "Guardando…",
-      "save": "Guardar"
+      "save": "Guardar",
+      "dropToUpload": "Suelta los archivos para subirlos"
     },
     "databases": {
       "createTitle": "Nueva base de datos",
@@ -735,6 +737,7 @@
       "importJson": "Importar JSON",
       "nestSettingsTitle": "Configuración de nido",
       "importTitle": "Importar huevo de pterodáctilo JSON",
+      "chooseFile": "Elegir archivo",
       "eggsTitle": "Huevos",
       "searchEggs": "Buscar huevos...",
       "deleteEggTitle": "¿Eliminar huevo?",

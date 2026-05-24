@@ -1,11 +1,48 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Plus, Trash2 } from "lucide-react";
+import { Download, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import Editor from "@monaco-editor/react";
+import type { Monaco } from "@monaco-editor/react";
 import { orpc, queryClient } from "@/utils/orpc";
 import { ContextMenu, RowMenu, type ActionItem } from "@/components/context-menu";
+
+function defineTheme(monaco: Monaco) {
+  monaco.editor.defineTheme("struxa-dark", {
+    base: "vs-dark",
+    inherit: true,
+    rules: [
+      { token: "", foreground: "aaaaaa", background: "0a0a0a" },
+      { token: "comment", foreground: "555555", fontStyle: "italic" },
+      { token: "string", foreground: "22c55e" },
+      { token: "keyword", foreground: "3b82f6" },
+      { token: "number", foreground: "f59e0b" },
+      { token: "type", foreground: "a855f7" },
+      { token: "variable", foreground: "aaaaaa" },
+    ],
+    colors: {
+      "editor.background": "#0a0a0a",
+      "editor.foreground": "#aaaaaa",
+      "editorLineNumber.foreground": "#333333",
+      "editorLineNumber.activeForeground": "#555555",
+      "editor.selectionBackground": "#22c55e22",
+      "editor.lineHighlightBackground": "#111111",
+      "editorCursor.foreground": "#22c55e",
+      "editorGutter.background": "#0a0a0a",
+      "editor.inactiveSelectionBackground": "#1a1a1a",
+      "editorWidget.background": "#141414",
+      "editorWidget.border": "#222222",
+      "input.background": "#141414",
+      "input.border": "#222222",
+      "scrollbarSlider.background": "#222222",
+      "scrollbarSlider.hoverBackground": "#333333",
+      "editorBracketMatch.background": "#22c55e22",
+      "editorBracketMatch.border": "#22c55e44",
+    },
+  });
+}
 
 function invalidateEgg(eggId: string) {
   void queryClient.invalidateQueries(orpc.eggs.get.queryOptions({ input: { id: eggId } }));
@@ -180,6 +217,8 @@ export default function EggDetailPage({
   );
 
   const [tab, setTab] = useState<Tab>("general");
+  const tabRef = useRef<Tab>("general");
+  const handleSaveRef = useRef<() => Promise<void>>(async () => { /* not yet ready */ });
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -246,6 +285,66 @@ export default function EggDetailPage({
     });
   }
 
+  tabRef.current = tab;
+  handleSaveRef.current = handleSave;
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        const t = tabRef.current;
+        if (t === "general" || t === "environment" || t === "installer") {
+          e.preventDefault();
+          void handleSaveRef.current();
+        }
+      }
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, []);
+
+  function handleExport() {
+    if (!egg) return;
+    const dockerImagesRecord = (JSON.parse(egg.dockerImages ?? "{}") as Record<string, string>);
+    const payload = {
+      _comment: "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY STRUXA PANEL",
+      meta: { version: "PTDL_v2", update_url: null },
+      exported_at: new Date().toISOString(),
+      name: egg.name,
+      description: egg.description ?? "",
+      startup: egg.startup,
+      config: {
+        files: egg.configFiles ?? "",
+        startup: egg.configStartup ?? "",
+        stop: egg.stopCommand ?? egg.configStop ?? "",
+        logs: egg.configLogs ?? "",
+      },
+      scripts: {
+        installation: {
+          script: egg.scriptInstall ?? "",
+          container: egg.scriptContainer ?? "",
+          entrypoint: egg.scriptEntry ?? "bash",
+        },
+      },
+      variables: egg.variables.map((v) => ({
+        name: v.name,
+        description: v.description ?? "",
+        env_variable: v.envVariable,
+        default_value: v.defaultValue ?? "",
+        user_viewable: v.userViewable,
+        user_editable: v.userEditable,
+        rules: v.rules ?? "",
+      })),
+      docker_images: dockerImagesRecord,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${egg.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   async function handleAddVariable() {
     if (!newVarName || !newVarEnv) return;
     await addVariableMutation.mutateAsync({
@@ -304,6 +403,16 @@ export default function EggDetailPage({
             )}
           </button>
         ))}
+        <div className="ml-auto">
+          <button
+            type="button"
+            onClick={handleExport}
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          >
+            <Download className="h-3.5 w-3.5" />
+            {tc("export")}
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-auto px-6 py-5">
@@ -509,12 +618,31 @@ export default function EggDetailPage({
                 <div className="grid grid-cols-3 gap-4">
                   <div className="col-span-2 flex flex-col gap-1.5">
                     <label className="text-xs font-medium text-foreground">{t("scriptLabel")}</label>
-                    <textarea
-                      className="w-full rounded-lg border border-border bg-background px-3 py-2 font-mono text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
-                      rows={16}
-                      value={scriptInstall}
-                      onChange={(e) => setScriptInstall(e.target.value)}
-                    />
+                    <div className="overflow-hidden rounded-lg border border-border">
+                      <Editor
+                        height="320px"
+                        language="shell"
+                        value={scriptInstall}
+                        theme="struxa-dark"
+                        onChange={(v) => setScriptInstall(v ?? "")}
+                        beforeMount={defineTheme}
+                        options={{
+                          fontSize: 13,
+                          fontFamily: "var(--font-geist-mono), 'JetBrains Mono', 'Fira Code', monospace",
+                          lineHeight: 20,
+                          minimap: { enabled: false },
+                          scrollBeyondLastLine: false,
+                          renderLineHighlight: "line",
+                          overviewRulerBorder: false,
+                          hideCursorInOverviewRuler: true,
+                          padding: { top: 12, bottom: 12 },
+                          scrollbar: { verticalScrollbarSize: 6, horizontalScrollbarSize: 6 },
+                          lineNumbersMinChars: 3,
+                          folding: false,
+                          contextmenu: false,
+                        }}
+                      />
+                    </div>
                   </div>
                   <div className="flex flex-col gap-3">
                     <div className="flex flex-col gap-1.5">

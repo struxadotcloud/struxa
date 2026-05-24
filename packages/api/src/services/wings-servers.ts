@@ -57,7 +57,7 @@ export interface PaginatedServersResponse {
   };
 }
 
-function parseProcessConfiguration(egg: { configStartup: string | null; configStop: string | null; configFiles: string | null }): RawServer["process_configuration"] {
+function parseProcessConfiguration(egg: { configStartup: string | null; configStop: string | null; configFiles: string | null; stopCommand?: string | null }): RawServer["process_configuration"] {
   let done: string[] | null = null;
   let stopType = "command";
   let stopValue: string | null = null;
@@ -81,6 +81,10 @@ function parseProcessConfiguration(egg: { configStartup: string | null; configSt
       stopValue = parsed.value ?? null;
     }
   } catch {}
+
+  if (stopValue === null && egg.stopCommand) {
+    stopValue = egg.stopCommand;
+  }
 
   try {
     const filesRaw = JSON.parse(egg.configFiles ?? "{}") as Record<string, {

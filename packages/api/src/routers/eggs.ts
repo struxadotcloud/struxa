@@ -237,6 +237,7 @@ export const eggsRouter = {
         description: raw.description ?? null,
         startup: raw.startup ?? "",
         dockerImages: JSON.stringify(raw.docker_images ?? {}),
+        stopCommand: raw.config?.stop ?? null,
         configFiles: raw.config?.files ?? null,
         configStartup: raw.config?.startup ?? null,
         configStop: raw.config?.stop ?? null,

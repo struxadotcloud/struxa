@@ -127,8 +127,10 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
   const [showNewFile, setShowNewFile] = useState(false);
   const [newFileName, setNewFileName] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const newFileInputRef = useRef<HTMLInputElement>(null);
+  const handleSaveRef = useRef<() => Promise<void>>(async () => { /* not yet ready */ });
 
   const filesBase = `/api/servers/${id}/files`;
 
@@ -194,6 +196,7 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
       setSaving(false);
     }
   }
+  handleSaveRef.current = handleSave;
 
   async function createFile() {
     const name = newFileName.trim();
@@ -241,6 +244,17 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
     }
   }
 
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        e.preventDefault();
+        void handleSaveRef.current();
+      }
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, []);
+
   const { data: server } = useQuery(orpc.servers.get.queryOptions({ input: { id } }));
 
   if (isPending || !session) return <Loader />;
@@ -260,7 +274,21 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
 
   return (
     <>
-      <div className="flex flex-1 gap-3 overflow-hidden px-4 py-4">
+      <div
+        className={`flex flex-1 gap-3 overflow-hidden px-4 py-4 relative${isDragging ? " outline outline-2 outline-dashed outline-green-500/40 rounded-xl" : ""}`}
+        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+        onDragEnter={(e) => { e.preventDefault(); setIsDragging(true); }}
+        onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsDragging(false); }}
+        onDrop={(e) => { e.preventDefault(); setIsDragging(false); void handleUpload(e.dataTransfer.files); }}
+      >
+        {isDragging && (
+          <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/80 backdrop-blur-sm">
+            <div className="flex flex-col items-center gap-2 text-green-500">
+              <Upload className="h-10 w-10" />
+              <span className="text-sm font-medium">{t("dropToUpload")}</span>
+            </div>
+          </div>
+        )}
         <div className="flex w-60 shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           <div className="flex h-10 shrink-0 items-center justify-between border-b border-border px-3">
             <span className="truncate font-mono text-[11px] text-muted-foreground">{dirPath}</span>

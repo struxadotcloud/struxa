@@ -32,6 +32,7 @@
     "test": "Tester",
     "import": "Importer",
     "importing": "Importation?",
+    "export": "Exporter",
     "upload": "T?l?verser",
     "uploading": "T?l?versement?",
     "replace": "Remplacer",
@@ -229,7 +230,8 @@
       "noFileSelected": "Aucun fichier sélectionné",
       "noFileSelectedHint": "Sélectionnez un fichier dans le panneau pour l'afficher ou le modifier",
       "saving": "Enregistrement…",
-      "save": "Enregistrer"
+      "save": "Enregistrer",
+      "dropToUpload": "Déposer les fichiers pour les téléverser"
     },
     "databases": {
       "createTitle": "Nouvelle base de données",
@@ -735,6 +737,7 @@
       "importJson": "Importer du JSON",
       "nestSettingsTitle": "Paramètres de nidification",
       "importTitle": "Importer un œuf de ptérodactyle JSON",
+      "chooseFile": "Choisir un fichier",
       "eggsTitle": "Œufs",
       "searchEggs": "Rechercher des œufs...",
       "deleteEggTitle": "Supprimer l'œuf ?",

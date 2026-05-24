@@ -32,6 +32,7 @@
     "test": "Testuj",
     "import": "Importuj",
     "importing": "Importowanie…",
+    "export": "Eksportuj",
     "upload": "Prześlij",
     "uploading": "Przesyłanie…",
     "replace": "Zastąp",
@@ -229,7 +230,8 @@
       "noFileSelected": "Nie wybrano pliku",
       "noFileSelectedHint": "Wybierz plik z panelu, aby go wyświetlić lub edytować",
       "saving": "Zapisywanie…",
-      "save": "Zapisz"
+      "save": "Zapisz",
+      "dropToUpload": "Upuść pliki, aby przesłać"
     },
     "databases": {
       "createTitle": "Nowa baza danych",
@@ -735,6 +737,7 @@
       "importJson": "Importuj JSON",
       "nestSettingsTitle": "Ustawienia gniazda",
       "importTitle": "Importuj jajo pterodaktyla w formacie JSON",
+      "chooseFile": "Wybierz plik",
       "eggsTitle": "Jajka",
       "searchEggs": "Szukaj jaj...",
       "deleteEggTitle": "Usunąć jajko?",

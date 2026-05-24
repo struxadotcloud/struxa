@@ -32,6 +32,7 @@
     "test": "Testen",
     "import": "Importieren",
     "importing": "Importieren?",
+    "export": "Exportieren",
     "upload": "Hochladen",
     "uploading": "Hochladen?",
     "replace": "Ersetzen",
@@ -229,7 +230,8 @@
       "noFileSelected": "Keine Datei ausgewählt",
       "noFileSelectedHint": "Wähle eine Datei im Panel aus, um sie anzuzeigen oder zu bearbeiten",
       "saving": "Speichern…",
-      "save": "Speichern"
+      "save": "Speichern",
+      "dropToUpload": "Dateien zum Hochladen ablegen"
     },
     "databases": {
       "createTitle": "Neue Datenbank",
@@ -735,6 +737,7 @@
       "importJson": "JSON importieren",
       "nestSettingsTitle": "Nest-Einstellungen",
       "importTitle": "Importieren Sie Pterodactyl Egg JSON",
+      "chooseFile": "Datei auswählen",
       "eggsTitle": "Eier",
       "searchEggs": "Eier suchen...",
       "deleteEggTitle": "Ei löschen?",

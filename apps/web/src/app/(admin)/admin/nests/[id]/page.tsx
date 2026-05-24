@@ -1,9 +1,9 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Plus, Trash2, Upload, Search, ChevronRight } from "lucide-react";
+import { FileJson, Plus, Trash2, Upload, Search, ChevronRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { orpc, queryClient } from "@/utils/orpc";
 import { ContextMenu, RowMenu, type ActionItem } from "@/components/context-menu";
@@ -50,6 +50,7 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
   const [showImport, setShowImport] = useState(false);
   const [importJson, setImportJson] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const importFileRef = useRef<HTMLInputElement>(null);
 
   const filtered = (eggs ?? []).filter((e) => {
     const q = search.toLowerCase();
@@ -69,6 +70,21 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
     await importMutation.mutateAsync({ nestId, json: importJson });
     setImportJson("");
     setShowImport(false);
+  }
+
+  function handleImportFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target?.result;
+      if (typeof text === "string") {
+        setImportJson(text);
+        setShowImport(true);
+      }
+    };
+    reader.readAsText(file);
+    if (importFileRef.current) importFileRef.current.value = "";
   }
 
   async function handleSaveNest() {
@@ -118,14 +134,31 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
             <span className="font-medium text-foreground">{nest?.name ?? nestId}</span>
           </div>
-          <button
-            type="button"
-            onClick={() => setShowImport((v) => !v)}
-            className="flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80"
-          >
-            <Upload className="h-3.5 w-3.5" />
-            {t("importJson")}
-          </button>
+          <div className="flex items-center gap-2">
+            <input
+              ref={importFileRef}
+              type="file"
+              accept=".json"
+              className="hidden"
+              onChange={handleImportFileChange}
+            />
+            <button
+              type="button"
+              onClick={() => importFileRef.current?.click()}
+              className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            >
+              <FileJson className="h-3.5 w-3.5" />
+              {t("chooseFile")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowImport((v) => !v)}
+              className="flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80"
+            >
+              <Upload className="h-3.5 w-3.5" />
+              {t("importJson")}
+            </button>
+          </div>
         </div>
           <div className="rounded-xl border border-border bg-card shadow-sm">
             <div className="border-b border-border px-4 py-3">
