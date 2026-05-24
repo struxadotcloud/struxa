@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Activity, Power, FileText, HardDrive } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
 import Loader from "@/components/loader";
@@ -54,35 +55,31 @@ function getEventStyle(event: string) {
   return { color: "#71717a", bg: "rgba(113,113,122,0.10)" };
 }
 
-const EVENT_LABELS: Record<string, string> = {
-  "server:power.start":            "Power: Start",
-  "server:power.stop":             "Power: Stop",
-  "server:power.restart":          "Power: Restart",
-  "server:power.kill":             "Power: Kill",
-  "server:backup.start":           "Backup: Create",
-  "server:backup.delete":          "Backup: Delete",
-  "server:backup.restore":         "Backup: Restore",
-  "server:files.read":             "Files: Read",
-  "server:files.write":            "Files: Write",
-  "server:settings":               "Settings: Update",
-  "server:reinstall":              "Server: Reinstall",
-  "server:database.create":        "Database: Create",
-  "server:database.delete":        "Database: Delete",
-  "server:database.rotate-password": "Database: Rotate Password",
-  "server:schedule.create":        "Schedule: Create",
-  "server:schedule.update":        "Schedule: Update",
-  "server:schedule.delete":        "Schedule: Delete",
-  "user:subuser-create":           "Users: Add",
-  "user:subuser-update":           "Users: Update",
-  "user:subuser-delete":           "Users: Remove",
+const EVENT_LABEL_KEYS: Record<string, string> = {
+  "server:power.start":              "eventPowerStart",
+  "server:power.stop":               "eventPowerStop",
+  "server:power.restart":            "eventPowerRestart",
+  "server:power.kill":               "eventPowerKill",
+  "server:backup.start":             "eventBackupCreate",
+  "server:backup.delete":            "eventBackupDelete",
+  "server:backup.restore":           "eventBackupRestore",
+  "server:files.read":               "eventFilesRead",
+  "server:files.write":              "eventFilesWrite",
+  "server:settings":                 "eventSettingsUpdate",
+  "server:reinstall":                "eventServerReinstall",
+  "server:database.create":          "eventDatabaseCreate",
+  "server:database.delete":          "eventDatabaseDelete",
+  "server:database.rotate-password": "eventDatabaseRotatePassword",
+  "server:schedule.create":          "eventScheduleCreate",
+  "server:schedule.update":          "eventScheduleUpdate",
+  "server:schedule.delete":          "eventScheduleDelete",
+  "user:subuser-create":             "eventUsersAdd",
+  "user:subuser-update":             "eventUsersUpdate",
+  "user:subuser-delete":             "eventUsersRemove",
 };
 
-function getEventLabel(event: string): string {
-  return EVENT_LABELS[event] ?? event;
-}
-
-function ActorCell({ user }: { user: { name: string | null; email: string; image: string | null } | null | undefined }) {
-  if (!user) return <span className="text-sm text-muted-foreground">System</span>;
+function ActorCell({ user, systemLabel }: { user: { name: string | null; email: string; image: string | null } | null | undefined; systemLabel: string }) {
+  if (!user) return <span className="text-sm text-muted-foreground">{systemLabel}</span>;
   const displayName = user.name ?? user.email;
   const initials = displayName[0]!.toUpperCase();
   return (
@@ -122,6 +119,7 @@ function fmtDate(d: Date | string | null): string {
 }
 
 export default function ActivityPage({ params }: { params: Promise<{ id: string }> }) {
+  const t = useTranslations("panel.activity");
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
   const { id } = use(params);
@@ -151,20 +149,20 @@ export default function ActivityPage({ params }: { params: Promise<{ id: string 
         <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           {/* Table header */}
           <div className="grid grid-cols-[160px_180px_200px_1fr_130px] border-b border-border bg-muted/40 px-4 py-2.5">
-            <span className="text-xs font-medium text-muted-foreground">Timestamp</span>
-            <span className="text-xs font-medium text-muted-foreground">Event</span>
-            <span className="text-xs font-medium text-muted-foreground">Actor</span>
-            <span className="text-xs font-medium text-muted-foreground">Details</span>
-            <span className="text-xs font-medium text-muted-foreground">IP Address</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("colTimestamp")}</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("colEvent")}</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("colActor")}</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("colDetails")}</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("colIp")}</span>
           </div>
 
           <div className="flex-1 overflow-y-auto">
             {activityPending ? (
-              <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">Loading…</div>
+              <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">{t("loading")}</div>
             ) : entries.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 gap-2">
                 <Activity className="h-8 w-8 text-muted-foreground/30" />
-                <p className="text-sm text-muted-foreground">No activity yet</p>
+                <p className="text-sm text-muted-foreground">{t("empty")}</p>
               </div>
             ) : (
               entries.map((entry, i) => {
@@ -181,11 +179,11 @@ export default function ActivityPage({ params }: { params: Promise<{ id: string 
                         className="rounded-full px-2 py-0.5 font-mono text-xs font-medium"
                         style={{ color: style.color, backgroundColor: style.bg }}
                       >
-                        {getEventLabel(entry.eventType)}
+                        {EVENT_LABEL_KEYS[entry.eventType] ? t(EVENT_LABEL_KEYS[entry.eventType]) : entry.eventType}
                       </span>
                     </span>
                     <div className="min-w-0 pr-4">
-                      <ActorCell user={entry.user} />
+                      <ActorCell user={entry.user} systemLabel={t("system")} />
                     </div>
                     <span className="truncate pr-4 font-mono text-xs text-muted-foreground">
                       {getEventDetails(entry.eventType, entry.properties) ?? "—"}
@@ -199,16 +197,16 @@ export default function ActivityPage({ params }: { params: Promise<{ id: string 
         </div>
 
         <aside className="flex w-[220px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-          <StatRow icon={Activity} label="Events">
+          <StatRow icon={Activity} label={t("statEvents")}>
             <span className="text-xl font-bold text-foreground">{entries.length}</span>
           </StatRow>
-          <StatRow icon={Power} label="Power Events">
+          <StatRow icon={Power} label={t("statPowerEvents")}>
             <span className="text-xl font-bold text-foreground">{powerCount}</span>
           </StatRow>
-          <StatRow icon={FileText} label="File Writes">
+          <StatRow icon={FileText} label={t("statFileWrites")}>
             <span className="text-xl font-bold" style={{ color: "#3b82f6" }}>{fileCount}</span>
           </StatRow>
-          <StatRow icon={HardDrive} label="Backups">
+          <StatRow icon={HardDrive} label={t("statBackups")}>
             <span className="text-xl font-bold" style={{ color: "#a855f7" }}>{backupCount}</span>
           </StatRow>
         </aside>

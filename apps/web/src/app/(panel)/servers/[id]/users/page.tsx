@@ -15,6 +15,7 @@ import {
   DialogDescription,
   DialogClose,
 } from "@struxa/ui/components/dialog";
+import { useTranslations } from "next-intl";
 import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
 import Loader from "@/components/loader";
@@ -51,6 +52,7 @@ function PermissionPill({ perm, active }: { perm: Permission; active: boolean })
 }
 
 export default function UsersPage({ params }: { params: Promise<{ id: string }> }) {
+  const t = useTranslations("panel.users");
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
   const { id } = use(params);
@@ -103,12 +105,12 @@ export default function UsersPage({ params }: { params: Promise<{ id: string }> 
       <Dialog open={showInvite} onOpenChange={(open) => { if (!open) closeInvite(); }}>
         <DialogPopup showCloseButton={false}>
           <DialogHeader>
-            <DialogTitle>Invite User</DialogTitle>
-            <DialogDescription>Enter the email address of the user you want to add to this server.</DialogDescription>
+            <DialogTitle>{t("inviteTitle")}</DialogTitle>
+            <DialogDescription>{t("inviteDescription")}</DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4 px-5 py-4">
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-foreground">Email Address</label>
+              <label className="mb-1.5 block text-xs font-medium text-foreground">{t("emailLabel")}</label>
               <input
                 autoFocus
                 type="email"
@@ -121,13 +123,13 @@ export default function UsersPage({ params }: { params: Promise<{ id: string }> 
             </div>
             <div>
               <div className="mb-2 flex items-center justify-between">
-                <label className="text-xs font-medium text-foreground">Permissions</label>
+                <label className="text-xs font-medium text-foreground">{t("permissionsLabel")}</label>
                 <button
                   type="button"
                   onClick={() => setInvitePermissions(invitePermissions.length === ALL_PERMISSIONS.length ? [] : [...ALL_PERMISSIONS])}
                   className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  {invitePermissions.length === ALL_PERMISSIONS.length ? "Deselect all" : "Select all"}
+                  {invitePermissions.length === ALL_PERMISSIONS.length ? t("deselectAll") : t("selectAll")}
                 </button>
               </div>
               <div className="grid grid-cols-3 gap-1">
@@ -160,7 +162,7 @@ export default function UsersPage({ params }: { params: Promise<{ id: string }> 
               className="rounded-lg px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               disabled={createMutation.isPending}
             >
-              Cancel
+              {t("cancel")}
             </DialogClose>
             <button
               type="button"
@@ -168,7 +170,7 @@ export default function UsersPage({ params }: { params: Promise<{ id: string }> 
               disabled={!inviteEmail.trim() || createMutation.isPending}
               className="rounded-lg bg-foreground px-4 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
             >
-              {createMutation.isPending ? "Inviting…" : "Invite User"}
+              {createMutation.isPending ? t("inviting") : t("inviteUser")}
             </button>
           </DialogFooter>
         </DialogPopup>
@@ -177,33 +179,33 @@ export default function UsersPage({ params }: { params: Promise<{ id: string }> 
       <div className="flex flex-1 gap-3 overflow-hidden px-4 py-4">
         <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
-            <p className="text-sm font-medium text-foreground">Subusers</p>
+            <p className="text-sm font-medium text-foreground">{t("sectionTitle")}</p>
             <button
               type="button"
               onClick={() => setShowInvite(true)}
               className="flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80"
             >
               <UserPlus className="h-3.5 w-3.5" />
-              Invite User
+              {t("inviteUser")}
             </button>
           </div>
           <div className="grid grid-cols-[1fr_auto] border-b border-border bg-muted/40 px-4 py-2.5">
-            <span className="text-xs font-medium text-muted-foreground">User</span>
-            <span className="text-xs font-medium text-muted-foreground">Actions</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("colUser")}</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("colActions")}</span>
           </div>
           <div className="flex-1 overflow-y-auto">
             {subusersPending ? (
-              <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">Loading…</div>
+              <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">{t("loading")}</div>
             ) : subusers.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 gap-2">
                 <Users className="h-8 w-8 text-muted-foreground/30" />
-                <p className="text-sm text-muted-foreground">No subusers yet</p>
+                <p className="text-sm text-muted-foreground">{t("empty")}</p>
                 <button
                   type="button"
                   onClick={() => setShowInvite(true)}
                   className="mt-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                 >
-                  Invite first user
+                  {t("inviteFirst")}
                 </button>
               </div>
             ) : (
@@ -248,13 +250,12 @@ export default function UsersPage({ params }: { params: Promise<{ id: string }> 
 
         <aside className="flex w-[220px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           <div className="overflow-y-auto">
-            <StatRow icon={Users} label="Subusers">
+            <StatRow icon={Users} label={t("statSubusers")}>
               <span className="text-xl font-bold text-foreground">{subusers.length}</span>
             </StatRow>
-            <StatRow icon={ShieldCheck} label="Note">
+            <StatRow icon={ShieldCheck} label={t("statNote")}>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Subusers have panel access only. Permissions are scoped to this server and do not grant
-                access to billing or account settings.
+                {t("statNoteText")}
               </p>
             </StatRow>
           </div>

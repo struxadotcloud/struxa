@@ -26,7 +26,6 @@ import {
   Server,
   User,
   Settings,
-  LifeBuoy,
   Terminal,
   FolderOpen,
   Database,
@@ -65,10 +64,6 @@ export function PanelSidebar() {
   const NAV_PRIMARY = [
     { key: "servers", label: t("panel.gameServers"), icon: Server, href: "/" },
     { key: "account", label: t("panel.account"), icon: User, href: "/account" },
-  ];
-
-  const NAV_SECONDARY = [
-    { key: "support", label: t("panel.support"), icon: LifeBuoy, href: "/support" },
   ];
 
   const NAV_SERVER = [
@@ -216,24 +211,6 @@ export function PanelSidebar() {
               </SidebarGroupContent>
             </SidebarGroup>
 
-            <SidebarGroup className="mt-auto p-0">
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {NAV_SECONDARY.map((item) => (
-                    <SidebarMenuItem key={item.key}>
-                      <SidebarMenuButton
-                        render={<Link href={item.href as never} />}
-                        tooltip={item.label}
-                        className="h-auto gap-2 rounded-lg py-2 px-3 text-sm"
-                      >
-                        <item.icon className="h-4 w-4" />
-                        {item.label}
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
           </>
         )}
       </SidebarContent>

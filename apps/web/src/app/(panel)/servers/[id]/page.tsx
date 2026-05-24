@@ -16,6 +16,7 @@ import {
   Timer,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
@@ -170,6 +171,8 @@ function AnsiLine({ raw }: { raw: string }) {
 const EMPTY_HISTORY = Array(60).fill(0) as number[];
 
 export default function ServerPage({ params }: { params: Promise<{ id: string }> }) {
+  const t = useTranslations("panel.console");
+  const tStatus = useTranslations("panel.serverStatus");
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
   const { id } = use(params);
@@ -362,8 +365,8 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                         : "bg-zinc-600"
                 }`}
               />
-              <span className="text-xs font-medium capitalize" style={{ color: wsStatusColor }}>
-                {wsStatus}
+              <span className="text-xs font-medium" style={{ color: wsStatusColor }}>
+                {tStatus(wsStatus)}
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -373,7 +376,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                 onClick={() => powerMutation.mutate({ serverId: id, action: "start" })}
                 className="rounded-md bg-green-500/20 px-2.5 py-1 text-xs font-medium text-green-400 transition-colors hover:bg-green-500/30 disabled:cursor-not-allowed disabled:opacity-30"
               >
-                Start
+                {t("start")}
               </button>
               <button
                 type="button"
@@ -381,7 +384,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                 onClick={() => powerMutation.mutate({ serverId: id, action: "restart" })}
                 className="rounded-md bg-zinc-700/60 px-2.5 py-1 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-30"
               >
-                Restart
+                {t("restart")}
               </button>
               {canKill ? (
                 <button
@@ -390,7 +393,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                   onClick={() => powerMutation.mutate({ serverId: id, action: "kill" })}
                   className="rounded-md bg-red-500/20 px-2.5 py-1 text-xs font-medium text-red-400 transition-colors hover:bg-red-500/30 disabled:cursor-not-allowed disabled:opacity-30"
                 >
-                  Kill
+                  {t("kill")}
                 </button>
               ) : (
                 <button
@@ -399,7 +402,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                   onClick={() => powerMutation.mutate({ serverId: id, action: "stop" })}
                   className="rounded-md bg-red-500/20 px-2.5 py-1 text-xs font-medium text-red-400 transition-colors hover:bg-red-500/30 disabled:cursor-not-allowed disabled:opacity-30"
                 >
-                  Stop
+                  {t("stop")}
                 </button>
               )}
             </div>
@@ -407,7 +410,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
 
           <div className="flex-1 overflow-y-auto p-3 font-mono text-xs">
             {lines.length === 0 ? (
-              <div className="text-zinc-700">Waiting for console output…</div>
+              <div className="text-zinc-700">{t("waitingOutput")}</div>
             ) : (
               lines.map((line, i) => (
                 <div key={i} className="leading-relaxed text-zinc-400 whitespace-pre-wrap break-all">
@@ -422,7 +425,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
             <span className="px-3 font-mono text-sm text-zinc-600">{">"}</span>
             <input
               className="flex-1 bg-transparent font-mono text-sm text-zinc-200 outline-none placeholder:text-zinc-700"
-              placeholder="Type a command..."
+              placeholder={t("commandPlaceholder")}
               value={command}
               onChange={(e) => setCommand(e.target.value)}
               onKeyDown={(e) => {
@@ -442,7 +445,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
         {/* Stats panel */}
         <aside className="flex w-[260px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           <div className="overflow-y-auto">
-            <StatRow icon={Globe} label="Address">
+            <StatRow icon={Globe} label={t("statsAddress")}>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold text-foreground">
                   {allocDisplay}
@@ -458,16 +461,16 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                 )}
               </div>
             </StatRow>
-            <StatRow icon={Timer} label="Uptime">
+            <StatRow icon={Timer} label={t("statsUptime")}>
               <span className="text-sm font-semibold text-foreground">{fmtUptime(stats.uptimeMs)}</span>
             </StatRow>
-            <StatRow icon={Cpu} label="CPU" chart={<Sparkline data={cpuHistory} color="#3b82f6" />}>
+            <StatRow icon={Cpu} label={t("statsCpu")} chart={<Sparkline data={cpuHistory} color="#3b82f6" />}>
               <div className="flex items-baseline gap-1">
                 <span className="text-xl font-bold text-foreground">{stats.cpu.toFixed(1)}%</span>
                 <span className="text-xs text-muted-foreground">/ {server?.cpu ?? 0}%</span>
               </div>
             </StatRow>
-            <StatRow icon={MemoryStick} label="Memory" chart={<Sparkline data={ramHistory} color="#a855f7" />}>
+            <StatRow icon={MemoryStick} label={t("statsMemory")} chart={<Sparkline data={ramHistory} color="#a855f7" />}>
               <div className="flex items-baseline gap-1">
                 <span className="text-xl font-bold text-foreground">
                   {fmtMb(stats.memBytes / (1024 * 1024))}
@@ -475,16 +478,16 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                 <span className="text-xs text-muted-foreground">/ {fmtMb(stats.memLimitBytes / (1024 * 1024))}</span>
               </div>
             </StatRow>
-            <StatRow icon={HardDrive} label="Disk" chart={<Sparkline data={diskHistory} color="#f43f5e" />}>
+            <StatRow icon={HardDrive} label={t("statsDisk")} chart={<Sparkline data={diskHistory} color="#f43f5e" />}>
               <div className="flex items-baseline gap-1">
                 <span className="text-xl font-bold text-foreground">{fmtMb(stats.diskMb)}</span>
                 <span className="text-xs text-muted-foreground">/ {fmtMb(server?.disk ?? 0)}</span>
               </div>
             </StatRow>
-            <StatRow icon={ArrowDown} label="Inbound" chart={<Sparkline data={rxHistory} />}>
+            <StatRow icon={ArrowDown} label={t("statsInbound")} chart={<Sparkline data={rxHistory} />}>
               <span className="text-xl font-bold text-foreground">{fmtBytes(rxHistory[rxHistory.length - 1] ?? 0)}</span>
             </StatRow>
-            <StatRow icon={ArrowUp} label="Outbound" chart={<Sparkline data={txHistory} />}>
+            <StatRow icon={ArrowUp} label={t("statsOutbound")} chart={<Sparkline data={txHistory} />}>
               <span className="text-xl font-bold text-foreground">{fmtBytes(txHistory[txHistory.length - 1] ?? 0)}</span>
             </StatRow>
           </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Copy, Check, Key, Plus, Trash2, Monitor, LogOut, Camera, Link2, Unlink, Download } from "lucide-react";
@@ -291,75 +292,14 @@ const LOCALES = [
   { value: "fr", labelKey: "languages.fr", countryCode: "FR" },
 ] as const;
 
-function LocaleSection({ currentLocale }: { currentLocale: string }) {
-  const t = useTranslations("account.locale");
-  const [locale, setLocale] = useState(currentLocale);
-
-  useEffect(() => { setLocale(currentLocale); }, [currentLocale]);
-
-  const updateLocale = useMutation(
-    orpc.users.updateLocale.mutationOptions({
-      onSuccess: (_, { locale: newLocale }) => {
-        document.cookie = `NEXT_LOCALE=${newLocale}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
-        toast.success(t("saveSuccess"));
-        void queryClient.invalidateQueries({ queryKey: orpc.users.key() });
-      },
-      onError: () => {
-        toast.error(t("saveFailed"));
-      },
-    }),
-  );
-
-  const selected = LOCALES.find((l) => l.value === locale) ?? LOCALES[0];
-
-  return (
-    <SectionCard title={t("sectionTitle")} description={t("sectionDescription")}>
-      <div className="flex items-end gap-3">
-        <div className="flex flex-col gap-1.5 flex-1 max-w-xs">
-          <label className="text-xs font-medium text-foreground">{t("label")}</label>
-          <Select value={locale} onValueChange={(value) => { if (value) setLocale(value); }}>
-            <SelectTrigger>
-              <SelectValue>
-                <ReactCountryFlag
-                  countryCode={selected!.countryCode}
-                  svg
-                  style={{ width: "1.1em", height: "1.1em", borderRadius: "2px" }}
-                />
-                {t(selected!.labelKey)}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {LOCALES.map((l) => (
-                <SelectItem key={l.value} value={l.value}>
-                  <ReactCountryFlag
-                    countryCode={l.countryCode}
-                    svg
-                    style={{ width: "1.1em", height: "1.1em", borderRadius: "2px" }}
-                  />
-                  {t(l.labelKey)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <button
-          type="button"
-          disabled={updateLocale.isPending || locale === currentLocale}
-          onClick={() => updateLocale.mutate({ locale })}
-          className="rounded-lg bg-foreground px-4 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
-        >
-          {updateLocale.isPending ? "…" : t("save")}
-        </button>
-      </div>
-    </SectionCard>
-  );
-}
 
 // ─────────────────────────────────────────────
 // Profile Tab (includes security)
 // ─────────────────────────────────────────────
 function ProfileTab() {
   const t = useTranslations("account.profile");
+  const tl = useTranslations("account.locale");
+  const router = useRouter();
   const { data: self, isLoading } = useQuery(orpc.users.getSelf.queryOptions());
   const { data: session } = authClient.useSession();
   const [name, setName] = useState("");
@@ -367,6 +307,7 @@ function ProfileTab() {
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const [linkedAccounts, setLinkedAccounts] = useState<LinkedAccount[]>([]);
+  const [locale, setLocale] = useState("en");
 
   async function loadLinkedAccounts() {
     const res = await authClient.listAccounts();
@@ -376,8 +317,27 @@ function ProfileTab() {
   useEffect(() => { void loadLinkedAccounts(); }, []);
 
   useEffect(() => {
-    if (self) setName(self.name ?? "");
+    if (self) {
+      setName(self.name ?? "");
+      setLocale(self.locale ?? "en");
+    }
   }, [self]);
+
+  const updateLocale = useMutation(
+    orpc.users.updateLocale.mutationOptions({
+      onError: () => toast.error(tl("saveFailed")),
+    }),
+  );
+
+  function handleLocaleChange(newLocale: string | null) {
+    if (!newLocale) return;
+    setLocale(newLocale);
+    document.cookie = `NEXT_LOCALE=${newLocale}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+    router.refresh();
+    updateLocale.mutate({ locale: newLocale });
+  }
+
+  const selectedLocale = LOCALES.find((l) => l.value === locale) ?? LOCALES[0];
 
   const updateProfile = useMutation(
     orpc.users.updateProfile.mutationOptions({
@@ -429,68 +389,100 @@ function ProfileTab() {
   return (
     <div className="flex flex-col gap-4">
       <SectionCard title={t("personalInfoTitle")}>
-        <div className="mb-4 flex items-center gap-3">
-          <label htmlFor="avatar-upload" className={`group relative h-12 w-12 shrink-0 cursor-pointer overflow-hidden rounded-full bg-muted ${avatarUploading ? "pointer-events-none" : ""}`}>
-            {self?.image ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={self.image} alt="Avatar" className="h-full w-full object-cover" />
-            ) : (
-              <span className="flex h-full w-full items-center justify-center text-base font-semibold text-muted-foreground">
-                {self?.name?.[0]?.toUpperCase() ?? "?"}
-              </span>
-            )}
-            <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
-              {avatarUploading
-                ? <span className="text-[10px] text-white">…</span>
-                : <Camera className="h-4 w-4 text-white" />}
+        <div className="flex gap-4">
+          <div className="flex flex-col items-center gap-2">
+            <label htmlFor="avatar-upload" className={`group relative h-16 w-16 shrink-0 cursor-pointer overflow-hidden rounded-full bg-muted ${avatarUploading ? "pointer-events-none" : ""}`}>
+              {self?.image ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={self.image} alt="Avatar" className="h-full w-full object-cover" />
+              ) : (
+                <span className="flex h-full w-full items-center justify-center text-lg font-semibold text-muted-foreground">
+                  {self?.name?.[0]?.toUpperCase() ?? "?"}
+                </span>
+              )}
+              <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                {avatarUploading
+                  ? <span className="text-[10px] text-white">…</span>
+                  : <Camera className="h-4 w-4 text-white" />}
+              </div>
+            </label>
+            <input
+              id="avatar-upload"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="sr-only"
+              disabled={avatarUploading}
+              onChange={(e) => void handleAvatarChange(e)}
+            />
+            {avatarError && <p className="max-w-[4.5rem] text-center text-[10px] text-destructive">{avatarError}</p>}
+          </div>
+          <div className="flex flex-1 flex-col gap-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-foreground">{t("displayNameLabel")}</label>
+                <input
+                  className={inputClass()}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder={t("displayNamePlaceholder")}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-foreground">{t("emailLabel")}</label>
+                <input
+                  className={`${inputClass()} cursor-not-allowed opacity-60`}
+                  value={session?.user.email ?? ""}
+                  readOnly
+                />
+              </div>
             </div>
-          </label>
-          <input
-            id="avatar-upload"
-            type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif"
-            className="sr-only"
-            disabled={avatarUploading}
-            onChange={(e) => void handleAvatarChange(e)}
-          />
-          {avatarError && <p className="text-xs text-destructive">{avatarError}</p>}
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-foreground">{t("displayNameLabel")}</label>
-            <input
-              className={inputClass()}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={t("displayNamePlaceholder")}
-            />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-foreground">{tl("label")}</label>
+                <Select value={locale} onValueChange={handleLocaleChange}>
+                  <SelectTrigger>
+                    <SelectValue>
+                      <ReactCountryFlag
+                        countryCode={selectedLocale!.countryCode}
+                        svg
+                        style={{ width: "1.1em", height: "1.1em", borderRadius: "2px" }}
+                      />
+                      {tl(selectedLocale!.labelKey)}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LOCALES.map((l) => (
+                      <SelectItem key={l.value} value={l.value}>
+                        <ReactCountryFlag
+                          countryCode={l.countryCode}
+                          svg
+                          style={{ width: "1.1em", height: "1.1em", borderRadius: "2px" }}
+                        />
+                        {tl(l.labelKey)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={updateProfile.isPending || !name.trim()}
+                onClick={() => updateProfile.mutate({ name: name.trim() })}
+                className="rounded-lg bg-foreground px-4 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
+              >
+                {updateProfile.isPending ? t("saving") : t("save")}
+              </button>
+              {saved && <span className="text-xs font-medium text-green-500">{t("saved")}</span>}
+              {updateProfile.isError && (
+                <span className="text-xs text-destructive">{updateProfile.error.message}</span>
+              )}
+            </div>
           </div>
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-foreground">{t("emailLabel")}</label>
-            <input
-              className={`${inputClass()} cursor-not-allowed opacity-60`}
-              value={session?.user.email ?? ""}
-              readOnly
-            />
-          </div>
-        </div>
-        <div className="mt-4 flex items-center gap-2">
-          <button
-            type="button"
-            disabled={updateProfile.isPending || !name.trim()}
-            onClick={() => updateProfile.mutate({ name: name.trim() })}
-            className="rounded-lg bg-foreground px-4 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
-          >
-            {updateProfile.isPending ? t("saving") : t("save")}
-          </button>
-          {saved && <span className="text-xs font-medium text-green-500">{t("saved")}</span>}
-          {updateProfile.isError && (
-            <span className="text-xs text-destructive">{updateProfile.error.message}</span>
-          )}
         </div>
       </SectionCard>
 
-      <LocaleSection currentLocale={self?.locale ?? "en"} />
       <SecurityContent twoFactorEnabled={self?.twoFactorEnabled ?? false} />
       <ConnectedAccountsSection accounts={linkedAccounts} onRefresh={loadLinkedAccounts} />
       <PasswordSection hasPassword={linkedAccounts.some((a) => a.providerId === "credential")} />

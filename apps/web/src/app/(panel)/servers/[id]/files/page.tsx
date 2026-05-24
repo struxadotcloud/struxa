@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import type { Monaco } from "@monaco-editor/react";
+import { useTranslations } from "next-intl";
 import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
 import Loader from "@/components/loader";
@@ -106,6 +107,7 @@ function FileIcon({ file, className = "h-4 w-4 shrink-0" }: { file: WingsFile; c
 }
 
 export default function FilesPage({ params }: { params: Promise<{ id: string }> }) {
+  const t = useTranslations("panel.files");
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
   const { id } = use(params);
@@ -265,7 +267,7 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
             <div className="flex shrink-0 items-center gap-1">
               <button
                 type="button"
-                title="New file"
+                title={t("newFile")}
                 onClick={() => {
                   setShowNewFile(true);
                   setTimeout(() => newFileInputRef.current?.focus(), 0);
@@ -276,7 +278,7 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
               </button>
               <button
                 type="button"
-                title="Upload files"
+                title={t("uploadFiles")}
                 disabled={uploading}
                 onClick={() => uploadInputRef.current?.click()}
                 className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40"
@@ -328,7 +330,7 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
               </button>
             )}
             {loadingDir ? (
-              <div className="px-3 py-4 text-xs text-muted-foreground">Loading…</div>
+              <div className="px-3 py-4 text-xs text-muted-foreground">{t("loading")}</div>
             ) : (
               entries.map((file) => {
                 const itemPath = dirPath === "/" ? `/${file.name}` : `${dirPath}/${file.name}`;
@@ -383,7 +385,7 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
                     }`}
                   >
                     <Save className="h-3.5 w-3.5" />
-                    {saving ? "Saving…" : "Save"}
+                    {saving ? t("saving") : t("save")}
                   </button>
                 )}
               </div>
@@ -424,8 +426,8 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
                 ) : (
                   <div className="flex h-full flex-col items-center justify-center gap-3">
                     <File className="h-10 w-10 text-muted-foreground/30" />
-                    <p className="text-sm font-medium text-foreground">Binary file</p>
-                    <span className="text-xs text-muted-foreground">Cannot be edited in the browser</span>
+                    <p className="text-sm font-medium text-foreground">{t("binaryFile")}</p>
+                    <span className="text-xs text-muted-foreground">{t("binaryFileNote")}</span>
                     <span className="font-mono text-xs text-muted-foreground/60">{selectedFile.mime}</span>
                   </div>
                 )}
@@ -434,8 +436,8 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-3">
               <FolderOpen className="h-10 w-10 text-muted-foreground/20" />
-              <p className="text-sm font-medium text-foreground">No file selected</p>
-              <span className="text-xs text-muted-foreground">Select a file from the panel to view or edit</span>
+              <p className="text-sm font-medium text-foreground">{t("noFileSelected")}</p>
+              <span className="text-xs text-muted-foreground">{t("noFileSelectedHint")}</span>
             </div>
           )}
         </div>

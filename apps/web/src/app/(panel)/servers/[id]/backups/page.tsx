@@ -15,6 +15,7 @@ import {
   DialogDescription,
   DialogClose,
 } from "@struxa/ui/components/dialog";
+import { useTranslations } from "next-intl";
 import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
 import Loader from "@/components/loader";
@@ -52,6 +53,7 @@ function StatusDot({ backup }: { backup: { isSuccessful: boolean; completedAt: D
 }
 
 export default function BackupsPage({ params }: { params: Promise<{ id: string }> }) {
+  const t = useTranslations("panel.backups");
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
   const { id } = use(params);
@@ -109,9 +111,9 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
       <Dialog open={!!restoreTarget} onOpenChange={(open) => { if (!open) setRestoreTarget(null); }}>
         <DialogPopup showCloseButton={false}>
           <DialogHeader>
-            <DialogTitle>Restore Backup</DialogTitle>
+            <DialogTitle>{t("restoreTitle")}</DialogTitle>
             <DialogDescription>
-              Restoring <span className="font-medium text-foreground">{restoreTarget?.name}</span> will overwrite the server&apos;s current files. This action cannot be undone.
+              {t("restoreDescription", { name: restoreTarget?.name ?? "" })}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -119,7 +121,7 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
               className="rounded-lg px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               disabled={restoreMutation.isPending}
             >
-              Cancel
+              {t("cancel")}
             </DialogClose>
             <button
               type="button"
@@ -130,7 +132,7 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
               }}
               className="rounded-lg bg-foreground px-4 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
             >
-              {restoreMutation.isPending ? "Restoring…" : "Restore Backup"}
+              {restoreMutation.isPending ? t("restoring") : t("restoreBackup")}
             </button>
           </DialogFooter>
         </DialogPopup>
@@ -139,9 +141,9 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
       <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
         <DialogPopup showCloseButton={false}>
           <DialogHeader>
-            <DialogTitle>Delete Backup</DialogTitle>
+            <DialogTitle>{t("deleteTitle")}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete <span className="font-medium text-foreground">{deleteTarget?.name}</span>? This action cannot be undone.
+              {t("deleteDescription", { name: deleteTarget?.name ?? "" })}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -149,7 +151,7 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
               className="rounded-lg px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               disabled={deleteMutation.isPending}
             >
-              Cancel
+              {t("cancel")}
             </DialogClose>
             <button
               type="button"
@@ -163,7 +165,7 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
               }}
               className="rounded-lg bg-destructive px-4 py-1.5 text-xs font-medium text-destructive-foreground transition-opacity hover:opacity-80 disabled:opacity-40"
             >
-              {deleteMutation.isPending ? "Deleting…" : "Delete Backup"}
+              {deleteMutation.isPending ? t("deleting") : t("deleteBackup")}
             </button>
           </DialogFooter>
         </DialogPopup>
@@ -172,11 +174,11 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
       <Dialog open={showCreate} onOpenChange={(open) => { if (!open) closeCreate(); }}>
         <DialogPopup showCloseButton={false}>
           <DialogHeader>
-            <DialogTitle>Create Backup</DialogTitle>
-            <DialogDescription>Give this backup a name to identify it later.</DialogDescription>
+            <DialogTitle>{t("createTitle")}</DialogTitle>
+            <DialogDescription>{t("createDescription")}</DialogDescription>
           </DialogHeader>
           <div className="px-5 py-4">
-            <label className="mb-1.5 block text-xs font-medium text-foreground">Backup Name</label>
+            <label className="mb-1.5 block text-xs font-medium text-foreground">{t("nameLabel")}</label>
             <input
               autoFocus
               value={createName}
@@ -197,7 +199,7 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
               className="rounded-lg px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               disabled={createMutation.isPending}
             >
-              Cancel
+              {t("cancel")}
             </DialogClose>
             <button
               type="button"
@@ -205,7 +207,7 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
               disabled={!createName.trim() || createMutation.isPending}
               className="rounded-lg bg-foreground px-4 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
             >
-              {createMutation.isPending ? "Creating…" : "Create Backup"}
+              {createMutation.isPending ? t("creating") : t("createBackup")}
             </button>
           </DialogFooter>
         </DialogPopup>
@@ -214,35 +216,35 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
       <div className="flex flex-1 gap-3 overflow-hidden px-4 py-4">
         <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
-            <p className="text-sm font-medium text-foreground">Backups</p>
+            <p className="text-sm font-medium text-foreground">{t("sectionTitle")}</p>
             <button
               type="button"
               onClick={() => setShowCreate(true)}
               className="rounded-lg bg-foreground px-3 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80"
             >
-              Create Backup
+              {t("createBackup")}
             </button>
           </div>
           <div className="grid grid-cols-[28px_1fr_100px_200px_100px] border-b border-border bg-muted/40 px-4 py-2.5">
             <span />
-            <span className="text-xs font-medium text-muted-foreground">Name</span>
-            <span className="text-xs font-medium text-muted-foreground">Size</span>
-            <span className="text-xs font-medium text-muted-foreground">Created</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("colName")}</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("colSize")}</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("colCreated")}</span>
             <span />
           </div>
           <div className="flex-1 overflow-y-auto">
             {backupsPending ? (
-              <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">Loading…</div>
+              <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">{t("loading")}</div>
             ) : backups.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 gap-2">
                 <Archive className="h-8 w-8 text-muted-foreground/30" />
-                <p className="text-sm text-muted-foreground">No backups yet</p>
+                <p className="text-sm text-muted-foreground">{t("empty")}</p>
                 <button
                   type="button"
                   onClick={() => setShowCreate(true)}
                   className="mt-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                 >
-                  Create first backup
+                  {t("createFirst")}
                 </button>
               </div>
             ) : (
@@ -264,7 +266,7 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
                             type="button"
                             onClick={() => serverId && downloadMutation.mutate({ serverId, backupId: backup.id })}
                             className="rounded p-0.5 text-muted-foreground/50 hover:bg-muted hover:text-blue-500 transition-colors"
-                            title="Download"
+                            title={t("download")}
                           >
                             <Download className="h-3.5 w-3.5" />
                           </button>
@@ -272,7 +274,7 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
                             type="button"
                             onClick={() => setRestoreTarget({ id: backup.id, name: backup.name })}
                             className="rounded p-0.5 text-muted-foreground/50 hover:bg-muted hover:text-green-500 transition-colors"
-                            title="Restore"
+                            title={t("restore")}
                           >
                             <RotateCcw className="h-3.5 w-3.5" />
                           </button>
@@ -283,7 +285,7 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
                         disabled={backup.isLocked}
                         onClick={() => setDeleteTarget({ id: backup.id, name: backup.name })}
                         className="rounded p-0.5 text-muted-foreground/50 hover:bg-muted hover:text-destructive disabled:opacity-30 transition-colors"
-                        title="Delete"
+                        title={t("delete")}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
@@ -297,13 +299,13 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
 
         <aside className="flex w-[220px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           <div className="overflow-y-auto">
-            <StatRow icon={Archive} label="Backups">
+            <StatRow icon={Archive} label={t("statBackups")}>
               <span className="text-xl font-bold text-foreground">{backups.length}</span>
             </StatRow>
-            <StatRow icon={HardDrive} label="Total Size">
+            <StatRow icon={HardDrive} label={t("statTotalSize")}>
               <span className="text-xl font-bold text-foreground">{fmtBytes(totalBytes)}</span>
             </StatRow>
-            <StatRow icon={Clock} label="Last Backup">
+            <StatRow icon={Clock} label={t("statLastBackup")}>
               <span className="text-sm font-semibold text-foreground leading-snug">
                 {lastBackup ? fmtDate(lastBackup.createdAt) : "—"}
               </span>

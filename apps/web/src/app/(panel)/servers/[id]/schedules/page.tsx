@@ -21,6 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@struxa/ui/components/dropdown-menu";
+import { useTranslations } from "next-intl";
 import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
 import Loader from "@/components/loader";
@@ -53,9 +54,12 @@ function formatCron(sch: {
   return `${sch.cronMinute} ${sch.cronHour} ${sch.cronDayOfMonth} * ${sch.cronDayOfWeek}`;
 }
 
-const DOW_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const DOW_KEYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"] as const;
 
-function describeCron(minute: string, hour: string, dom: string, dow: string): string {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type CronT = (key: any, values?: any) => string;
+
+function describeCron(minute: string, hour: string, dom: string, dow: string, t: CronT): string {
   const minStep = minute.match(/^\*\/(\d+)$/)?.[1];
   const hrStep = hour.match(/^\*\/(\d+)$/)?.[1];
   const minFixed = /^\d+$/.test(minute) ? parseInt(minute) : null;
@@ -63,12 +67,12 @@ function describeCron(minute: string, hour: string, dom: string, dow: string): s
   const domFixed = /^\d+$/.test(dom) ? parseInt(dom) : null;
   const dowFixed = /^\d+$/.test(dow) ? parseInt(dow) % 7 : null;
 
-  if (minute === "*" && hour === "*" && dom === "*" && dow === "*") return "Every minute";
+  if (minute === "*" && hour === "*" && dom === "*" && dow === "*") return t("cronEveryMinute");
   if (minStep && hour === "*" && dom === "*" && dow === "*")
-    return `Every ${minStep} minute${minStep === "1" ? "" : "s"}`;
-  if (minFixed === 0 && hour === "*" && dom === "*" && dow === "*") return "Every hour";
+    return t("cronEveryNMinutes", { n: parseInt(minStep) });
+  if (minFixed === 0 && hour === "*" && dom === "*" && dow === "*") return t("cronEveryHour");
   if (minFixed === 0 && hrStep && dom === "*" && dow === "*")
-    return `Every ${hrStep} hour${hrStep === "1" ? "" : "s"}`;
+    return t("cronEveryNHours", { n: parseInt(hrStep) });
 
   const timeStr =
     hrFixed !== null && minFixed !== null
@@ -81,11 +85,11 @@ function describeCron(minute: string, hour: string, dom: string, dow: string): s
       : null;
 
   if (timeStr) {
-    if (dom === "*" && dow === "*") return `Every day at ${timeStr}`;
-    if (dom === "*" && dowFixed !== null) return `Every ${DOW_NAMES[dowFixed]} at ${timeStr}`;
-    if (domFixed !== null && dow === "*") return `Monthly on day ${domFixed} at ${timeStr}`;
+    if (dom === "*" && dow === "*") return t("cronEveryDayAt", { time: timeStr });
+    if (dom === "*" && dowFixed !== null) return t("cronEveryWeekdayAt", { weekday: t(`dow.${DOW_KEYS[dowFixed]}`), time: timeStr });
+    if (domFixed !== null && dow === "*") return t("cronMonthlyOnDay", { day: domFixed, time: timeStr });
     if (domFixed !== null && dowFixed !== null)
-      return `On day ${domFixed} or ${DOW_NAMES[dowFixed]} at ${timeStr}`;
+      return t("cronOnDayOrWeekday", { day: domFixed, weekday: t(`dow.${DOW_KEYS[dowFixed]}`), time: timeStr });
   }
 
   return `${minute} ${hour} ${dom} * ${dow}`;
@@ -131,10 +135,10 @@ interface ScheduleTask {
   isQueued: boolean;
 }
 
-const ACTION_LABELS: Record<TaskAction, string> = {
-  command: "Command",
-  power: "Power",
-  backup: "Backup",
+const ACTION_LABEL_KEYS: Record<TaskAction, string> = {
+  command: "actionCommand",
+  power: "actionPower",
+  backup: "actionBackup",
 };
 
 const ACTION_COLORS: Record<TaskAction, string> = {
@@ -161,6 +165,7 @@ function TasksPanel({
   tasks: ScheduleTask[];
   queryClient: ReturnType<typeof useQueryClient>;
 }) {
+  const t = useTranslations("panel.schedules");
   const [showModal, setShowModal] = useState(false);
   const [taskForm, setTaskForm] = useState(EMPTY_TASK_FORM);
 
@@ -208,20 +213,20 @@ function TasksPanel({
       <Dialog open={showModal} onOpenChange={(open) => { if (!open) closeModal(); }}>
         <DialogPopup showCloseButton={false}>
           <DialogHeader>
-            <DialogTitle>Add Task</DialogTitle>
+            <DialogTitle>{t("addTaskTitle")}</DialogTitle>
             <DialogDescription>
-              Tasks run in sequence when the schedule fires.
+              {t("addTaskDescription")}
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4 px-5 py-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-foreground">Action</label>
+              <label className="text-xs font-medium text-foreground">{t("actionLabel")}</label>
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex w-full items-center justify-between rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-foreground outline-none transition-colors hover:border-ring data-[popup-open]:border-ring">
                   <span>
-                    {taskForm.action === "command" && "Command — run a console command"}
-                    {taskForm.action === "power" && "Power — change server power state"}
-                    {taskForm.action === "backup" && "Backup — create a server backup"}
+                    {taskForm.action === "command" && t("actionCommandDesc")}
+                    {taskForm.action === "power" && t("actionPowerDesc")}
+                    {taskForm.action === "backup" && t("actionBackupDesc")}
                   </span>
                   <ChevronDown className="ml-2 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 </DropdownMenuTrigger>
@@ -233,9 +238,9 @@ function TasksPanel({
                       className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground"
                     >
                       <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${taskForm.action === a ? "bg-green-500" : "bg-transparent"}`} />
-                      {a === "command" && "Command — run a console command"}
-                      {a === "power" && "Power — change server power state"}
-                      {a === "backup" && "Backup — create a server backup"}
+                      {a === "command" && t("actionCommandDesc")}
+                      {a === "power" && t("actionPowerDesc")}
+                      {a === "backup" && t("actionBackupDesc")}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
@@ -244,7 +249,7 @@ function TasksPanel({
 
             {taskForm.action === "command" && (
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-foreground">Command</label>
+                <label className="text-xs font-medium text-foreground">{t("commandLabel")}</label>
                 <input
                   autoFocus
                   value={taskForm.payload}
@@ -258,7 +263,7 @@ function TasksPanel({
 
             {taskForm.action === "power" && (
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-foreground">Power Action</label>
+                <label className="text-xs font-medium text-foreground">{t("powerActionLabel")}</label>
                 <DropdownMenu>
                   <DropdownMenuTrigger className="flex w-full items-center justify-between rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-foreground outline-none transition-colors hover:border-ring data-[popup-open]:border-ring capitalize">
                     <span>{taskForm.payload || "restart"}</span>
@@ -282,7 +287,7 @@ function TasksPanel({
 
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-foreground">Delay after previous (seconds)</label>
+                <label className="text-xs font-medium text-foreground">{t("delayLabel")}</label>
                 <input
                   type="number"
                   min={0}
@@ -301,7 +306,7 @@ function TasksPanel({
                     onChange={(e) => setTaskForm((f) => ({ ...f, continueOnFailure: e.target.checked }))}
                     className="rounded"
                   />
-                  Continue on failure
+                  {t("continueOnFailure")}
                 </label>
               </div>
             </div>
@@ -315,7 +320,7 @@ function TasksPanel({
               className="rounded-lg px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               disabled={createTaskMutation.isPending}
             >
-              Cancel
+              {t("cancel")}
             </DialogClose>
             <button
               type="button"
@@ -326,7 +331,7 @@ function TasksPanel({
               }
               className="rounded-lg bg-foreground px-4 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
             >
-              {createTaskMutation.isPending ? "Adding…" : "Add Task"}
+              {createTaskMutation.isPending ? t("adding") : t("addTask")}
             </button>
           </DialogFooter>
         </DialogPopup>
@@ -335,7 +340,7 @@ function TasksPanel({
       <div className="border-t border-border/60 bg-muted/10">
         {tasks.length === 0 ? (
           <div className="flex items-center gap-3 px-10 py-3 text-xs text-muted-foreground">
-            No tasks yet — this schedule does nothing until you add one.
+            {t("noTasks")}
           </div>
         ) : (
           <div className="divide-y divide-border/40">
@@ -355,7 +360,7 @@ function TasksPanel({
                     <span
                       className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${ACTION_COLORS[action] ?? "bg-muted text-muted-foreground"}`}
                     >
-                      {ACTION_LABELS[action] ?? action}
+                      {ACTION_LABEL_KEYS[action] ? t(ACTION_LABEL_KEYS[action]) : action}
                     </span>
                     <span className="flex-1 font-mono text-xs text-foreground truncate">
                       {task.payload || "—"}
@@ -364,7 +369,7 @@ function TasksPanel({
                       <span className="text-[11px] text-muted-foreground">+{task.timeOffset}s</span>
                     )}
                     {task.continueOnFailure && (
-                      <span className="text-[10px] text-muted-foreground/60">continue on fail</span>
+                      <span className="text-[10px] text-muted-foreground/60">{t("continueOnFailShort")}</span>
                     )}
                     <button
                       type="button"
@@ -387,7 +392,7 @@ function TasksPanel({
             className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
             <Plus className="h-3 w-3" />
-            Add task
+            {t("addTask")}
           </button>
         </div>
       </div>
@@ -396,6 +401,7 @@ function TasksPanel({
 }
 
 export default function SchedulesPage({ params }: { params: Promise<{ id: string }> }) {
+  const t = useTranslations("panel.schedules");
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
   const { id } = use(params);
@@ -471,6 +477,7 @@ export default function SchedulesPage({ params }: { params: Promise<{ id: string
     form.cronHour || "*",
     form.cronDayOfMonth || "*",
     form.cronDayOfWeek || "*",
+    t,
   );
 
   return (
@@ -478,46 +485,46 @@ export default function SchedulesPage({ params }: { params: Promise<{ id: string
       <Dialog open={showCreate} onOpenChange={(open) => { if (!open) closeCreate(); }}>
         <DialogPopup showCloseButton={false}>
           <DialogHeader>
-            <DialogTitle>Create Schedule</DialogTitle>
-            <DialogDescription>Set up an automated task using cron syntax.</DialogDescription>
+            <DialogTitle>{t("createTitle")}</DialogTitle>
+            <DialogDescription>{t("createDescription")}</DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4 px-5 py-4">
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-foreground">Schedule Name</label>
+              <label className="mb-1.5 block text-xs font-medium text-foreground">{t("nameLabel")}</label>
               <input
                 autoFocus
                 value={form.name}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                placeholder="Daily restart"
+                placeholder={t("namePlaceholder")}
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
               />
             </div>
             <div>
-              <p className="mb-2 text-xs font-medium text-foreground">Cron Expression</p>
+              <p className="mb-2 text-xs font-medium text-foreground">{t("cronExpression")}</p>
               <div className="grid grid-cols-4 gap-2">
                 <CronField
-                  label="Minute"
+                  label={t("cronMinute")}
                   placeholder="*/5"
                   value={form.cronMinute}
                   onChange={(v) => setForm((f) => ({ ...f, cronMinute: v }))}
                   hint="0–59"
                 />
                 <CronField
-                  label="Hour"
+                  label={t("cronHour")}
                   placeholder="*"
                   value={form.cronHour}
                   onChange={(v) => setForm((f) => ({ ...f, cronHour: v }))}
                   hint="0–23"
                 />
                 <CronField
-                  label="Day"
+                  label={t("cronDay")}
                   placeholder="*"
                   value={form.cronDayOfMonth}
                   onChange={(v) => setForm((f) => ({ ...f, cronDayOfMonth: v }))}
                   hint="1–31"
                 />
                 <CronField
-                  label="Weekday"
+                  label={t("cronWeekday")}
                   placeholder="*"
                   value={form.cronDayOfWeek}
                   onChange={(v) => setForm((f) => ({ ...f, cronDayOfWeek: v }))}
@@ -541,7 +548,7 @@ export default function SchedulesPage({ params }: { params: Promise<{ id: string
               className="rounded-lg px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               disabled={createMutation.isPending}
             >
-              Cancel
+              {t("cancel")}
             </DialogClose>
             <button
               type="button"
@@ -549,7 +556,7 @@ export default function SchedulesPage({ params }: { params: Promise<{ id: string
               disabled={!form.name.trim() || createMutation.isPending}
               className="rounded-lg bg-foreground px-4 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
             >
-              {createMutation.isPending ? "Creating…" : "Create Schedule"}
+              {createMutation.isPending ? t("creating") : t("createSchedule")}
             </button>
           </DialogFooter>
         </DialogPopup>
@@ -558,39 +565,39 @@ export default function SchedulesPage({ params }: { params: Promise<{ id: string
       <div className="flex flex-1 gap-3 overflow-hidden px-4 py-4">
         <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
-            <p className="text-sm font-medium text-foreground">Schedules</p>
+            <p className="text-sm font-medium text-foreground">{t("sectionTitle")}</p>
             <button
               type="button"
               onClick={() => setShowCreate(true)}
               className="flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80"
             >
               <Plus className="h-3.5 w-3.5" />
-              New Schedule
+              {t("newSchedule")}
             </button>
           </div>
           <div className="grid grid-cols-[28px_1fr_160px_180px_180px_48px] border-b border-border bg-muted/40 px-4 py-2.5">
             <span />
-            <span className="text-xs font-medium text-muted-foreground">Name</span>
-            <span className="text-xs font-medium text-muted-foreground">Cron</span>
-            <span className="text-xs font-medium text-muted-foreground">Last Run</span>
-            <span className="text-xs font-medium text-muted-foreground">Next Run</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("colName")}</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("colCron")}</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("colLastRun")}</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("colNextRun")}</span>
             <span />
           </div>
           <div className="flex-1 overflow-y-auto">
             {schedulesPending ? (
               <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
-                Loading…
+                {t("loading")}
               </div>
             ) : schedules.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 gap-2">
                 <Clock className="h-8 w-8 text-muted-foreground/30" />
-                <p className="text-sm text-muted-foreground">No schedules yet</p>
+                <p className="text-sm text-muted-foreground">{t("empty")}</p>
                 <button
                   type="button"
                   onClick={() => setShowCreate(true)}
                   className="mt-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                 >
-                  Create first schedule
+                  {t("createFirst")}
                 </button>
               </div>
             ) : (
@@ -605,7 +612,7 @@ export default function SchedulesPage({ params }: { params: Promise<{ id: string
                     >
                       <button
                         type="button"
-                        title={sch.isActive ? "Disable" : "Enable"}
+                        title={sch.isActive ? t("disable") : t("enable")}
                         onClick={(e) => {
                           e.stopPropagation();
                           serverId &&
@@ -634,7 +641,7 @@ export default function SchedulesPage({ params }: { params: Promise<{ id: string
                         <div className="flex flex-col gap-0.5">
                           <span className="text-sm font-medium text-foreground">{sch.name}</span>
                           <span className="text-xs text-muted-foreground">
-                            {tasks.length} task{tasks.length !== 1 ? "s" : ""}
+                            {t("taskCount", { count: tasks.length })}
                           </span>
                         </div>
                       </div>
@@ -672,16 +679,16 @@ export default function SchedulesPage({ params }: { params: Promise<{ id: string
 
         <aside className="flex w-[220px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           <div className="overflow-y-auto">
-            <StatRow icon={ListChecks} label="Schedules">
+            <StatRow icon={ListChecks} label={t("statSchedules")}>
               <span className="text-xl font-bold text-foreground">{schedules.length}</span>
             </StatRow>
-            <StatRow icon={Clock} label="Enabled">
+            <StatRow icon={Clock} label={t("statEnabled")}>
               <span className="text-xl font-bold text-green-500">{enabled.length}</span>
             </StatRow>
-            <StatRow icon={Clock} label="Disabled">
+            <StatRow icon={Clock} label={t("statDisabled")}>
               <span className="text-xl font-bold text-muted-foreground">{disabled.length}</span>
             </StatRow>
-            <StatRow icon={Clock} label="Next Run">
+            <StatRow icon={Clock} label={t("statNextRun")}>
               <span className="text-sm font-semibold text-foreground leading-snug">
                 {soonest ? fmtDate(soonest.nextRunAt) : "—"}
               </span>

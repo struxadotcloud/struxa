@@ -3,6 +3,7 @@
 import { use } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ShieldOff } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { orpc } from "@/utils/orpc";
 
 function BlockedPage({
@@ -12,6 +13,7 @@ function BlockedPage({
   name: string;
   state: "installing" | "suspended";
 }) {
+  const t = useTranslations("panel.server");
   const suspended = state === "suspended";
 
   return (
@@ -21,7 +23,7 @@ function BlockedPage({
         <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
           suspended ? "bg-red-500/10 text-red-400" : "bg-amber-500/10 text-amber-400"
         }`}>
-          {suspended ? "Suspended" : "Installing"}
+          {suspended ? t("suspended") : t("installing")}
         </span>
       </div>
 
@@ -33,17 +35,17 @@ function BlockedPage({
                 <ShieldOff className="h-5 w-5 text-red-400" />
               </div>
               <div className="flex flex-col gap-1.5">
-                <p className="text-sm font-semibold text-foreground">Server suspended</p>
+                <p className="text-sm font-semibold text-foreground">{t("suspendedTitle")}</p>
                 <p className="text-xs leading-relaxed text-muted-foreground">
-                  Access to this server has been restricted by an administrator. Contact support if you think this is a mistake.
+                  {t("suspendedDescription")}
                 </p>
               </div>
             </>
           ) : (
             <div className="flex flex-col gap-1.5">
-              <p className="text-sm font-semibold text-foreground">Installation in progress</p>
+              <p className="text-sm font-semibold text-foreground">{t("installingTitle")}</p>
               <p className="text-xs leading-relaxed text-muted-foreground">
-                Your server is currently being installed. This usually takes a minute or two depending on the egg configuration. The page will refresh automatically once it's ready.
+                {t("installingDescription")}
               </p>
             </div>
           )}

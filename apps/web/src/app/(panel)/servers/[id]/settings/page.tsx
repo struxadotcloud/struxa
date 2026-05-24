@@ -22,6 +22,7 @@ import {
 } from "@struxa/ui/components/dialog";
 import { Button } from "@struxa/ui/components/button";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { orpc, queryClient } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
 import Loader from "@/components/loader";
@@ -193,10 +194,11 @@ function DebouncedInput({
 type SaveStatus = "saving" | "saved" | "error";
 
 function SaveIndicator({ status }: { status: SaveStatus | undefined }) {
+  const tCommon = useTranslations("common");
   if (!status) return null;
-  if (status === "saving") return <span className="text-xs text-muted-foreground">Saving…</span>;
-  if (status === "saved") return <span className="text-xs text-green-500">Saved</span>;
-  return <span className="text-xs text-destructive">Error</span>;
+  if (status === "saving") return <span className="text-xs text-muted-foreground">{tCommon("saving")}</span>;
+  if (status === "saved") return <span className="text-xs text-green-500">{tCommon("saved")}</span>;
+  return <span className="text-xs text-destructive">{tCommon("error")}</span>;
 }
 
 function isBoolVariable(rules: string | null | undefined): boolean {
@@ -217,6 +219,7 @@ type ServerVariable = {
 };
 
 export default function SettingsPage({ params }: { params: Promise<{ id: string }> }) {
+  const t = useTranslations("panel.settings");
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
   const { id } = use(params);
@@ -319,8 +322,8 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
     <>
       <div className="flex flex-1 gap-3 overflow-hidden px-4 py-4">
         <div className="flex flex-1 flex-col gap-3 overflow-y-auto">
-          <SectionCard title="General" description="Basic server configuration.">
-            <SettingRow label="Server Name" description="Displayed in the panel.">
+          <SectionCard title={t("generalTitle")} description={t("generalDescription")}>
+            <SettingRow label={t("serverNameLabel")} description={t("serverNameDescription")}>
               <div className="flex items-center gap-2">
                 <DebouncedInput
                   defaultValue={server?.name ?? ""}
@@ -330,7 +333,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
                 <SaveIndicator status={nameStatus} />
               </div>
             </SettingRow>
-            <SettingRow label="Docker Image" description="Container image used to run this server.">
+            <SettingRow label={t("dockerImageLabel")} description={t("dockerImageDescription")}>
               {dockerImageOptions.length > 1 ? (
                 <div className="flex items-center gap-2">
                   <CustomSelect
@@ -349,12 +352,12 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
             </SettingRow>
           </SectionCard>
 
-          <SectionCard title="SFTP" description="Use these credentials to connect via any SFTP client. Your panel password is used for authentication.">
+          <SectionCard title={t("sftpTitle")} description={t("sftpDescription")}>
             <div className="grid grid-cols-3">
               {[
-                { label: "Host", value: sftp.host, copy: sftp.host },
-                { label: "Port", value: String(sftp.port), copy: null },
-                { label: "Username", value: sftp.username, copy: sftp.username },
+                { label: t("sftpHost"), value: sftp.host, copy: sftp.host },
+                { label: t("sftpPort"), value: String(sftp.port), copy: null },
+                { label: t("sftpUsername"), value: sftp.username, copy: sftp.username },
               ].map(({ label, value, copy: copyVal }, i) => (
                 <div key={label} className={`px-4 py-3 ${i < 2 ? "border-r border-border" : ""}`}>
                   <p className="mb-1.5 text-xs font-medium text-muted-foreground">{label}</p>
@@ -374,21 +377,21 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
               ))}
             </div>
             <div className="flex items-center justify-between border-t border-border px-4 py-3">
-              <p className="text-xs text-muted-foreground">Opens your local SFTP client via protocol handler.</p>
+              <p className="text-xs text-muted-foreground">{t("sftpConnectHint")}</p>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => window.open(`sftp://${sftp.username}@${sftp.host}:${sftp.port}`, "_self")}
               >
                 <ExternalLink />
-                Connect
+                {t("sftpConnect")}
               </Button>
             </div>
           </SectionCard>
 
-          <SectionCard title="Startup" description="Server startup command and variables.">
+          <SectionCard title={t("startupTitle")} description={t("startupDescription")}>
             <div className="border-b border-border px-4 py-3">
-              <p className="mb-1 text-xs font-medium text-muted-foreground">Startup Command</p>
+              <p className="mb-1 text-xs font-medium text-muted-foreground">{t("startupCommandLabel")}</p>
               <p className="font-mono text-xs text-foreground/70 leading-relaxed break-all">
                 {server?.startup ?? "—"}
               </p>
@@ -412,7 +415,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
                       />
                       <SaveIndicator status={varStatuses[sv.variable.envVariable]} />
                       {!sv.variable.userEditable && !varStatuses[sv.variable.envVariable] && (
-                        <span className="text-xs text-muted-foreground">read-only</span>
+                        <span className="text-xs text-muted-foreground">{t("readOnly")}</span>
                       )}
                     </div>
                   </SettingRow>
@@ -442,7 +445,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
                     )}
                     <SaveIndicator status={varStatuses[sv.variable.envVariable]} />
                     {!sv.variable.userEditable && (
-                      <span className="text-xs text-muted-foreground">read-only</span>
+                      <span className="text-xs text-muted-foreground">{t("readOnly")}</span>
                     )}
                   </div>
                 </SettingRow>
@@ -450,17 +453,17 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
             })}
           </SectionCard>
 
-          <SectionCard title="Danger Zone" description="Irreversible actions that affect this server.">
+          <SectionCard title={t("dangerZoneTitle")} description={t("dangerZoneDescription")}>
             <SettingRow
-              label="Reinstall Server"
-              description="Runs the egg installer again. Install-script files will be overwritten — other server data is usually preserved but not guaranteed."
+              label={t("reinstallLabel")}
+              description={t("reinstallDescription")}
             >
               <button
                 type="button"
                 onClick={() => setReinstallConfirm(true)}
                 className="rounded-lg border border-destructive/30 px-3 py-1.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/10"
               >
-                Reinstall
+                {t("reinstall")}
               </button>
             </SettingRow>
           </SectionCard>
@@ -468,14 +471,14 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
           <Dialog open={reinstallConfirm} onOpenChange={(open) => { if (!open) setReinstallConfirm(false); }}>
             <DialogPopup showCloseButton={false} className="max-w-md">
               <DialogHeader>
-                <DialogTitle>Reinstall "{server?.name}"?</DialogTitle>
+                <DialogTitle>{t("reinstallDialogTitle", { name: server?.name ?? "" })}</DialogTitle>
                 <DialogDescription>
-                  This will run the egg installer again. Files created by the installer (startup scripts, default configs) will be overwritten. Other server data is usually preserved, but this is not guaranteed. The server will be temporarily unavailable.
+                  {t("reinstallDialogDescription")}
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter>
                 <Button variant="outline" size="sm" onClick={() => setReinstallConfirm(false)}>
-                  Cancel
+                  {t("cancel")}
                 </Button>
                 <Button
                   variant="destructive"
@@ -483,7 +486,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
                   disabled={reinstallMutation.isPending}
                   onClick={() => reinstallMutation.mutate({ serverId: id })}
                 >
-                  {reinstallMutation.isPending ? "Reinstalling…" : "Reinstall"}
+                  {reinstallMutation.isPending ? t("reinstalling") : t("reinstall")}
                 </Button>
               </DialogFooter>
             </DialogPopup>
@@ -492,16 +495,16 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
 
         <aside className="flex w-[240px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           <div className="overflow-y-auto">
-            <StatRow icon={Server} label="Server ID">
+            <StatRow icon={Server} label={t("statServerId")}>
               <span className="font-mono text-xs text-muted-foreground break-all">{server?.uuid ?? "—"}</span>
             </StatRow>
-            <StatRow icon={Globe} label="Node">
+            <StatRow icon={Globe} label={t("statNode")}>
               <span className="text-sm font-semibold text-foreground">{node?.name ?? "—"}</span>
             </StatRow>
-            <StatRow icon={Server} label="Egg">
+            <StatRow icon={Server} label={t("statEgg")}>
               <span className="text-sm font-semibold text-foreground">{(server?.egg as { name?: string } | undefined)?.name ?? "—"}</span>
             </StatRow>
-            <StatRow icon={Terminal} label="SFTP Host">
+            <StatRow icon={Terminal} label={t("statSftpHost")}>
               <div className="flex items-center gap-2">
                 <span className="font-mono text-sm text-foreground">{sftp.host}:{sftp.port}</span>
                 <button
