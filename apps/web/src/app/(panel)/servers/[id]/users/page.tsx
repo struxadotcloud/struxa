@@ -132,7 +132,7 @@ export default function UsersPage({ params }: { params: Promise<{ id: string }> 
                   {invitePermissions.length === ALL_PERMISSIONS.length ? t("deselectAll") : t("selectAll")}
                 </button>
               </div>
-              <div className="grid grid-cols-3 gap-1">
+              <div className="grid grid-cols-2 gap-1 sm:grid-cols-3">
                 {ALL_PERMISSIONS.map((perm) => {
                   const active = invitePermissions.includes(perm);
                   return (
@@ -176,7 +176,7 @@ export default function UsersPage({ params }: { params: Promise<{ id: string }> 
         </DialogPopup>
       </Dialog>
 
-      <div className="flex flex-1 gap-3 overflow-hidden px-4 py-4">
+      <div className="flex flex-1 flex-col gap-3 overflow-auto px-4 py-4 md:flex-row md:overflow-hidden">
         <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <p className="text-sm font-medium text-foreground">{t("sectionTitle")}</p>
@@ -248,7 +248,7 @@ export default function UsersPage({ params }: { params: Promise<{ id: string }> 
           </div>
         </div>
 
-        <aside className="flex w-[220px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        <aside className="flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm md:w-[220px]">
           <div className="overflow-y-auto">
             <StatRow icon={Users} label={t("statSubusers")}>
               <span className="text-xl font-bold text-foreground">{subusers.length}</span>

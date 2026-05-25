@@ -58,7 +58,7 @@ export default function NetworkPage({ params }: { params: Promise<{ id: string }
 
   return (
     <>
-      <div className="flex flex-1 gap-3 overflow-hidden px-4 py-4">
+      <div className="flex flex-1 flex-col gap-3 overflow-auto px-4 py-4 md:flex-row md:overflow-hidden">
         <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           <div className="grid grid-cols-[32px_1fr_100px_120px] border-b border-border bg-muted/40 px-4 py-2.5">
             <span />
@@ -100,7 +100,7 @@ export default function NetworkPage({ params }: { params: Promise<{ id: string }
           </div>
         </div>
 
-        <aside className="flex w-[220px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        <aside className="flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm md:w-[220px]">
           <div className="overflow-y-auto">
             <StatRow icon={Globe} label={t("statPrimary")}>
               <span className="text-sm font-semibold text-foreground leading-snug">

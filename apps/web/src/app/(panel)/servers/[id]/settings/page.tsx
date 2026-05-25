@@ -320,7 +320,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
 
   return (
     <>
-      <div className="flex flex-1 gap-3 overflow-hidden px-4 py-4">
+      <div className="flex flex-1 flex-col gap-3 overflow-auto px-4 py-4 md:flex-row md:overflow-hidden">
         <div className="flex flex-1 flex-col gap-3 overflow-y-auto">
           <SectionCard title={t("generalTitle")} description={t("generalDescription")}>
             <SettingRow label={t("serverNameLabel")} description={t("serverNameDescription")}>
@@ -353,21 +353,21 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
           </SectionCard>
 
           <SectionCard title={t("sftpTitle")} description={t("sftpDescription")}>
-            <div className="grid grid-cols-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3">
               {[
                 { label: t("sftpHost"), value: sftp.host, copy: sftp.host },
                 { label: t("sftpPort"), value: String(sftp.port), copy: null },
                 { label: t("sftpUsername"), value: sftp.username, copy: sftp.username },
               ].map(({ label, value, copy: copyVal }, i) => (
-                <div key={label} className={`px-4 py-3 ${i < 2 ? "border-r border-border" : ""}`}>
+                <div key={label} className={`px-4 py-3 ${i < 2 ? "border-b border-border sm:border-b-0 sm:border-r" : ""}`}>
                   <p className="mb-1.5 text-xs font-medium text-muted-foreground">{label}</p>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-sm text-foreground">{value}</span>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="min-w-0 break-all font-mono text-sm text-foreground">{value}</span>
                     {copyVal && (
                       <button
                         type="button"
                         onClick={() => copy(copyVal)}
-                        className="rounded p-0.5 text-muted-foreground/50 transition-colors hover:bg-muted hover:text-foreground"
+                        className="shrink-0 rounded p-0.5 text-muted-foreground/50 transition-colors hover:bg-muted hover:text-foreground"
                       >
                         <Copy className="h-3.5 w-3.5" />
                       </button>
@@ -493,7 +493,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
           </Dialog>
         </div>
 
-        <aside className="flex w-[240px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        <aside className="flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm md:w-[240px]">
           <div className="overflow-y-auto">
             <StatRow icon={Server} label={t("statServerId")}>
               <span className="font-mono text-xs text-muted-foreground break-all">{server?.uuid ?? "—"}</span>

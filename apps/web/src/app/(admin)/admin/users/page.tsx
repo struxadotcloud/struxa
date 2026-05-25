@@ -165,7 +165,8 @@ export default function AdminUsersPage() {
         </div>
 
         {/* Table */}
-        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        <div className="overflow-x-auto">
+        <div className="min-w-[560px] overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           {/* Header */}
           <div className="grid grid-cols-[1fr_1fr_100px_80px_120px_36px] border-b border-border bg-muted/40 px-4 py-2.5">
             <span className="text-xs font-medium text-muted-foreground">{t("userColumn")}</span>
@@ -238,6 +239,7 @@ export default function AdminUsersPage() {
               </ContextMenu>
             );
           })}
+        </div>
         </div>
 
         {data && totalPages > 1 && (

@@ -562,7 +562,7 @@ export default function SchedulesPage({ params }: { params: Promise<{ id: string
         </DialogPopup>
       </Dialog>
 
-      <div className="flex flex-1 gap-3 overflow-hidden px-4 py-4">
+      <div className="flex flex-1 flex-col gap-3 overflow-auto px-4 py-4 md:flex-row md:overflow-hidden">
         <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <p className="text-sm font-medium text-foreground">{t("sectionTitle")}</p>
@@ -677,7 +677,7 @@ export default function SchedulesPage({ params }: { params: Promise<{ id: string
           </div>
         </div>
 
-        <aside className="flex w-[220px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        <aside className="flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm md:w-[220px]">
           <div className="overflow-y-auto">
             <StatRow icon={ListChecks} label={t("statSchedules")}>
               <span className="text-xl font-bold text-foreground">{schedules.length}</span>

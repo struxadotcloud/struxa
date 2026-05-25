@@ -213,7 +213,7 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
         </DialogPopup>
       </Dialog>
 
-      <div className="flex flex-1 gap-3 overflow-hidden px-4 py-4">
+      <div className="flex flex-1 flex-col gap-3 overflow-auto px-4 py-4 md:flex-row md:overflow-hidden">
         <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <p className="text-sm font-medium text-foreground">{t("sectionTitle")}</p>
@@ -225,7 +225,9 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
               {t("createBackup")}
             </button>
           </div>
-          <div className="grid grid-cols-[28px_1fr_100px_200px_100px] border-b border-border bg-muted/40 px-4 py-2.5">
+          <div className="flex flex-1 flex-col overflow-x-auto">
+          <div className="min-w-[500px] flex flex-1 flex-col">
+          <div className="grid grid-cols-[28px_1fr_100px_200px_100px] border-b border-border bg-muted/40 px-4 py-2.5 shrink-0">
             <span />
             <span className="text-xs font-medium text-muted-foreground">{t("colName")}</span>
             <span className="text-xs font-medium text-muted-foreground">{t("colSize")}</span>
@@ -295,9 +297,11 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
               })
             )}
           </div>
+          </div>
+          </div>
         </div>
 
-        <aside className="flex w-[220px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        <aside className="flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm md:w-[220px]">
           <div className="overflow-y-auto">
             <StatRow icon={Archive} label={t("statBackups")}>
               <span className="text-xl font-bold text-foreground">{backups.length}</span>

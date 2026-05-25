@@ -275,7 +275,7 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
   return (
     <>
       <div
-        className={`flex flex-1 gap-3 overflow-hidden px-4 py-4 relative${isDragging ? " outline outline-2 outline-dashed outline-green-500/40 rounded-xl" : ""}`}
+        className={`relative flex flex-1 flex-col gap-3 overflow-auto px-4 py-4 md:flex-row md:overflow-hidden${isDragging ? " outline outline-2 outline-dashed outline-green-500/40 rounded-xl" : ""}`}
         onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
         onDragEnter={(e) => { e.preventDefault(); setIsDragging(true); }}
         onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsDragging(false); }}
@@ -289,7 +289,7 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
             </div>
           </div>
         )}
-        <div className="flex w-60 shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        <div className="flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm max-h-64 md:max-h-none md:w-60">
           <div className="flex h-10 shrink-0 items-center justify-between border-b border-border px-3">
             <span className="truncate font-mono text-[11px] text-muted-foreground">{dirPath}</span>
             <div className="flex shrink-0 items-center gap-1">

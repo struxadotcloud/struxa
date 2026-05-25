@@ -53,7 +53,7 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="flex-1 overflow-auto px-6 py-5">
+    <div className="flex-1 overflow-auto px-4 py-5 md:px-6">
       <div className="mx-auto max-w-5xl">
         <div className="mb-5 flex items-center gap-2.5">
           <h1 className="text-sm font-semibold text-foreground">{t("title")}</h1>
@@ -61,7 +61,7 @@ export default function AdminDashboard() {
 
         <div className="mb-6">
           <h2 className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">{t("overview")}</h2>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <StatCard
               icon={Server}
               label={t("nodesLabel")}
@@ -86,7 +86,7 @@ export default function AdminDashboard() {
 
         <div>
           <h2 className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">{t("quickLinks")}</h2>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {QUICK_LINKS.map((link) => (
               <Link
                 key={link.href}

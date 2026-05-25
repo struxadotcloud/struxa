@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { SidebarProvider, SidebarInset } from "@struxa/ui/components/sidebar";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@struxa/ui/components/sidebar";
 import { PanelSidebar } from "./panel-sidebar";
 
 const AUTH_ROUTES = ["/login", "/register", "/forgot-password"];
@@ -29,7 +29,13 @@ export function PanelShell({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider open={open} onOpenChange={handleOpenChange} className="h-svh overflow-hidden">
       <PanelSidebar />
-      <SidebarInset className="flex flex-col overflow-hidden bg-background">{children}</SidebarInset>
+      <SidebarInset className="flex flex-col overflow-hidden bg-background">
+          <div className="flex shrink-0 items-center justify-between border-b border-border bg-card px-4 py-2.5 md:hidden">
+            <span className="text-sm font-semibold text-foreground">Struxa</span>
+            <SidebarTrigger />
+          </div>
+          {children}
+        </SidebarInset>
     </SidebarProvider>
   );
 }

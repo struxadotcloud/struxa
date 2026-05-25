@@ -87,8 +87,8 @@ function DatabaseRow({ db, serverId, onRotate, onDelete }: {
       </button>
 
       {open && (
-        <div className="grid grid-cols-2 border-t border-border bg-muted/20">
-          <div className="border-r border-border px-4 py-3">
+        <div className="grid grid-cols-1 border-t border-border bg-muted/20 sm:grid-cols-2">
+          <div className="border-b border-border px-4 py-3 sm:border-b-0 sm:border-r">
             <p className="mb-1.5 text-xs font-medium text-muted-foreground">{t("fieldUsername")}</p>
             <div className="flex items-center gap-2">
               <span className="font-mono text-sm text-foreground">{db.username}</span>
@@ -109,7 +109,7 @@ function DatabaseRow({ db, serverId, onRotate, onDelete }: {
               </button>
             </div>
           </div>
-          <div className="border-r border-t border-border px-4 py-3">
+          <div className="border-t border-border px-4 py-3 sm:border-r">
             <p className="mb-1.5 text-xs font-medium text-muted-foreground">{t("fieldHost")}</p>
             <div className="flex items-center gap-2">
               <span className="font-mono text-sm text-foreground">{db.host.host}</span>
@@ -122,7 +122,7 @@ function DatabaseRow({ db, serverId, onRotate, onDelete }: {
             <p className="mb-1.5 text-xs font-medium text-muted-foreground">{t("fieldPort")}</p>
             <span className="font-mono text-sm text-foreground">{db.host.port}</span>
           </div>
-          <div className="col-span-2 border-t border-border px-4 py-3">
+          <div className="col-span-1 border-t border-border px-4 py-3 sm:col-span-2">
             <p className="mb-1.5 text-xs font-medium text-muted-foreground">{t("fieldConnectionString")}</p>
             <div className="flex items-center gap-2">
               <span className="font-mono text-xs text-muted-foreground">
@@ -265,7 +265,7 @@ export default function DatabasesPage({ params }: { params: Promise<{ id: string
         </DialogPopup>
       </Dialog>
 
-      <div className="flex flex-1 gap-3 overflow-hidden px-4 py-4">
+      <div className="flex flex-1 flex-col gap-3 overflow-auto px-4 py-4 md:flex-row md:overflow-hidden">
         <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <p className="text-sm font-medium text-foreground">{t("sectionTitle")}</p>
@@ -307,7 +307,7 @@ export default function DatabasesPage({ params }: { params: Promise<{ id: string
           </div>
         </div>
 
-        <aside className="flex w-[240px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        <aside className="flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm md:w-[240px]">
           <div className="overflow-y-auto">
             <StatRow icon={Database} label={t("statDatabases")}>
               <span className="text-xl font-bold text-foreground">{databases.length}</span>
