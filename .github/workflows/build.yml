@@ -38,9 +38,6 @@ jobs:
   build:
     name: Build
     runs-on: blacksmith-2vcpu-ubuntu-2404
-    needs: typecheck
-    # Always run so we can report build status even when typecheck failed
-    if: always()
     outputs:
       result: ${{ job.status }}
 

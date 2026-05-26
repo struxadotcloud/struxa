@@ -5,7 +5,8 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": ["dist/**", ".next/**"]
+      "outputs": ["dist/**", ".next/**"],
+      "passThroughEnv": ["SKIP_ENV_VALIDATION", "NEXT_TELEMETRY_DISABLED"]
     },
     "lint": {
       "dependsOn": ["^lint"]
