@@ -52,7 +52,7 @@ Contributions are welcome — code, bug reports, and design feedback. See [CONTR
 
 ## License
 
-[Elastic License 2.0 (ELv2)](./LICENSE) — free to use, modify, and self-host. You may **not** offer it as a hosted service to third parties.
+[MIT)](./LICENSE) — free to use, modify, and self-host
 
 <br />
 
