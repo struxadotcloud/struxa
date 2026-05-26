@@ -12,7 +12,7 @@ Built to replace Pterodactyl — modern stack, dark UI, fully self-hosted.
 ![Last commit](https://www.shieldcn.dev/github/last-commit/struxadotcloud/struxa.svg?variant=secondary&size=sm)
 ![Open issues](https://www.shieldcn.dev/github/open-issues/struxadotcloud/struxa.svg?variant=secondary&size=sm)
 ![Release](https://www.shieldcn.dev/github/release/struxadotcloud/struxa.svg?size=sm)
-![License · ELv2](https://www.shieldcn.dev/badge/License-ELv2-000000.svg?variant=secondary&size=sm)
+![License](https://www.shieldcn.dev/github/license/struxadotcloud/struxa.svg?variant=ghost&size=sm)
 
 ![Package mgr · Bun](https://www.shieldcn.dev/badge/Package_mgr-Bun-000000.svg?logo=bun&variant=branded&size=sm)
 ![Language · TypeScript](https://www.shieldcn.dev/badge/Language-TypeScript-3178C6.svg?logo=typescript&variant=branded&size=sm)
