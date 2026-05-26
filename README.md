@@ -25,9 +25,6 @@ Built to replace Pterodactyl — modern stack, dark UI, fully self-hosted.
 
 <br />
 
-> [!CAUTION]
-> **This project is not suited for commercial deployment yet.** Our feature coverage is around 95% of current Pterodactyl® features, and we aim to release first stable version very soon. Feel free to use this on private deployments
-
 Struxa is a self-hosted server management panel — a clean-room, modern replacement for [Pterodactyl](https://pterodactyl.io). Built on a fully typed TypeScript monorepo with a dark, operator-focused UI.
 
 ## Related repositories
