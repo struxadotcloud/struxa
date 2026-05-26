@@ -1,0 +1,126 @@
+name: Build Check
+
+on:
+  pull_request:
+    branches:
+      - "**"
+  push:
+    branches:
+      - development
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  typecheck:
+    name: Type Check
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    # Expose result to the comment job
+    outputs:
+      result: ${{ job.status }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: useblacksmith/setup-bun@v1
+        with:
+          bun-version: "1.3.5"
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Type check
+        run: bun run check-types
+
+  build:
+    name: Build
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    needs: typecheck
+    # Always run so we can report build status even when typecheck failed
+    if: always()
+    outputs:
+      result: ${{ job.status }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: useblacksmith/setup-bun@v1
+        with:
+          bun-version: "1.3.5"
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build
+        run: bun run build
+        env:
+          # Stub values so env validation passes at build time — not real credentials
+          SKIP_ENV_VALIDATION: "1"
+
+  comment:
+    name: PR Comment
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    needs: [typecheck, build]
+    if: always() && github.event_name == 'pull_request'
+    permissions:
+      pull-requests: write
+
+    steps:
+      - name: Post result comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const typecheck = '${{ needs.typecheck.outputs.result }}';
+            const build     = '${{ needs.build.outputs.result }}';
+
+            const icon  = (s) => s === 'success' ? '✅' : s === 'skipped' ? '⏭️' : '❌';
+            const label = (s) => s === 'success' ? 'passed' : s === 'skipped' ? 'skipped' : 'failed';
+
+            const allGood = typecheck === 'success' && build === 'success';
+            const header  = allGood
+              ? '## ✅ Build checks passed'
+              : '## ❌ Build checks failed';
+
+            const run_url = `https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
+
+            const body = [
+              header,
+              '',
+              '| Check | Status |',
+              '|-------|--------|',
+              `| Type Check | ${icon(typecheck)} ${label(typecheck)} |`,
+              `| Build      | ${icon(build)} ${label(build)} |`,
+              '',
+              `[View run](${run_url}) · commit ${{ github.sha }}`.slice(0, 120),
+            ].join('\n');
+
+            const marker = '<!-- struxa-build-check -->';
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.find(c => c.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner:      context.repo.owner,
+                repo:       context.repo.repo,
+                comment_id: existing.id,
+                body:       marker + '\n' + body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner:       context.repo.owner,
+                repo:        context.repo.repo,
+                issue_number: context.issue.number,
+                body:         marker + '\n' + body,
+              });
+            }
