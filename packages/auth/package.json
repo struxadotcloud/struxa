@@ -11,11 +11,13 @@
   },
   "scripts": {},
   "dependencies": {
+    "@better-auth/api-key": "catalog:",
     "@struxa/db": "workspace:*",
     "@struxa/env": "workspace:*",
-    "@better-auth/api-key": "catalog:",
+    "@types/nodemailer": "^8.0.0",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
+    "nodemailer": "^8.0.8",
     "zod": "catalog:"
   },
   "devDependencies": {

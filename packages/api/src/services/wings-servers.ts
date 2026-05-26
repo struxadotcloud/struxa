@@ -8,6 +8,14 @@ import {
   servers,
   serverVariables,
 } from "@struxa/db";
+import { user as userTable } from "@struxa/db";
+import {
+  buildEmailServiceFromSettings,
+  getEmailTemplate,
+  DEFAULT_TEMPLATES,
+  substituteVars,
+  sendEmail,
+} from "@struxa/auth/email";
 
 export interface RawServer {
   settings: {
@@ -283,6 +291,28 @@ export async function completeInstall(
     .update(servers)
     .set({ status: successful ? "" : "install_failed" })
     .where(eq(servers.id, server.id));
+
+  if (successful && server.userId) {
+    void (async () => {
+      try {
+        const svc = await buildEmailServiceFromSettings();
+        if (!svc) return;
+        const owner = await db.query.user.findFirst({ where: eq(userTable.id, server.userId!) });
+        if (!owner) return;
+        const rows = await db.query.settings.findMany();
+        const s = Object.fromEntries(rows.map((r) => [r.key, r.value ?? ""]));
+        const appName = s.app_name ?? "Struxa";
+        const vars = { appName, userName: owner.name ?? owner.email, serverName: server.name };
+        const custom = await getEmailTemplate("server-install");
+        const html = custom
+          ? substituteVars(custom, vars)
+          : DEFAULT_TEMPLATES["server-install"](vars);
+        await sendEmail(svc, owner.email, `Your ${appName} server is ready`, html);
+      } catch {
+        // non-critical — don't fail the install callback
+      }
+    })();
+  }
 
   return true;
 }

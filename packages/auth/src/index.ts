@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { createDecipheriv } from "crypto";
 import { db, settings } from "@struxa/db";
 import * as schema from "@struxa/db/schema/auth";
 import { env } from "@struxa/env/server";
@@ -9,19 +8,14 @@ import { APIError, createAuthMiddleware } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { admin, captcha, twoFactor } from "better-auth/plugins";
-
-function safeDecrypt(value: string): string {
-  try {
-    const key = Buffer.from(env.DATABASE_ENCRYPTION_KEY, "hex");
-    const [ivHex, tagHex, encHex] = value.split(":");
-    if (!ivHex || !tagHex || !encHex) return value;
-    const decipher = createDecipheriv("aes-256-gcm", key, Buffer.from(ivHex, "hex"));
-    decipher.setAuthTag(Buffer.from(tagHex, "hex"));
-    return decipher.update(Buffer.from(encHex, "hex")).toString("utf8") + decipher.final("utf8");
-  } catch {
-    return value;
-  }
-}
+import { safeDecrypt } from "./lib/crypto";
+import {
+  buildEmailServiceFromSettings,
+  getEmailTemplate,
+  DEFAULT_TEMPLATES,
+  substituteVars,
+  sendEmail,
+} from "./email";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AuthInstance = any;
@@ -59,6 +53,35 @@ async function buildAuth(): Promise<AuthInstance> {
     },
     emailAndPassword: {
       enabled: true,
+      sendResetPassword: async ({ user, url }) => {
+        const svc = await buildEmailServiceFromSettings();
+        if (!svc) return;
+        const custom = await getEmailTemplate("password-reset");
+        const resetToken = (() => { try { return new URL(url).searchParams.get("token") ?? ""; } catch { return ""; } })();
+        const vars = { appName, userName: user.name ?? user.email, resetUrl: url, resetToken };
+        const html = custom
+          ? substituteVars(custom, vars)
+          : DEFAULT_TEMPLATES["password-reset"](vars);
+        await sendEmail(svc, user.email, `Reset your ${appName} password`, html);
+      },
+    },
+    emailVerification: {
+      sendVerificationEmail: async ({ user, url }) => {
+        const svc = await buildEmailServiceFromSettings();
+        if (!svc) {
+          // Email disabled — auto-verify so email/password signups aren't permanently locked out.
+          // Social logins auto-verify; this keeps consistent behaviour when no email service is set.
+          await db.update(schema.user).set({ emailVerified: true }).where(eq(schema.user.id, user.id));
+          return;
+        }
+        const verificationToken = (() => { try { return new URL(url).searchParams.get("token") ?? ""; } catch { return ""; } })();
+        const custom = await getEmailTemplate("verification");
+        const vars = { appName, userName: user.name ?? user.email, verificationUrl: url, verificationToken };
+        const html = custom
+          ? substituteVars(custom, vars)
+          : DEFAULT_TEMPLATES.verification(vars);
+        await sendEmail(svc, user.email, `Verify your ${appName} email`, html);
+      },
     },
     socialProviders,
     secret: env.BETTER_AUTH_SECRET,
@@ -76,6 +99,25 @@ async function buildAuth(): Promise<AuthInstance> {
         if (row?.value === "false") {
           throw new APIError("FORBIDDEN", { message: "Registration is disabled." });
         }
+      }),
+      after: createAuthMiddleware(async (ctx) => {
+        if (ctx.path !== "/sign-up/email") return;
+        const newUser = ctx.context.newSession?.user;
+        if (!newUser) return;
+        void (async () => {
+          try {
+            const svc = await buildEmailServiceFromSettings();
+            if (!svc) return;
+            const custom = await getEmailTemplate("welcome");
+            const vars = { appName, userName: newUser.name ?? newUser.email };
+            const html = custom
+              ? substituteVars(custom, vars)
+              : DEFAULT_TEMPLATES.welcome(vars);
+            await sendEmail(svc, newUser.email, `Welcome to ${appName}`, html);
+          } catch {
+            // non-critical
+          }
+        })();
       }),
     },
     plugins: [

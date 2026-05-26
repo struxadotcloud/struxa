@@ -3,7 +3,8 @@
 import { useRef, useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { Check, Upload, X, Github, ChevronDown, RotateCcw, Copy } from "lucide-react";
+import { Check, Upload, X, Github, ChevronDown, RotateCcw, Copy, Mail, Loader2, ChevronRight } from "lucide-react";
+import Link from "next/link";
 import { orpc, queryClient } from "@/utils/orpc";
 
 function invalidateSettings() {
@@ -183,7 +184,7 @@ function DiscordIcon({ className }: { className?: string }) {
   );
 }
 
-const TABS = ["branding", "auth"] as const;
+const TABS = ["branding", "auth", "email"] as const;
 type Tab = (typeof TABS)[number];
 
 export default function AdminSettingsPage() {
@@ -209,11 +210,37 @@ export default function AdminSettingsPage() {
   const [github, setGithub] = useState<{ enabled: boolean; clientId: string; clientSecret: string }>({ enabled: false, clientId: "", clientSecret: "" });
   const [discord, setDiscord] = useState<{ enabled: boolean; clientId: string; clientSecret: string }>({ enabled: false, clientId: "", clientSecret: "" });
 
+  // Email / SMTP state
+  const { data: smtpData, isLoading: smtpLoading } = useQuery(orpc.email.getSmtpConfig.queryOptions());
+  const saveSmtpMutation = useMutation(orpc.email.saveSmtpConfig.mutationOptions());
+  const testConnectionMutation = useMutation(orpc.email.testConnection.mutationOptions());
+  const [smtp, setSmtp] = useState<{
+    enabled: boolean; host: string; port: string; user: string; password: string;
+    fromEmail: string; fromName: string; secure: boolean;
+  } | null>(null);
+  const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
+  const [testModalOpen, setTestModalOpen] = useState(false);
+  const [testEmail, setTestEmail] = useState("");
+
   useEffect(() => {
     if (!data) return;
     setGithub((prev) => prev.clientId || prev.enabled ? prev : { enabled: data.githubEnabled, clientId: data.githubClientId, clientSecret: "" });
     setDiscord((prev) => prev.clientId || prev.enabled ? prev : { enabled: data.discordEnabled, clientId: data.discordClientId, clientSecret: "" });
   }, [data]);
+
+  useEffect(() => {
+    if (!smtpData || smtp !== null) return;
+    setSmtp({
+      enabled: smtpData.enabled,
+      host: smtpData.host,
+      port: smtpData.port,
+      user: smtpData.user,
+      password: "",
+      fromEmail: smtpData.fromEmail,
+      fromName: smtpData.fromName,
+      secure: smtpData.secure,
+    });
+  }, [smtpData, smtp]);
 
   function markSaved(key: string) {
     setSaved((s) => [...s, key]);
@@ -267,6 +294,33 @@ export default function AdminSettingsPage() {
     markSaved("discord");
   }
 
+  async function saveSmtp() {
+    if (!smtp) return;
+    await saveSmtpMutation.mutateAsync({
+      enabled: smtp.enabled,
+      host: smtp.host,
+      port: smtp.port,
+      user: smtp.user,
+      password: smtp.password,
+      fromEmail: smtp.fromEmail,
+      fromName: smtp.fromName,
+      secure: smtp.secure,
+    });
+    setSmtp((prev) => prev ? { ...prev, password: "" } : null);
+    markSaved("smtp");
+  }
+
+  async function testSmtp(email: string) {
+    setTestResult(null);
+    const result = await testConnectionMutation.mutateAsync({ email });
+    setTestModalOpen(false);
+    if (result.ok) {
+      setTestResult({ ok: true, message: t("testConnectionSuccess", { email: result.email }) });
+    } else {
+      setTestResult({ ok: false, message: t("testConnectionFailed", { error: result.error ?? "Unknown error" }) });
+    }
+  }
+
   async function handleUpload(
     endpoint: string,
     setUploading: (v: boolean) => void,
@@ -316,13 +370,13 @@ export default function AdminSettingsPage() {
               key={tab_item}
               type="button"
               onClick={() => setTab(tab_item)}
-              className={`px-3 py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px ${
+              className={`px-3 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
                 tab === tab_item
                   ? "border-foreground text-foreground"
                   : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
-              {tab_item}
+              {tab_item === "branding" ? t("tabBranding") : tab_item === "auth" ? t("tabAuth") : t("tabEmail")}
             </button>
           ))}
         </div>
@@ -543,7 +597,190 @@ export default function AdminSettingsPage() {
             </SectionCard>
           </>
         )}
+
+        {tab === "email" && (
+          <>
+            <SectionCard title={t("smtpTitle")} description={t("smtpDesc")}>
+              {smtpLoading || !smtp ? (
+                <div className="py-4 text-center text-xs text-muted-foreground">Loading…</div>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  {/* Enable toggle */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{t("smtpEnabled")}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{t("smtpEnabledDesc")}</p>
+                    </div>
+                    <Toggle enabled={smtp.enabled} onChange={(v) => setSmtp({ ...smtp, enabled: v })} />
+                  </div>
+
+                  {smtp.enabled && (
+                    <>
+                      {/* Host + Port */}
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="col-span-2 flex flex-col gap-1.5">
+                          <label className="text-xs font-medium text-foreground">{t("smtpHost")}</label>
+                          <input
+                            className={inputClass()}
+                            placeholder="smtp.example.com"
+                            value={smtp.host}
+                            onChange={(e) => setSmtp({ ...smtp, host: e.target.value })}
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-xs font-medium text-foreground">{t("smtpPort")}</label>
+                          <input
+                            className={inputClass()}
+                            placeholder="587"
+                            value={smtp.port}
+                            onChange={(e) => setSmtp({ ...smtp, port: e.target.value })}
+                          />
+                        </div>
+                      </div>
+
+                      {/* User + Password */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-xs font-medium text-foreground">{t("smtpUser")}</label>
+                          <input
+                            className={inputClass()}
+                            placeholder="user@example.com"
+                            value={smtp.user}
+                            onChange={(e) => setSmtp({ ...smtp, user: e.target.value })}
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-xs font-medium text-foreground">{t("smtpPassword")}</label>
+                          <input
+                            className={inputClass()}
+                            type="password"
+                            placeholder={smtpData?.passwordSet ? t("smtpPasswordSet") : ""}
+                            value={smtp.password}
+                            onChange={(e) => setSmtp({ ...smtp, password: e.target.value })}
+                            autoComplete="new-password"
+                          />
+                        </div>
+                      </div>
+
+                      {/* From Email + From Name */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-xs font-medium text-foreground">{t("smtpFromEmail")}</label>
+                          <input
+                            className={inputClass()}
+                            placeholder="noreply@example.com"
+                            value={smtp.fromEmail}
+                            onChange={(e) => setSmtp({ ...smtp, fromEmail: e.target.value })}
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-xs font-medium text-foreground">{t("smtpFromName")}</label>
+                          <input
+                            className={inputClass()}
+                            placeholder="Struxa"
+                            value={smtp.fromName}
+                            onChange={(e) => setSmtp({ ...smtp, fromName: e.target.value })}
+                          />
+                        </div>
+                      </div>
+
+                      {/* TLS toggle */}
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-foreground">{t("smtpSecure")}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{t("smtpSecureDesc")}</p>
+                        </div>
+                        <Toggle enabled={smtp.secure} onChange={(v) => setSmtp({ ...smtp, secure: v })} />
+                      </div>
+                    </>
+                  )}
+
+                  {/* Actions row */}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <div onClick={saveSmtp}>
+                      <SaveButton saving={saveSmtpMutation.isPending} saved={saved.includes("smtp")} />
+                    </div>
+                    {smtp.enabled && (
+                      <button
+                        type="button"
+                        onClick={() => { setTestEmail(""); setTestResult(null); setTestModalOpen(true); }}
+                        className="flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                      >
+                        <Mail className="h-3.5 w-3.5" /> {t("testConnection")}
+                      </button>
+                    )}
+                  </div>
+
+                  {testResult && (
+                    <div className={`flex items-start gap-2 rounded-lg px-3 py-2 text-sm ${testResult.ok ? "bg-green-500/10 border border-green-500/30 text-green-700 dark:text-green-400" : "bg-destructive/10 border border-destructive/30 text-destructive"}`}>
+                      {testResult.ok ? <Check className="mt-0.5 h-4 w-4 shrink-0" /> : <X className="mt-0.5 h-4 w-4 shrink-0" />}
+                      {testResult.message}
+                    </div>
+                  )}
+                </div>
+              )}
+            </SectionCard>
+
+            <SectionCard title={t("templatesTitle")} description={t("templatesDesc")}>
+              <Link
+                href="/admin/settings/email"
+                className="flex items-center justify-between rounded-lg border border-border bg-background px-4 py-3 transition-colors hover:bg-muted group"
+              >
+                <div className="flex items-center gap-3">
+                  <Mail className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{t("editTemplates")}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{t("editTemplatesDesc")}</p>
+                  </div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
+              </Link>
+            </SectionCard>
+          </>
+        )}
       </div>
+
+      {/* Test connection modal */}
+      {testModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setTestModalOpen(false)}>
+          <div className="w-full max-w-sm rounded-xl border border-border bg-card shadow-xl p-5" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-4">
+              <h3 className="text-sm font-semibold text-foreground">{t("testConnectionModalTitle")}</h3>
+              <p className="text-xs text-muted-foreground mt-1">{t("testConnectionModalDesc")}</p>
+            </div>
+            <form onSubmit={(e) => { e.preventDefault(); void testSmtp(testEmail); }}>
+              <input
+                type="email"
+                autoFocus
+                value={testEmail}
+                onChange={(e) => setTestEmail(e.target.value)}
+                placeholder={t("testConnectionEmailPlaceholder")}
+                className={inputClass()}
+              />
+              <div className="mt-3 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setTestModalOpen(false)}
+                  className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  {t("testConnectionCancel")}
+                </button>
+                <button
+                  type="submit"
+                  disabled={!testEmail || testConnectionMutation.isPending}
+                  className="flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-colors hover:opacity-90 disabled:opacity-50"
+                >
+                  {testConnectionMutation.isPending ? (
+                    <><Loader2 className="h-3.5 w-3.5 animate-spin" /> {t("testConnectionTesting")}</>
+                  ) : (
+                    <><Mail className="h-3.5 w-3.5" /> {t("testConnectionSend")}</>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
