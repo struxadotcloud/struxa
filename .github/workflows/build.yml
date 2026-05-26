@@ -59,8 +59,16 @@ jobs:
       - name: Build
         run: bun run build
         env:
-          # Stub values so env validation passes at build time — not real credentials
-          SKIP_ENV_VALIDATION: "1"
+          # Dummy values — satisfy schema constraints so env validation passes at build time.
+          # These are NOT real credentials and are never used at runtime.
+          DATABASE_URL: "mysql://ci:ci@127.0.0.1:3306/ci"
+          BETTER_AUTH_SECRET: "ci-build-placeholder-secret-value-only"
+          JWT_PRIVATE_KEY: "ci-build-jwt-private-key"
+          JWT_PUBLIC_KEY: "ci-build-jwt-public-key"
+          DATABASE_ENCRYPTION_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
+          MINIO_ENDPOINT: "http://localhost:9000"
+          MINIO_ACCESS_KEY: "ci-access-key"
+          MINIO_SECRET_KEY: "ci-secret-key"
 
   comment:
     name: PR Comment

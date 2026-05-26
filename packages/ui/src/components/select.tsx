@@ -3,7 +3,6 @@
 import { Select as SelectPrimitive } from "@base-ui/react/select";
 import { cn } from "@struxa/ui/lib/utils";
 import { CheckIcon, ChevronDownIcon } from "lucide-react";
-import * as React from "react";
 
 function Select<TValue = string>({
   ...props
