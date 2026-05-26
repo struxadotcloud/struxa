@@ -6,6 +6,8 @@ import { useTranslations } from "next-intl";
 import { Check, Upload, X, Github, ChevronDown, RotateCcw, Copy, Mail, Loader2, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { orpc, queryClient } from "@/utils/orpc";
+import { DiscordPreview, GooglePreview, TwitterPreview, type SeoPreviewData } from "./_components/seo-previews";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@struxa/ui/components/select";
 
 function invalidateSettings() {
   void queryClient.invalidateQueries({ queryKey: orpc.settings.key() });
@@ -184,7 +186,7 @@ function DiscordIcon({ className }: { className?: string }) {
   );
 }
 
-const TABS = ["branding", "auth", "email"] as const;
+const TABS = ["branding", "seo", "auth", "email"] as const;
 type Tab = (typeof TABS)[number];
 
 export default function AdminSettingsPage() {
@@ -202,10 +204,16 @@ export default function AdminSettingsPage() {
   const [saved, setSaved] = useState<SavedKey[]>([]);
   const [logoUploading, setLogoUploading] = useState(false);
   const [logoError, setLogoError] = useState<string | null>(null);
+
+  const [general, setGeneral] = useState<{ appName: string; appUrl: string } | null>(null);
+  const [seo, setSeo] = useState<{
+    metaDescription: string; metaKeywords: string; themeColor: string;
+    ogTitle: string; ogDescription: string; ogSiteName: string; ogType: string;
+    twitterCard: string; twitterSite: string; twitterCreator: string;
+  } | null>(null);
+  const [seoPreviewTab, setSeoPreviewTab] = useState<"discord" | "google" | "twitter">("discord");
   const [bannerUploading, setBannerUploading] = useState(false);
   const [bannerError, setBannerError] = useState<string | null>(null);
-
-  const [general, setGeneral] = useState<{ appName: string; appUrl: string; metaDescription: string } | null>(null);
   const [registration, setRegistration] = useState<{ enabled: boolean } | null>(null);
   const [github, setGithub] = useState<{ enabled: boolean; clientId: string; clientSecret: string }>({ enabled: false, clientId: "", clientSecret: "" });
   const [discord, setDiscord] = useState<{ enabled: boolean; clientId: string; clientSecret: string }>({ enabled: false, clientId: "", clientSecret: "" });
@@ -248,7 +256,21 @@ export default function AdminSettingsPage() {
   }
 
   function generalForm() {
-    return general ?? { appName: data?.appName ?? "Struxa", appUrl: data?.appUrl ?? "", metaDescription: data?.metaDescription ?? "" };
+    return general ?? { appName: data?.appName ?? "Struxa", appUrl: data?.appUrl ?? "" };
+  }
+  function seoForm() {
+    return seo ?? {
+      metaDescription: data?.metaDescription ?? "",
+      metaKeywords: data?.metaKeywords ?? "",
+      themeColor: data?.themeColor ?? "",
+      ogTitle: data?.ogTitle ?? "",
+      ogDescription: data?.ogDescription ?? "",
+      ogSiteName: data?.ogSiteName ?? "",
+      ogType: data?.ogType ?? "website",
+      twitterCard: data?.twitterCard ?? "summary_large_image",
+      twitterSite: data?.twitterSite ?? "",
+      twitterCreator: data?.twitterCreator ?? "",
+    };
   }
   function registrationForm() {
     return registration ?? { enabled: data?.registrationEnabled ?? true };
@@ -259,10 +281,26 @@ export default function AdminSettingsPage() {
     const saves: Promise<unknown>[] = [];
     if (!data?.appNameFromEnv) saves.push(setMutation.mutateAsync({ key: "app_name", value: f.appName }));
     if (!data?.appUrlFromEnv) saves.push(setMutation.mutateAsync({ key: "app_url", value: f.appUrl }));
-    saves.push(setMutation.mutateAsync({ key: "meta_description", value: f.metaDescription }));
     await Promise.all(saves);
     if (!data?.appNameFromEnv) setNeedsRestart(true);
     markSaved("general");
+  }
+
+  async function saveSeo() {
+    const f = seoForm();
+    await Promise.all([
+      setMutation.mutateAsync({ key: "meta_description", value: f.metaDescription }),
+      setMutation.mutateAsync({ key: "meta_keywords", value: f.metaKeywords }),
+      setMutation.mutateAsync({ key: "theme_color", value: f.themeColor }),
+      setMutation.mutateAsync({ key: "og_title", value: f.ogTitle }),
+      setMutation.mutateAsync({ key: "og_description", value: f.ogDescription }),
+      setMutation.mutateAsync({ key: "og_site_name", value: f.ogSiteName }),
+      setMutation.mutateAsync({ key: "og_type", value: f.ogType }),
+      setMutation.mutateAsync({ key: "twitter_card", value: f.twitterCard }),
+      setMutation.mutateAsync({ key: "twitter_site", value: f.twitterSite }),
+      setMutation.mutateAsync({ key: "twitter_creator", value: f.twitterCreator }),
+    ]);
+    markSaved("seo");
   }
 
   async function saveRegistration() {
@@ -360,7 +398,7 @@ export default function AdminSettingsPage() {
 
   return (
     <div className="flex-1 overflow-auto px-6 py-5">
-      <div className="mx-auto max-w-2xl flex flex-col gap-4">
+      <div className={`mx-auto flex flex-col gap-4 ${tab === "seo" ? "max-w-5xl" : "max-w-2xl"}`}>
         <h1 className="text-sm font-semibold text-foreground">{t("title")}</h1>
 
         {/* Tab bar */}
@@ -376,7 +414,10 @@ export default function AdminSettingsPage() {
                   : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
-              {tab_item === "branding" ? t("tabBranding") : tab_item === "auth" ? t("tabAuth") : t("tabEmail")}
+              {tab_item === "branding" ? t("tabBranding")
+                : tab_item === "seo" ? t("tabSeo")
+                : tab_item === "auth" ? t("tabAuth")
+                : t("tabEmail")}
             </button>
           ))}
         </div>
@@ -427,16 +468,6 @@ export default function AdminSettingsPage() {
                   {data?.appUrlFromEnv && <p className="text-[11px] text-muted-foreground">{t("appUrlEnvNote")}</p>}
                 </div>
               </div>
-              <div className="mt-3 flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-foreground">{t("metaDescLabel")}</label>
-                <textarea
-                  rows={2}
-                  className={`${inputClass()} resize-none`}
-                  placeholder={t("metaDescPlaceholder")}
-                  value={gf.metaDescription}
-                  onChange={(e) => setGeneral({ ...gf, metaDescription: e.target.value })}
-                />
-              </div>
               {!bothFromEnv && (
                 <div className="mt-4" onClick={saveGeneral}>
                   <SaveButton saving={setMutation.isPending} saved={saved.includes("general")} />
@@ -457,23 +488,210 @@ export default function AdminSettingsPage() {
                 onRemove={() => removeLogoMutation.mutate(undefined)}
               />
             </SectionCard>
-
-            <SectionCard title={t("ogBannerTitle")} description={t("ogBannerDesc")}>
-              <ImageUploadField
-                label={t("bannerLabel")}
-                description={t("bannerHint")}
-                accept="image/jpeg,image/png,image/webp"
-                maxSizeMb={8}
-                aspectHint={t("bannerAspectHint")}
-                currentUrl={data?.ogBannerUrl}
-                uploading={bannerUploading}
-                error={bannerError}
-                onUpload={(f) => handleUpload("/api/files/upload/og-banner", setBannerUploading, setBannerError, f)}
-                onRemove={() => removeOgBannerMutation.mutate(undefined)}
-              />
-            </SectionCard>
           </>
         )}
+
+        {tab === "seo" && (() => {
+          const sf = seoForm();
+          const previewData: SeoPreviewData = {
+            title: sf.ogTitle || data?.appName || "Struxa",
+            description: sf.ogDescription || sf.metaDescription || `${data?.appName || "Struxa"} panel`,
+            siteName: sf.ogSiteName || data?.appName || "Struxa",
+            siteUrl: data?.appUrl || "",
+            imageUrl: data?.ogBannerUrl ?? null,
+            themeColor: sf.themeColor,
+            twitterCard: (sf.twitterCard as "summary" | "summary_large_image") || "summary_large_image",
+            twitterSite: sf.twitterSite,
+          };
+          return (
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 items-start">
+              {/* Left: form sections */}
+              <div className="flex flex-col gap-4">
+                <SectionCard title={t("seoBasicTitle")} description={t("seoBasicDesc")}>
+                  <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-medium text-foreground">{t("metaDescLabel")}</label>
+                      <textarea
+                        rows={2}
+                        className={`${inputClass()} resize-none`}
+                        placeholder={t("metaDescPlaceholder")}
+                        value={sf.metaDescription}
+                        onChange={(e) => setSeo({ ...sf, metaDescription: e.target.value })}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-medium text-foreground">{t("seoKeywordsLabel")}</label>
+                      <input
+                        className={inputClass()}
+                        placeholder={t("seoKeywordsPlaceholder")}
+                        value={sf.metaKeywords}
+                        onChange={(e) => setSeo({ ...sf, metaKeywords: e.target.value })}
+                      />
+                      <p className="text-[11px] text-muted-foreground">{t("seoKeywordsHint")}</p>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-medium text-foreground">{t("seoThemeColorLabel")}</label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="color"
+                          className="h-8 w-10 cursor-pointer rounded border border-border bg-background p-0.5"
+                          value={sf.themeColor || "#5865F2"}
+                          onChange={(e) => setSeo({ ...sf, themeColor: e.target.value })}
+                        />
+                        <input
+                          className={`${inputClass()} flex-1`}
+                          placeholder={t("seoThemeColorPlaceholder")}
+                          value={sf.themeColor}
+                          onChange={(e) => setSeo({ ...sf, themeColor: e.target.value })}
+                        />
+                      </div>
+                      <p className="text-[11px] text-muted-foreground">{t("seoThemeColorHint")}</p>
+                    </div>
+                  </div>
+                </SectionCard>
+
+                <SectionCard title={t("seoOgSectionTitle")} description={t("seoOgSectionDesc")}>
+                  <div className="flex flex-col gap-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-xs font-medium text-foreground">{t("seoOgTitleLabel")}</label>
+                        <input
+                          className={inputClass()}
+                          placeholder={t("seoOgTitlePlaceholder")}
+                          value={sf.ogTitle}
+                          onChange={(e) => setSeo({ ...sf, ogTitle: e.target.value })}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-xs font-medium text-foreground">{t("seoOgSiteNameLabel")}</label>
+                        <input
+                          className={inputClass()}
+                          placeholder={t("seoOgSiteNamePlaceholder")}
+                          value={sf.ogSiteName}
+                          onChange={(e) => setSeo({ ...sf, ogSiteName: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-medium text-foreground">{t("seoOgDescLabel")}</label>
+                      <textarea
+                        rows={2}
+                        className={`${inputClass()} resize-none`}
+                        placeholder={t("seoOgDescPlaceholder")}
+                        value={sf.ogDescription}
+                        onChange={(e) => setSeo({ ...sf, ogDescription: e.target.value })}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-medium text-foreground">{t("seoOgTypeLabel")}</label>
+                      <Select value={sf.ogType || "website"} onValueChange={(v) => setSeo({ ...sf, ogType: v ?? "website" })}>
+                        <SelectTrigger className="h-[30px] text-sm">
+                          <SelectValue>
+                            {sf.ogType === "article" ? t("seoOgTypeArticle") : sf.ogType === "profile" ? t("seoOgTypeProfile") : t("seoOgTypeWebsite")}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="website">{t("seoOgTypeWebsite")}</SelectItem>
+                          <SelectItem value="article">{t("seoOgTypeArticle")}</SelectItem>
+                          <SelectItem value="profile">{t("seoOgTypeProfile")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="pt-1">
+                      <ImageUploadField
+                        label={t("seoOgImageTitle")}
+                        description={t("seoOgImageDesc")}
+                        accept="image/jpeg,image/png,image/webp"
+                        maxSizeMb={8}
+                        aspectHint={t("bannerAspectHint")}
+                        currentUrl={data?.ogBannerUrl}
+                        uploading={bannerUploading}
+                        error={bannerError}
+                        onUpload={(f) => handleUpload("/api/files/upload/og-banner", setBannerUploading, setBannerError, f)}
+                        onRemove={() => removeOgBannerMutation.mutate(undefined)}
+                      />
+                    </div>
+                  </div>
+                </SectionCard>
+
+                <SectionCard title={t("seoTwitterSectionTitle")} description={t("seoTwitterSectionDesc")}>
+                  <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-medium text-foreground">{t("seoTwitterCardLabel")}</label>
+                      <Select value={sf.twitterCard || "summary_large_image"} onValueChange={(v) => setSeo({ ...sf, twitterCard: v ?? "summary_large_image" })}>
+                        <SelectTrigger className="h-[30px] text-sm">
+                          <SelectValue>
+                            {sf.twitterCard === "summary" ? t("seoTwitterCardSummary") : t("seoTwitterCardLarge")}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="summary_large_image">{t("seoTwitterCardLarge")}</SelectItem>
+                          <SelectItem value="summary">{t("seoTwitterCardSummary")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-xs font-medium text-foreground">{t("seoTwitterSiteLabel")}</label>
+                        <input
+                          className={inputClass()}
+                          placeholder={t("seoTwitterSitePlaceholder")}
+                          value={sf.twitterSite}
+                          onChange={(e) => setSeo({ ...sf, twitterSite: e.target.value })}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-xs font-medium text-foreground">{t("seoTwitterCreatorLabel")}</label>
+                        <input
+                          className={inputClass()}
+                          placeholder={t("seoTwitterCreatorPlaceholder")}
+                          value={sf.twitterCreator}
+                          onChange={(e) => setSeo({ ...sf, twitterCreator: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </SectionCard>
+
+                <div onClick={saveSeo}>
+                  <SaveButton saving={setMutation.isPending} saved={saved.includes("seo")} />
+                </div>
+              </div>
+
+              {/* Right: live preview */}
+              <div className="lg:sticky lg:top-4 flex flex-col gap-3">
+                <div className="rounded-xl border border-border bg-card shadow-sm">
+                  <div className="border-b border-border px-4 py-3">
+                    <h2 className="text-sm font-semibold text-foreground">{t("seoPreviewTitle")}</h2>
+                  </div>
+                  <div className="p-4 flex flex-col gap-3">
+                    <div className="flex gap-1">
+                      {(["discord", "google", "twitter"] as const).map((p) => (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => setSeoPreviewTab(p)}
+                          className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                            seoPreviewTab === p
+                              ? "bg-foreground text-background"
+                              : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                          }`}
+                        >
+                          {p === "discord" ? t("seoPreviewDiscord") : p === "google" ? t("seoPreviewGoogle") : t("seoPreviewTwitter")}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="pt-1">
+                      {seoPreviewTab === "discord" && <DiscordPreview data={previewData} />}
+                      {seoPreviewTab === "google" && <GooglePreview data={previewData} />}
+                      {seoPreviewTab === "twitter" && <TwitterPreview data={previewData} />}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {tab === "auth" && (
           <>

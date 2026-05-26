@@ -25,16 +25,36 @@ const geistMono = Geist_Mono({
 });
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { appName, metaDescription, logoUrl, ogBannerUrl } = await getInstanceSettings();
-  const description = metaDescription || `${appName} panel`;
+  const {
+    appName, metaDescription, logoUrl, ogBannerUrl,
+    ogTitle, ogDescription, ogSiteName, ogType,
+    twitterCard, twitterSite, twitterCreator,
+    themeColor, metaKeywords,
+  } = await getInstanceSettings();
+
+  const resolvedTitle = ogTitle || appName;
+  const resolvedDesc = ogDescription || metaDescription || `${appName} panel`;
+
   return {
     title: appName,
-    description,
+    description: resolvedDesc,
+    ...(metaKeywords ? { keywords: metaKeywords } : {}),
+    ...(themeColor ? { themeColor } : {}),
     icons: { icon: logoUrl ?? "/favicon.ico" },
     openGraph: {
-      title: appName,
-      description,
+      title: resolvedTitle,
+      description: resolvedDesc,
+      siteName: ogSiteName || appName,
+      type: (ogType as "website" | "article" | "profile") ?? "website",
       ...(ogBannerUrl ? { images: [{ url: ogBannerUrl }] } : {}),
+    },
+    twitter: {
+      card: (twitterCard as "summary" | "summary_large_image") ?? "summary_large_image",
+      ...(twitterSite ? { site: twitterSite } : {}),
+      ...(twitterCreator ? { creator: twitterCreator } : {}),
+      title: resolvedTitle,
+      description: resolvedDesc,
+      ...(ogBannerUrl ? { images: [ogBannerUrl] } : {}),
     },
   };
 }

@@ -14,6 +14,15 @@ const DEFAULTS = {
   logoUrl: null as string | null,
   ogBannerUrl: null as string | null,
   socialProviders: [] as string[],
+  ogTitle: "",
+  ogDescription: "",
+  ogSiteName: "",
+  ogType: "website",
+  twitterCard: "summary_large_image",
+  twitterSite: "",
+  twitterCreator: "",
+  themeColor: "",
+  metaKeywords: "",
   raw: {} as Record<string, string>,
 };
 
@@ -35,6 +44,15 @@ export const getInstanceSettings = unstable_cache(
           ...(s.github_enabled === "true" && s.github_client_id && s.github_client_secret ? ["github"] : []),
           ...(s.discord_enabled === "true" && s.discord_client_id && s.discord_client_secret ? ["discord"] : []),
         ],
+        ogTitle: s.og_title ?? "",
+        ogDescription: s.og_description ?? "",
+        ogSiteName: s.og_site_name ?? "",
+        ogType: s.og_type ?? "website",
+        twitterCard: s.twitter_card ?? "summary_large_image",
+        twitterSite: s.twitter_site ?? "",
+        twitterCreator: s.twitter_creator ?? "",
+        themeColor: s.theme_color ?? "",
+        metaKeywords: s.meta_keywords ?? "",
         raw: s,
       };
     } catch {

@@ -71,6 +71,15 @@ export const settingsRouter = {
       discordEnabled: s.discord_enabled === "true",
       discordClientId: s.discord_client_id ?? "",
       discordClientSecretSet: !!(s.discord_client_secret),
+      ogTitle: s.og_title ?? "",
+      ogDescription: s.og_description ?? "",
+      ogSiteName: s.og_site_name ?? "",
+      ogType: s.og_type ?? "website",
+      twitterCard: s.twitter_card ?? "summary_large_image",
+      twitterSite: s.twitter_site ?? "",
+      twitterCreator: s.twitter_creator ?? "",
+      themeColor: s.theme_color ?? "",
+      metaKeywords: s.meta_keywords ?? "",
     };
   }),
 
