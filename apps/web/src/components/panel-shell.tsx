@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@struxa/ui/components/sidebar";
 import { PanelSidebar } from "./panel-sidebar";
+import { PageTransition } from "./page-transition";
 
 const AUTH_ROUTES = ["/login", "/register", "/forgot-password"];
 const SIDEBAR_STORAGE_KEY = "sidebar:open";
@@ -34,7 +35,7 @@ export function PanelShell({ children }: { children: React.ReactNode }) {
             <span className="text-sm font-semibold text-foreground">Struxa</span>
             <SidebarTrigger />
           </div>
-          {children}
+          <PageTransition>{children}</PageTransition>
         </SidebarInset>
     </SidebarProvider>
   );

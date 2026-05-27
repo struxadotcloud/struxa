@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
+import { motion } from "motion/react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Check, Upload, X, Github, ChevronDown, RotateCcw, Copy, Mail, Loader2, ChevronRight } from "lucide-react";
@@ -442,6 +443,7 @@ export default function AdminSettingsPage() {
           </div>
         )}
 
+        <motion.div key={tab} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15, ease: "easeOut" }} className="flex flex-col gap-4">
         {tab === "branding" && (
           <>
             <SectionCard title={t("generalTitle")} description={t("generalDesc")}>
@@ -956,6 +958,7 @@ export default function AdminSettingsPage() {
             </SectionCard>
           </>
         )}
+        </motion.div>
       </div>
 
       {/* Test connection modal */}

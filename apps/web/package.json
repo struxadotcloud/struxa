@@ -28,14 +28,15 @@
     "drizzle-orm": "^0.45.1",
     "evlog": "^2.14.1",
     "lucide-react": "catalog:",
+    "motion": "^12.40.0",
     "next": "catalog:",
+    "next-intl": "catalog:",
     "next-themes": "catalog:",
     "qrcode": "^1.5.4",
     "react": "catalog:",
+    "react-country-flag": "catalog:",
     "react-dom": "catalog:",
     "sonner": "catalog:",
-    "next-intl": "catalog:",
-    "react-country-flag": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
