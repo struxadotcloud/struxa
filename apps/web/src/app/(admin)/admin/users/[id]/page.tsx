@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useState } from "react";
+import { motion } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -208,6 +209,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
       {/* Tab Content */}
       <div className="flex-1 overflow-auto px-6 py-5">
         <div className="mx-auto max-w-2xl flex flex-col gap-4">
+          <motion.div key={tab} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15, ease: "easeOut" }} className="flex flex-col gap-4">
 
           {/* ── Overview ── */}
           {tab === "overview" && (
@@ -452,6 +454,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
               </div>
             </div>
           )}
+          </motion.div>
         </div>
       </div>
     </>

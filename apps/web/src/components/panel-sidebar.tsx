@@ -179,7 +179,7 @@ export function PanelSidebar() {
                       }
                       isActive={item.key === activeServerTab}
                       tooltip={item.label}
-                      className="h-auto gap-2 rounded-lg py-2 px-3 text-sm"
+                      className="h-auto gap-2 rounded-lg py-2 px-3 text-sm transition-colors duration-150"
                     >
                       <item.icon className="h-4 w-4" />
                       {item.label}
@@ -200,7 +200,7 @@ export function PanelSidebar() {
                         render={<Link href={item.href as never} />}
                         isActive={pathname === "/" ? item.key === "servers" : pathname.startsWith(item.href) && item.href !== "/"}
                         tooltip={item.label}
-                        className="h-auto gap-2 rounded-lg py-2 px-3 text-sm"
+                        className="h-auto gap-2 rounded-lg py-2 px-3 text-sm transition-colors duration-150"
                       >
                         <item.icon className="h-4 w-4" />
                         {item.label}

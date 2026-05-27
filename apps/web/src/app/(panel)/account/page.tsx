@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Copy, Check, Key, Plus, Trash2, Monitor, LogOut, Camera, Link2, Unlink, Download } from "lucide-react";
+import { motion } from "motion/react";
 import QRCode from "qrcode";
 import {
   Dialog,
@@ -1318,9 +1319,16 @@ export default function AccountPage() {
 
       <div className="flex-1 overflow-auto px-6 py-5">
         <div className="mx-auto max-w-2xl">
-          {tab === "profile" && <ProfileTab />}
-          {tab === "api-keys" && <ApiKeysTab />}
-          {tab === "billing" && <BillingTab />}
+          <motion.div
+            key={tab}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+          >
+            {tab === "profile" && <ProfileTab />}
+            {tab === "api-keys" && <ApiKeysTab />}
+            {tab === "billing" && <BillingTab />}
+          </motion.div>
         </div>
       </div>
     </>

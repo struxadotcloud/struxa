@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useEffect, useRef, useState } from "react";
+import { motion, useReducedMotion } from "motion/react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Download, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -193,6 +194,7 @@ export default function EggDetailPage({
 }) {
   const t = useTranslations("admin.nests");
   const tc = useTranslations("common");
+  const shouldReduceMotion = useReducedMotion();
 
   const TABS: { id: Tab; label: string }[] = [
     { id: "general", label: t("eggTabGeneral") },
@@ -416,6 +418,7 @@ export default function EggDetailPage({
       </div>
 
       <div className="flex-1 overflow-auto px-6 py-5">
+        <motion.div key={tab} initial={shouldReduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.15, ease: "easeOut" }}>
         {tab === "general" && (
           <div className="mx-auto max-w-2xl flex flex-col gap-4">
             <div className="rounded-xl border border-border bg-card shadow-sm">
@@ -737,6 +740,7 @@ export default function EggDetailPage({
             </div>
           </div>
         )}
+        </motion.div>
       </div>
     </>
   );

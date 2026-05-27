@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@struxa/ui/components/sidebar";
 import { AdminSidebar } from "./admin-sidebar";
 import { ThemeProvider } from "./theme-provider";
+import { PageTransition } from "./page-transition";
 
 const SIDEBAR_STORAGE_KEY = "sidebar:open";
 
@@ -30,7 +31,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               <span className="text-sm font-semibold text-foreground">Struxa Admin</span>
               <SidebarTrigger />
             </div>
-            {children}
+            <PageTransition>{children}</PageTransition>
           </SidebarInset>
         </SidebarProvider>
       </div>

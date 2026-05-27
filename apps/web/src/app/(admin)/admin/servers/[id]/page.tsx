@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
+import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -202,6 +203,7 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
       </div>
 
       <div className="flex-1 overflow-auto px-6 py-5">
+        <motion.div key={tab} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15, ease: "easeOut" }}>
         {tab === "general" && (
           <div className="mx-auto max-w-2xl flex flex-col gap-4">
             <SectionCard title={t("identityTitle")}>
@@ -527,6 +529,7 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
             </ConfirmDialog>
           </div>
         )}
+        </motion.div>
       </div>
     </>
   );
