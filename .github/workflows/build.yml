@@ -4,19 +4,39 @@ on:
   pull_request:
     branches:
       - "**"
-  push:
-    branches:
-      - development
 
 concurrency:
   group: build-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  changes:
+    name: Detect Changes
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    outputs:
+      web: ${{ steps.filter.outputs.web }}
+      go: ${{ steps.filter.outputs.go }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            web:
+              - 'apps/web/**'
+              - 'packages/**'
+              - 'package.json'
+              - 'bun.lock'
+              - 'turbo.json'
+              - 'tsconfig.json'
+            go:
+              - 'apps/watchkeeper/**'
+
   typecheck:
     name: Type Check
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
     runs-on: blacksmith-2vcpu-ubuntu-2404
-    # Expose result to the comment job
     outputs:
       result: ${{ job.status }}
 
@@ -35,8 +55,10 @@ jobs:
       - name: Type check
         run: bun run check-types
 
-  build:
-    name: Build
+  build-web:
+    name: Build (Web)
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
     runs-on: blacksmith-2vcpu-ubuntu-2404
     outputs:
       result: ${{ job.status }}
@@ -59,10 +81,31 @@ jobs:
           SKIP_ENV_VALIDATION: "1"
           NEXT_TELEMETRY_DISABLED: "1"
 
+  build-go:
+    name: Build (Go)
+    needs: changes
+    if: needs.changes.outputs.go == 'true'
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    outputs:
+      result: ${{ job.status }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: apps/watchkeeper/go.mod
+
+      - name: Build
+        run: go build ./...
+        working-directory: apps/watchkeeper
+
   comment:
     name: PR Comment
     runs-on: blacksmith-2vcpu-ubuntu-2404
-    needs: [typecheck, build]
+    needs: [typecheck, build-web, build-go]
     if: always() && github.event_name == 'pull_request'
     permissions:
       pull-requests: write
@@ -72,26 +115,36 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const typecheck = '${{ needs.typecheck.outputs.result }}';
-            const build     = '${{ needs.build.outputs.result }}';
+            const typecheck = '${{ needs.typecheck.outputs.result }}' || 'skipped';
+            const buildWeb  = '${{ needs.build-web.outputs.result }}' || 'skipped';
+            const buildGo   = '${{ needs.build-go.outputs.result }}' || 'skipped';
 
             const icon  = (s) => s === 'success' ? '✅' : s === 'skipped' ? '⏭️' : '❌';
             const label = (s) => s === 'success' ? 'passed' : s === 'skipped' ? 'skipped' : 'failed';
 
-            const allGood = typecheck === 'success' && build === 'success';
-            const header  = allGood
+            const relevant = [typecheck, buildWeb, buildGo].filter(s => s !== 'skipped');
+            const allGood  = relevant.length === 0 || relevant.every(s => s === 'success');
+            const header   = allGood
               ? '## ✅ Build checks passed'
               : '## ❌ Build checks failed';
 
             const run_url = `https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
+
+            const rows = [];
+            if (typecheck !== 'skipped' || buildWeb !== 'skipped') {
+              rows.push(`| Type Check | ${icon(typecheck)} ${label(typecheck)} |`);
+              rows.push(`| Build (Web) | ${icon(buildWeb)} ${label(buildWeb)} |`);
+            }
+            if (buildGo !== 'skipped') {
+              rows.push(`| Build (Go) | ${icon(buildGo)} ${label(buildGo)} |`);
+            }
 
             const body = [
               header,
               '',
               '| Check | Status |',
               '|-------|--------|',
-              `| Type Check | ${icon(typecheck)} ${label(typecheck)} |`,
-              `| Build      | ${icon(build)} ${label(build)} |`,
+              ...rows,
               '',
               `[View run](${run_url}) · commit ${{ github.sha }}`.slice(0, 120),
             ].join('\n');
