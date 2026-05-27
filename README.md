@@ -52,7 +52,7 @@ Contributions are welcome — code, bug reports, and design feedback. See [CONTR
 
 ## License
 
-[MIT)](./LICENSE) — free to use, modify, and self-host
+[MIT](./LICENSE) — free to use, modify, and self-host
 
 <br />
 
