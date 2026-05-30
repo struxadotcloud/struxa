@@ -1,0 +1,14 @@
+{
+  "name": "struxa-extension-registry",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Struxa extension registry — hosted on GitHub Pages. Add extension packages to packages/, push to trigger CI deploy.",
+  "scripts": {
+    "gen-keys": "node scripts/gen-keys.mjs",
+    "build": "node scripts/build.mjs"
+  },
+  "dependencies": {
+    "tar": "^7.4.3"
+  }
+}
