@@ -22,13 +22,6 @@
         "typescript": "catalog:",
       },
     },
-    "apps/registry": {
-      "name": "struxa-extension-registry",
-      "version": "1.0.0",
-      "dependencies": {
-        "tar": "^7.4.3",
-      },
-    },
     "apps/web": {
       "name": "web",
       "version": "0.1.0",
@@ -1739,8 +1732,6 @@
     "strip-final-newline": ["strip-final-newline@4.0.0", "", {}, "sha512-aulFJcD6YK8V1G7iRB5tigAP4TsHBZZrOV8pjV++zdUwmeV8uzbY7yn6h9MswN62adStNZFuCIx4haBnRuMDaw=="],
 
     "strnum": ["strnum@2.3.0", "", {}, "sha512-ums3KNd42PGyx5xaoVTO1mjU1bH3NpY4vsrVlnv9PNGqQj8wd7rJ6nEypLrJ7z5vxK5RP0yMLo6J/Gsm62DI5Q=="],
-
-    "struxa-extension-registry": ["struxa-extension-registry@workspace:apps/registry"],
 
     "style-to-js": ["style-to-js@1.1.21", "", { "dependencies": { "style-to-object": "1.0.14" } }, "sha512-RjQetxJrrUJLQPHbLku6U/ocGtzyjbJMP9lCNK7Ag0CNh690nSH8woqWH9u16nMjYBAok+i7JO1NP2pOy8IsPQ=="],
 
