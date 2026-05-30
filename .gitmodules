@@ -1,3 +1,0 @@
-[submodule "apps/registry/packages/hello-world"]
-	path = apps/registry/packages/hello-world
-	url = git@github.com:struxadotcloud/hello-world.git
