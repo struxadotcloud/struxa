@@ -1,4 +1,4 @@
-import { readFile, stat } from "node:fs/promises";
+import { readFile, realpath, stat } from "node:fs/promises";
 import path from "node:path";
 
 import { getEnabledExtension } from "@struxa/extension-host";
@@ -49,7 +49,7 @@ export async function GET(
   const rel = parts.join("/") || "index.html";
   let filePath = path.normalize(path.join(webRoot, rel));
 
-  // Path-traversal guard: resolved path must stay inside the bundle dir.
+  // Normalised prefix check (catches simple traversal before hitting the FS).
   if (filePath !== webRoot && !filePath.startsWith(webRoot + path.sep)) {
     return new Response("Forbidden", { status: 403 });
   }
@@ -58,12 +58,23 @@ export async function GET(
   try {
     const info = await stat(filePath);
     if (info.isDirectory()) filePath = path.join(filePath, "index.html");
-    data = await readFile(filePath);
+    // Resolve symlinks and re-check so a symlink inside the tarball cannot
+    // escape the bundle directory (symlink bypass / path traversal).
+    const [realRoot, realFile] = await Promise.all([realpath(webRoot), realpath(filePath)]);
+    if (realFile !== realRoot && !realFile.startsWith(realRoot + path.sep)) {
+      return new Response("Forbidden", { status: 403 });
+    }
+    data = await readFile(realFile);
   } catch {
-    // SPA fallback.
+    // SPA fallback — also realpath-checked.
     try {
-      filePath = path.join(webRoot, "index.html");
-      data = await readFile(filePath);
+      const fallback = path.join(webRoot, "index.html");
+      const [realRoot, realFallback] = await Promise.all([realpath(webRoot), realpath(fallback)]);
+      if (realFallback !== realRoot && !realFallback.startsWith(realRoot + path.sep)) {
+        return notFound();
+      }
+      data = await readFile(realFallback);
+      filePath = fallback;
     } catch {
       return notFound();
     }
