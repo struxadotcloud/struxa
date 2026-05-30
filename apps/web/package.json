@@ -20,7 +20,7 @@
     "@struxa/db": "workspace:*",
     "@struxa/env": "workspace:*",
     "@struxa/extension-host": "workspace:*",
-    "@struxa/extension-sdk": "file:../../../extensions/packages/extension-sdk",
+    "@struxa/extension-sdk": "^1.0.0",
     "@struxa/ui": "workspace:*",
     "@tanstack/react-form": "^1.28.0",
     "@tanstack/react-query": "^5.90.12",
