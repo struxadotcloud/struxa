@@ -116,7 +116,7 @@ export async function installExtension(entry: RegistryEntry): Promise<Manifest> 
   try {
     // Stream verified bytes directly into tar — no intermediate file on disk.
     await pipeline(
-      Readable.from(bytes),
+      Readable.from([Buffer.from(bytes)]),
       tar.x({ cwd: dir, strict: true }),
     );
 
