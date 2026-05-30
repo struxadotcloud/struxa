@@ -29,18 +29,6 @@ type VerbRule = {
 
 const IDENT = "`?([a-zA-Z0-9_]+)`?";
 
-const SQL_KEYWORDS = new Set([
-  "create","table","if","not","exists","alter","drop","truncate","insert",
-  "into","update","delete","from","index","unique","on","add","column",
-  "constraint","primary","key","foreign","references","default","null","auto_increment",
-  "varchar","int","integer","bigint","tinyint","smallint","text","blob","datetime",
-  "timestamp","boolean","bool","float","double","decimal","unsigned","signed",
-  "character","set","collate","engine","innodb","charset","utf8","utf8mb4",
-  "cascade","restrict","no","action","set","where","values","select","join",
-  "inner","outer","left","right","full","cross","using","as","asc","desc",
-  "order","by","group","having","limit","offset","distinct","all","and","or",
-  "in","like","between","is","case","when","then","else","end","now","current_timestamp",
-]);
 
 const VERB_RULES: VerbRule[] = [
   {

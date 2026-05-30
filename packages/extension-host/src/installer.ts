@@ -1,6 +1,8 @@
 import { createPublicKey, verify as cryptoVerify } from "node:crypto";
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, rm } from "node:fs/promises";
 import path from "node:path";
+import { Readable } from "node:stream";
+import { pipeline } from "node:stream/promises";
 
 import { env } from "@struxa/env/server";
 import { manifestSchema, type Manifest } from "@struxa/extension-sdk";
@@ -87,13 +89,11 @@ export async function installExtension(entry: RegistryEntry): Promise<Manifest> 
   await rm(dir, { recursive: true, force: true });
   await mkdir(dir, { recursive: true });
 
-  const tmp = path.join(dir, ".package.tgz");
-  await writeFile(tmp, bytes);
-  try {
-    await tar.x({ file: tmp, cwd: dir });
-  } finally {
-    await rm(tmp, { force: true });
-  }
+  // Stream verified bytes directly into tar — no intermediate file on disk.
+  await pipeline(
+    Readable.from(bytes),
+    tar.x({ cwd: dir, strict: true }),
+  );
 
   // Validate the extracted manifest and sanity-check identity.
   const { readFile } = await import("node:fs/promises");
