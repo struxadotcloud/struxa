@@ -19,6 +19,7 @@
     "@struxa/auth": "workspace:*",
     "@struxa/db": "workspace:*",
     "@struxa/env": "workspace:*",
+    "@struxa/extension-host": "workspace:*",
     "@types/nodemailer": "^8.0.0",
     "bcryptjs": "^2.4.3",
     "croner": "catalog:",
@@ -34,5 +35,6 @@
     "@struxa/config": "workspace:*",
     "typescript": "catalog:",
     "@types/bcryptjs": "^2.4.6"
-  }
+  },
+  "private": true
 }

@@ -32,9 +32,11 @@ import {
   LogOut,
   ChevronLeft,
   Activity,
+  Boxes,
 } from "lucide-react";
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
+import { ExtensionNav } from "@/components/extension-nav";
 
 export function AdminSidebar() {
   const t = useTranslations("nav.admin");
@@ -65,6 +67,7 @@ export function AdminSidebar() {
     { key: "servers", label: t("servers"), icon: Monitor, href: "/admin/servers" },
     { key: "users", label: t("users"), icon: Users, href: "/admin/users" },
     { key: "activity", label: t("activity"), icon: Activity, href: "/admin/activity" },
+    { key: "extensions", label: t("extensions"), icon: Boxes, href: "/admin/extensions" },
     { key: "settings", label: t("settings"), icon: Settings2, href: "/admin/settings" },
   ];
 
@@ -143,13 +146,14 @@ export function AdminSidebar() {
                     render={<Link href={item.href as never} />}
                     isActive={isActive(item.href)}
                     tooltip={item.label}
-                    className="h-auto gap-2 rounded-lg py-2 px-3 text-sm"
+                    className="h-auto gap-2 rounded-lg py-2 px-3 text-sm transition-colors duration-150"
                   >
                     <item.icon className="h-4 w-4" />
                     {item.label}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              <ExtensionNav section="admin" routePrefix="/admin" />
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

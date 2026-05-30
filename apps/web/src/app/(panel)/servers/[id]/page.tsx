@@ -21,6 +21,7 @@ import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import Loader from "@/components/loader";
+import { ExtensionSlot } from "@/components/extension-slot";
 
 function fmtUptime(ms: number): string {
   if (ms <= 0) return "—";
@@ -493,6 +494,11 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
           </div>
         </aside>
       </div>
+      <ExtensionSlot
+        name="server.overview.after"
+        context={{ serverId: id }}
+        className="mt-4 flex flex-col gap-4"
+      />
     </>
   );
 }
