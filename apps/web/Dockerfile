@@ -15,6 +15,7 @@ COPY packages/auth/package.json     ./packages/auth/
 COPY packages/env/package.json      ./packages/env/
 COPY packages/ui/package.json       ./packages/ui/
 COPY packages/config/package.json   ./packages/config/
+COPY packages/extension-host/package.json ./packages/extension-host/
 RUN bun install --frozen-lockfile
 
 # Copy source after install to maximise cache hits
@@ -30,6 +31,9 @@ COPY packages/env/package.json ./packages/env/package.json
 COPY packages/ui/src/       ./packages/ui/src/
 COPY packages/ui/package.json ./packages/ui/package.json
 COPY packages/config/       ./packages/config/
+COPY packages/extension-host/src/     ./packages/extension-host/src/
+COPY packages/extension-host/package.json ./packages/extension-host/package.json
+COPY packages/extension-host/tsconfig.json ./packages/extension-host/tsconfig.json
 COPY package.json tsconfig.json ./
 
 ENV NEXT_TELEMETRY_DISABLED=1
