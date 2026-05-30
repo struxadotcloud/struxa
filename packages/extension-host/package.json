@@ -1,5 +1,6 @@
 {
-  "name": "@struxa/auth",
+  "name": "@struxa/extension-host",
+  "version": "0.0.0",
   "type": "module",
   "exports": {
     ".": {
@@ -9,19 +10,18 @@
       "default": "./src/*.ts"
     }
   },
-  "scripts": {},
   "dependencies": {
-    "@better-auth/api-key": "catalog:",
+    "@orpc/server": "catalog:",
     "@struxa/db": "workspace:*",
     "@struxa/env": "workspace:*",
-    "@types/nodemailer": "^8.0.0",
-    "better-auth": "catalog:",
-    "dotenv": "catalog:",
-    "nodemailer": "^8.0.8",
+    "@struxa/extension-sdk": "file:../../../extensions/packages/extension-sdk",
+    "drizzle-orm": "^0.45.1",
+    "tar": "^7.4.3",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@struxa/config": "workspace:*",
+    "@types/node": "^22.13.14",
     "typescript": "catalog:"
   },
   "private": true

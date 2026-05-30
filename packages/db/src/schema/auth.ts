@@ -3,6 +3,7 @@ import {
   boolean,
   index,
   int,
+  json,
   mysqlTable,
   text,
   timestamp,
@@ -40,6 +41,8 @@ export const user = mysqlTable("user", {
   vatCountry: varchar("vat_country", { length: 2 }),
   // i18n
   locale: varchar("locale", { length: 10 }).default("en").notNull(),
+  // Extension-owned data, namespaced per extension id. Never used by core.
+  metadata: json("metadata").$type<Record<string, unknown>>(),
 });
 
 export const session = mysqlTable(

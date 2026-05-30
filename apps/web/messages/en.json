@@ -42,7 +42,6 @@
     "edit": "Edit",
     "purgeFromNode": "Purge files from node"
   },
-
   "auth": {
     "login": {
       "title": "Welcome back",
@@ -154,7 +153,6 @@
       "or": "or"
     }
   },
-
   "nav": {
     "panel": {
       "gameServers": "Game Servers",
@@ -181,10 +179,10 @@
       "servers": "Servers",
       "users": "Users",
       "activity": "Activity",
-      "settings": "Settings"
+      "settings": "Settings",
+      "extensions": "Extensions"
     }
   },
-
   "panel": {
     "servers": {
       "noServersTitle": "No servers yet",
@@ -456,7 +454,6 @@
       "eventUsersRemove": "Users: Remove"
     }
   },
-
   "account": {
     "tabs": {
       "profile": "Profile",
@@ -604,7 +601,6 @@
       "saveFailed": "Failed to save language preference"
     }
   },
-
   "admin": {
     "dashboard": {
       "title": "Dashboard",
@@ -1140,7 +1136,6 @@
       "viewPreview": "Preview"
     }
   },
-
   "setup": {
     "steps": {
       "adminAccount": "Admin Account",
@@ -1238,5 +1233,40 @@
       "finishFailed": "Failed to complete setup. Please try again."
     },
     "importSuccess": "Imported {count} {count, plural, one {egg} other {eggs}} successfully."
+  },
+  "extensions": {
+    "nav": "Extensions",
+    "title": "Extensions",
+    "subtitle": "Install and manage extensions for this instance",
+    "installed": "Installed",
+    "marketplace": "Marketplace",
+    "noneInstalled": "No extensions installed yet.",
+    "noneAvailable": "No extensions available in the registry.",
+    "install": "Install",
+    "installed_toast": "Extension installed",
+    "installConfirmTitle": "Install extension?",
+    "installConfirmDescription": "This extension will be granted the following permissions and activated immediately.",
+    "installNoPermissions": "This extension requests no special permissions.",
+    "enable": "Enable",
+    "enabled": "Extension enabled",
+    "disable": "Disable",
+    "uninstall": "Uninstall",
+    "active": "Active",
+    "errored": "Error",
+    "uninstallConfirmTitle": "Uninstall extension?",
+    "uninstallConfirmDescription": "This removes the extension's files and disables its features. Owned data tables are left intact unless the extension defines cleanup.",
+    "uninstallDropTables": "Drop extension's database tables",
+    "uninstallDropTablesHint": "Permanently deletes all data stored by this extension. This cannot be undone.",
+    "tabDiscover": "Discover",
+    "tabInstalled": "Installed",
+    "pageOf": "Page {page} of {total}",
+    "noDescription": "No description provided.",
+    "backToExtensions": "Back to Extensions",
+    "publisher": "Publisher",
+    "extensionId": "Extension ID",
+    "capabilitiesTitle": "Capabilities",
+    "capabilitiesNone": "No special capabilities required.",
+    "aboutTitle": "About",
+    "notInRegistry": "This extension is installed locally and not listed in the connected registry."
   }
 }

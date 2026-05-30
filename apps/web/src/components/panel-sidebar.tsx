@@ -39,6 +39,7 @@ import {
   ChevronLeft,
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import { ExtensionNav } from "@/components/extension-nav";
 
 export function PanelSidebar() {
   const t = useTranslations("nav");
@@ -207,6 +208,7 @@ export function PanelSidebar() {
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
+                  <ExtensionNav section="panel" />
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
