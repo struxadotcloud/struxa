@@ -1,9 +1,9 @@
 import {
   boolean,
-  index,
   json,
   mysqlTable,
   timestamp,
+  uniqueIndex,
   varchar,
 } from "drizzle-orm/mysql-core";
 
@@ -52,5 +52,5 @@ export const extMigrations = mysqlTable(
     hash: varchar("hash", { length: 64 }).notNull(),
     appliedAt: timestamp("applied_at", { fsp: 3 }).defaultNow().notNull(),
   },
-  (table) => [index("ext_migrations_extId_idx").on(table.extId)],
+  (table) => [uniqueIndex("ext_migrations_extId_hash_idx").on(table.extId, table.hash)],
 );

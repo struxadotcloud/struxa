@@ -1533,12 +1533,13 @@
         }
       },
       "indexes": {
-        "ext_migrations_extId_idx": {
-          "name": "ext_migrations_extId_idx",
+        "ext_migrations_extId_hash_idx": {
+          "name": "ext_migrations_extId_hash_idx",
           "columns": [
-            "ext_id"
+            "ext_id",
+            "hash"
           ],
-          "isUnique": false
+          "isUnique": true
         }
       },
       "foreignKeys": {},

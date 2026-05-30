@@ -7,6 +7,7 @@ import { pipeline } from "node:stream/promises";
 import { env } from "@struxa/env/server";
 import { manifestSchema, type Manifest } from "@struxa/extension-sdk";
 import * as tar from "tar";
+import { z } from "zod";
 
 import { extensionDir } from "./loader";
 
@@ -35,21 +36,44 @@ export interface RegistryEntry {
   signature: string;
 }
 
+const registryIndexSchema = z.object({
+  extensions: z
+    .array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        version: z.string(),
+        description: z.string().optional(),
+        author: z.string().optional(),
+        readme: z.string().optional(),
+        permissions: z.array(z.string()),
+        tarball: z.string(),
+        signature: z.string(),
+      }),
+    )
+    .optional(),
+});
+
 function registryUrl(): string {
   const url = env.EXTENSIONS_REGISTRY_URL;
   if (!url) throw new Error("EXTENSIONS_REGISTRY_URL is not configured");
   return url.replace(/\/$/, "");
 }
 
+function fetchWithTimeout(url: string, ms = 10_000): Promise<Response> {
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), ms);
+  return fetch(url, { signal: ac.signal }).finally(() => clearTimeout(timer));
+}
+
 /** Fetch the marketplace catalog. */
 export async function listAvailableExtensions(): Promise<RegistryEntry[]> {
-  const res = await fetch(`${registryUrl()}/index.json`, {
-    headers: { accept: "application/json" },
-  });
+  const res = await fetchWithTimeout(`${registryUrl()}/index.json`);
   if (!res.ok) {
     throw new Error(`registry index fetch failed: ${res.status}`);
   }
-  const body = (await res.json()) as { extensions?: RegistryEntry[] };
+  const raw = await res.json();
+  const body = registryIndexSchema.parse(raw);
   return body.extensions ?? [];
 }
 
@@ -78,7 +102,7 @@ async function resolveUrl(maybeRelative: string): Promise<string> {
  */
 export async function installExtension(entry: RegistryEntry): Promise<Manifest> {
   const tarballUrl = await resolveUrl(entry.tarball);
-  const res = await fetch(tarballUrl);
+  const res = await fetchWithTimeout(tarballUrl);
   if (!res.ok) throw new Error(`package download failed: ${res.status}`);
   const bytes = new Uint8Array(await res.arrayBuffer());
 
@@ -89,21 +113,25 @@ export async function installExtension(entry: RegistryEntry): Promise<Manifest> 
   await rm(dir, { recursive: true, force: true });
   await mkdir(dir, { recursive: true });
 
-  // Stream verified bytes directly into tar — no intermediate file on disk.
-  await pipeline(
-    Readable.from(bytes),
-    tar.x({ cwd: dir, strict: true }),
-  );
+  try {
+    // Stream verified bytes directly into tar — no intermediate file on disk.
+    await pipeline(
+      Readable.from(bytes),
+      tar.x({ cwd: dir, strict: true }),
+    );
 
-  // Validate the extracted manifest and sanity-check identity.
-  const { readFile } = await import("node:fs/promises");
-  const manifestRaw = await readFile(path.join(dir, "manifest.json"), "utf8");
-  const manifest = manifestSchema.parse(JSON.parse(manifestRaw));
-  if (manifest.id !== entry.id || manifest.version !== entry.version) {
+    // Validate the extracted manifest and sanity-check identity.
+    const { readFile } = await import("node:fs/promises");
+    const manifestRaw = await readFile(path.join(dir, "manifest.json"), "utf8");
+    const manifest = manifestSchema.parse(JSON.parse(manifestRaw));
+    if (manifest.id !== entry.id || manifest.version !== entry.version) {
+      throw new Error("manifest id/version does not match registry entry");
+    }
+    return manifest;
+  } catch (err) {
     await rm(dir, { recursive: true, force: true });
-    throw new Error("manifest id/version does not match registry entry");
+    throw err;
   }
-  return manifest;
 }
 
 /** Remove an installed package's files from disk. */

@@ -119,8 +119,11 @@ export function ExtensionFrame({
         }
         case "struxa:iframe:navigate": {
           const route = (data as { route?: string }).route;
-          // Only allow internal navigation.
-          if (route && route.startsWith("/")) router.push(route as never);
+          // Reject protocol-relative ("//evil.com") and allow only absolute
+          // same-origin paths ("/foo/bar").
+          if (route && route.startsWith("/") && !route.startsWith("//")) {
+            router.push(route as never);
+          }
           break;
         }
         case "struxa:iframe:toast": {

@@ -32,20 +32,23 @@ function invalidate(id: string) {
   });
 }
 
-function permInfo(p: string): { label: string; description: string } {
-  if (p === "db:own") return { label: "Database tables", description: "Creates and manages its own prefixed database tables." };
-  if (p === "api:public") return { label: "Public API", description: "Adds API routes accessible without authentication." };
-  if (p === "api:protected") return { label: "Authenticated API", description: "Adds API routes accessible to signed-in users." };
-  if (p === "api:admin") return { label: "Admin API", description: "Adds API routes accessible to admins only." };
-  if (p.startsWith("hook:")) return { label: `Hook: ${p.slice(5)}`, description: `Listens to the ${p.slice(5)} event.` };
-  if (p.startsWith("core.metadata:")) return { label: `Metadata: ${p.slice(14)}`, description: `Reads and writes metadata on ${p.slice(14)} records.` };
-  if (p.startsWith("settings:")) return { label: "Settings storage", description: `Stores configuration under the ${p.slice(9)} key space.` };
+type PermTranslator = (key: string, values?: Record<string, string>) => string;
+
+function permInfo(p: string, t: PermTranslator): { label: string; description: string } {
+  if (p === "db:own") return { label: t("perm.dbOwn.label"), description: t("perm.dbOwn.description") };
+  if (p === "api:public") return { label: t("perm.apiPublic.label"), description: t("perm.apiPublic.description") };
+  if (p === "api:protected") return { label: t("perm.apiProtected.label"), description: t("perm.apiProtected.description") };
+  if (p === "api:admin") return { label: t("perm.apiAdmin.label"), description: t("perm.apiAdmin.description") };
+  if (p.startsWith("hook:")) return { label: t("perm.hook.label", { event: p.slice(5) }), description: t("perm.hook.description", { event: p.slice(5) }) };
+  if (p.startsWith("core.metadata:")) return { label: t("perm.metadata.label", { entity: p.slice(14) }), description: t("perm.metadata.description", { entity: p.slice(14) }) };
+  if (p.startsWith("settings:")) return { label: t("perm.settings.label"), description: t("perm.settings.description", { prefix: p.slice(9) }) };
   return { label: p, description: "" };
 }
 
 const CAPS_PREVIEW = 3;
 
 function CapabilitiesSidebar({ permissions }: { permissions: string[] }) {
+  const t = useTranslations("extensions");
   const [open, setOpen] = useState(false);
   const preview = permissions.slice(0, CAPS_PREVIEW);
   const rest = permissions.length - CAPS_PREVIEW;
@@ -55,9 +58,9 @@ function CapabilitiesSidebar({ permissions }: { permissions: string[] }) {
   return (
     <>
       <div className="flex flex-col gap-2 border-t border-border pt-4 text-xs">
-        <span className="text-muted-foreground">Capabilities</span>
+        <span className="text-muted-foreground">{t("capabilitiesTitle")}</span>
         {preview.map((p) => {
-          const info = permInfo(p);
+          const info = permInfo(p, t);
           return (
             <div key={p} className="flex flex-col gap-0.5">
               <span className="font-medium text-foreground">{info.label}</span>
@@ -67,10 +70,11 @@ function CapabilitiesSidebar({ permissions }: { permissions: string[] }) {
         })}
         {rest > 0 && (
           <button
+            type="button"
             onClick={() => setOpen(true)}
             className="text-left text-[11px] text-primary hover:underline"
           >
-            Show {rest} more…
+            {t("showMore", { count: String(rest) })}
           </button>
         )}
       </div>
@@ -78,11 +82,11 @@ function CapabilitiesSidebar({ permissions }: { permissions: string[] }) {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogPopup>
           <DialogHeader>
-            <DialogTitle>All capabilities</DialogTitle>
+            <DialogTitle>{t("allCapabilities")}</DialogTitle>
           </DialogHeader>
           <div className="px-5 pb-5">
             {permissions.map((p, i) => {
-              const info = permInfo(p);
+              const info = permInfo(p, t);
               return (
                 <div
                   key={p}
@@ -167,7 +171,10 @@ export default function ExtensionDetailPage() {
     }),
   );
   const disableMutation = useMutation(
-    orpc.extensions.disable.mutationOptions({ onSuccess: () => invalidate(id) }),
+    orpc.extensions.disable.mutationOptions({
+      onSuccess: () => { invalidate(id); toast.success(t("disable")); },
+      onError: (e) => toast.error(e.message),
+    }),
   );
   const uninstallMutation = useMutation(
     orpc.extensions.uninstall.mutationOptions({
@@ -244,7 +251,7 @@ export default function ExtensionDetailPage() {
             {permissions.length > 0 ? (
               <div className="flex flex-col divide-y divide-border rounded-lg border border-border">
                 {permissions.map((p) => {
-                  const info = permInfo(p);
+                  const info = permInfo(p, t);
                   return (
                     <div key={p} className="flex items-start gap-3 px-3 py-2.5">
                       <div className="min-w-0 flex-1">
@@ -320,7 +327,7 @@ export default function ExtensionDetailPage() {
                       <span className="rounded-md bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-500">{t("active")}</span>
                     )}
                     {isInstalled && !isEnabled && (
-                      <span className="rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">Disabled</span>
+                      <span className="rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">{t("disabled")}</span>
                     )}
                   </div>
                 )}
@@ -339,24 +346,27 @@ export default function ExtensionDetailPage() {
                     <>
                       {isEnabled ? (
                         <button
+                          disabled={disableMutation.isPending}
                           onClick={() => disableMutation.mutate({ id })}
-                          className="flex items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                          className="flex items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
                         >
                           <PowerOff className="h-4 w-4" />
                           {t("disable")}
                         </button>
                       ) : (
                         <button
+                          disabled={enableMutation.isPending}
                           onClick={() => enableMutation.mutate({ id })}
-                          className="flex items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+                          className="flex items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
                         >
                           <Power className="h-4 w-4" />
                           {t("enable")}
                         </button>
                       )}
                       <button
+                        disabled={uninstallMutation.isPending}
                         onClick={() => setConfirmUninstall(true)}
-                        className="flex items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm text-destructive transition-colors hover:bg-destructive/10"
+                        className="flex items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-50"
                       >
                         <Trash2 className="h-4 w-4" />
                         {t("uninstall")}
@@ -377,7 +387,7 @@ export default function ExtensionDetailPage() {
                     </div>
                   )}
                   <div className="flex flex-col gap-0.5">
-                    <span className="text-muted-foreground">Version</span>
+                    <span className="text-muted-foreground">{t("version")}</span>
                     <span className="text-foreground">{version}</span>
                   </div>
                 </div>

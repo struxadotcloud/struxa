@@ -33,8 +33,7 @@ export async function listEnabledExtensions(): Promise<EnabledExtension[]> {
   const rows = await db
     .select()
     .from(extensions)
-    .where(eq(extensions.enabled, true))
-    .catch(() => []);
+    .where(eq(extensions.enabled, true));
 
   const out: EnabledExtension[] = [];
   for (const row of rows) {
@@ -60,7 +59,6 @@ export async function getEnabledExtension(
       .from(extensions)
       .where(and(eq(extensions.id, id), eq(extensions.enabled, true)))
       .limit(1)
-      .catch(() => [])
   )[0];
   if (!row) return undefined;
   const parsed = manifestSchema.safeParse(row.manifest);

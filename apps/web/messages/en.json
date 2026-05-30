@@ -1267,6 +1267,44 @@
     "capabilitiesTitle": "Capabilities",
     "capabilitiesNone": "No special capabilities required.",
     "aboutTitle": "About",
-    "notInRegistry": "This extension is installed locally and not listed in the connected registry."
+    "notInRegistry": "This extension is installed locally and not listed in the connected registry.",
+    "details": "Details",
+    "disabled": "Disabled",
+    "version": "Version",
+    "showMore": "Show {count} more…",
+    "allCapabilities": "All capabilities",
+    "paginationPrevious": "Previous page",
+    "paginationNext": "Next page",
+    "installedEmpty": "Browse extensions from the Discover tab.",
+    "perm": {
+      "dbOwn": {
+        "label": "Database tables",
+        "description": "Creates and manages its own prefixed database tables."
+      },
+      "apiPublic": {
+        "label": "Public API",
+        "description": "Adds API routes accessible without authentication."
+      },
+      "apiProtected": {
+        "label": "Authenticated API",
+        "description": "Adds API routes accessible to signed-in users."
+      },
+      "apiAdmin": {
+        "label": "Admin API",
+        "description": "Adds API routes accessible to admins only."
+      },
+      "hook": {
+        "label": "Hook: {event}",
+        "description": "Listens to the {event} event."
+      },
+      "metadata": {
+        "label": "Metadata: {entity}",
+        "description": "Reads and writes metadata on {entity} records."
+      },
+      "settings": {
+        "label": "Settings storage",
+        "description": "Stores configuration under the {prefix} key space."
+      }
+    }
   }
 }

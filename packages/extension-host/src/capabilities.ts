@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import { db, nodes, servers, settings, user } from "@struxa/db";
 import type {
   CoreMetaClient,
@@ -49,17 +50,20 @@ function makeCoreMeta(extId: string, entity: CoreMetaEntity): CoreMetaClient {
       return (slice as Record<string, unknown>) ?? null;
     },
     async set(id, patch) {
-      const row = await db
-        .select({ metadata: table.metadata })
-        .from(table)
-        .where(eq(table.id, id))
-        .limit(1);
-      const current = (row[0]?.metadata as Record<string, unknown> | null) ?? {};
-      const next = {
-        ...current,
-        [extId]: { ...((current[extId] as Record<string, unknown>) ?? {}), ...patch },
-      };
-      await db.update(table).set({ metadata: next }).where(eq(table.id, id));
+      // Single UPDATE — atomically merges `patch` into the extId sub-key so
+      // concurrent writes to different extension slices don't clobber each other.
+      const path = `$."${extId}"`;
+      const patchJson = JSON.stringify(patch);
+      await db.update(table).set({
+        metadata: sql`JSON_SET(
+          COALESCE(${table.metadata}, JSON_OBJECT()),
+          ${path},
+          JSON_MERGE_PATCH(
+            COALESCE(JSON_EXTRACT(${table.metadata}, ${path}), JSON_OBJECT()),
+            CAST(${patchJson} AS JSON)
+          )
+        )`,
+      }).where(eq(table.id, id));
     },
   };
 }

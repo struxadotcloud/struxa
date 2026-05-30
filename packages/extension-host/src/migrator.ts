@@ -171,8 +171,9 @@ async function listSqlFiles(dir: string): Promise<string[]> {
   let entries: string[];
   try {
     entries = await readdir(dir);
-  } catch {
-    return []; // no migrations dir => nothing to do
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") return [];
+    throw err;
   }
   return entries.filter((f) => f.endsWith(".sql")).sort();
 }

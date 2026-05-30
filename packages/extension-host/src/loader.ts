@@ -106,16 +106,19 @@ export async function loadExtension(
     // Server entry is optional (a pure-UI extension may have none).
     let registration: { router?: unknown } = {};
     const serverEntry = path.join(dir, "server", "index.js");
+    const serverEntryUrl = pathToFileURL(serverEntry).href;
     try {
-      const mod = await nativeImport(pathToFileURL(serverEntry).href);
+      const mod = await nativeImport(serverEntryUrl);
       if (mod.default?.register) {
         registration = (await mod.default.register(ctx)) ?? {};
       }
     } catch (err) {
-      // No server entry is fine; a real import/runtime error is not.
-      if ((err as NodeJS.ErrnoException)?.code !== "ERR_MODULE_NOT_FOUND") {
-        throw err;
-      }
+      // Missing server entry is fine; a transitive missing dep is a real error.
+      const e = err as { code?: string; url?: string; message?: string };
+      const isEntryMissing =
+        e.code === "ERR_MODULE_NOT_FOUND" &&
+        (e.url === serverEntryUrl || !!e.message?.includes(serverEntryUrl));
+      if (!isEntryMissing) throw err;
     }
 
     const routerKeys = registration.router

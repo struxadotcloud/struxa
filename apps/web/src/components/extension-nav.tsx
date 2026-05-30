@@ -19,6 +19,12 @@ import { getExtensionIcon } from "@/lib/extension-icons";
  * route as-is (e.g. /foo); admin pages are mounted under /admin (e.g.
  * /admin/foo).
  */
+function routeIsActive(pathname: string, href: string): boolean {
+  if (href === "/") return pathname === "/";
+  const base = href.replace(/\/$/, "");
+  return pathname === base || pathname.startsWith(base + "/");
+}
+
 export function ExtensionNav({
   section,
   routePrefix = "",
@@ -42,7 +48,7 @@ export function ExtensionNav({
           <SidebarMenuItem key={`${page.extId}:${page.route}`}>
             <SidebarMenuButton
               render={<Link href={href as never} />}
-              isActive={pathname === href || pathname.startsWith(href + "/")}
+              isActive={routeIsActive(pathname, href)}
               tooltip={page.label}
               className="h-auto gap-2 rounded-lg py-2 px-3 text-sm transition-colors duration-150"
             >

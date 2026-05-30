@@ -156,7 +156,7 @@ export const extensionsRouter = {
     .handler(async ({ input }) => {
       await db
         .update(extensions)
-        .set({ enabled: false })
+        .set({ enabled: false, status: "disabled" })
         .where(eq(extensions.id, input.id));
       unsubscribeExtension(input.id);
       extensionRegistry.remove(input.id);

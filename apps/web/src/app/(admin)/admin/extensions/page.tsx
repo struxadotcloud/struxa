@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
@@ -81,15 +81,19 @@ function Pagination({
       </span>
       <div className="flex gap-1">
         <button
+          type="button"
           disabled={page <= 1}
           onClick={onPrev}
+          aria-label={t("paginationPrevious")}
           className="flex h-7 w-7 items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted disabled:opacity-30"
         >
           <ChevronLeft className="h-3.5 w-3.5" />
         </button>
         <button
+          type="button"
           disabled={page >= total}
           onClick={onNext}
+          aria-label={t("paginationNext")}
           className="flex h-7 w-7 items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted disabled:opacity-30"
         >
           <ChevronRight className="h-3.5 w-3.5" />
@@ -133,6 +137,15 @@ export default function ExtensionsPage() {
 
   const discoverTotalPages = Math.max(1, Math.ceil(marketplace.length / PAGE_SIZE));
   const installedTotalPages = Math.max(1, Math.ceil(installedRows.length / PAGE_SIZE));
+
+  // Clamp pages when data shrinks (e.g. after a filter or install).
+  useEffect(() => {
+    setDiscoverPage((p) => Math.min(Math.max(1, p), discoverTotalPages));
+  }, [discoverTotalPages]);
+  useEffect(() => {
+    setInstalledPage((p) => Math.min(Math.max(1, p), installedTotalPages));
+  }, [installedTotalPages]);
+
   const discoverSlice = marketplace.slice(
     (discoverPage - 1) * PAGE_SIZE,
     discoverPage * PAGE_SIZE,
@@ -210,7 +223,7 @@ export default function ExtensionsPage() {
                       href={`/admin/extensions/${e.id}` as never}
                       className="flex items-center justify-center rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
                     >
-                      Details
+                      {t("details")}
                     </Link>
                   </div>
                 ))}
@@ -234,7 +247,7 @@ export default function ExtensionsPage() {
               <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-16 text-center">
                 <Boxes className="mb-3 h-8 w-8 text-muted-foreground/40" />
                 <p className="text-sm font-medium text-foreground">{t("noneInstalled")}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{t("tabDiscover")} extensions from the Discover tab.</p>
+                <p className="mt-1 text-xs text-muted-foreground">{t("installedEmpty")}</p>
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">

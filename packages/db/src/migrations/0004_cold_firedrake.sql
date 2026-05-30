@@ -20,8 +20,7 @@ CREATE TABLE `extensions` (
 	CONSTRAINT `extensions_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
-ALTER TABLE `user` ADD `locale` varchar(10) DEFAULT 'en' NOT NULL;--> statement-breakpoint
 ALTER TABLE `user` ADD `metadata` json;--> statement-breakpoint
 ALTER TABLE `nodes` ADD `metadata` json;--> statement-breakpoint
 ALTER TABLE `servers` ADD `metadata` json;--> statement-breakpoint
-CREATE INDEX `ext_migrations_extId_idx` ON `ext_migrations` (`ext_id`);
+CREATE UNIQUE INDEX `ext_migrations_extId_hash_idx` ON `ext_migrations` (`ext_id`,`hash`);

@@ -54,6 +54,12 @@ export async function GET(
     return new Response("Forbidden", { status: 403 });
   }
 
+  // Only fall back to index.html for navigational requests; asset requests
+  // (JS, CSS, map files) should 404 rather than returning HTML.
+  const acceptsHtml = _req.headers.get("accept")?.includes("text/html") ?? false;
+  const hasFileExt = path.extname(rel.split("?")[0]!) !== "";
+  const canFallback = acceptsHtml || !hasFileExt;
+
   let data: Buffer;
   try {
     const info = await stat(filePath);
@@ -66,6 +72,7 @@ export async function GET(
     }
     data = await readFile(realFile);
   } catch {
+    if (!canFallback) return notFound();
     // SPA fallback — also realpath-checked.
     try {
       const fallback = path.join(webRoot, "index.html");
