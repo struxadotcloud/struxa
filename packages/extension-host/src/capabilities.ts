@@ -50,6 +50,12 @@ function makeCoreMeta(extId: string, entity: CoreMetaEntity): CoreMetaClient {
       return (slice as Record<string, unknown>) ?? null;
     },
     async set(id, patch) {
+      // Guard: extId must be a safe slug before it's interpolated into the JSON
+      // path. The manifest schema enforces this at install time; this assertion
+      // catches any accidental bypass.
+      if (!/^[a-z][a-z0-9-]{1,62}$/.test(extId)) {
+        throw new Error(`invalid extension id for metadata path: "${extId}"`);
+      }
       // Single UPDATE — atomically merges `patch` into the extId sub-key so
       // concurrent writes to different extension slices don't clobber each other.
       const path = `$."${extId}"`;
