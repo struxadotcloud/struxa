@@ -1056,7 +1056,7 @@ export default function AdminSettingsPage() {
                             {field.description && (
                               <p className="text-[11px] text-muted-foreground">{field.description}</p>
                             )}
-                            <Select value={value} onValueChange={setVal}>
+                            <Select value={value} onValueChange={(v) => v !== null && setVal(v)}>
                               <SelectTrigger className="h-[30px] text-sm">
                                 <SelectValue>
                                   {field.options.find((o) => o.value === value)?.label ?? value}
