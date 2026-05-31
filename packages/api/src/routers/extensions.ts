@@ -210,24 +210,34 @@ export const extensionsRouter = {
    * so the browser knows one is set without receiving the raw secret.
    */
   getAdminSettingsTabs: adminProcedure.handler(async () => {
+    type FieldOut = {
+      key: string; label: string; description: string | null;
+      type: string; placeholder: string | null;
+      options: Array<{ value: string; label: string }> | null;
+      value: string;
+    };
+    type SectionOut = { title: string; description: string | null; fields: FieldOut[] };
+    type TabOut = { extId: string; extName: string; tabId: string; label: string; sections: SectionOut[] };
+
     const activeExts = extensionRegistry.active().filter(
       (e) => (e.manifest.ui?.adminSettingsTabs ?? []).length > 0,
     );
-    if (!activeExts.length) return [];
+    if (!activeExts.length) return [] as TabOut[];
 
-    return Promise.all(
-      activeExts.map(async (ext) => {
-        const ns = `ext:${ext.id}:`;
-        const rows = await db
-          .select()
-          .from(settings)
-          .where(like(settings.key, `${ns}%`));
-        const valMap = Object.fromEntries(
-          rows.map((r) => [r.key.slice(ns.length), r.value ?? ""]),
-        );
+    const result: TabOut[] = [];
 
-        // Resolve tab label via extension messages (best-effort)
-        return (ext.manifest.ui?.adminSettingsTabs ?? []).map((tab) => ({
+    for (const ext of activeExts) {
+      const ns = `ext:${ext.id}:`;
+      const rows = await db
+        .select()
+        .from(settings)
+        .where(like(settings.key, `${ns}%`));
+      const valMap = Object.fromEntries(
+        rows.map((r) => [r.key.slice(ns.length), r.value ?? ""]),
+      );
+
+      for (const tab of ext.manifest.ui?.adminSettingsTabs ?? []) {
+        result.push({
           extId: ext.id,
           extName: ext.manifest.name,
           tabId: tab.id,
@@ -242,14 +252,14 @@ export const extensionsRouter = {
               type: f.type,
               placeholder: f.placeholder ?? null,
               options: f.options ?? null,
-              value: f.type === "password" && valMap[f.key]
-                ? "__set__"
-                : (valMap[f.key] ?? ""),
+              value: f.type === "password" && valMap[f.key] ? "__set__" : (valMap[f.key] ?? ""),
             })),
           })),
-        }));
-      }),
-    ).then((nested) => nested.flat());
+        });
+      }
+    }
+
+    return result;
   }),
 
   /**
