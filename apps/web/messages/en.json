@@ -417,7 +417,8 @@
       "statServerId": "Server ID",
       "statNode": "Node",
       "statEgg": "Egg",
-      "statSftpHost": "SFTP Host"
+      "statSftpHost": "SFTP Host",
+      "extensionSettingsDescription": "Settings provided by this extension."
     },
     "activity": {
       "colTimestamp": "Timestamp",
@@ -1116,7 +1117,8 @@
       "previewSubjectWelcome": "Welcome!",
       "previewSubjectServerInstall": "Your server is ready",
       "editTemplates": "Edit Templates",
-      "editTemplatesDesc": "Customize the HTML for each outbound email."
+      "editTemplatesDesc": "Customize the HTML for each outbound email.",
+      "extensionPasswordSet": "••••••••  (configured — type to replace)"
     },
     "emailEditor": {
       "backToSettings": "Settings",

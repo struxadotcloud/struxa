@@ -14,7 +14,7 @@
     "@orpc/server": "catalog:",
     "@struxa/db": "workspace:*",
     "@struxa/env": "workspace:*",
-    "@struxa/extension-sdk": "^1.0.0",
+    "@struxa/extension-sdk": "^1.0.1",
     "drizzle-orm": "^0.45.1",
     "tar": "^7.4.3",
     "zod": "catalog:"

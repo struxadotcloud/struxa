@@ -38,7 +38,7 @@
         "@struxa/db": "workspace:*",
         "@struxa/env": "workspace:*",
         "@struxa/extension-host": "workspace:*",
-        "@struxa/extension-sdk": "^1.0.0",
+        "@struxa/extension-sdk": "^1.0.1",
         "@struxa/ui": "workspace:*",
         "@tanstack/react-form": "^1.28.0",
         "@tanstack/react-query": "^5.90.12",
@@ -162,7 +162,7 @@
         "@orpc/server": "catalog:",
         "@struxa/db": "workspace:*",
         "@struxa/env": "workspace:*",
-        "@struxa/extension-sdk": "^1.0.0",
+        "@struxa/extension-sdk": "^1.0.1",
         "drizzle-orm": "^0.45.1",
         "tar": "^7.4.3",
         "zod": "catalog:",
@@ -747,7 +747,7 @@
 
     "@struxa/extension-host": ["@struxa/extension-host@workspace:packages/extension-host"],
 
-    "@struxa/extension-sdk": ["@struxa/extension-sdk@1.0.0", "", { "dependencies": { "@orpc/client": "^1.13.14", "@orpc/server": "^1.13.14", "drizzle-orm": "^0.45.1", "zod": "^4.1.13" }, "peerDependencies": { "react": ">=18", "react-dom": ">=18" }, "optionalPeers": ["react", "react-dom"] }, "sha512-Tjf4impRZebU1Zbkbi8EDVbiiRxODPOFKhEEdfqEtZWWJN+gDiMY34O4+tDLFWrYr9A37nSa3ZIu/i+x5lcvrg=="],
+    "@struxa/extension-sdk": ["@struxa/extension-sdk@1.0.1", "", { "dependencies": { "@orpc/client": "^1.13.14", "@orpc/server": "^1.13.14", "drizzle-orm": "^0.45.1", "zod": "^4.1.13" }, "peerDependencies": { "react": ">=18", "react-dom": ">=18" }, "optionalPeers": ["react", "react-dom"] }, "sha512-FvwKoE9PL3tSy28pB6LHiXluJey2xyXSuJsufpgI+ixQ9Mb9OzMvx3Xpw2GWtzmd3t28i/K78SFJH8+Dzn/fuw=="],
 
     "@struxa/ui": ["@struxa/ui@workspace:packages/ui"],
 
