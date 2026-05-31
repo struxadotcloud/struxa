@@ -94,6 +94,12 @@ export const extensionsRouter = {
   getServerSettings: protectedProcedure
     .input(z.object({ serverId: z.string() }))
     .handler(async ({ context, input }) => {
+      type FieldOut = {
+        key: string; label: string; description: string | null;
+        type: string; placeholder: string | null; value: string;
+      };
+      type ExtOut = { extId: string; extName: string; fields: FieldOut[] };
+
       const userId = context.session.user.id;
       const isAdmin = context.session.user.role === "admin";
 
@@ -112,7 +118,7 @@ export const extensionsRouter = {
       const activeExts = extensionRegistry.active().filter(
         (e) => (e.manifest.ui?.serverSettings ?? []).length > 0,
       );
-      if (!activeExts.length) return [];
+      if (!activeExts.length) return [] as ExtOut[];
 
       const extRows = await db.query.extensions.findMany({
         where: inArray(extensions.id, activeExts.map((e) => e.id)),
@@ -123,24 +129,23 @@ export const extensionsRouter = {
       );
 
       const serverMeta = (server.metadata ?? {}) as Record<string, Record<string, unknown>>;
+      const result: ExtOut[] = [];
 
-      return activeExts
-        .filter((e) => grantMap.get(e.id)?.includes("core.metadata:server"))
-        .map((e) => {
-          const extMeta = serverMeta[e.id] ?? {};
-          return {
-            extId: e.id,
-            extName: e.manifest.name,
-            fields: (e.manifest.ui?.serverSettings ?? []).map((f) => ({
-              key: f.key,
-              label: f.label,
-              description: f.description ?? null,
-              type: f.type,
-              placeholder: f.placeholder ?? null,
-              value: String(extMeta[f.key] ?? ""),
-            })),
-          };
-        });
+      for (const e of activeExts) {
+        if (!grantMap.get(e.id)?.includes("core.metadata:server")) continue;
+        const extMeta = serverMeta[e.id] ?? {};
+        const fields: FieldOut[] = (e.manifest.ui?.serverSettings ?? []).map((f) => ({
+          key: f.key,
+          label: f.label,
+          description: f.description ?? null,
+          type: f.type,
+          placeholder: f.placeholder ?? null,
+          value: String(extMeta[f.key] ?? ""),
+        }));
+        result.push({ extId: e.id, extName: e.manifest.name, fields });
+      }
+
+      return result;
     }),
 
   /**
