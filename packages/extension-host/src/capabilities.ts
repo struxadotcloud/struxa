@@ -4,6 +4,7 @@ import type {
   CoreMetaClient,
   ExtensionContext,
   ExtensionLogger,
+  FieldOutputs,
   ProcedureBuilder,
   ScopedProcedures,
   ScopedSettings,
@@ -12,6 +13,7 @@ import type { CoreMetaEntity } from "@struxa/extension-sdk";
 import { eq, like } from "drizzle-orm";
 
 import { subscribe } from "./hooks";
+import { extensionRegistry } from "./registry";
 
 /** The host's real, context-bound oRPC builders, injected by the app layer. */
 export interface HostProcedures {
@@ -151,6 +153,34 @@ export function buildContext(opts: {
       .map((p) => p.slice("hook:".length)),
   );
 
+  // Permitted output slots: set of "entity:field" pairs from output:<entity>:<field> grants.
+  const outputGrants = new Set(
+    permissions
+      .filter((p) => p.startsWith("output:"))
+      .map((p) => p.slice("output:".length)),
+  );
+
+  const fieldOutputs: FieldOutputs = {
+    set(entity, field, entityId, value) {
+      if (!outputGrants.has(`${entity}:${field}`)) {
+        console.warn(
+          `[extensions] ${extId} called fieldOutputs.set("${entity}", "${field}", ...) without output:${entity}:${field} permission; ignored`,
+        );
+        return;
+      }
+      extensionRegistry.setFieldOutput(entity, field, entityId, value, extId);
+    },
+    clear(entity, field, entityId) {
+      if (!outputGrants.has(`${entity}:${field}`)) {
+        console.warn(
+          `[extensions] ${extId} called fieldOutputs.clear("${entity}", "${field}", ...) without output:${entity}:${field} permission; ignored`,
+        );
+        return;
+      }
+      extensionRegistry.clearFieldOutput(entity, field, entityId, extId);
+    },
+  };
+
   return {
     extId,
     version,
@@ -175,5 +205,6 @@ export function buildContext(opts: {
       },
     },
     procedures: scoped,
+    fieldOutputs,
   };
 }

@@ -417,7 +417,8 @@
       "statServerId": "Server ID",
       "statNode": "Node",
       "statEgg": "Egg",
-      "statSftpHost": "SFTP Host"
+      "statSftpHost": "SFTP Host",
+      "extensionSettingsDescription": "Settings provided by this extension."
     },
     "activity": {
       "colTimestamp": "Timestamp",

@@ -1,8 +1,11 @@
 import { z } from "zod";
 import { ORPCError } from "@orpc/server";
-import { db, extensions } from "@struxa/db";
+import { sql, and, eq, inArray } from "drizzle-orm";
+import { db, extensions, servers, subusers, settings } from "@struxa/db";
+import { like } from "drizzle-orm";
 import {
   extensionRegistry,
+  emitToExtension,
   forgetExtensionMigrations,
   dropExtensionTables,
   installExtension,
@@ -13,7 +16,6 @@ import {
   unsubscribeExtension,
   uninstallExtensionFiles,
 } from "@struxa/extension-host";
-import { eq } from "drizzle-orm";
 
 import { adminProcedure, protectedProcedure } from "../index";
 
@@ -46,6 +48,255 @@ export const extensionsRouter = {
         widget: s.widget,
       })),
     ),
+
+  /**
+   * Read the value published by an extension for a named output field, e.g.
+   * `{ entity: "server", field: "address", entityId: "abc" }`. Returns null if
+   * no active extension has set a value for this slot.
+   *
+   * Authorization: entity access is verified before returning — callers can only
+   * read outputs for entities they already have access to.
+   */
+  getFieldOutput: protectedProcedure
+    .input(z.object({ entity: z.string(), field: z.string(), entityId: z.string() }))
+    .handler(async ({ context, input }) => {
+      const { entity, field, entityId } = input;
+      const userId = context.session.user.id;
+      const isAdmin = context.session.user.role === "admin";
+
+      if (entity === "server") {
+        const server = await db.query.servers.findFirst({
+          where: eq(servers.uuid, entityId),
+          columns: { id: true, userId: true },
+        });
+        if (!server) throw new ORPCError("NOT_FOUND");
+        if (!isAdmin && server.userId !== userId) {
+          const sub = await db.query.subusers.findFirst({
+            where: and(eq(subusers.userId, userId), eq(subusers.serverId, server.id)),
+          });
+          if (!sub) throw new ORPCError("FORBIDDEN");
+        }
+      } else {
+        // Unknown entity type — reject rather than silently leaking data
+        throw new ORPCError("NOT_FOUND");
+      }
+
+      return { value: extensionRegistry.getFieldOutput(entity, field, entityId) };
+    }),
+
+  // ---- Extension server settings ----
+
+  /**
+   * Returns all active extensions that declare `ui.serverSettings` fields and
+   * have been granted `core.metadata:server`, merged with their current stored
+   * values for the given server. Caller must have access to the server.
+   */
+  getServerSettings: protectedProcedure
+    .input(z.object({ serverId: z.string() }))
+    .handler(async ({ context, input }) => {
+      const userId = context.session.user.id;
+      const isAdmin = context.session.user.role === "admin";
+
+      const server = await db.query.servers.findFirst({
+        where: eq(servers.uuid, input.serverId),
+        columns: { id: true, userId: true, metadata: true },
+      });
+      if (!server) throw new ORPCError("NOT_FOUND");
+      if (!isAdmin && server.userId !== userId) {
+        const sub = await db.query.subusers.findFirst({
+          where: and(eq(subusers.userId, userId), eq(subusers.serverId, server.id)),
+        });
+        if (!sub) throw new ORPCError("FORBIDDEN");
+      }
+
+      const activeExts = extensionRegistry.active().filter(
+        (e) => (e.manifest.ui?.serverSettings ?? []).length > 0,
+      );
+      if (!activeExts.length) return [];
+
+      const extRows = await db.query.extensions.findMany({
+        where: inArray(extensions.id, activeExts.map((e) => e.id)),
+        columns: { id: true, grantedPermissions: true },
+      });
+      const grantMap = new Map(
+        extRows.map((r) => [r.id, (r.grantedPermissions as string[] | null) ?? []]),
+      );
+
+      const serverMeta = (server.metadata ?? {}) as Record<string, Record<string, unknown>>;
+
+      return activeExts
+        .filter((e) => grantMap.get(e.id)?.includes("core.metadata:server"))
+        .map((e) => {
+          const extMeta = serverMeta[e.id] ?? {};
+          return {
+            extId: e.id,
+            extName: e.manifest.name,
+            fields: (e.manifest.ui?.serverSettings ?? []).map((f) => ({
+              key: f.key,
+              label: f.label,
+              description: f.description ?? null,
+              type: f.type,
+              placeholder: f.placeholder ?? null,
+              value: String(extMeta[f.key] ?? ""),
+            })),
+          };
+        });
+    }),
+
+  /**
+   * Save one extension-declared server setting. Fires `server.settings.saved`
+   * to that extension's handlers only. Caller must have server access; the
+   * extension must be active with `core.metadata:server` granted and the key
+   * must be declared in its manifest.
+   */
+  saveServerSetting: protectedProcedure
+    .input(z.object({ serverId: z.string(), extId: z.string(), key: z.string(), value: z.string() }))
+    .handler(async ({ context, input }) => {
+      const userId = context.session.user.id;
+      const isAdmin = context.session.user.role === "admin";
+
+      const server = await db.query.servers.findFirst({
+        where: eq(servers.uuid, input.serverId),
+        columns: { id: true, userId: true },
+      });
+      if (!server) throw new ORPCError("NOT_FOUND");
+      if (!isAdmin && server.userId !== userId) {
+        const sub = await db.query.subusers.findFirst({
+          where: and(eq(subusers.userId, userId), eq(subusers.serverId, server.id)),
+        });
+        if (!sub) throw new ORPCError("FORBIDDEN");
+      }
+
+      const ext = extensionRegistry.get(input.extId);
+      if (!ext || ext.status !== "active") throw new ORPCError("NOT_FOUND");
+
+      const extRow = await db.query.extensions.findFirst({
+        where: eq(extensions.id, input.extId),
+        columns: { grantedPermissions: true },
+      });
+      const granted = (extRow?.grantedPermissions as string[] | null) ?? [];
+      if (!granted.includes("core.metadata:server")) throw new ORPCError("FORBIDDEN");
+
+      const declaredKeys = (ext.manifest.ui?.serverSettings ?? []).map((f) => f.key);
+      if (!declaredKeys.includes(input.key)) throw new ORPCError("NOT_FOUND");
+
+      // Write via the same atomic JSON_SET pattern used by coreMeta
+      if (!/^[a-z][a-z0-9-]{1,62}$/.test(input.extId)) throw new ORPCError("BAD_REQUEST");
+      const path = `$."${input.extId}"`;
+      const patchJson = JSON.stringify({ [input.key]: input.value });
+      await db.update(servers).set({
+        metadata: sql`JSON_SET(
+          COALESCE(${servers.metadata}, JSON_OBJECT()),
+          ${path},
+          JSON_MERGE_PATCH(
+            COALESCE(JSON_EXTRACT(${servers.metadata}, ${path}), JSON_OBJECT()),
+            CAST(${patchJson} AS JSON)
+          )
+        )`,
+      }).where(eq(servers.id, server.id));
+
+      emitToExtension(input.extId, "server.settings.saved", {
+        serverId: input.serverId,
+        key: input.key,
+        value: input.value,
+      });
+    }),
+
+  // ---- Extension admin settings tabs ----
+
+  /**
+   * All active extensions that declare `ui.adminSettingsTabs`, with current
+   * stored values merged in. Password field values are replaced with a sentinel
+   * so the browser knows one is set without receiving the raw secret.
+   */
+  getAdminSettingsTabs: adminProcedure.handler(async () => {
+    const activeExts = extensionRegistry.active().filter(
+      (e) => (e.manifest.ui?.adminSettingsTabs ?? []).length > 0,
+    );
+    if (!activeExts.length) return [];
+
+    return Promise.all(
+      activeExts.map(async (ext) => {
+        const ns = `ext:${ext.id}:`;
+        const rows = await db
+          .select()
+          .from(settings)
+          .where(like(settings.key, `${ns}%`));
+        const valMap = Object.fromEntries(
+          rows.map((r) => [r.key.slice(ns.length), r.value ?? ""]),
+        );
+
+        // Resolve tab label via extension messages (best-effort)
+        return (ext.manifest.ui?.adminSettingsTabs ?? []).map((tab) => ({
+          extId: ext.id,
+          extName: ext.manifest.name,
+          tabId: tab.id,
+          label: tab.label,
+          sections: tab.sections.map((sec) => ({
+            title: sec.title,
+            description: sec.description ?? null,
+            fields: sec.fields.map((f) => ({
+              key: f.key,
+              label: f.label,
+              description: f.description ?? null,
+              type: f.type,
+              placeholder: f.placeholder ?? null,
+              options: f.options ?? null,
+              value: f.type === "password" && valMap[f.key]
+                ? "__set__"
+                : (valMap[f.key] ?? ""),
+            })),
+          })),
+        }));
+      }),
+    ).then((nested) => nested.flat());
+  }),
+
+  /**
+   * Batch-save one extension's admin settings tab values. Fires
+   * `admin.settings.saved` only to that extension's handlers.
+   */
+  saveAdminSettings: adminProcedure
+    .input(
+      z.object({
+        extId: z.string(),
+        tabId: z.string(),
+        values: z.record(z.string(), z.string()),
+      }),
+    )
+    .handler(async ({ input }) => {
+      const ext = extensionRegistry.get(input.extId);
+      if (!ext || ext.status !== "active") throw new ORPCError("NOT_FOUND");
+
+      const tab = (ext.manifest.ui?.adminSettingsTabs ?? []).find(
+        (t) => t.id === input.tabId,
+      );
+      if (!tab) throw new ORPCError("NOT_FOUND");
+
+      const declaredKeys = new Set(
+        tab.sections.flatMap((s) => s.fields.map((f) => f.key)),
+      );
+      const ns = `ext:${input.extId}:`;
+      const changes: Record<string, string> = {};
+
+      for (const [key, value] of Object.entries(input.values)) {
+        if (!declaredKeys.has(key)) continue;
+        // Skip password sentinel — means the client didn't change it
+        if (value === "__set__") continue;
+        changes[key] = value;
+        await db
+          .insert(settings)
+          .values({ key: ns + key, value })
+          .onDuplicateKeyUpdate({ set: { value } });
+      }
+
+      if (Object.keys(changes).length > 0) {
+        emitToExtension(input.extId, "admin.settings.saved", {
+          tabId: input.tabId,
+          changes,
+        });
+      }
+    }),
 
   // ---- Admin lifecycle ----
 

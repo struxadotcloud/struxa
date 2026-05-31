@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
+import { useMessages } from "next-intl";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 
@@ -70,17 +71,20 @@ export function ExtensionFrame({
   const router = useRouter();
   const { resolvedTheme } = useTheme();
   const { data: session } = authClient.useSession();
+  const allMessages = useMessages() as Record<string, unknown>;
   const [height, setHeight] = useState<number>(fill ? 0 : 240);
 
   // Keep latest context in a ref so the message handler isn't re-created.
-  const ctxRef = useRef({ resolvedTheme, session, params, extId });
-  ctxRef.current = { resolvedTheme, session, params, extId };
+  const ctxRef = useRef({ resolvedTheme, session, params, extId, allMessages });
+  ctxRef.current = { resolvedTheme, session, params, extId, allMessages };
 
   function postInit() {
     const win = ref.current?.contentWindow;
     if (!win) return;
-    const { resolvedTheme: mode, session: s, params: p, extId: id } =
+    const { resolvedTheme: mode, session: s, params: p, extId: id, allMessages: msgs } =
       ctxRef.current;
+    const extMessages =
+      ((msgs.ext as Record<string, unknown> | undefined)?.[id] as Record<string, unknown>) ?? {};
     win.postMessage(
       {
         type: "struxa:host:init",
@@ -93,6 +97,7 @@ export function ExtensionFrame({
             locale: readLocale(),
           },
           params: p,
+          messages: extMessages,
         },
       },
       window.location.origin,

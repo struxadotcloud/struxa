@@ -25,7 +25,7 @@ export {
 } from "./catalog";
 export type { EnabledExtension } from "./catalog";
 export type { HostProcedures } from "./capabilities";
-export { emit, unsubscribeExtension } from "./hooks";
+export { emit, emitToExtension, unsubscribeExtension } from "./hooks";
 export { runExtensionMigrations, forgetExtensionMigrations, dropExtensionTables } from "./migrator";
 
 /**

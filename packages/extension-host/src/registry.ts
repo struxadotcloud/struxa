@@ -24,6 +24,8 @@ export interface RegisteredExtension {
 class ExtensionRegistry {
   private byId = new Map<string, RegisteredExtension>();
   private listeners = new Set<() => void>();
+  /** key: `"entity:field:entityId"`, value: owning extId + published value */
+  private fieldOutputMap = new Map<string, { extId: string; value: string }>();
 
   set(ext: RegisteredExtension): void {
     this.byId.set(ext.id, ext);
@@ -31,12 +33,35 @@ class ExtensionRegistry {
   }
 
   remove(id: string): void {
-    if (this.byId.delete(id)) this.emitChange();
+    if (this.byId.delete(id)) {
+      for (const [k, v] of this.fieldOutputMap) {
+        if (v.extId === id) this.fieldOutputMap.delete(k);
+      }
+      this.emitChange();
+    }
   }
 
   clear(): void {
     this.byId.clear();
+    this.fieldOutputMap.clear();
     this.emitChange();
+  }
+
+  setFieldOutput(entity: string, field: string, entityId: string, value: string, extId: string): void {
+    this.fieldOutputMap.set(`${entity}:${field}:${entityId}`, { extId, value });
+    this.emitChange();
+  }
+
+  clearFieldOutput(entity: string, field: string, entityId: string, extId: string): void {
+    const key = `${entity}:${field}:${entityId}`;
+    if (this.fieldOutputMap.get(key)?.extId === extId) {
+      this.fieldOutputMap.delete(key);
+      this.emitChange();
+    }
+  }
+
+  getFieldOutput(entity: string, field: string, entityId: string): string | null {
+    return this.fieldOutputMap.get(`${entity}:${field}:${entityId}`)?.value ?? null;
   }
 
   get(id: string): RegisteredExtension | undefined {

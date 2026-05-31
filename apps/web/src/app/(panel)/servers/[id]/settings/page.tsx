@@ -26,6 +26,7 @@ import { useTranslations } from "next-intl";
 import { orpc, queryClient } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
 import Loader from "@/components/loader";
+import { ExtensionSlot } from "@/components/extension-slot";
 
 function StatRow({
   icon: Icon,
@@ -227,6 +228,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
   const [nameStatus, setNameStatus] = useState<SaveStatus | undefined>(undefined);
   const [imageStatus, setImageStatus] = useState<SaveStatus | undefined>(undefined);
   const [varStatuses, setVarStatuses] = useState<Record<string, SaveStatus>>({});
+  const [extSettingStatuses, setExtSettingStatuses] = useState<Record<string, SaveStatus>>({});
 
   useEffect(() => {
     if (!isPending && !session) router.replace("/login");
@@ -235,6 +237,13 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
   const { data: server, isPending: serverPending } = useQuery(
     orpc.servers.get.queryOptions({ input: { id } }),
   );
+  const { data: extSftpHost } = useQuery(
+    orpc.extensions.getFieldOutput.queryOptions({ input: { entity: "server", field: "sftp.host", entityId: id } }),
+  );
+  const { data: extSettings } = useQuery(
+    orpc.extensions.getServerSettings.queryOptions({ input: { serverId: id } }),
+  );
+  const saveExtSettingMutation = useMutation(orpc.extensions.saveServerSetting.mutationOptions());
 
   const reinstallMutation = useMutation({
     ...orpc.servers.reinstall.mutationOptions(),
@@ -293,12 +302,27 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
     }
   }
 
+  async function saveExtSetting(extId: string, key: string, value: string) {
+    const statusKey = `${extId}:${key}`;
+    setExtSettingStatuses((prev) => ({ ...prev, [statusKey]: "saving" }));
+    try {
+      await saveExtSettingMutation.mutateAsync({ serverId: id, extId, key, value });
+      setExtSettingStatuses((prev) => ({ ...prev, [statusKey]: "saved" }));
+      setTimeout(
+        () => setExtSettingStatuses((prev) => { const next = { ...prev }; delete next[statusKey]; return next; }),
+        2000,
+      );
+    } catch {
+      setExtSettingStatuses((prev) => ({ ...prev, [statusKey]: "error" }));
+    }
+  }
+
   if (isPending || !session) return <Loader />;
   if (serverPending) return <Loader />;
 
   const node = server?.node as { name?: string; fqdn?: string; daemonSFTP?: number } | undefined;
   const sftp = {
-    host: node?.fqdn ?? "—",
+    host: extSftpHost?.value ?? node?.fqdn ?? "—",
     port: node?.daemonSFTP ?? 2022,
     username: `${session?.user.email?.split("@")[0] ?? "user"}.${server?.uuidShort ?? ""}`,
   };
@@ -352,6 +376,8 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
             </SettingRow>
           </SectionCard>
 
+          <ExtensionSlot name="server.settings.general.after" context={{ serverId: id }} />
+
           <SectionCard title={t("sftpTitle")} description={t("sftpDescription")}>
             <div className="grid grid-cols-1 sm:grid-cols-3">
               {[
@@ -388,6 +414,8 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
               </Button>
             </div>
           </SectionCard>
+
+          <ExtensionSlot name="server.settings.sftp.after" context={{ serverId: id }} />
 
           <SectionCard title={t("startupTitle")} description={t("startupDescription")}>
             <div className="border-b border-border px-4 py-3">
@@ -468,6 +496,43 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
             </SettingRow>
           </SectionCard>
 
+          {(extSettings ?? []).map((ext) => (
+            <SectionCard
+              key={ext.extId}
+              title={ext.extName}
+              description={t("extensionSettingsDescription")}
+            >
+              {ext.fields.map((field) => {
+                const statusKey = `${ext.extId}:${field.key}`;
+                return (
+                  <SettingRow
+                    key={field.key}
+                    label={field.label}
+                    description={field.description ?? undefined}
+                  >
+                    <div className="flex items-center gap-2">
+                      {field.type === "toggle" ? (
+                        <Toggle
+                          checked={field.value === "1"}
+                          onChange={(v) => void saveExtSetting(ext.extId, field.key, v ? "1" : "0")}
+                          disabled={extSettingStatuses[statusKey] === "saving"}
+                        />
+                      ) : (
+                        <DebouncedInput
+                          defaultValue={field.value}
+                          onSave={(v) => void saveExtSetting(ext.extId, field.key, v)}
+                          placeholder={field.placeholder ?? undefined}
+                          className="w-48 rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-foreground outline-none focus:border-ring transition-colors"
+                        />
+                      )}
+                      <SaveIndicator status={extSettingStatuses[statusKey]} />
+                    </div>
+                  </SettingRow>
+                );
+              })}
+            </SectionCard>
+          ))}
+
           <Dialog open={reinstallConfirm} onOpenChange={(open) => { if (!open) setReinstallConfirm(false); }}>
             <DialogPopup showCloseButton={false} className="max-w-md">
               <DialogHeader>
@@ -516,6 +581,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
                 </button>
               </div>
             </StatRow>
+            <ExtensionSlot name="server.settings.sidebar.after" context={{ serverId: id }} />
           </div>
         </aside>
       </div>

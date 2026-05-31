@@ -40,14 +40,40 @@ export function unsubscribeExtension(extId: string): void {
 }
 
 /**
- * Fire an event. Returns immediately; handlers run detached. Errors are caught
- * per-handler and reported, never propagated to the caller.
+ * Fire an event to all subscribers. Returns immediately; handlers run detached.
+ * Errors are caught per-handler and reported, never propagated to the caller.
  */
 export function emit<E extends HookEvent>(
   event: E,
   payload: E extends keyof HookPayloads ? HookPayloads[E] : AnyPayload,
 ): void {
   const list = subscriptions.get(event);
+  if (!list?.length) return;
+  for (const sub of list) {
+    void (async () => {
+      try {
+        await sub.handler(payload as AnyPayload);
+      } catch (err) {
+        console.error(
+          `[extensions] hook handler failed (ext=${sub.extId}, event=${event}):`,
+          err,
+        );
+      }
+    })();
+  }
+}
+
+/**
+ * Fire an event only to a specific extension's handlers. Used when an event
+ * is scoped to one extension (e.g. its own settings being saved) so other
+ * extensions don't receive unrelated notifications.
+ */
+export function emitToExtension<E extends HookEvent>(
+  targetExtId: string,
+  event: E,
+  payload: E extends keyof HookPayloads ? HookPayloads[E] : AnyPayload,
+): void {
+  const list = subscriptions.get(event)?.filter((s) => s.extId === targetExtId);
   if (!list?.length) return;
   for (const sub of list) {
     void (async () => {
