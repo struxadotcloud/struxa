@@ -296,16 +296,19 @@ export const extensionsRouter = {
 
       for (const [key, value] of Object.entries(input.values)) {
         if (!declaredKeys.has(key)) continue;
-        // Skip password sentinel — means the client didn't change it
         if (value === "__set__") continue;
         changes[key] = value;
-        await db
-          .insert(settings)
-          .values({ key: ns + key, value })
-          .onDuplicateKeyUpdate({ set: { value } });
       }
 
       if (Object.keys(changes).length > 0) {
+        await db.transaction(async (tx) => {
+          for (const [key, value] of Object.entries(changes)) {
+            await tx
+              .insert(settings)
+              .values({ key: ns + key, value })
+              .onDuplicateKeyUpdate({ set: { value } });
+          }
+        });
         emitToExtension(input.extId, "admin.settings.saved", {
           tabId: input.tabId,
           changes,

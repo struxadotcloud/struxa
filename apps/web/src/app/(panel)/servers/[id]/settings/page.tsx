@@ -307,6 +307,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
     setExtSettingStatuses((prev) => ({ ...prev, [statusKey]: "saving" }));
     try {
       await saveExtSettingMutation.mutateAsync({ serverId: id, extId, key, value });
+      void queryClient.invalidateQueries(orpc.extensions.getServerSettings.queryOptions({ input: { serverId: id } }));
       setExtSettingStatuses((prev) => ({ ...prev, [statusKey]: "saved" }));
       setTimeout(
         () => setExtSettingStatuses((prev) => { const next = { ...prev }; delete next[statusKey]; return next; }),

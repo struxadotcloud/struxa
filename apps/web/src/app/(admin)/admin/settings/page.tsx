@@ -1083,7 +1083,7 @@ export default function AdminSettingsPage() {
                             type={field.type === "password" ? "password" : "text"}
                             placeholder={
                               field.type === "password" && field.value === "__set__"
-                                ? "••••••••  (configured — type to replace)"
+                                ? t("extensionPasswordSet")
                                 : (field.placeholder ?? undefined)
                             }
                             value={value === "__set__" ? "" : value}
