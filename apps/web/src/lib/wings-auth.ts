@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { db } from "@struxa/db";
 import { nodes } from "@struxa/db";
 import { eq } from "drizzle-orm";
+import { safeDecrypt } from "@struxa/api/lib/crypto";
 
 type NodeRecord = typeof nodes.$inferSelect;
 
@@ -36,7 +37,7 @@ export async function authenticateWings(
   }
 
   try {
-    const a = Buffer.from(node.token, "utf8");
+    const a = Buffer.from(safeDecrypt(node.token), "utf8");
     const b = Buffer.from(token, "utf8");
     if (a.length !== b.length || !timingSafeEqual(a, b)) {
       return {
