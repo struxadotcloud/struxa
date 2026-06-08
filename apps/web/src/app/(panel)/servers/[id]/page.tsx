@@ -21,7 +21,6 @@ import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import Loader from "@/components/loader";
-import { ExtensionSlot } from "@/components/extension-slot";
 
 function fmtUptime(ms: number): string {
   if (ms <= 0) return "—";
@@ -202,9 +201,6 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
   const [txHistory, setTxHistory] = useState<number[]>(EMPTY_HISTORY);
 
   const { data: server } = useQuery(orpc.servers.get.queryOptions({ input: { id } }));
-  const { data: extAddress } = useQuery(
-    orpc.extensions.getFieldOutput.queryOptions({ input: { entity: "server", field: "address", entityId: id } }),
-  );
 
   const [reconnectKey, setReconnectKey] = useState(0);
 
@@ -338,7 +334,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
   if (isPending || !session) return <Loader />;
 
   const alloc = server?.allocation as { ip: string; ipAlias: string | null; port: number } | null | undefined;
-  const allocDisplay = extAddress?.value ?? (alloc ? `${alloc.ipAlias ?? alloc.ip}:${alloc.port}` : "—");
+  const allocDisplay = alloc ? `${alloc.ipAlias ?? alloc.ip}:${alloc.port}` : "—";
   const canStart = wsStatus === "offline";
   const canStop = wsStatus === "running";
   const canKill = wsStatus === "starting" || wsStatus === "stopping";
@@ -495,14 +491,8 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
               <span className="text-xl font-bold text-foreground">{fmtBytes(txHistory[txHistory.length - 1] ?? 0)}</span>
             </StatRow>
           </div>
-          <ExtensionSlot name="server.stats.after" context={{ serverId: id }} />
         </aside>
       </div>
-      <ExtensionSlot
-        name="server.overview.after"
-        context={{ serverId: id }}
-        className="mt-4 flex flex-col gap-4"
-      />
     </>
   );
 }

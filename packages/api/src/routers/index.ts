@@ -1,5 +1,4 @@
 import type { RouterClient } from "@orpc/server";
-import { createExtensionRouter } from "@struxa/extension-host";
 
 import { publicProcedure } from "../index";
 import { locationsRouter } from "./locations";
@@ -19,7 +18,6 @@ import { usersRouter } from "./users";
 import { settingsRouter } from "./settings";
 import { onboardingRouter } from "./onboarding";
 import { emailRouter } from "./email";
-import { extensionsRouter } from "./extensions";
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
@@ -42,23 +40,7 @@ export const appRouter = {
   settings: settingsRouter,
   onboarding: onboardingRouter,
   email: emailRouter,
-  extensions: extensionsRouter,
 };
 
 export type AppRouter = typeof appRouter;
 export type AppRouterClient = RouterClient<typeof appRouter>;
-
-/**
- * The router actually served per request: the static core router plus the live
- * extension namespace (`ext.<id>.*`) read from the extension registry. Built
- * lazily by the route handler after the boot loader has activated extensions,
- * so newly registered routers are present. The host client (`AppRouterClient`)
- * intentionally does not include `ext` — extension UIs call their own endpoints
- * via the iframe SDK, not the host's typed client.
- */
-export function createFullRouter() {
-  return {
-    ...appRouter,
-    ext: createExtensionRouter(),
-  };
-}

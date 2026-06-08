@@ -187,20 +187,13 @@ function DiscordIcon({ className }: { className?: string }) {
   );
 }
 
-const CORE_TABS = ["branding", "seo", "auth", "email"] as const;
-type CoreTab = (typeof CORE_TABS)[number];
-type Tab = CoreTab | string; // extension tabs use "ext:<extId>:<tabId>"
+const TABS = ["branding", "seo", "auth", "email"] as const;
+type Tab = (typeof TABS)[number];
 
 export default function AdminSettingsPage() {
   const t = useTranslations("admin.settings");
   const [tab, setTab] = useState<Tab>("branding");
   const [needsRestart, setNeedsRestart] = useState(false);
-
-  const { data: extTabs } = useQuery(orpc.extensions.getAdminSettingsTabs.queryOptions());
-  const saveExtSettingsMutation = useMutation(orpc.extensions.saveAdminSettings.mutationOptions());
-  // Unsaved edits per tab key, and save-indicator state
-  const [extDraft, setExtDraft] = useState<Record<string, Record<string, string>>>({});
-  const [extSaved, setExtSaved] = useState<Record<string, boolean>>({});
   const [githubExpanded, setGithubExpanded] = useState(false);
   const [discordExpanded, setDiscordExpanded] = useState(false);
 
@@ -261,24 +254,6 @@ export default function AdminSettingsPage() {
   function markSaved(key: string) {
     setSaved((s) => [...s, key]);
     setTimeout(() => setSaved((s) => s.filter((k) => k !== key)), 2000);
-  }
-
-  function extTabKey(extId: string, tabId: string) {
-    return `ext:${extId}:${tabId}`;
-  }
-
-  function getExtDraft(extId: string, tabId: string, field: { key: string; value: string }) {
-    return extDraft[extTabKey(extId, tabId)]?.[field.key] ?? field.value;
-  }
-
-  async function saveExtTab(extId: string, tabId: string, fields: Array<{ key: string; value: string }>) {
-    const key = extTabKey(extId, tabId);
-    const draft = extDraft[key] ?? {};
-    const values: Record<string, string> = {};
-    for (const f of fields) values[f.key] = draft[f.key] ?? f.value;
-    await saveExtSettingsMutation.mutateAsync({ extId, tabId, values });
-    setExtSaved((prev) => ({ ...prev, [key]: true }));
-    setTimeout(() => setExtSaved((prev) => ({ ...prev, [key]: false })), 2000);
   }
 
   function generalForm() {
@@ -428,8 +403,8 @@ export default function AdminSettingsPage() {
         <h1 className="text-sm font-semibold text-foreground">{t("title")}</h1>
 
         {/* Tab bar */}
-        <div className="flex gap-1 border-b border-border -mb-1 flex-wrap">
-          {CORE_TABS.map((tab_item) => (
+        <div className="flex gap-1 border-b border-border -mb-1">
+          {TABS.map((tab_item) => (
             <button
               key={tab_item}
               type="button"
@@ -446,23 +421,6 @@ export default function AdminSettingsPage() {
                 : t("tabEmail")}
             </button>
           ))}
-          {(extTabs ?? []).map((extTab) => {
-            const key = extTabKey(extTab.extId, extTab.tabId);
-            return (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setTab(key)}
-                className={`px-3 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
-                  tab === key
-                    ? "border-foreground text-foreground"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {extTab.label}
-              </button>
-            );
-          })}
         </div>
 
         {/* Restart banner */}
@@ -1000,111 +958,6 @@ export default function AdminSettingsPage() {
             </SectionCard>
           </>
         )}
-        {(extTabs ?? []).map((extTab) => {
-          const key = extTabKey(extTab.extId, extTab.tabId);
-          if (tab !== key) return null;
-          const allFields = extTab.sections.flatMap((s) => s.fields);
-          return (
-            <div key={key} className="flex flex-col gap-4">
-              {extTab.sections.map((sec, si) => (
-                <SectionCard key={si} title={sec.title} description={sec.description ?? undefined}>
-                  <div className="flex flex-col gap-3">
-                    {sec.fields.map((field) => {
-                      const value = getExtDraft(extTab.extId, extTab.tabId, field);
-                      const setVal = (v: string) =>
-                        setExtDraft((prev) => ({
-                          ...prev,
-                          [key]: { ...(prev[key] ?? {}), [field.key]: v },
-                        }));
-
-                      if (field.type === "toggle") {
-                        return (
-                          <div key={field.key} className="flex items-center justify-between">
-                            <div>
-                              <p className="text-sm font-medium text-foreground">{field.label}</p>
-                              {field.description && (
-                                <p className="text-xs text-muted-foreground mt-0.5">{field.description}</p>
-                              )}
-                            </div>
-                            <Toggle enabled={value === "1"} onChange={(v) => setVal(v ? "1" : "0")} />
-                          </div>
-                        );
-                      }
-
-                      if (field.type === "textarea") {
-                        return (
-                          <div key={field.key} className="flex flex-col gap-1.5">
-                            <label className="text-xs font-medium text-foreground">{field.label}</label>
-                            {field.description && (
-                              <p className="text-[11px] text-muted-foreground">{field.description}</p>
-                            )}
-                            <textarea
-                              rows={3}
-                              className={`${inputClass()} resize-none`}
-                              placeholder={field.placeholder ?? undefined}
-                              value={value}
-                              onChange={(e) => setVal(e.target.value)}
-                            />
-                          </div>
-                        );
-                      }
-
-                      if (field.type === "select" && field.options) {
-                        return (
-                          <div key={field.key} className="flex flex-col gap-1.5">
-                            <label className="text-xs font-medium text-foreground">{field.label}</label>
-                            {field.description && (
-                              <p className="text-[11px] text-muted-foreground">{field.description}</p>
-                            )}
-                            <Select value={value} onValueChange={(v) => v !== null && setVal(v)}>
-                              <SelectTrigger className="h-[30px] text-sm">
-                                <SelectValue>
-                                  {field.options.find((o) => o.value === value)?.label ?? value}
-                                </SelectValue>
-                              </SelectTrigger>
-                              <SelectContent>
-                                {field.options.map((o) => (
-                                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        );
-                      }
-
-                      return (
-                        <div key={field.key} className="flex flex-col gap-1.5">
-                          <label className="text-xs font-medium text-foreground">{field.label}</label>
-                          {field.description && (
-                            <p className="text-[11px] text-muted-foreground">{field.description}</p>
-                          )}
-                          <input
-                            className={inputClass()}
-                            type={field.type === "password" ? "password" : "text"}
-                            placeholder={
-                              field.type === "password" && field.value === "__set__"
-                                ? t("extensionPasswordSet")
-                                : (field.placeholder ?? undefined)
-                            }
-                            value={value === "__set__" ? "" : value}
-                            onChange={(e) => setVal(e.target.value)}
-                            autoComplete={field.type === "password" ? "new-password" : undefined}
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
-                </SectionCard>
-              ))}
-              <div onClick={() => void saveExtTab(extTab.extId, extTab.tabId, allFields)}>
-                <SaveButton
-                  saving={saveExtSettingsMutation.isPending}
-                  saved={extSaved[key] ?? false}
-                />
-              </div>
-            </div>
-          );
-        })}
         </motion.div>
       </div>
 

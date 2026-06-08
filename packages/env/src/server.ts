@@ -19,12 +19,6 @@ export const env = createEnv({
     MINIO_ACCESS_KEY: z.string().min(1),
     MINIO_SECRET_KEY: z.string().min(1),
     MINIO_BUCKET: z.string().min(1).default("struxa"),
-    // Extension system: persistent dir where installed extension packages live.
-    EXTENSIONS_DIR: z.string().min(1).default("/data/extensions"),
-    // Marketplace registry base URL and the ed25519 public key (base64) used to
-    // verify downloaded package signatures.
-    EXTENSIONS_REGISTRY_URL: z.url().optional(),
-    EXTENSIONS_REGISTRY_PUBLIC_KEY: z.string().min(1).optional(),
   },
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,

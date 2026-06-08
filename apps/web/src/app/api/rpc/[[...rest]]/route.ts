@@ -4,57 +4,36 @@ import { onError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
 import { createContext } from "@struxa/api/context";
-import { createFullRouter } from "@struxa/api/routers/index";
-import { extensionRegistry } from "@struxa/extension-host";
+import { appRouter } from "@struxa/api/routers/index";
 import { NextRequest } from "next/server";
 import { revalidateTag } from "next/cache";
 import { INSTANCE_SETTINGS_TAG } from "@/lib/instance-settings";
-import { bootExtensions } from "@/lib/extensions";
 
 import { withEvlog } from "@/lib/evlog";
 import { identifyEvlogUser } from "@/lib/evlog-auth";
 
-type Handlers = {
-  rpcHandler: RPCHandler<Awaited<ReturnType<typeof createContext>>>;
-  apiHandler: OpenAPIHandler<Awaited<ReturnType<typeof createContext>>>;
-};
-
-let handlers: Handlers | null = null;
-
-function buildHandlers(): Handlers {
-  const router = createFullRouter();
-  return {
-    rpcHandler: new RPCHandler(router, {
-      interceptors: [onError((error) => console.error(error))],
+const rpcHandler = new RPCHandler(appRouter, {
+  interceptors: [
+    onError((error) => {
+      console.error(error);
     }),
-    apiHandler: new OpenAPIHandler(router, {
-      plugins: [
-        new OpenAPIReferencePlugin({
-          schemaConverters: [new ZodToJsonSchemaConverter()],
-        }),
-      ],
-      interceptors: [onError((error) => console.error(error))],
-    }),
-  };
-}
-
-// Rebuild handlers whenever the set of active extensions changes (install,
-// enable/disable, reload) so `ext.<id>.*` routes stay in sync without a restart.
-extensionRegistry.onChange(() => {
-  handlers = null;
+  ],
 });
-
-async function getHandlers(): Promise<Handlers> {
-  // Idempotent: ensures extensions are loaded before the first request is served
-  // (instrumentation also triggers this on boot).
-  await bootExtensions();
-  if (!handlers) handlers = buildHandlers();
-  return handlers;
-}
+const apiHandler = new OpenAPIHandler(appRouter, {
+  plugins: [
+    new OpenAPIReferencePlugin({
+      schemaConverters: [new ZodToJsonSchemaConverter()],
+    }),
+  ],
+  interceptors: [
+    onError((error) => {
+      console.error(error);
+    }),
+  ],
+});
 
 async function handleRequest(req: NextRequest) {
   await identifyEvlogUser(req);
-  const { rpcHandler, apiHandler } = await getHandlers();
   const ctx = await createContext(req);
   ctx.revalidate = () => revalidateTag(INSTANCE_SETTINGS_TAG, {});
   const rpcResult = await rpcHandler.handle(req, {

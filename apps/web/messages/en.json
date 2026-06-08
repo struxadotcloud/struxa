@@ -42,6 +42,7 @@
     "edit": "Edit",
     "purgeFromNode": "Purge files from node"
   },
+
   "auth": {
     "login": {
       "title": "Welcome back",
@@ -153,6 +154,7 @@
       "or": "or"
     }
   },
+
   "nav": {
     "panel": {
       "gameServers": "Game Servers",
@@ -179,10 +181,10 @@
       "servers": "Servers",
       "users": "Users",
       "activity": "Activity",
-      "settings": "Settings",
-      "extensions": "Extensions"
+      "settings": "Settings"
     }
   },
+
   "panel": {
     "servers": {
       "noServersTitle": "No servers yet",
@@ -417,8 +419,7 @@
       "statServerId": "Server ID",
       "statNode": "Node",
       "statEgg": "Egg",
-      "statSftpHost": "SFTP Host",
-      "extensionSettingsDescription": "Settings provided by this extension."
+      "statSftpHost": "SFTP Host"
     },
     "activity": {
       "colTimestamp": "Timestamp",
@@ -455,6 +456,7 @@
       "eventUsersRemove": "Users: Remove"
     }
   },
+
   "account": {
     "tabs": {
       "profile": "Profile",
@@ -602,6 +604,7 @@
       "saveFailed": "Failed to save language preference"
     }
   },
+
   "admin": {
     "dashboard": {
       "title": "Dashboard",
@@ -1117,8 +1120,7 @@
       "previewSubjectWelcome": "Welcome!",
       "previewSubjectServerInstall": "Your server is ready",
       "editTemplates": "Edit Templates",
-      "editTemplatesDesc": "Customize the HTML for each outbound email.",
-      "extensionPasswordSet": "••••••••  (configured — type to replace)"
+      "editTemplatesDesc": "Customize the HTML for each outbound email."
     },
     "emailEditor": {
       "backToSettings": "Settings",
@@ -1138,6 +1140,7 @@
       "viewPreview": "Preview"
     }
   },
+
   "setup": {
     "steps": {
       "adminAccount": "Admin Account",
@@ -1235,78 +1238,5 @@
       "finishFailed": "Failed to complete setup. Please try again."
     },
     "importSuccess": "Imported {count} {count, plural, one {egg} other {eggs}} successfully."
-  },
-  "extensions": {
-    "nav": "Extensions",
-    "title": "Extensions",
-    "subtitle": "Install and manage extensions for this instance",
-    "installed": "Installed",
-    "marketplace": "Marketplace",
-    "noneInstalled": "No extensions installed yet.",
-    "noneAvailable": "No extensions available in the registry.",
-    "install": "Install",
-    "installed_toast": "Extension installed",
-    "installConfirmTitle": "Install extension?",
-    "installConfirmDescription": "This extension will be granted the following permissions and activated immediately.",
-    "installNoPermissions": "This extension requests no special permissions.",
-    "enable": "Enable",
-    "enabled": "Extension enabled",
-    "disable": "Disable",
-    "uninstall": "Uninstall",
-    "active": "Active",
-    "errored": "Error",
-    "uninstallConfirmTitle": "Uninstall extension?",
-    "uninstallConfirmDescription": "This removes the extension's files and disables its features. Owned data tables are left intact unless the extension defines cleanup.",
-    "uninstallDropTables": "Drop extension's database tables",
-    "uninstallDropTablesHint": "Permanently deletes all data stored by this extension. This cannot be undone.",
-    "tabDiscover": "Discover",
-    "tabInstalled": "Installed",
-    "pageOf": "Page {page} of {total}",
-    "noDescription": "No description provided.",
-    "backToExtensions": "Back to Extensions",
-    "publisher": "Publisher",
-    "extensionId": "Extension ID",
-    "capabilitiesTitle": "Capabilities",
-    "capabilitiesNone": "No special capabilities required.",
-    "aboutTitle": "About",
-    "notInRegistry": "This extension is installed locally and not listed in the connected registry.",
-    "details": "Details",
-    "disabled": "Disabled",
-    "version": "Version",
-    "showMore": "Show {count} more…",
-    "allCapabilities": "All capabilities",
-    "paginationPrevious": "Previous page",
-    "paginationNext": "Next page",
-    "installedEmpty": "Browse extensions from the Discover tab.",
-    "perm": {
-      "dbOwn": {
-        "label": "Database tables",
-        "description": "Creates and manages its own prefixed database tables."
-      },
-      "apiPublic": {
-        "label": "Public API",
-        "description": "Adds API routes accessible without authentication."
-      },
-      "apiProtected": {
-        "label": "Authenticated API",
-        "description": "Adds API routes accessible to signed-in users."
-      },
-      "apiAdmin": {
-        "label": "Admin API",
-        "description": "Adds API routes accessible to admins only."
-      },
-      "hook": {
-        "label": "Hook: {event}",
-        "description": "Listens to the {event} event."
-      },
-      "metadata": {
-        "label": "Metadata: {entity}",
-        "description": "Reads and writes metadata on {entity} records."
-      },
-      "settings": {
-        "label": "Settings storage",
-        "description": "Stores configuration under the {prefix} key space."
-      }
-    }
   }
 }

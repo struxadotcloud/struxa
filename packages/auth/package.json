@@ -23,6 +23,5 @@
   "devDependencies": {
     "@struxa/config": "workspace:*",
     "typescript": "catalog:"
-  },
-  "private": true
+  }
 }

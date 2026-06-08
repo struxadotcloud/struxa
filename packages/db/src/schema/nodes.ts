@@ -2,7 +2,6 @@ import {
   boolean,
   index,
   int,
-  json,
   mysqlTable,
   text,
   timestamp,
@@ -36,8 +35,6 @@ export const nodes = mysqlTable(
     maintenanceMode: boolean("maintenance_mode").notNull().default(false),
     tokenId: varchar("token_id", { length: 36 }).notNull(),
     token: text("token").notNull(),
-    // Extension-owned data, namespaced per extension id. Never used by core.
-    metadata: json("metadata").$type<Record<string, unknown>>(),
     createdAt: timestamp("created_at", { fsp: 3 }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { fsp: 3 })
       .defaultNow()

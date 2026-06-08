@@ -16,7 +16,6 @@ import { createWingsClient } from "../lib/wings-client";
 import { signWsToken } from "../lib/jwt";
 import { buildInvocation } from "../services/wings-servers";
 import { recordActivity } from "../services/activity";
-import { emit } from "@struxa/extension-host";
 import { adminProcedure, protectedProcedure } from "../index";
 
 export const serversRouter = {
@@ -582,7 +581,6 @@ export const serversRouter = {
         serverId: server.id,
         ip: context.ip,
       });
-      emit("server.power", { serverId: server.id, action: input.action });
     }),
 
   reinstall: protectedProcedure
@@ -758,7 +756,6 @@ export const serversRouter = {
       }
 
       recordActivity({ eventType: "admin:server.create", userId: context.session.user.id, serverId: id, ip: context.ip, properties: { name: input.name } });
-      emit("server.created", { serverId: id, userId: input.userId });
 
       return db.query.servers.findFirst({ where: eq(servers.id, id) });
     }),
@@ -791,7 +788,6 @@ export const serversRouter = {
 
       await db.delete(servers).where(eq(servers.id, server.id));
       recordActivity({ eventType: "admin:server.delete", userId: context.session.user.id, ip: context.ip, properties: { name: server.name } });
-      emit("server.deleted", { serverId: server.id, userId: server.userId });
     }),
 
   getWebSocketToken: protectedProcedure

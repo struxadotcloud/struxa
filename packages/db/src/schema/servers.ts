@@ -2,7 +2,6 @@ import {
   boolean,
   index,
   int,
-  json,
   mysqlTable,
   text,
   timestamp,
@@ -47,9 +46,6 @@ export const servers = mysqlTable(
     startup: text("startup").notNull(),
     skipScripts: boolean("skip_scripts").notNull().default(false),
     invocation: text("invocation").notNull(),
-    // Extension-owned data, namespaced per extension id (ext writes only its
-    // own key via the capability broker's coreMeta helpers). Never used by core.
-    metadata: json("metadata").$type<Record<string, unknown>>(),
     createdAt: timestamp("created_at", { fsp: 3 }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { fsp: 3 })
       .defaultNow()

@@ -49,10 +49,3 @@ coverage
 .cache
 tmp
 temp
-
-# Extension system — locally installed extension packages (dev)
-.extensions/
-
-# Registry — private signing key (never commit)
-apps/registry/keys/registry_private.pem
-apps/registry/keys/registry_private.pem.b64

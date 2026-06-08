@@ -89,13 +89,6 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
       MINIO_BUCKET: ${MINIO_BUCKET:-struxa}
-      # Extension system: persistent dir for installed extension packages + the
-      # marketplace registry to pull them from.
-      EXTENSIONS_DIR: ${EXTENSIONS_DIR:-/data/extensions}
-      EXTENSIONS_REGISTRY_URL: ${EXTENSIONS_REGISTRY_URL:-}
-      EXTENSIONS_REGISTRY_PUBLIC_KEY: ${EXTENSIONS_REGISTRY_PUBLIC_KEY:-}
-    volumes:
-      - extensions_data:/data/extensions
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -127,7 +120,6 @@ services:
 volumes:
   mysql_data:
   minio_data:
-  extensions_data:
 
 networks:
   struxa:
