@@ -18,6 +18,7 @@ import { usersRouter } from "./users";
 import { settingsRouter } from "./settings";
 import { onboardingRouter } from "./onboarding";
 import { emailRouter } from "./email";
+import { billingRouter } from "./billing";
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
@@ -40,6 +41,7 @@ export const appRouter = {
   settings: settingsRouter,
   onboarding: onboardingRouter,
   email: emailRouter,
+  billing: billingRouter,
 };
 
 export type AppRouter = typeof appRouter;

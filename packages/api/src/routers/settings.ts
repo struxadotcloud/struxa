@@ -102,4 +102,64 @@ export const settingsRouter = {
     await db.delete(settings).where(eq(settings.key, "og_banner_url"));
     context.revalidate?.();
   }),
+
+  getBillingConfig: adminProcedure.handler(async () => {
+    const rows = await db.select().from(settings);
+    const s = Object.fromEntries(rows.map((r) => [r.key, r.value ?? ""]));
+    return {
+      enabled: s.billing_enabled !== "false",
+      defaultCurrency: s.billing_default_currency || "USD",
+      trialsEnabled: s.billing_trials_enabled !== "false",
+      trialDays: Number(s.billing_trial_days) || 7,
+      taxEnabled: s.billing_tax_enabled !== "false",
+      vatRate: Number(s.billing_vat_rate) || 0,
+      requireVatNumber: s.billing_require_vat_number === "true",
+      invoicePrefix: s.billing_invoice_prefix || "INV-",
+      companyName: s.billing_company_name || "",
+      referralEnabled: s.billing_referral_enabled === "true",
+      refereeDiscountPercent: Number(s.billing_referral_referee_discount_percent) || 0,
+      referrerRewardPercent: Number(s.billing_referral_referrer_reward_percent) || 0,
+    };
+  }),
+
+  setBillingSettings: adminProcedure
+    .input(
+      z.object({
+        enabled: z.boolean().optional(),
+        defaultCurrency: z.string().max(3).optional(),
+        trialsEnabled: z.boolean().optional(),
+        trialDays: z.number().int().min(1).max(365).optional(),
+        taxEnabled: z.boolean().optional(),
+        vatRate: z.number().min(0).max(100).optional(),
+        requireVatNumber: z.boolean().optional(),
+        invoicePrefix: z.string().max(50).optional(),
+        companyName: z.string().max(255).optional(),
+        referralEnabled: z.boolean().optional(),
+        refereeDiscountPercent: z.number().int().min(0).max(100).optional(),
+        referrerRewardPercent: z.number().int().min(0).max(100).optional(),
+      }),
+    )
+    .handler(async ({ context, input }) => {
+      const pairs: Array<{ key: string; value: string }> = [];
+      if (input.enabled !== undefined) pairs.push({ key: "billing_enabled", value: String(input.enabled) });
+      if (input.defaultCurrency !== undefined) pairs.push({ key: "billing_default_currency", value: input.defaultCurrency });
+      if (input.trialsEnabled !== undefined) pairs.push({ key: "billing_trials_enabled", value: String(input.trialsEnabled) });
+      if (input.trialDays !== undefined) pairs.push({ key: "billing_trial_days", value: String(input.trialDays) });
+      if (input.taxEnabled !== undefined) pairs.push({ key: "billing_tax_enabled", value: String(input.taxEnabled) });
+      if (input.vatRate !== undefined) pairs.push({ key: "billing_vat_rate", value: String(input.vatRate) });
+      if (input.requireVatNumber !== undefined) pairs.push({ key: "billing_require_vat_number", value: String(input.requireVatNumber) });
+      if (input.invoicePrefix !== undefined) pairs.push({ key: "billing_invoice_prefix", value: input.invoicePrefix });
+      if (input.companyName !== undefined) pairs.push({ key: "billing_company_name", value: input.companyName });
+      if (input.referralEnabled !== undefined) pairs.push({ key: "billing_referral_enabled", value: String(input.referralEnabled) });
+      if (input.refereeDiscountPercent !== undefined) pairs.push({ key: "billing_referral_referee_discount_percent", value: String(input.refereeDiscountPercent) });
+      if (input.referrerRewardPercent !== undefined) pairs.push({ key: "billing_referral_referrer_reward_percent", value: String(input.referrerRewardPercent) });
+      for (const { key, value } of pairs) {
+        await db
+          .insert(settings)
+          .values({ key, value, updatedAt: new Date() })
+          .onDuplicateKeyUpdate({ set: { value, updatedAt: new Date() } });
+      }
+      context.revalidate?.();
+      recordActivity({ eventType: "admin:settings.update", userId: context.session.user.id, ip: context.ip, properties: { keys: pairs.map((p) => p.key) } });
+    }),
 };

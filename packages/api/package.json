@@ -19,6 +19,7 @@
     "@struxa/auth": "workspace:*",
     "@struxa/db": "workspace:*",
     "@struxa/env": "workspace:*",
+    "@struxa/payments": "workspace:*",
     "@types/nodemailer": "^8.0.0",
     "bcryptjs": "^2.4.3",
     "croner": "catalog:",

@@ -159,6 +159,8 @@
     "panel": {
       "gameServers": "Game Servers",
       "account": "Account",
+      "wallet": "Wallet",
+      "shop": "Shop",
       "allServers": "All Servers"
     },
     "server": {
@@ -181,11 +183,94 @@
       "servers": "Servers",
       "users": "Users",
       "activity": "Activity",
-      "settings": "Settings"
+      "settings": "Settings",
+      "billing": "Billing"
     }
   },
 
   "panel": {
+    "billing": {
+      "title": "Billing",
+      "subtitle": "Choose a plan that fits your needs.",
+      "shopTitle": "Shop",
+      "shopSubtitle": "Choose a plan that fits your needs.",
+      "empty": "No plan categories are available yet.",
+      "backToCategories": "All Categories",
+      "noPlans": "No plans are available in this category yet.",
+      "plans": "plans",
+      "plan": "plan",
+      "featured": "Featured",
+      "getStarted": "Get Started",
+      "startingFrom": "Starting from",
+      "durations": {
+        "7day": "7 Days",
+        "1month": "Monthly",
+        "3months": "3 Months",
+        "6months": "6 Months",
+        "1year": "Yearly"
+      },
+      "specs": {
+        "cpu": "vCPU",
+        "ram": "GB RAM",
+        "disk": "GB Disk",
+        "backups": "Backups",
+        "allocations": "Allocations",
+        "databases": "Databases"
+      },
+      "wallet": {
+        "title": "My Wallet",
+        "backToBilling": "Billing",
+        "balance": "Balance",
+        "topUp": "Top Up",
+        "viewWallet": "View Wallet",
+        "transactions": "Transaction History",
+        "noTransactions": "No transactions yet",
+        "noTransactionsHint": "Your wallet activity will appear here after your first top-up.",
+        "balanceAfter": "Balance after",
+        "topUpSuccess": "Wallet topped up successfully",
+        "noGateway": "No active payment provider is configured. Contact your administrator.",
+        "topUpSheet": {
+          "title": "Top Up Wallet",
+          "description": "Select an amount to add to your wallet balance.",
+          "customAmount": "Custom amount",
+          "customAmountPlaceholder": "Enter amount",
+          "total": "Total",
+          "confirm": "Proceed to payment",
+          "processing": "Processing…"
+        },
+        "chooseProvider": "Choose Payment Method",
+        "chooseProviderDesc": "Select how you'd like to top up your wallet.",
+        "back": "Back",
+        "types": {
+          "topup": "Top-up",
+          "refund": "Refund",
+          "charge": "Charge",
+          "adjustment": "Adjustment",
+          "expired": "Expired"
+        },
+        "referral": {
+          "title": "Referral Program",
+          "subtitle": "Share your code and earn rewards when friends top up.",
+          "yourCode": "Your Referral Code",
+          "yourCodeDesc": "Share this code with friends to earn rewards.",
+          "create": "Create",
+          "save": "Save",
+          "cancel": "Cancel",
+          "codePlaceholderCreate": "e.g. MYCODE",
+          "enterCode": "Have a Referral Code?",
+          "enterCodeDesc": "Enter a friend's code to claim your reward.",
+          "codePlaceholder": "e.g. STRUXA-ABCD",
+          "apply": "Apply",
+          "applySuccess": "Referral code applied! Your bonus will be credited on your first top-up.",
+          "usageCount": "Used by {count} {count, plural, one {person} other {people}}",
+          "errorSelfReferral": "You can't use your own referral code.",
+          "errorAlreadyApplied": "You've already applied a referral code.",
+          "errorCodeNotFound": "Referral code not found or no longer active.",
+          "errorCodeTaken": "That code is already taken. Try a different one.",
+          "errorGeneric": "Something went wrong. Please try again."
+        }
+      }
+    },
     "servers": {
       "noServersTitle": "No servers yet",
       "noServersDescription": "Your servers will appear here once created.",
@@ -1138,6 +1223,151 @@
       "loading": "Loading…",
       "viewEditor": "Editor",
       "viewPreview": "Preview"
+    },
+
+    "billing": {
+      "title": "Billing",
+      "tabs": {
+        "settings": "Settings",
+        "providers": "Providers",
+        "catalog": "Catalog"
+      },
+      "settings": {
+        "general": {
+          "title": "General",
+          "description": "Enable billing and set the default currency.",
+          "enableBilling": "Enable billing",
+          "defaultCurrency": "Default currency",
+          "searchCurrencies": "Search currencies…"
+        },
+        "trials": {
+          "title": "Free Trials",
+          "description": "Offer a free trial period before charging.",
+          "enableTrials": "Enable free trials",
+          "trialDays": "Default trial duration (days)"
+        },
+        "tax": {
+          "title": "Tax",
+          "description": "Configure tax collection for invoices.",
+          "enableTax": "Enable tax collection",
+          "defaultVatRate": "Default VAT rate (%)",
+          "requireVatNumber": "Require VAT number for EU customers"
+        },
+        "referral": {
+          "title": "Referral Program",
+          "description": "Reward users for bringing new customers.",
+          "enableReferral": "Enable referral program",
+          "refereeDiscount": "Referee bonus (%)",
+          "refereeDiscountDesc": "Bonus added to the referee's wallet on first top-up.",
+          "referrerReward": "Referrer commission (%)",
+          "referrerRewardDesc": "Commission credited to the referrer on the referee's first top-up."
+        }
+      },
+      "providers": {
+        "title": "Payment Providers",
+        "addProvider": "Add Provider",
+        "empty": "No payment providers configured.",
+        "nameColumn": "Provider",
+        "keyColumn": "API Key",
+        "statusColumn": "Status",
+        "providerType": "Provider type",
+        "name": "Display name",
+        "namePlaceholder": "e.g. Stripe Production",
+        "publicKey": "Publishable key",
+        "secretKey": "Secret key",
+        "isDefault": "Set as default",
+        "isDefaultDescription": "Use this provider for new transactions by default.",
+        "isActive": "Active",
+        "statusSection": "Status",
+        "editTitle": "Edit Provider",
+        "editDescription": "Update credentials and configuration for this provider.",
+        "addTitle": "Add Provider",
+        "addDescription": "Connect a payment gateway to start accepting payments.",
+        "deleteTitle": "Delete Provider",
+        "deleteDescription": "This will remove the provider configuration. Existing subscriptions linked to this provider will not be affected.",
+        "webhookSecret": "Webhook Secret",
+        "webhookSecretPlaceholder": "whsec_…",
+        "keepExisting": "Leave empty to keep existing key",
+        "webhookEndpointLabel": "Webhook endpoint",
+        "webhookEndpointHint": "Point your provider's webhook to this URL",
+        "copied": "Copied",
+        "stripe": "Stripe",
+        "simpay": "SimPay",
+        "apiPassword": "API Password",
+        "apiPasswordPlaceholder": "Your SimPay API password",
+        "serviceId": "Service ID",
+        "serviceIdPlaceholder": "Your SimPay service ID",
+        "signatureKey": "IPN Signature Key",
+        "signatureKeyPlaceholder": "Your SimPay IPN signature key",
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "catalog": {
+        "back": "Back",
+        "categories": {
+          "title": "Categories",
+          "add": "Add category",
+          "addDescription": "Create a new category to group plans together.",
+          "edit": "Edit category",
+          "editDescription": "Update the category name, slug, and status.",
+          "delete": "Delete category",
+          "deleteDescription": "Products in this category will be uncategorized.",
+          "statusSection": "Status",
+          "icon": "Icon",
+          "bannerUrl": "Banner",
+          "previewName": "Category name",
+          "previewDescription": "Short description",
+          "name": "Name",
+          "slug": "Slug",
+          "description": "Description",
+          "sortOrder": "Sort order",
+          "isActive": "Active",
+          "empty": "No categories yet."
+        },
+        "plans": {
+          "title": "Plans",
+          "add": "Add plan",
+          "addDescription": "Define a new pricing plan for this category.",
+          "edit": "Edit plan",
+          "editDescription": "Update plan details, resource limits, and pricing.",
+          "delete": "Delete plan",
+          "deleteDescription": "Active subscriptions on this plan will not be affected.",
+          "statusSection": "Visibility",
+          "previewName": "Plan name",
+          "previewDescription": "Short description",
+          "name": "Name",
+          "description": "Description",
+          "isFeatured": "Featured plan",
+          "isFeaturedDescription": "Mark this plan as the featured/recommended option for new customers.",
+          "featured": "Featured",
+          "isActive": "Active",
+          "active": "Active",
+          "inactive": "Inactive",
+          "public": "Public",
+          "unlisted": "Unlisted",
+          "isPublic": "Publicly visible",
+          "isPublicDescription": "Show this plan on public pricing pages.",
+          "resources": "Resource Allocation",
+          "cpu": "CPU",
+          "ram": "RAM",
+          "disk": "Disk",
+          "backups": "Backups",
+          "allocations": "Allocations",
+          "databases": "Databases",
+          "eggs": "Eggs",
+          "prices": "Pricing",
+          "noPrices": "No pricing tiers added yet.",
+          "addPrice": "Add tier",
+          "noneInProduct": "No plans in this category yet.",
+          "durations": {
+            "7day": "7 Days",
+            "1month": "1 Month",
+            "3months": "3 Months",
+            "6months": "6 Months",
+            "1year": "1 Year"
+          }
+        }
+      }
     }
   },
 

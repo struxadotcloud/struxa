@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@better-auth/api-key": "catalog:",
+    "@simpay/typescript": "*",
     "@monaco-editor/react": "^4.6.0",
     "@orpc/client": "catalog:",
     "@orpc/openapi": "catalog:",
@@ -19,8 +20,10 @@
     "@struxa/auth": "workspace:*",
     "@struxa/db": "workspace:*",
     "@struxa/env": "workspace:*",
+    "@struxa/payments": "workspace:*",
     "@struxa/ui": "workspace:*",
     "@tanstack/react-form": "^1.28.0",
+    "@tanstack/react-pacer": "^0.22.1",
     "@tanstack/react-query": "^5.90.12",
     "babel-plugin-react-compiler": "^1.0.0",
     "better-auth": "catalog:",
