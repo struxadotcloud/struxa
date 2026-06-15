@@ -52,7 +52,7 @@ Contributions are welcome — code, bug reports, and design feedback. See [CONTR
 
 ## License
 
-[MIT](./LICENSE) — licensed to The Hosting Company Ltd
+[MIT](./LICENSE) — free to use, modify, and self-host
 
 <br />
 
@@ -62,6 +62,6 @@ Contributions are welcome — code, bug reports, and design feedback. See [CONTR
 |:---:|:---|
 | <a href="https://pshost.pl" target="_blank"><img src="https://cdn.pejpal.cloud/psHost-banner.png" alt="psHost" height="48" /></a> | Development partner & infrastructure |
 
-<sub>Part of the Struxa project.</sub>
+<sub>Licensed to The Hosting Company Ltd.</sub>
 
 </div>
