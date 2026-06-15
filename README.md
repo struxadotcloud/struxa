@@ -62,6 +62,6 @@ Contributions are welcome — code, bug reports, and design feedback. See [CONTR
 |:---:|:---|
 | <a href="https://pshost.pl" target="_blank"><img src="https://cdn.pejpal.cloud/psHost-banner.png" alt="psHost" height="48" /></a> | Development partner & infrastructure |
 
-<sub>Licensed to The Hosting Company Ltd.</sub>
+<sub>Copyright (c) The Hosting Company Ltd</sub>
 
 </div>
