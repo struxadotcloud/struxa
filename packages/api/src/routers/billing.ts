@@ -1,30 +1,99 @@
-import { randomUUID } from "crypto";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { randomBytes, randomUUID } from "crypto";
+import { and, asc, desc, eq, gte, inArray, isNull, ne, or, sql } from "drizzle-orm";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { db } from "@struxa/db";
 import {
   billingCategories,
+  billingCouponRedemptions,
+  billingCoupons,
+  billingInvoiceItems,
+  billingInvoices,
   billingPaymentGateways,
   billingPlans,
   billingPlanPrices,
   billingProducts,
   billingReferralCodes,
   billingReferralRedemptions,
+  billingSubscriptions,
+  billingTransactions,
   billingWallet,
   billingWalletTransactions,
+  eggs,
+  nodeAllocations,
+  nodes,
+  serverVariables,
+  servers,
   settings,
 } from "@struxa/db";
 import { recordActivity } from "../services/activity";
 import { encrypt, decrypt } from "../lib/crypto";
+import { createWingsClient } from "../lib/wings-client";
+import { buildInvocation } from "../services/wings-servers";
 import { createStripeTopupSession, createSimPayTopupSession } from "@struxa/payments";
 import { adminProcedure, protectedProcedure } from "../index";
+
+const DURATION_DAYS: Record<string, number> = {
+  "7day": 7,
+  "1month": 30,
+  "3months": 90,
+  "6months": 180,
+  "1year": 365,
+};
+
+const DURATION_LABELS: Record<string, string> = {
+  "7day": "7 days",
+  "1month": "1 month",
+  "3months": "3 months",
+  "6months": "6 months",
+  "1year": "1 year",
+};
 
 function slugify(s: string) {
   return s.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
 }
 
 const DURATIONS = ["7day", "1month", "3months", "6months", "1year"] as const;
+
+type NodeCapacityEntry = { remainingRamMB: number; remainingDiskMB: number; freeAllocCount: number };
+let _capacityCache: { data: Map<string, NodeCapacityEntry>; expiresAt: number } | null = null;
+
+async function getNodeCapacityMap(): Promise<Map<string, NodeCapacityEntry>> {
+  if (_capacityCache && Date.now() < _capacityCache.expiresAt) return _capacityCache.data;
+
+  const freeAllocs = await db.query.nodeAllocations.findMany({
+    where: isNull(nodeAllocations.serverId),
+    with: { node: true },
+  });
+
+  const freeCountByNode = new Map<string, number>();
+  for (const a of freeAllocs) freeCountByNode.set(a.nodeId, (freeCountByNode.get(a.nodeId) ?? 0) + 1);
+
+  const map = new Map<string, NodeCapacityEntry>();
+  for (const a of freeAllocs) {
+    if (map.has(a.nodeId)) continue;
+    const node = a.node as typeof nodes.$inferSelect;
+    const [usage] = await db.select({
+      usedRam: sql<number>`COALESCE(SUM(${servers.memory}), 0)`,
+      usedDisk: sql<number>`COALESCE(SUM(${servers.disk}), 0)`,
+    }).from(servers).where(eq(servers.nodeId, a.nodeId));
+    const maxRam = node.memory * (1 + node.memoryOverallocate / 100);
+    const maxDisk = node.disk * (1 + node.diskOverallocate / 100);
+    map.set(a.nodeId, {
+      remainingRamMB: maxRam - Number(usage?.usedRam ?? 0),
+      remainingDiskMB: maxDisk - Number(usage?.usedDisk ?? 0),
+      freeAllocCount: freeCountByNode.get(a.nodeId) ?? 0,
+    });
+  }
+
+  // ponytail: process-local cache; resets on deploy. Fine for a 2-min soft stock check
+  _capacityCache = { data: map, expiresAt: Date.now() + 2 * 60 * 1000 };
+  return map;
+}
+
+export function invalidateCapacityCache() {
+  _capacityCache = null;
+}
 
 const resourceLimitsSchema = z.object({
   cpu: z.number().min(0),
@@ -34,6 +103,7 @@ const resourceLimitsSchema = z.object({
   allocations: z.number().int().min(0),
   databases: z.number().int().min(0),
   eggs: z.array(z.string()),
+  nodes: z.array(z.string()).optional(),
 });
 
 export const billingRouter = {
@@ -43,6 +113,7 @@ export const billingRouter = {
     return {
       enabled: s.billing_enabled !== "false",
       referralEnabled: s.billing_referral_enabled === "true",
+      defaultCurrency: s.billing_default_currency || "USD",
     };
   }),
 
@@ -65,36 +136,51 @@ export const billingRouter = {
   listProducts: protectedProcedure
     .input(z.object({ categoryId: z.string().uuid().optional() }).optional())
     .handler(async ({ input }) => {
-      const products = await db.query.billingProducts.findMany({
-        where: input?.categoryId
-          ? and(eq(billingProducts.isActive, true), eq(billingProducts.categoryId, input.categoryId))
-          : eq(billingProducts.isActive, true),
-        orderBy: [asc(billingProducts.sortOrder)],
-        with: {
-          plans: {
-            where: and(eq(billingPlans.isActive, true), eq(billingPlans.isPublic, true)),
-            with: {
-              prices: { where: eq(billingPlanPrices.isActive, true) },
+      const [products, nodeCapacity] = await Promise.all([
+        db.query.billingProducts.findMany({
+          where: input?.categoryId
+            ? and(eq(billingProducts.isActive, true), eq(billingProducts.categoryId, input.categoryId))
+            : eq(billingProducts.isActive, true),
+          orderBy: [asc(billingProducts.sortOrder)],
+          with: {
+            plans: {
+              where: and(eq(billingPlans.isActive, true), eq(billingPlans.isPublic, true)),
+              with: { prices: { where: eq(billingPlanPrices.isActive, true) } },
             },
           },
-        },
-      });
+        }),
+        getNodeCapacityMap(),
+      ]);
+
       return products
         .filter((p) => p.plans.length > 0)
         .map((product) => {
           const plan = product.plans[0]!;
           const limits = plan.resourceLimits as {
             cpu?: number; ram?: number; disk?: number;
-            backups?: number; allocations?: number; databases?: number; eggs?: string[];
+            backups?: number; allocations?: number; databases?: number; eggs?: string[]; nodes?: string[];
           } | null;
+          const allowedNodes = (limits?.nodes ?? []) as string[];
+          const requiredRamMB = (limits?.ram ?? 0) * 1024;
+          const requiredDiskMB = (limits?.disk ?? 0) * 1024;
+          let soldOut = true;
+          for (const [nodeId, cap] of nodeCapacity) {
+            if (allowedNodes.length > 0 && !allowedNodes.includes(nodeId)) continue;
+            if (cap.freeAllocCount > 0 && cap.remainingRamMB >= requiredRamMB && cap.remainingDiskMB >= requiredDiskMB) {
+              soldOut = false;
+              break;
+            }
+          }
           return {
             id: product.id,
+            planId: plan.id,
             categoryId: product.categoryId ?? "",
             name: product.name,
             description: product.description ?? "",
             isFeatured: product.isFeatured,
             icon: product.icon ?? "",
             currency: plan.currency,
+            soldOut,
             resources: {
               cpu: limits?.cpu ?? 0,
               ram: limits?.ram ?? 0,
@@ -302,7 +388,7 @@ export const billingRouter = {
       const plan = product.plans[0];
       const limits = plan?.resourceLimits as {
         cpu?: number; ram?: number; disk?: number;
-        backups?: number; allocations?: number; databases?: number; eggs?: string[];
+        backups?: number; allocations?: number; databases?: number; eggs?: string[]; nodes?: string[];
       } | null;
       return {
         id: product.id,
@@ -321,6 +407,7 @@ export const billingRouter = {
           allocations: limits?.allocations ?? 1,
           databases: limits?.databases ?? 0,
           eggs: limits?.eggs ?? [],
+          nodes: limits?.nodes ?? [],
         },
         prices: (plan?.prices ?? []).map((p) => ({
           id: p.id,
@@ -364,6 +451,9 @@ export const billingRouter = {
       const planId = randomUUID();
       const slug = input.slug || slugify(input.name);
 
+      const currencySettingRow = await db.query.settings.findFirst({ where: eq(settings.key, "billing_default_currency") });
+      const defaultCurrencyForPlan = input.currency ?? currencySettingRow?.value ?? "USD";
+
       await db.insert(billingProducts).values({
         id: productId,
         categoryId: input.categoryId,
@@ -381,7 +471,7 @@ export const billingRouter = {
         productId,
         name: input.name,
         description: input.description,
-        currency: input.currency ?? "USD",
+        currency: defaultCurrencyForPlan,
         resourceLimits: input.resourceLimits,
         isActive: input.isActive ?? true,
         isPublic: input.isPublic ?? true,
@@ -462,17 +552,26 @@ export const billingRouter = {
         }).where(eq(billingPlans.id, existingPlan.id));
 
         if (input.prices !== undefined) {
-          await db.delete(billingPlanPrices).where(eq(billingPlanPrices.planId, existingPlan.id));
-          if (input.prices.length > 0) {
-            await db.insert(billingPlanPrices).values(
-              input.prices.map((p) => ({
-                id: randomUUID(),
-                planId: existingPlan.id,
-                duration: p.duration,
-                priceCents: p.priceCents,
-                isActive: true,
-              })),
-            );
+          const existingPrices = await db.select().from(billingPlanPrices).where(eq(billingPlanPrices.planId, existingPlan.id));
+          const existingByDuration = new Map(existingPrices.map((p) => [p.duration, p]));
+
+          for (const p of input.prices) {
+            const existing = existingByDuration.get(p.duration);
+            if (existing) {
+              await db.update(billingPlanPrices).set({ priceCents: p.priceCents }).where(eq(billingPlanPrices.id, existing.id));
+            } else {
+              await db.insert(billingPlanPrices).values({ id: randomUUID(), planId: existingPlan.id, duration: p.duration, priceCents: p.priceCents, isActive: true });
+            }
+          }
+
+          const incomingDurations = input.prices.map((p) => p.duration);
+          const toDelete = existingPrices.filter((p) => !incomingDurations.includes(p.duration));
+          if (toDelete.length > 0) {
+            const referencedIds = (await db.select({ id: billingSubscriptions.priceId }).from(billingSubscriptions).where(inArray(billingSubscriptions.priceId, toDelete.map((p) => p.id)))).map((r) => r.id);
+            const safeToDelete = toDelete.filter((p) => !referencedIds.includes(p.id));
+            if (safeToDelete.length > 0) {
+              await db.delete(billingPlanPrices).where(inArray(billingPlanPrices.id, safeToDelete.map((p) => p.id)));
+            }
           }
         }
       }
@@ -660,5 +759,580 @@ export const billingRouter = {
         .where(eq(billingReferralCodes.id, referralCode.id));
 
       return { success: true };
+    }),
+
+  listSubscriptions: protectedProcedure.handler(async ({ context }) => {
+    const rows = await db.query.billingSubscriptions.findMany({
+      where: and(
+        eq(billingSubscriptions.userId, context.session.user.id),
+        ne(billingSubscriptions.status, "canceled"),
+      ),
+      with: {
+        plan: { columns: { id: true, name: true } },
+        price: { columns: { duration: true, priceCents: true } },
+      },
+      orderBy: [desc(billingSubscriptions.createdAt)],
+    });
+    return rows.map((r) => ({
+      id: r.id,
+      status: r.status,
+      planId: r.planId,
+      planName: r.plan?.name ?? "",
+      duration: r.price?.duration ?? "",
+      priceCents: r.price?.priceCents ?? 0,
+      currency: r.currency,
+      currentPeriodStart: r.currentPeriodStart,
+      currentPeriodEnd: r.currentPeriodEnd,
+      cancelAtPeriodEnd: r.cancelAtPeriodEnd,
+    }));
+  }),
+
+  getActiveSubscription: protectedProcedure.handler(async ({ context }) => {
+    const row = await db.query.billingSubscriptions.findFirst({
+      where: and(
+        eq(billingSubscriptions.userId, context.session.user.id),
+        or(
+          eq(billingSubscriptions.status, "active"),
+          eq(billingSubscriptions.status, "trialing"),
+        ),
+      ),
+      with: {
+        plan: true,
+        price: { columns: { duration: true, priceCents: true } },
+      },
+      orderBy: [desc(billingSubscriptions.createdAt)],
+    });
+    if (!row) return null;
+    const limits = row.plan?.resourceLimits as {
+      cpu?: number; ram?: number; disk?: number;
+      backups?: number; allocations?: number; databases?: number; eggs?: string[];
+    } | null;
+    return {
+      id: row.id,
+      status: row.status,
+      planId: row.planId,
+      planName: row.plan?.name ?? "",
+      duration: row.price?.duration ?? "",
+      priceCents: row.price?.priceCents ?? 0,
+      currency: row.currency,
+      currentPeriodStart: row.currentPeriodStart,
+      currentPeriodEnd: row.currentPeriodEnd,
+      cancelAtPeriodEnd: row.cancelAtPeriodEnd,
+      resourceLimits: {
+        cpu: limits?.cpu ?? 0,
+        ram: limits?.ram ?? 0,
+        disk: limits?.disk ?? 0,
+        backups: limits?.backups ?? 0,
+        allocations: limits?.allocations ?? 0,
+        databases: limits?.databases ?? 0,
+        eggs: limits?.eggs ?? [],
+      },
+    };
+  }),
+
+  listPlanEggs: protectedProcedure
+    .input(z.object({ planId: z.string().optional() }))
+    .handler(async ({ input }) => {
+      if (!input.planId) return [];
+      const plan = await db.query.billingPlans.findFirst({
+        where: eq(billingPlans.id, input.planId),
+        columns: { resourceLimits: true },
+      });
+      const limits = plan?.resourceLimits as { eggs?: string[] } | null;
+      const eggIds = limits?.eggs ?? [];
+      if (eggIds.length === 0) return [];
+      const rows = await db.query.eggs.findMany({
+        where: inArray(eggs.id, eggIds),
+        columns: { id: true, name: true, dockerImages: true },
+        with: {
+          variables: {
+            columns: { id: true, name: true, description: true, envVariable: true, defaultValue: true, userViewable: true, userEditable: true },
+          },
+        },
+      });
+      return rows.map((row) => {
+        let imagesMap: Record<string, string> = {};
+        try { imagesMap = JSON.parse(row.dockerImages as unknown as string) as Record<string, string>; } catch {}
+        return {
+          id: row.id,
+          name: row.name,
+          dockerImages: Object.entries(imagesMap).map(([name, image]) => ({ name, image })),
+          variables: row.variables.filter((v) => v.userViewable),
+        };
+      });
+    }),
+
+  purchasePlan: protectedProcedure
+    .input(z.object({
+      priceId: z.string().uuid(),
+      eggId: z.string().uuid(),
+      serverName: z.string().min(1).max(255),
+      couponCode: z.string().optional(),
+      dockerImage: z.string().optional(),
+      envVars: z.record(z.string(), z.string()).optional(),
+    }))
+    .handler(async ({ context, input }) => {
+      const userId = context.session.user.id;
+
+      const priceRow = await db.query.billingPlanPrices.findFirst({
+        where: and(eq(billingPlanPrices.id, input.priceId), eq(billingPlanPrices.isActive, true)),
+        with: { plan: true },
+      });
+      if (!priceRow?.plan) throw new ORPCError("NOT_FOUND", { message: "Plan or price not found" });
+
+      const plan = priceRow.plan;
+      if (!plan.isActive) throw new ORPCError("NOT_FOUND", { message: "Plan is not active" });
+
+      const planLimits = plan.resourceLimits as {
+        cpu?: number; ram?: number; disk?: number;
+        backups?: number; allocations?: number; databases?: number; eggs?: string[]; nodes?: string[];
+      } | null;
+
+      const allowedEggs = planLimits?.eggs ?? [];
+      if (allowedEggs.length > 0 && !allowedEggs.includes(input.eggId)) {
+        throw new ORPCError("BAD_REQUEST", { message: "Egg not allowed for this plan" });
+      }
+
+      const eggRow = await db.query.eggs.findFirst({
+        where: eq(eggs.id, input.eggId),
+        with: { variables: true },
+      });
+      if (!eggRow) throw new ORPCError("NOT_FOUND", { message: "Egg not found" });
+
+      const allowedNodeIds = (planLimits?.nodes ?? []) as string[];
+      const requiredRam = (planLimits?.ram ?? 0.5) * 1024;
+      const requiredDisk = (planLimits?.disk ?? 1) * 1024;
+
+      const freeAllocs = await db.query.nodeAllocations.findMany({
+        where: and(
+          isNull(nodeAllocations.serverId),
+          allowedNodeIds.length > 0 ? inArray(nodeAllocations.nodeId, allowedNodeIds) : undefined,
+        ),
+        with: { node: true },
+      });
+
+      // ponytail: soft capacity check — two concurrent buys can both pass; overallocation headroom absorbs the slop
+      const nodeUsageCache = new Map<string, { usedRam: number; usedDisk: number }>();
+      let alloc: (typeof freeAllocs)[0] | null = null;
+
+      for (const candidate of freeAllocs) {
+        const nodeId = candidate.nodeId;
+        if (!nodeUsageCache.has(nodeId)) {
+          const [usage] = await db.select({
+            usedRam: sql<number>`COALESCE(SUM(${servers.memory}), 0)`,
+            usedDisk: sql<number>`COALESCE(SUM(${servers.disk}), 0)`,
+          }).from(servers).where(eq(servers.nodeId, nodeId));
+          nodeUsageCache.set(nodeId, { usedRam: Number(usage?.usedRam ?? 0), usedDisk: Number(usage?.usedDisk ?? 0) });
+        }
+        const node = candidate.node as typeof nodes.$inferSelect;
+        const usage = nodeUsageCache.get(nodeId)!;
+        const maxRam = node.memory * (1 + node.memoryOverallocate / 100);
+        const maxDisk = node.disk * (1 + node.diskOverallocate / 100);
+        if (usage.usedRam + requiredRam <= maxRam && usage.usedDisk + requiredDisk <= maxDisk) {
+          alloc = candidate;
+          break;
+        }
+      }
+
+      if (!alloc) {
+        const hasAnyFree = freeAllocs.length > 0;
+        throw new ORPCError("BAD_REQUEST", { data: { code: hasAnyFree ? "NO_CAPACITY" : "NO_ALLOCATIONS" } });
+      }
+
+      const wallet = await db.query.billingWallet.findFirst({
+        where: eq(billingWallet.userId, userId),
+      });
+      const settingsRows = await db.select().from(settings);
+      const s = Object.fromEntries(settingsRows.map((r) => [r.key, r.value ?? ""]));
+      const currency = (s.billing_default_currency || "USD").toUpperCase();
+
+      let discountCents = 0;
+      let couponRow: typeof billingCoupons.$inferSelect | null = null;
+      if (input.couponCode) {
+        const now = new Date();
+        couponRow = await db.query.billingCoupons.findFirst({
+          where: and(
+            eq(billingCoupons.code, input.couponCode.toUpperCase()),
+            eq(billingCoupons.isActive, true),
+            or(isNull(billingCoupons.planId), eq(billingCoupons.planId, plan.id)),
+          ),
+        }) ?? null;
+        if (
+          couponRow &&
+          (!couponRow.redeemBy || couponRow.redeemBy > now) &&
+          (couponRow.maxRedemptions === null || couponRow.timesRedeemed < couponRow.maxRedemptions)
+        ) {
+          const alreadyUsed = await db.query.billingCouponRedemptions.findFirst({
+            where: and(
+              eq(billingCouponRedemptions.couponId, couponRow.id),
+              eq(billingCouponRedemptions.userId, userId),
+            ),
+          });
+          if (!alreadyUsed) {
+            if (couponRow.discountType === "percentage") {
+              discountCents = Math.round(priceRow.priceCents * couponRow.discountValue / 100);
+            } else {
+              discountCents = couponRow.discountValue;
+            }
+          }
+        } else {
+          couponRow = null;
+        }
+      }
+
+      const finalAmountCents = Math.max(0, priceRow.priceCents - discountCents);
+      const durationDays = DURATION_DAYS[priceRow.duration] ?? 30;
+      const now = new Date();
+      const periodEnd = new Date(now.getTime() + durationDays * 86400 * 1000);
+      const invoicePrefix = s.billing_invoice_prefix ?? "INV-";
+      const invoiceNumber = `${invoicePrefix}${now.toISOString().slice(0, 10).replace(/-/g, "")}${randomBytes(4).toString("hex")}`;
+
+      const subscriptionId = randomUUID();
+      const invoiceId = randomUUID();
+      const invoiceItemId = randomUUID();
+      const walletTxId = randomUUID();
+      const transactionId = randomUUID();
+      const serverId = randomUUID();
+      const serverUuid = randomUUID();
+      const serverUuidShort = serverUuid.slice(0, 8);
+
+      const resolveVar = (v: { envVariable: string; userEditable: boolean; defaultValue: string | null }) =>
+        v.userEditable && input.envVars && v.envVariable in input.envVars
+          ? (input.envVars[v.envVariable] ?? "")
+          : (v.defaultValue ?? "");
+
+      const varMap: Record<string, string> = {};
+      for (const v of eggRow.variables) {
+        varMap[v.envVariable] = resolveVar(v);
+      }
+      const serverInvocation = buildInvocation(eggRow.startup, varMap);
+      let dockerImages: Record<string, string> = {};
+      try { dockerImages = JSON.parse(eggRow.dockerImages as unknown as string) as Record<string, string>; } catch {}
+      const availableImages = Object.values(dockerImages);
+      const serverImage = (input.dockerImage && availableImages.includes(input.dockerImage))
+        ? input.dockerImage
+        : availableImages[0] ?? "";
+
+      if (finalAmountCents > 0 && (wallet?.balanceCents ?? 0) < finalAmountCents) {
+        throw new ORPCError("BAD_REQUEST", { data: { code: "INSUFFICIENT_FUNDS" } });
+      }
+
+      await db.transaction(async (tx) => {
+        let balanceAfter = (wallet?.balanceCents ?? 0) - finalAmountCents;
+
+        if (finalAmountCents > 0) {
+          const result = await tx
+            .update(billingWallet)
+            .set({ balanceCents: sql`${billingWallet.balanceCents} - ${finalAmountCents}` })
+            .where(and(
+              eq(billingWallet.userId, userId),
+              gte(billingWallet.balanceCents, finalAmountCents),
+            ));
+          if ((result as unknown as [{ affectedRows: number }])[0].affectedRows !== 1) {
+            throw new ORPCError("BAD_REQUEST", { data: { code: "INSUFFICIENT_FUNDS" } });
+          }
+          const refreshed = await tx.query.billingWallet.findFirst({
+            where: eq(billingWallet.userId, userId),
+            columns: { balanceCents: true },
+          });
+          balanceAfter = refreshed?.balanceCents ?? balanceAfter;
+        }
+
+        await tx.insert(billingSubscriptions).values({
+          id: subscriptionId,
+          userId,
+          planId: plan.id,
+          priceId: priceRow.id,
+          status: "active",
+          currency,
+          currentPeriodStart: now,
+          currentPeriodEnd: periodEnd,
+          cancelAtPeriodEnd: false,
+        });
+
+        await tx.insert(servers).values({
+          id: serverId,
+          uuid: serverUuid,
+          uuidShort: serverUuidShort,
+          name: input.serverName,
+          userId,
+          nodeId: alloc.nodeId,
+          eggId: input.eggId,
+          allocationId: alloc.id,
+          subscriptionId,
+          memory: (planLimits?.ram ?? 0.5) * 1024,
+          disk: (planLimits?.disk ?? 1) * 1024,
+          cpu: (planLimits?.cpu ?? 1) * 100,
+          swap: 0,
+          io: 500,
+          oomDisabled: false,
+          image: serverImage,
+          startup: eggRow.startup,
+          invocation: serverInvocation,
+          status: "installing",
+        });
+
+        if (eggRow.variables.length > 0) {
+          await tx.insert(serverVariables).values(
+            eggRow.variables.map((v) => ({
+              id: randomUUID(),
+              serverId,
+              variableId: v.id,
+              variableValue: resolveVar(v),
+            })),
+          );
+        }
+
+        await tx.update(nodeAllocations).set({ serverId }).where(eq(nodeAllocations.id, alloc.id));
+
+        await tx.insert(billingInvoices).values({
+          id: invoiceId,
+          userId,
+          subscriptionId,
+          invoiceNumber,
+          status: "paid",
+          currency,
+          subtotalCents: priceRow.priceCents,
+          discountCents,
+          totalCents: finalAmountCents,
+          amountPaidCents: finalAmountCents,
+          amountDueCents: 0,
+          paidAt: now,
+        });
+
+        await tx.insert(billingInvoiceItems).values({
+          id: invoiceItemId,
+          invoiceId,
+          description: `${plan.name} — ${priceRow.duration}`,
+          quantity: 1,
+          unitAmountCents: priceRow.priceCents,
+          totalCents: priceRow.priceCents,
+          currency,
+          periodStart: now,
+          periodEnd,
+        });
+
+        if (finalAmountCents > 0) {
+          await tx.insert(billingWalletTransactions).values({
+            id: walletTxId,
+            userId,
+            invoiceId,
+            amountCents: -finalAmountCents,
+            balanceAfterCents: balanceAfter,
+            currency,
+            type: "charge",
+            description: `${plan.name} — ${priceRow.duration}`,
+          });
+
+          await tx.insert(billingTransactions).values({
+            id: transactionId,
+            userId,
+            invoiceId,
+            type: "payment",
+            status: "succeeded",
+            amountCents: finalAmountCents,
+            currency,
+            description: `${plan.name} — ${priceRow.duration}`,
+          });
+        }
+
+        if (couponRow && discountCents > 0) {
+          await tx.insert(billingCouponRedemptions).values({
+            id: randomUUID(),
+            couponId: couponRow.id,
+            userId,
+            invoiceId,
+            discountAmountCents: discountCents,
+            currency,
+          });
+          await tx
+            .update(billingCoupons)
+            .set({ timesRedeemed: couponRow.timesRedeemed + 1 })
+            .where(eq(billingCoupons.id, couponRow.id));
+        }
+      });
+
+      const wingsNode = alloc.node as typeof nodes.$inferSelect;
+      const wingsClient = createWingsClient(wingsNode);
+      const environment: Record<string, string> = {};
+      for (const v of eggRow.variables) {
+        environment[v.envVariable] = resolveVar(v);
+      }
+      try {
+        await wingsClient.createServer({
+          uuid: serverUuid,
+          start_on_completion: true,
+          environment,
+          limits: {
+            cpu: (planLimits?.cpu ?? 1) * 100,
+            memory: (planLimits?.ram ?? 0.5) * 1024,
+            disk: (planLimits?.disk ?? 1) * 1024,
+            swap: 0,
+            io: 500,
+            threads: null,
+            oom_disabled: false,
+          },
+          container: {
+            image: serverImage,
+            oom_killer: true,
+          },
+        });
+      } catch {
+        // Wings provisioning failed; server stays "installing" — admin can reinstall
+      }
+
+      invalidateCapacityCache();
+
+      recordActivity({
+        eventType: "billing.plan.purchase",
+        userId,
+        ip: context.ip,
+        properties: { planId: plan.id, priceId: priceRow.id, amountCents: finalAmountCents, serverId },
+      });
+
+      return { subscriptionId, invoiceId, serverId, serverUuid };
+    }),
+
+  cancelSubscription: protectedProcedure
+    .input(z.object({ subscriptionId: z.string().uuid() }))
+    .handler(async ({ context, input }) => {
+      const sub = await db.query.billingSubscriptions.findFirst({
+        where: and(
+          eq(billingSubscriptions.id, input.subscriptionId),
+          eq(billingSubscriptions.userId, context.session.user.id),
+        ),
+      });
+      if (!sub) throw new ORPCError("NOT_FOUND");
+      await db
+        .update(billingSubscriptions)
+        .set({ cancelAtPeriodEnd: true, canceledAt: new Date() })
+        .where(eq(billingSubscriptions.id, sub.id));
+      recordActivity({
+        eventType: "billing.subscription.cancel",
+        userId: context.session.user.id,
+        ip: context.ip,
+        properties: { subscriptionId: sub.id },
+      });
+    }),
+
+  adminGetUserWallet: adminProcedure
+    .input(z.object({ userId: z.string() }))
+    .handler(async ({ input }) => {
+      const row = await db.query.billingWallet.findFirst({
+        where: eq(billingWallet.userId, input.userId),
+      });
+      if (!row) {
+        const currencyRow = await db.query.settings.findFirst({
+          where: eq(settings.key, "billing_default_currency"),
+        });
+        return { balanceCents: 0, currency: currencyRow?.value ?? "USD" };
+      }
+      return { balanceCents: row.balanceCents, currency: row.currency };
+    }),
+
+  adminListUserSubscriptions: adminProcedure
+    .input(z.object({ userId: z.string() }))
+    .handler(async ({ input }) => {
+      const rows = await db.query.billingSubscriptions.findMany({
+        where: eq(billingSubscriptions.userId, input.userId),
+        orderBy: [desc(billingSubscriptions.createdAt)],
+        with: {
+          plan: { with: { product: { columns: { name: true } } }, columns: { name: true } },
+          price: { columns: { priceCents: true, duration: true } },
+        },
+      });
+      return rows.map((r) => ({
+        id: r.id,
+        status: r.status,
+        planName: r.plan?.name ?? "",
+        productName: r.plan?.product?.name ?? "",
+        priceCents: r.price?.priceCents ?? 0,
+        duration: r.price?.duration ?? "",
+        currency: r.currency,
+        currentPeriodStart: r.currentPeriodStart,
+        currentPeriodEnd: r.currentPeriodEnd,
+        cancelAtPeriodEnd: r.cancelAtPeriodEnd,
+        canceledAt: r.canceledAt,
+        createdAt: r.createdAt,
+      }));
+    }),
+
+  adminListUserWalletTransactions: adminProcedure
+    .input(z.object({
+      userId: z.string(),
+      limit: z.number().int().min(1).max(200).optional(),
+      offset: z.number().int().min(0).optional(),
+    }))
+    .handler(async ({ input }) => {
+      const rows = await db.query.billingWalletTransactions.findMany({
+        where: eq(billingWalletTransactions.userId, input.userId),
+        orderBy: [desc(billingWalletTransactions.createdAt)],
+        limit: input.limit ?? 50,
+        offset: input.offset ?? 0,
+      });
+      return rows.map((r) => ({
+        id: r.id,
+        type: r.type,
+        amountCents: r.amountCents,
+        balanceAfterCents: r.balanceAfterCents,
+        currency: r.currency,
+        description: r.description,
+        createdAt: r.createdAt,
+      }));
+    }),
+
+  adminAdjustUserBalance: adminProcedure
+    .input(z.object({
+      userId: z.string(),
+      amountCents: z.number().int(),
+      description: z.string().optional(),
+    }))
+    .handler(async ({ context, input }) => {
+      const settingsRows = await db.select().from(settings);
+      const s = Object.fromEntries(settingsRows.map((r) => [r.key, r.value ?? ""]));
+      const defaultCurrency = s.billing_default_currency || "USD";
+
+      let newBalanceCents = 0;
+      await db.transaction(async (tx) => {
+        let wallet = await tx.query.billingWallet.findFirst({
+          where: eq(billingWallet.userId, input.userId),
+        });
+        if (!wallet) {
+          const walletId = randomUUID();
+          await tx.insert(billingWallet).values({
+            id: walletId,
+            userId: input.userId,
+            balanceCents: 0,
+            currency: defaultCurrency,
+          });
+          wallet = await tx.query.billingWallet.findFirst({
+            where: eq(billingWallet.userId, input.userId),
+          });
+        }
+        const balanceAfter = (wallet!.balanceCents) + input.amountCents;
+        await tx
+          .update(billingWallet)
+          .set({ balanceCents: sql`${billingWallet.balanceCents} + ${input.amountCents}` })
+          .where(eq(billingWallet.userId, input.userId));
+        await tx.insert(billingWalletTransactions).values({
+          id: randomUUID(),
+          userId: input.userId,
+          amountCents: input.amountCents,
+          balanceAfterCents: balanceAfter,
+          currency: wallet!.currency,
+          type: "adjustment",
+          description: input.description ?? null,
+        });
+        newBalanceCents = balanceAfter;
+      });
+
+      recordActivity({
+        eventType: "admin:billing.wallet.adjust",
+        userId: context.session.user.id,
+        ip: context.ip,
+        properties: { targetUserId: input.userId, amountCents: input.amountCents },
+      });
+
+      return { newBalanceCents };
     }),
 };

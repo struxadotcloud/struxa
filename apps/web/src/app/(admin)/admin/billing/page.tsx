@@ -123,6 +123,7 @@ interface ResourceLimits {
   allocations: number;
   databases: number;
   eggs: string[];
+  nodes: string[];
 }
 
 type Duration = "7day" | "1month" | "3months" | "6months" | "1year";
@@ -322,22 +323,14 @@ function maskKey(k: string) {
 
 function ProviderLogo({ provider, size = "md" }: { provider: ProviderType; size?: "sm" | "md" }) {
   const box = size === "sm" ? "h-5 w-5 rounded-md" : "h-7 w-7 rounded-lg";
-  const icon = size === "sm" ? "size-3" : "size-3.5";
   const iconMd = size === "sm" ? "size-3" : "size-4";
-  if (provider === "stripe") {
+  if (provider === "stripe" || provider === "simpay") {
     return (
-      <div className={cn("flex shrink-0 items-center justify-center bg-[#635BFF]", box)}>
-        <svg viewBox="0 0 24 24" className={icon} fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path fill="white" d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z" />
-        </svg>
-      </div>
-    );
-  }
-  if (provider === "simpay") {
-    return (
-      <div className={cn("flex shrink-0 items-center justify-center bg-[#1a7f37]", box)}>
-        <CreditCard className={cn("text-white", icon)} />
-      </div>
+      <img
+        src={`/providers/${provider}-icon.png`}
+        alt={provider}
+        className={cn("shrink-0 object-contain", box)}
+      />
     );
   }
   return (
@@ -934,7 +927,7 @@ function ProvidersTab() {
     <>
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-foreground">{t("title")}</h2>
-        <Button variant="outline" size="sm" onClick={openAdd}>
+        <Button variant="outline" size="sm" onClick={openAdd} disabled={availableProviders.length === 0}>
           <Plus />
           {t("addProvider")}
         </Button>
@@ -949,7 +942,7 @@ function ProvidersTab() {
             <p className="text-sm font-medium text-foreground">{t("empty")}</p>
             <p className="mt-0.5 text-xs text-muted-foreground">{t("addProvider")}</p>
           </div>
-          <Button variant="outline" size="sm" onClick={openAdd}>
+          <Button variant="outline" size="sm" onClick={openAdd} disabled={availableProviders.length === 0}>
             <Plus />
             {t("addProvider")}
           </Button>
@@ -1296,6 +1289,7 @@ function CatalogTab() {
   const { data: categories = [], isLoading: catsLoading } = useQuery(orpc.billing.adminListCategories.queryOptions());
   const { data: plans = [], isLoading: plansLoading } = useQuery(orpc.billing.adminListProducts.queryOptions());
   const { data: allEggsRaw = [] } = useQuery(orpc.eggs.listAll.queryOptions());
+  const { data: allNodes = [] } = useQuery(orpc.nodes.list.queryOptions());
 
   const eggGroups = useMemo(() => {
     const byNest = new Map<string, { nestId: string; nestName: string; eggs: { id: string; name: string }[] }>();
@@ -1364,6 +1358,13 @@ function CatalogTab() {
   const [planIconUploading, setPlanIconUploading] = useState(false);
   const [planIconError, setPlanIconError] = useState<string | null>(null);
   const [eggsDrawerOpen, setEggsDrawerOpen] = useState(false);
+  const [nodesDrawerOpen, setNodesDrawerOpen] = useState(false);
+
+  const nodeGroups = useMemo(
+    () => [{ id: "all", label: "Nodes", items: allNodes.map((n) => ({ id: n.id, label: n.name })) }],
+    [allNodes],
+  );
+  const nodeNameById = useMemo(() => new Map(allNodes.map((n) => [n.id, n.name])), [allNodes]);
 
   async function uploadBillingImage(
     file: File,
@@ -1390,7 +1391,7 @@ function CatalogTab() {
       setUploading(false);
     }
   }
-  const defaultResources: ResourceLimits = { cpu: 2, ram: 2, disk: 10, backups: 0, allocations: 1, databases: 0, eggs: [] };
+  const defaultResources: ResourceLimits = { cpu: 2, ram: 2, disk: 10, backups: 0, allocations: 1, databases: 0, eggs: [], nodes: [] };
   const [planForm, setPlanForm] = useState<Omit<Plan, "id">>({
     categoryId: "",
     name: "",
@@ -1960,6 +1961,34 @@ function CatalogTab() {
                     />
                   )}
                 </div>
+                <div className="border-t border-border px-4 py-3">
+                  <p className="mb-2 text-xs font-medium text-muted-foreground">{t("plans.nodes")}</p>
+                  {isMobile ? (
+                    <button
+                      type="button"
+                      onClick={() => setNodesDrawerOpen(true)}
+                      className="flex h-8 w-full items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-foreground transition-colors hover:bg-muted/40"
+                    >
+                      <span className="truncate text-left">
+                        {planForm.resources.nodes.length === 0
+                          ? <span className="text-muted-foreground">Any node…</span>
+                          : planForm.resources.nodes.length <= 3
+                            ? planForm.resources.nodes.map((id) => nodeNameById.get(id) ?? id).join(", ")
+                            : `${planForm.resources.nodes.slice(0, 2).map((id) => nodeNameById.get(id) ?? id).join(", ")} +${planForm.resources.nodes.length - 2} more`
+                        }
+                      </span>
+                      <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" />
+                    </button>
+                  ) : (
+                    <GroupedMultiSelect
+                      value={planForm.resources.nodes}
+                      onChange={(nodes) => setPlanForm((s) => ({ ...s, resources: { ...s.resources, nodes } }))}
+                      groups={nodeGroups}
+                      placeholder="Any node…"
+                      searchPlaceholder="Search nodes…"
+                    />
+                  )}
+                </div>
               </div>
 
               <div className="overflow-hidden rounded-xl border border-border">
@@ -2072,6 +2101,26 @@ function CatalogTab() {
           </SheetPanel>
           <SheetFooter variant="default">
             <Button size="sm" className="w-full" onClick={() => setEggsDrawerOpen(false)}>
+              {tc("done")}
+            </Button>
+          </SheetFooter>
+        </SheetPopup>
+      </Sheet>
+
+      <Sheet open={nodesDrawerOpen} onOpenChange={setNodesDrawerOpen}>
+        <SheetPopup side="bottom" showCloseButton={false} className="rounded-t-2xl max-h-[80vh]">
+          <SheetHeader>
+            <SheetTitle>{t("plans.nodes")}</SheetTitle>
+          </SheetHeader>
+          <SheetPanel className="overflow-y-auto">
+            <EggsDrawerContent
+              value={planForm.resources.nodes}
+              onChange={(nodes) => setPlanForm((s) => ({ ...s, resources: { ...s.resources, nodes } }))}
+              groups={nodeGroups}
+            />
+          </SheetPanel>
+          <SheetFooter variant="default">
+            <Button size="sm" className="w-full" onClick={() => setNodesDrawerOpen(false)}>
               {tc("done")}
             </Button>
           </SheetFooter>
