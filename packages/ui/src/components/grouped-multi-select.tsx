@@ -22,6 +22,8 @@ export function GroupedMultiSelect({
   groups,
   placeholder = "Select…",
   searchPlaceholder = "Search…",
+  noResultsText = "",
+  clearAllText,
   className,
 }: {
   value: string[];
@@ -29,6 +31,8 @@ export function GroupedMultiSelect({
   groups: GroupedMultiSelectGroup[];
   placeholder?: string;
   searchPlaceholder?: string;
+  noResultsText?: string;
+  clearAllText?: (count: number) => string;
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -120,7 +124,7 @@ export function GroupedMultiSelect({
 
             <div className="max-h-56 overflow-y-auto p-1">
               {filtered.length === 0 ? (
-                <p className="py-4 text-center text-xs text-muted-foreground">No results</p>
+                <p className="py-4 text-center text-xs text-muted-foreground">{noResultsText}</p>
               ) : (
                 filtered.map((group) => {
                   const groupChecked = group.items.every((i) => value.includes(i.id));
@@ -173,7 +177,7 @@ export function GroupedMultiSelect({
                   onClick={() => onChange([])}
                   className="text-[11px] text-muted-foreground hover:text-destructive"
                 >
-                  Clear all ({value.length})
+                  {clearAllText ? clearAllText(value.length) : `Clear all (${value.length})`}
                 </button>
               </div>
             )}

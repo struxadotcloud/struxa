@@ -5,7 +5,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Layers } from "lucide-react";
 import { orpc } from "@/utils/orpc";
-import { cn } from "@struxa/ui/lib/utils";
 
 function CategoryCard({
   name,

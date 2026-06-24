@@ -341,7 +341,7 @@ export const billingTransactions = mysqlTable(
   (table) => [
     index("billing_transactions_userId_idx").on(table.userId),
     index("billing_transactions_invoiceId_idx").on(table.invoiceId),
-    index("billing_transactions_providerTransactionId_idx").on(
+    unique("billing_transactions_providerTransactionId_unique").on(
       table.providerTransactionId,
     ),
     foreignKey({
@@ -705,10 +705,7 @@ export const billingCouponRedemptionsRelations = relations(
 );
 
 export const billingUserRelations = relations(user, ({ one, many }) => ({
-  billingSubscription: one(billingSubscriptions, {
-    fields: [user.id],
-    references: [billingSubscriptions.userId],
-  }),
+  billingSubscriptions: many(billingSubscriptions),
   billingWallet: one(billingWallet, {
     fields: [user.id],
     references: [billingWallet.userId],

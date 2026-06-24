@@ -227,7 +227,7 @@ export function PanelSidebar() {
                         render={<Link href={item.href as never} />}
                         isActive={
                           item.key === "servers" ? pathname === "/" :
-                          item.key === "shop" ? pathname === "/billing" :
+                          item.key === "shop" ? (pathname === "/billing" || pathname.startsWith("/billing/")) :
                           pathname.startsWith(item.href)
                         }
                         tooltip={item.label}

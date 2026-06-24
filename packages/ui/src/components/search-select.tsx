@@ -16,6 +16,7 @@ export function SearchSelect({
   items,
   placeholder = "Select…",
   searchPlaceholder = "Search…",
+  noResultsText = "",
   className,
 }: {
   value: string;
@@ -23,6 +24,7 @@ export function SearchSelect({
   items: SearchSelectItem[];
   placeholder?: string;
   searchPlaceholder?: string;
+  noResultsText?: string;
   className?: string;
 }) {
   const [query, setQuery] = useState("");
@@ -80,7 +82,7 @@ export function SearchSelect({
             <div className="max-h-52 overflow-y-auto p-1">
               {filtered.length === 0 ? (
                 <p className="px-2 py-4 text-center text-xs text-muted-foreground">
-                  No results
+                  {noResultsText}
                 </p>
               ) : (
                 filtered.map((item) => (

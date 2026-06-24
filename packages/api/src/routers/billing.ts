@@ -41,14 +41,6 @@ const DURATION_DAYS: Record<string, number> = {
   "1year": 365,
 };
 
-const DURATION_LABELS: Record<string, string> = {
-  "7day": "7 days",
-  "1month": "1 month",
-  "3months": "3 months",
-  "6months": "6 months",
-  "1year": "1 year",
-};
-
 function slugify(s: string) {
   return s.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
 }
@@ -440,12 +432,8 @@ export const billingRouter = {
       }),
     )
     .handler(async ({ context, input }) => {
-      if (input.isFeatured && input.categoryId) {
-        await db
-          .update(billingProducts)
-          .set({ isFeatured: false })
-          .where(eq(billingProducts.categoryId, input.categoryId));
-      }
+      const durations = input.prices.map((p) => p.duration);
+      if (new Set(durations).size !== durations.length) throw new ORPCError("BAD_REQUEST", { message: "Duplicate price durations" });
 
       const productId = randomUUID();
       const planId = randomUUID();
@@ -454,41 +442,38 @@ export const billingRouter = {
       const currencySettingRow = await db.query.settings.findFirst({ where: eq(settings.key, "billing_default_currency") });
       const defaultCurrencyForPlan = input.currency ?? currencySettingRow?.value ?? "USD";
 
-      await db.insert(billingProducts).values({
-        id: productId,
-        categoryId: input.categoryId,
-        name: input.name,
-        slug,
-        description: input.description,
-        isActive: input.isActive ?? true,
-        isFeatured: input.isFeatured ?? false,
-        icon: input.icon,
-        sortOrder: 0,
+      await db.transaction(async (tx) => {
+        if (input.isFeatured && input.categoryId) {
+          await tx.update(billingProducts).set({ isFeatured: false }).where(eq(billingProducts.categoryId, input.categoryId));
+        }
+        await tx.insert(billingProducts).values({
+          id: productId,
+          categoryId: input.categoryId,
+          name: input.name,
+          slug,
+          description: input.description,
+          isActive: input.isActive ?? true,
+          isFeatured: input.isFeatured ?? false,
+          icon: input.icon,
+          sortOrder: 0,
+        });
+        await tx.insert(billingPlans).values({
+          id: planId,
+          productId,
+          name: input.name,
+          description: input.description,
+          currency: defaultCurrencyForPlan,
+          resourceLimits: input.resourceLimits,
+          isActive: input.isActive ?? true,
+          isPublic: input.isPublic ?? true,
+          sortOrder: 0,
+        });
+        if (input.prices.length > 0) {
+          await tx.insert(billingPlanPrices).values(
+            input.prices.map((p) => ({ id: randomUUID(), planId, duration: p.duration, priceCents: p.priceCents, isActive: true })),
+          );
+        }
       });
-
-      await db.insert(billingPlans).values({
-        id: planId,
-        productId,
-        name: input.name,
-        description: input.description,
-        currency: defaultCurrencyForPlan,
-        resourceLimits: input.resourceLimits,
-        isActive: input.isActive ?? true,
-        isPublic: input.isPublic ?? true,
-        sortOrder: 0,
-      });
-
-      if (input.prices.length > 0) {
-        await db.insert(billingPlanPrices).values(
-          input.prices.map((p) => ({
-            id: randomUUID(),
-            planId,
-            duration: p.duration,
-            priceCents: p.priceCents,
-            isActive: true,
-          })),
-        );
-      }
 
       recordActivity({ eventType: "admin:billing.product.create", userId: context.session.user.id, ip: context.ip, properties: { name: input.name } });
       return { id: productId };
@@ -755,7 +740,7 @@ export const billingRouter = {
         referrerId: referralCode.userId,
       });
       await db.update(billingReferralCodes)
-        .set({ usageCount: referralCode.usageCount + 1 })
+        .set({ usageCount: sql`${billingReferralCodes.usageCount} + 1` })
         .where(eq(billingReferralCodes.id, referralCode.id));
 
       return { success: true };

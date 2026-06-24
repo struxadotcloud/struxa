@@ -269,6 +269,7 @@
         "noTransactionsHint": "Your wallet activity will appear here after your first top-up.",
         "balanceAfter": "Balance after",
         "topUpSuccess": "Wallet topped up successfully",
+        "topUpError": "Failed to start checkout. Please try again.",
         "noGateway": "No active payment provider is configured. Contact your administrator.",
         "topUpSheet": {
           "title": "Top Up Wallet",
@@ -312,7 +313,8 @@
           "errorAlreadyApplied": "You've already applied a referral code.",
           "errorCodeNotFound": "Referral code not found or no longer active.",
           "errorCodeTaken": "That code is already taken. Try a different one.",
-          "errorGeneric": "Something went wrong. Please try again."
+          "errorGeneric": "Something went wrong. Please try again.",
+          "editCode": "Edit referral code"
         }
       }
     },
@@ -1306,7 +1308,8 @@
           "description": "Enable billing and set the default currency.",
           "enableBilling": "Enable billing",
           "defaultCurrency": "Default currency",
-          "searchCurrencies": "Search currencies…"
+          "searchCurrencies": "Search currencies…",
+          "noResults": "No results"
         },
         "trials": {
           "title": "Free Trials",
@@ -1383,6 +1386,11 @@
           "statusSection": "Status",
           "icon": "Icon",
           "bannerUrl": "Banner",
+          "preview": "Preview",
+          "uploading": "Uploading…",
+          "changeBanner": "Change banner",
+          "uploadBanner": "Upload banner",
+          "iconUploading": "…",
           "previewName": "Category name",
           "previewDescription": "Short description",
           "name": "Name",
@@ -1423,7 +1431,13 @@
           "allocations": "Allocations",
           "databases": "Databases",
           "eggs": "Eggs",
+          "selectEggs": "Select eggs…",
+          "searchEggs": "Search eggs…",
           "nodes": "Nodes",
+          "selectNodes": "Any node…",
+          "searchNodes": "Search nodes…",
+          "noResults": "No results",
+          "planCount": "{count, plural, one {# plan} other {# plans}}",
           "prices": "Pricing",
           "noPrices": "No pricing tiers added yet.",
           "addPrice": "Add tier",

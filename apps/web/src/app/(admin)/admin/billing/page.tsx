@@ -316,11 +316,6 @@ function formatPrice(price: number) {
   return price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function maskKey(k: string) {
-  if (k.length <= 14) return k;
-  return k.slice(0, 10) + "••••••••" + k.slice(-4);
-}
-
 function ProviderLogo({ provider, size = "md" }: { provider: ProviderType; size?: "sm" | "md" }) {
   const box = size === "sm" ? "h-5 w-5 rounded-md" : "h-7 w-7 rounded-lg";
   const iconMd = size === "sm" ? "size-3" : "size-4";
@@ -432,12 +427,13 @@ function CategoryPreviewCard({
   onIconRemove: () => void;
   onBannerRemove: () => void;
 }) {
+  const t = useTranslations("admin.billing.catalog.categories");
   const iconRef = React.useRef<HTMLInputElement>(null);
   const bannerRef = React.useRef<HTMLInputElement>(null);
 
   return (
     <div className="flex flex-col gap-1.5">
-      <Label className="text-xs font-medium">Preview</Label>
+      <Label className="text-xs font-medium">{t("preview")}</Label>
 
       <input ref={iconRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden"
         onChange={(e) => { const f = e.target.files?.[0]; if (f) onIconUpload(f); if (iconRef.current) iconRef.current.value = ""; }} />
@@ -455,7 +451,7 @@ function CategoryPreviewCard({
           }
           <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/30">
             <div className="flex items-center gap-1.5 rounded-lg bg-black/60 px-3 py-1.5 text-xs font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">
-              {bannerUploading ? "Uploading…" : bannerUrl ? <><ImageIcon className="size-3.5" /> Change banner</> : <><Upload className="size-3.5" /> Upload banner</>}
+              {bannerUploading ? t("uploading") : bannerUrl ? <><ImageIcon className="size-3.5" /> {t("changeBanner")}</> : <><Upload className="size-3.5" /> {t("uploadBanner")}</>}
             </div>
           </div>
           {bannerUrl && !bannerUploading && (
@@ -481,7 +477,7 @@ function CategoryPreviewCard({
             }
             <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/40">
               {iconUploading
-                ? <span className="text-[10px] font-medium text-white">…</span>
+                ? <span className="text-[10px] font-medium text-white">{t("iconUploading")}</span>
                 : <Upload className="size-3.5 text-white opacity-0 transition-opacity group-hover:opacity-100" />
               }
             </div>
@@ -774,6 +770,7 @@ function SettingsTab() {
                       }}
                       items={CURRENCIES}
                       searchPlaceholder={t("general.searchCurrencies")}
+                      noResultsText={t("general.noResults")}
                       className="w-28"
                     />
                   </SettingRow>
@@ -1199,7 +1196,7 @@ type CatalogDialogState =
   | { type: "editPlan"; plan: Plan }
   | { type: "deletePlan"; plan: Plan };
 
-function EggsDrawerContent({ value, onChange, groups }: { value: string[]; onChange: (v: string[]) => void; groups: { id: string; label: string; items: { id: string; label: string }[] }[] }) {
+function EggsDrawerContent({ value, onChange, groups, searchPlaceholder, noResults }: { value: string[]; onChange: (v: string[]) => void; groups: { id: string; label: string; items: { id: string; label: string }[] }[]; searchPlaceholder: string; noResults: string }) {
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
@@ -1229,13 +1226,13 @@ function EggsDrawerContent({ value, onChange, groups }: { value: string[]; onCha
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search eggs…"
+            placeholder={searchPlaceholder}
             className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
           />
         </div>
       </div>
       {filtered.length === 0 ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">No results</p>
+        <p className="py-8 text-center text-sm text-muted-foreground">{noResults}</p>
       ) : (
         filtered.map((group) => {
           const groupChecked = group.items.every((i) => value.includes(i.id));
@@ -1582,7 +1579,7 @@ function CatalogTab() {
                   </div>
                   <div className="relative flex shrink-0 items-center gap-2">
                     <span className="hidden text-xs text-muted-foreground sm:inline">
-                      {catPlans.length} {catPlans.length === 1 ? "plan" : "plans"}
+                      {t("planCount", { count: catPlans.length })}
                     </span>
                     <Badge variant={cat.isActive ? "success" : "secondary"}>
                       {cat.isActive ? t("plans.active") : t("plans.inactive")}
@@ -1943,10 +1940,10 @@ function CatalogTab() {
                     >
                       <span className="truncate text-left">
                         {planForm.resources.eggs.length === 0
-                          ? <span className="text-muted-foreground">Select eggs…</span>
+                          ? <span className="text-muted-foreground">{t("plans.selectEggs")}</span>
                           : planForm.resources.eggs.length <= 3
                             ? planForm.resources.eggs.map((id) => eggNameById.get(id) ?? id).join(", ")
-                            : `${planForm.resources.eggs.slice(0, 2).map((id) => eggNameById.get(id) ?? id).join(", ")} +${planForm.resources.eggs.length - 2} more`
+                            : `${planForm.resources.eggs.slice(0, 2).map((id) => eggNameById.get(id) ?? id).join(", ")} +${planForm.resources.eggs.length - 2}`
                         }
                       </span>
                       <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" />
@@ -1956,8 +1953,9 @@ function CatalogTab() {
                       value={planForm.resources.eggs}
                       onChange={(eggs) => setPlanForm((s) => ({ ...s, resources: { ...s.resources, eggs } }))}
                       groups={eggGroups}
-                      placeholder="Select eggs…"
-                      searchPlaceholder="Search eggs…"
+                      placeholder={t("plans.selectEggs")}
+                      searchPlaceholder={t("plans.searchEggs")}
+                      noResultsText={t("plans.noResults")}
                     />
                   )}
                 </div>
@@ -1971,10 +1969,10 @@ function CatalogTab() {
                     >
                       <span className="truncate text-left">
                         {planForm.resources.nodes.length === 0
-                          ? <span className="text-muted-foreground">Any node…</span>
+                          ? <span className="text-muted-foreground">{t("plans.selectNodes")}</span>
                           : planForm.resources.nodes.length <= 3
                             ? planForm.resources.nodes.map((id) => nodeNameById.get(id) ?? id).join(", ")
-                            : `${planForm.resources.nodes.slice(0, 2).map((id) => nodeNameById.get(id) ?? id).join(", ")} +${planForm.resources.nodes.length - 2} more`
+                            : `${planForm.resources.nodes.slice(0, 2).map((id) => nodeNameById.get(id) ?? id).join(", ")} +${planForm.resources.nodes.length - 2}`
                         }
                       </span>
                       <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" />
@@ -1984,8 +1982,9 @@ function CatalogTab() {
                       value={planForm.resources.nodes}
                       onChange={(nodes) => setPlanForm((s) => ({ ...s, resources: { ...s.resources, nodes } }))}
                       groups={nodeGroups}
-                      placeholder="Any node…"
-                      searchPlaceholder="Search nodes…"
+                      placeholder={t("plans.selectNodes")}
+                      searchPlaceholder={t("plans.searchNodes")}
+                      noResultsText={t("plans.noResults")}
                     />
                   )}
                 </div>
@@ -2097,6 +2096,8 @@ function CatalogTab() {
               value={planForm.resources.eggs}
               onChange={(eggs) => setPlanForm((s) => ({ ...s, resources: { ...s.resources, eggs } }))}
               groups={eggGroups}
+              searchPlaceholder={t("plans.searchEggs")}
+              noResults={t("plans.noResults")}
             />
           </SheetPanel>
           <SheetFooter variant="default">
@@ -2117,6 +2118,8 @@ function CatalogTab() {
               value={planForm.resources.nodes}
               onChange={(nodes) => setPlanForm((s) => ({ ...s, resources: { ...s.resources, nodes } }))}
               groups={nodeGroups}
+              searchPlaceholder={t("plans.searchNodes")}
+              noResults={t("plans.noResults")}
             />
           </SheetPanel>
           <SheetFooter variant="default">

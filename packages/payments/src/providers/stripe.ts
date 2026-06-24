@@ -35,7 +35,8 @@ export async function createStripeTopupSession(
       type: "wallet_topup",
     },
   });
-  return { sessionId: session.id, url: session.url ?? "" };
+  if (!session.url) throw new Error("Stripe session has no URL");
+  return { sessionId: session.id, url: session.url };
 }
 
 export async function handleStripeWebhook(ctx: WebhookContext): Promise<WebhookPayload | null> {
@@ -57,10 +58,11 @@ export async function handleStripeWebhook(ctx: WebhookContext): Promise<WebhookP
       session.metadata.userId &&
       session.metadata.gatewayId
     ) {
+      if (!session.amount_total || session.amount_total <= 0) return null;
       return {
         type: "topup.succeeded",
         userId: session.metadata.userId,
-        amountCents: session.amount_total ?? 0,
+        amountCents: session.amount_total,
         currency: (session.currency ?? "usd").toUpperCase(),
         providerTransactionId: typeof session.payment_intent === "string" ? session.payment_intent : session.id,
         gatewayId: session.metadata.gatewayId,

@@ -14,16 +14,22 @@ import { handleWebhook } from "@struxa/payments";
 import type { WebhookPayload } from "@struxa/payments";
 import { randomUUID } from "crypto";
 
-async function addWalletCredits(userId: string, amountCents: number, currency: string, description: string) {
-  const walletRow = await db.query.billingWallet.findFirst({ where: eq(billingWallet.userId, userId) });
+async function addWalletCredits(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  userId: string,
+  amountCents: number,
+  currency: string,
+  description: string,
+) {
+  const walletRow = await tx.query.billingWallet.findFirst({ where: eq(billingWallet.userId, userId) });
   let balanceBefore = 0;
   if (walletRow) {
     balanceBefore = walletRow.balanceCents;
-    await db.update(billingWallet).set({ balanceCents: walletRow.balanceCents + amountCents }).where(eq(billingWallet.userId, userId));
+    await tx.update(billingWallet).set({ balanceCents: walletRow.balanceCents + amountCents }).where(eq(billingWallet.userId, userId));
   } else {
-    await db.insert(billingWallet).values({ id: randomUUID(), userId, balanceCents: amountCents, currency });
+    await tx.insert(billingWallet).values({ id: randomUUID(), userId, balanceCents: amountCents, currency });
   }
-  await db.insert(billingWalletTransactions).values({
+  await tx.insert(billingWalletTransactions).values({
     id: randomUUID(),
     userId,
     amountCents,
@@ -35,84 +41,76 @@ async function addWalletCredits(userId: string, amountCents: number, currency: s
 }
 
 async function creditWallet(payload: Extract<WebhookPayload, { type: "topup.succeeded" }>) {
-  const existing = await db.query.billingTransactions.findFirst({
-    where: eq(billingTransactions.providerTransactionId, payload.providerTransactionId),
-  });
-  if (existing) return;
+  try {
+    await db.transaction(async (tx) => {
+      const walletRow = await tx.query.billingWallet.findFirst({ where: eq(billingWallet.userId, payload.userId) });
+      const currency = payload.currency.toUpperCase();
+      let balanceBefore = 0;
 
-  const currency = payload.currency.toUpperCase();
+      if (walletRow) {
+        balanceBefore = walletRow.balanceCents;
+        await tx.update(billingWallet).set({ balanceCents: walletRow.balanceCents + payload.amountCents }).where(eq(billingWallet.userId, payload.userId));
+      } else {
+        await tx.insert(billingWallet).values({ id: randomUUID(), userId: payload.userId, balanceCents: payload.amountCents, currency });
+      }
 
-  const walletRow = await db.query.billingWallet.findFirst({
-    where: eq(billingWallet.userId, payload.userId),
-  });
+      const balanceAfter = balanceBefore + payload.amountCents;
 
-  let balanceBefore = 0;
-  if (walletRow) {
-    balanceBefore = walletRow.balanceCents;
-    await db
-      .update(billingWallet)
-      .set({ balanceCents: walletRow.balanceCents + payload.amountCents })
-      .where(eq(billingWallet.userId, payload.userId));
-  } else {
-    await db.insert(billingWallet).values({
-      id: randomUUID(),
-      userId: payload.userId,
-      balanceCents: payload.amountCents,
-      currency,
+      await tx.insert(billingWalletTransactions).values({
+        id: randomUUID(),
+        userId: payload.userId,
+        amountCents: payload.amountCents,
+        balanceAfterCents: balanceAfter,
+        currency,
+        type: "topup",
+        description: null,
+      });
+
+      // Insert last — unique constraint on providerTransactionId prevents double-processing
+      await tx.insert(billingTransactions).values({
+        id: randomUUID(),
+        userId: payload.userId,
+        gatewayId: payload.gatewayId,
+        type: "payment",
+        status: "succeeded",
+        amountCents: payload.amountCents,
+        currency,
+        providerTransactionId: payload.providerTransactionId,
+      });
+
+      const redemption = await tx.query.billingReferralRedemptions.findFirst({
+        where: and(
+          eq(billingReferralRedemptions.refereeId, payload.userId),
+          isNull(billingReferralRedemptions.firstTopupAt),
+        ),
+      });
+
+      if (redemption) {
+        const settingsRows = await tx.select().from(settings);
+        const s = Object.fromEntries(settingsRows.map((r) => [r.key, r.value ?? ""]));
+        if (s.billing_referral_enabled !== "true") return;
+
+        const refereeDiscountPercent = Number(s.billing_referral_referee_discount_percent) || 0;
+        const referrerRewardPercent = Number(s.billing_referral_referrer_reward_percent) || 0;
+
+        await tx.update(billingReferralRedemptions).set({ firstTopupAt: new Date() }).where(eq(billingReferralRedemptions.id, redemption.id));
+
+        if (refereeDiscountPercent > 0) {
+          const bonusCents = Math.round(payload.amountCents * refereeDiscountPercent / 100);
+          await addWalletCredits(tx, payload.userId, bonusCents, currency, "referral_bonus");
+        }
+
+        if (referrerRewardPercent > 0) {
+          const rewardCents = Math.round(payload.amountCents * referrerRewardPercent / 100);
+          await addWalletCredits(tx, redemption.referrerId, rewardCents, currency, "referral_commission");
+        }
+      }
     });
-  }
-
-  const balanceAfter = balanceBefore + payload.amountCents;
-
-  await db.insert(billingWalletTransactions).values({
-    id: randomUUID(),
-    userId: payload.userId,
-    amountCents: payload.amountCents,
-    balanceAfterCents: balanceAfter,
-    currency,
-    type: "topup",
-    description: "Wallet top-up via payment provider",
-  });
-
-  await db.insert(billingTransactions).values({
-    id: randomUUID(),
-    userId: payload.userId,
-    gatewayId: payload.gatewayId,
-    type: "payment",
-    status: "succeeded",
-    amountCents: payload.amountCents,
-    currency,
-    providerTransactionId: payload.providerTransactionId,
-  });
-
-  const redemption = await db.query.billingReferralRedemptions.findFirst({
-    where: and(
-      eq(billingReferralRedemptions.refereeId, payload.userId),
-      isNull(billingReferralRedemptions.firstTopupAt),
-    ),
-  });
-
-  if (redemption) {
-    const settingsRows = await db.select().from(settings);
-    const s = Object.fromEntries(settingsRows.map((r) => [r.key, r.value ?? ""]));
-    if (s.billing_referral_enabled !== "true") return;
-
-    const refereeDiscountPercent = Number(s.billing_referral_referee_discount_percent) || 0;
-    const referrerRewardPercent = Number(s.billing_referral_referrer_reward_percent) || 0;
-
-    await db.update(billingReferralRedemptions)
-      .set({ firstTopupAt: new Date() })
-      .where(eq(billingReferralRedemptions.id, redemption.id));
-
-    if (refereeDiscountPercent > 0) {
-      const bonusCents = Math.round(payload.amountCents * refereeDiscountPercent / 100);
-      await addWalletCredits(payload.userId, bonusCents, currency, `Referral bonus — ${refereeDiscountPercent}% top-up reward`);
-    }
-
-    if (referrerRewardPercent > 0) {
-      const rewardCents = Math.round(payload.amountCents * referrerRewardPercent / 100);
-      await addWalletCredits(redemption.referrerId, rewardCents, currency, `Referral commission — ${referrerRewardPercent}% of referred top-up`);
-    }
+  } catch (err) {
+    const sqlErr = err as { code?: string };
+    // Unique constraint violation = already processed this webhook
+    if (sqlErr?.code === "ER_DUP_ENTRY") return;
+    throw err;
   }
 }
 

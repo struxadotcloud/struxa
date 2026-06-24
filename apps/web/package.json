@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@better-auth/api-key": "catalog:",
-    "@simpay/typescript": "*",
+    "@simpay/typescript": "^1.0.3",
     "@monaco-editor/react": "^4.6.0",
     "@orpc/client": "catalog:",
     "@orpc/openapi": "catalog:",

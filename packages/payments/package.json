@@ -11,7 +11,7 @@
   },
   "scripts": {},
   "dependencies": {
-    "@simpay/typescript": "*",
+    "@simpay/typescript": "^1.0.3",
     "stripe": "^17.7.0",
     "zod": "catalog:"
   },

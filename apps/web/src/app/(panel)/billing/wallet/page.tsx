@@ -7,14 +7,13 @@ import { useTranslations } from "next-intl";
 import {
   ArrowUpRight, ArrowDownLeft, RotateCcw,
   SlidersHorizontal, Clock, CreditCard, Banknote,
-  Wallet, ChevronLeft, Gift, Pencil,
+  Wallet, ChevronLeft, ChevronRight, Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import { orpc } from "@/utils/orpc";
 import { cn } from "@struxa/ui/lib/utils";
 import { Button } from "@struxa/ui/components/button";
 import { Input } from "@struxa/ui/components/input";
-import { Label } from "@struxa/ui/components/label";
 import {
   Dialog,
   DialogPopup,
@@ -103,20 +102,20 @@ function TopUpForm({
   const resolvedAmount = selectedPreset ?? (customAmount ? parseFloat(customAmount) : null);
 
   function handleSubmit() {
-    if (!resolvedAmount || resolvedAmount < 1) return;
+    if (!resolvedAmount || !Number.isFinite(resolvedAmount) || resolvedAmount < 1) return;
     onSubmit(Math.round(resolvedAmount * 100));
   }
 
   return (
-    <div className="flex flex-col gap-4 p-5">
-      <div className="flex flex-wrap gap-2">
+    <div className="flex flex-col gap-3 p-5">
+      <div className="grid grid-cols-2 gap-2">
         {PRESET_AMOUNTS.map((amount) => (
           <button
             key={amount}
             type="button"
             onClick={() => { setSelectedPreset(amount); setCustomAmount(""); }}
             className={cn(
-              "rounded-full border px-3.5 py-1 text-xs font-medium transition-all",
+              "rounded-xl border py-2.5 text-sm font-medium transition-all",
               selectedPreset === amount
                 ? "border-foreground bg-foreground text-background"
                 : "border-border bg-transparent text-muted-foreground hover:border-foreground/40 hover:text-foreground",
@@ -127,28 +126,18 @@ function TopUpForm({
         ))}
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <Label className="text-xs font-medium text-muted-foreground">{t("topUpSheet.customAmount")}</Label>
-        <Input
-          type="number"
-          min="1"
-          step="0.01"
-          placeholder={t("topUpSheet.customAmountPlaceholder")}
-          value={customAmount}
-          onChange={(e) => { setCustomAmount(e.target.value); setSelectedPreset(null); }}
-        />
-      </div>
-
-      {resolvedAmount && resolvedAmount >= 1 && (
-        <div className="rounded-xl border border-border bg-muted/30 px-4 py-3 flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">{t("topUpSheet.total")}</span>
-          <span className="text-sm font-bold tabular-nums text-foreground">{formatBalance(Math.round(resolvedAmount * 100), currency)}</span>
-        </div>
-      )}
+      <Input
+        type="number"
+        min="1"
+        step="0.01"
+        placeholder={t("topUpSheet.customAmountPlaceholder")}
+        value={customAmount}
+        onChange={(e) => { setCustomAmount(e.target.value); setSelectedPreset(null); }}
+      />
 
       <Button
         className="w-full"
-        disabled={!resolvedAmount || resolvedAmount < 1 || isPending}
+        disabled={!resolvedAmount || !Number.isFinite(resolvedAmount) || resolvedAmount < 1 || isPending}
         onClick={handleSubmit}
       >
         {isPending ? t("topUpSheet.processing") : t("topUpSheet.confirm")}
@@ -157,9 +146,14 @@ function TopUpForm({
   );
 }
 
+const DURATION_KEYS = new Set(["7day", "1month", "3months", "6months", "1year"]);
+const TX_DESC_KEYS = new Set(["referral_bonus", "referral_commission"]);
+
 export default function WalletPage() {
   const t = useTranslations("panel.billing.wallet");
+  const tBilling = useTranslations("panel.billing");
   const tr = useTranslations("panel.billing.wallet.referral");
+  const tc = useTranslations("common");
   const router = useRouter();
   const searchParams = useSearchParams();
   const isMobile = useIsMobile();
@@ -172,12 +166,17 @@ export default function WalletPage() {
   const [newCode, setNewCode] = useState("");
   const [editingCode, setEditingCode] = useState(false);
   const [editCode, setEditCode] = useState("");
+  const [txPage, setTxPage] = useState(0);
   const queryClient = useQueryClient();
 
+  const TX_PAGE_SIZE = 10;
+
   const { data: wallet, refetch: refetchWallet } = useQuery(orpc.billing.getWallet.queryOptions());
-  const { data: transactions = [], isLoading: txLoading } = useQuery(
-    orpc.billing.listWalletTransactions.queryOptions({ limit: 50 }),
+  const { data: txRaw = [], isLoading: txLoading } = useQuery(
+    orpc.billing.listWalletTransactions.queryOptions({ limit: TX_PAGE_SIZE + 1, offset: txPage * TX_PAGE_SIZE }),
   );
+  const hasNextPage = txRaw.length > TX_PAGE_SIZE;
+  const transactions = txRaw.slice(0, TX_PAGE_SIZE);
   const { data: gateways = [] } = useQuery(orpc.billing.listActiveGateways.queryOptions());
   const { data: billingConfig } = useQuery(orpc.billing.getConfig.queryOptions());
   const { data: referralCode } = useQuery({
@@ -231,6 +230,9 @@ export default function WalletPage() {
     ...orpc.billing.createTopupSession.mutationOptions(),
     onSuccess: ({ url }) => {
       router.push(url as never);
+    },
+    onError: () => {
+      toast.error(t("topUpError"));
     },
   });
 
@@ -289,19 +291,34 @@ export default function WalletPage() {
   const modalTitle = isProviderStep ? t("chooseProvider") : t("topUpSheet.title");
   const modalDesc = isProviderStep ? t("chooseProviderDesc") : t("topUpSheet.description");
 
+  const BANNER_PROVIDERS = ["stripe", "simpay"];
+
   const modalContent = isProviderStep ? (
     <div className="flex flex-col gap-2 p-5">
       {gateways.map((gw) => {
+        const hasBanner = BANNER_PROVIDERS.includes(gw.provider);
         const Icon = PROVIDER_ICON[gw.provider] ?? Wallet;
         return (
           <button
             key={gw.id}
             type="button"
             onClick={() => { setSelectedGatewayId(gw.id); setTopupStep("amount"); }}
-            className="flex items-center gap-3 rounded-xl border border-border px-4 py-3 text-left transition-all hover:border-foreground/40 hover:bg-muted/30"
+            className="overflow-hidden rounded-xl border border-border transition-all hover:border-foreground/40 hover:bg-muted/30"
           >
-            <Icon className="size-4 shrink-0 text-muted-foreground" />
-            <span className="text-sm font-medium text-foreground">{gw.name}</span>
+            {hasBanner ? (
+              <div className="flex items-center justify-center px-4 py-3">
+                <img
+                  src={`/providers/${gw.provider}-long.png`}
+                  alt={gw.name}
+                  className="h-7 w-auto object-contain"
+                />
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 px-4 py-3 text-left">
+                <Icon className="size-4 shrink-0 text-muted-foreground" />
+                <span className="text-sm font-medium text-foreground">{gw.name}</span>
+              </div>
+            )}
           </button>
         );
       })}
@@ -326,11 +343,11 @@ export default function WalletPage() {
     <div className="flex-1 overflow-auto px-4 py-5 sm:px-6">
       <div className="mx-auto max-w-3xl flex flex-col gap-6">
 
-        {/* Balance hero card */}
-        <div className="rounded-2xl border border-border bg-card px-6 py-5 flex items-center justify-between gap-4">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">{t("balance")}</p>
-            <p className="text-3xl font-bold tabular-nums text-foreground leading-tight mt-0.5">
+        {/* Balance card */}
+        <div className="rounded-2xl border border-border bg-card px-6 py-6 flex items-center justify-between gap-4">
+          <div className="flex flex-col gap-1">
+            <p className="text-xs text-muted-foreground">{t("balance")}</p>
+            <p className="text-4xl font-bold tabular-nums text-foreground leading-none">
               {wallet ? formatBalance(wallet.balanceCents, currency) : "—"}
             </p>
           </div>
@@ -341,7 +358,7 @@ export default function WalletPage() {
 
         {/* Transaction history */}
         <div className="flex flex-col gap-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground/70">{t("transactions")}</h2>
+          <h2 className="text-sm font-semibold text-foreground">{t("transactions")}</h2>
 
           {txLoading ? (
             <div className="flex flex-col gap-2">
@@ -359,9 +376,9 @@ export default function WalletPage() {
             <div className="overflow-hidden rounded-xl border border-border bg-card divide-y divide-border/60">
               {transactions.map((tx) => {
                 const Icon = TYPE_ICON[tx.type as TxType] ?? ArrowUpRight;
-                const isPositive = TYPE_POSITIVE[tx.type as TxType] ?? false;
+                const isPositive = tx.type === "adjustment" ? tx.amountCents > 0 : (TYPE_POSITIVE[tx.type as TxType] ?? false);
                 return (
-                  <div key={tx.id} className="flex items-center gap-3 px-4 py-3">
+                  <div key={tx.id} className="flex items-center gap-3 px-4 py-3.5">
                     <div className={cn(
                       "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
                       isPositive ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500",
@@ -369,18 +386,31 @@ export default function WalletPage() {
                       <Icon className="size-3.5" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-xs font-medium text-foreground">
+                      <p className="truncate text-sm font-medium text-foreground">
                         {t(`types.${tx.type as TxType}`)}
-                        {tx.description && <span className="ml-1.5 font-normal text-muted-foreground">— {tx.description}</span>}
+                        {tx.description && (() => {
+                          const desc = tx.description;
+                          if (TX_DESC_KEYS.has(desc)) {
+                            return <span className="ml-1.5 font-normal text-muted-foreground">— {t(`txDescriptions.${desc}`)}</span>;
+                          }
+                          const sep = desc.lastIndexOf(" — ");
+                          if (sep !== -1) {
+                            const suffix = desc.slice(sep + 3);
+                            if (DURATION_KEYS.has(suffix)) {
+                              return <span className="ml-1.5 font-normal text-muted-foreground">— {desc.slice(0, sep)} — {tBilling(`durations.${suffix}`)}</span>;
+                            }
+                          }
+                          return <span className="ml-1.5 font-normal text-muted-foreground">— {desc}</span>;
+                        })()}
                       </p>
-                      <p className="text-[10px] text-muted-foreground">{formatDate(tx.createdAt)}</p>
+                      <p className="text-xs text-muted-foreground">{formatDate(tx.createdAt)}</p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className={cn("text-xs font-semibold tabular-nums", isPositive ? "text-emerald-500" : "text-red-500")}>
+                      <p className={cn("text-sm font-semibold tabular-nums", isPositive ? "text-emerald-500" : "text-red-500")}>
                         {isPositive ? "+" : "−"}{formatAmount(tx.amountCents, tx.currency)}
                       </p>
-                      <p className="text-[10px] text-muted-foreground tabular-nums">
-                        {t("balanceAfter")} {formatBalance(tx.balanceAfterCents, tx.currency)}
+                      <p className="text-xs text-muted-foreground tabular-nums">
+                        {formatBalance(tx.balanceAfterCents, tx.currency)}
                       </p>
                     </div>
                   </div>
@@ -388,15 +418,38 @@ export default function WalletPage() {
               })}
             </div>
           )}
+
+          {(txPage > 0 || hasNextPage) && !txLoading && (
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setTxPage((p) => p - 1)}
+                disabled={txPage === 0}
+                className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+              >
+                <ChevronLeft className="size-3.5" />
+                {tc("prev")}
+              </button>
+              <span className="text-xs text-muted-foreground">{tc("page", { page: txPage + 1 })}</span>
+              <button
+                type="button"
+                onClick={() => setTxPage((p) => p + 1)}
+                disabled={!hasNextPage}
+                className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+              >
+                {tc("next")}
+                <ChevronRight className="size-3.5" />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Referral program */}
         {billingConfig?.referralEnabled && <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-2">
-            <Gift className="size-3.5 text-muted-foreground/60" />
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground/70">{tr("title")}</h2>
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">{tr("title")}</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">{tr("subtitle")}</p>
           </div>
-          <p className="text-xs text-muted-foreground -mt-1">{tr("subtitle")}</p>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {/* Your referral code */}
@@ -447,6 +500,7 @@ export default function WalletPage() {
                         type="button"
                         size="icon-sm"
                         variant="ghost"
+                        aria-label={tr("editCode")}
                         onClick={() => { setEditCode(referralCode.code); setEditingCode(true); }}
                         className="shrink-0 h-8 w-8"
                       >

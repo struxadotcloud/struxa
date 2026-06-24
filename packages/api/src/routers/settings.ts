@@ -126,7 +126,7 @@ export const settingsRouter = {
     .input(
       z.object({
         enabled: z.boolean().optional(),
-        defaultCurrency: z.string().max(3).optional(),
+        defaultCurrency: z.string().length(3).regex(/^[A-Z]{3}$/).optional(),
         trialsEnabled: z.boolean().optional(),
         trialDays: z.number().int().min(1).max(365).optional(),
         taxEnabled: z.boolean().optional(),

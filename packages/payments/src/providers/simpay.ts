@@ -20,7 +20,7 @@ export async function createSimPayTopupSession(
   const simpay = new SimPayClient({
     api: { password: config.apiPassword },
     service: { id: config.serviceId },
-    ipn: { signatureKey: "", validateSourceIp: false },
+    ipn: { signatureKey: "", validateSourceIp: true },
   });
   const tx = await simpay.payments.transactions.create(config.serviceId, {
     amount: opts.amountCents / 100,
@@ -37,7 +37,7 @@ export async function handleSimPayWebhook(ctx: WebhookContext): Promise<WebhookP
   const simpay = new SimPayClient({
     api: { password: ctx.config.secretKey },
     service: { id: ctx.config.serviceId ?? "" },
-    ipn: { signatureKey: ctx.config.webhookSecret, validateSourceIp: false },
+    ipn: { signatureKey: ctx.config.webhookSecret, validateSourceIp: true },
   });
 
   let payload: unknown;
@@ -57,10 +57,12 @@ export async function handleSimPayWebhook(ctx: WebhookContext): Promise<WebhookP
   if (n.type === "transaction:status_changed" && n.data.status === "transaction_paid") {
     const data = n.data;
     if (!data.control) return null;
+    const parsedAmount = parseFloat(data.amount.original_value);
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) return null;
     return {
       type: "topup.succeeded",
       userId: data.control,
-      amountCents: Math.round(parseFloat(data.amount.original_value) * 100),
+      amountCents: Math.round(parsedAmount * 100),
       currency: data.amount.original_currency.toUpperCase(),
       providerTransactionId: data.payer_transaction_id || data.id,
       gatewayId: ctx.gatewayId,
