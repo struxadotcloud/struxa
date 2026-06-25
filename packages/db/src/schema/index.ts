@@ -17,3 +17,4 @@ export * from "./activity-logs";
 export * from "./subusers";
 export * from "./relations";
 export * from "./settings";
+export * from "./billing";

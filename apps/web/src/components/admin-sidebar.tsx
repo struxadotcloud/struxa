@@ -32,6 +32,7 @@ import {
   LogOut,
   ChevronLeft,
   Activity,
+  CreditCard,
 } from "lucide-react";
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
@@ -64,6 +65,7 @@ export function AdminSidebar() {
     { key: "database-hosts", label: t("databaseHosts"), icon: Database, href: "/admin/database-hosts" },
     { key: "servers", label: t("servers"), icon: Monitor, href: "/admin/servers" },
     { key: "users", label: t("users"), icon: Users, href: "/admin/users" },
+    { key: "billing", label: t("billing"), icon: CreditCard, href: "/admin/billing" },
     { key: "activity", label: t("activity"), icon: Activity, href: "/admin/activity" },
     { key: "settings", label: t("settings"), icon: Settings2, href: "/admin/settings" },
   ];

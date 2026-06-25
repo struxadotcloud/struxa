@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { getAuth } from "@struxa/auth";
 import { db } from "@struxa/db";
 import { nodes, servers, subusers } from "@struxa/db";
+import { safeDecrypt } from "@struxa/api/lib/crypto";
 import { recordActivity } from "@struxa/api/services/activity";
 
 type Params = { params: Promise<{ id: string; path: string[] }> };
@@ -34,7 +35,7 @@ async function proxy(req: NextRequest, { params }: Params) {
   const daemonUrl = `${node.scheme}://${node.fqdn}:${node.daemonListen}/api/servers/${server.uuid}/files/${path.join("/")}${req.nextUrl.search}`;
 
   const headers: Record<string, string> = {
-    Authorization: `Bearer ${node.token}`,
+    Authorization: `Bearer ${safeDecrypt(node.token)}`,
   };
   const ct = req.headers.get("Content-Type");
   if (ct) headers["Content-Type"] = ct;

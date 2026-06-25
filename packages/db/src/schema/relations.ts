@@ -18,7 +18,7 @@ import { subusers } from "./subusers";
 import { activityLogs } from "./activity-logs";
 import { servers as serversTable } from "./servers";
 import { nodes as nodesTable } from "./nodes";
-
+import { billingSubscriptions } from "./billing";
 export const locationsRelations = relations(locations, ({ many }) => ({
   nodes: many(nodes),
 }));
@@ -82,6 +82,10 @@ export const serversRelations = relations(servers, ({ one, many }) => ({
   allocation: one(nodeAllocations, {
     fields: [servers.allocationId],
     references: [nodeAllocations.id],
+  }),
+  subscription: one(billingSubscriptions, {
+    fields: [servers.subscriptionId],
+    references: [billingSubscriptions.id],
   }),
   variables: many(serverVariables),
   databases: many(serverDatabases),
@@ -181,3 +185,4 @@ export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
     references: [nodesTable.id],
   }),
 }));
+

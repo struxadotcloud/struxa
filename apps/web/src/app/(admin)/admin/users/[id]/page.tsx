@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { ChevronRight, Server, Shield, ShieldOff, Ban, UserCheck, Monitor } from "lucide-react";
+import { ChevronRight, Server, Shield, ShieldOff, Ban, UserCheck, Monitor, Wallet } from "lucide-react";
 import {
   Dialog,
   DialogPopup,
@@ -19,7 +19,7 @@ import {
 import { orpc, queryClient } from "@/utils/orpc";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 
-type Tab = "overview" | "servers" | "security" | "actions";
+type Tab = "overview" | "servers" | "security" | "billing" | "actions";
 
 function parseUserAgent(ua: string | null | undefined): string {
   if (!ua) return "Unknown device";
@@ -53,14 +53,18 @@ function InfoRow({ label, children }: { label: string; children: React.ReactNode
 export default function AdminUserDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const t = useTranslations("admin.users");
   const tc = useTranslations("common");
+  const tBilling = useTranslations("panel.billing");
   const { id: userId } = use(params);
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("overview");
+
+  const { data: billingConfig } = useQuery(orpc.billing.getConfig.queryOptions());
 
   const TABS: { id: Tab; label: string }[] = [
     { id: "overview", label: t("tabOverview") },
     { id: "servers", label: t("tabServers") },
     { id: "security", label: t("tabSecurity") },
+    ...(billingConfig?.enabled ? [{ id: "billing" as Tab, label: t("tabBilling") }] : []),
     { id: "actions", label: t("tabActions") },
   ];
 
@@ -74,6 +78,35 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
 
   const { data: serversData } = useQuery(
     orpc.users.adminGetServers.queryOptions({ input: { userId, page: 1 } }),
+  );
+
+  const { data: userWallet } = useQuery({
+    ...orpc.billing.adminGetUserWallet.queryOptions({ input: { userId } }),
+    enabled: tab === "billing" && (billingConfig?.enabled ?? false),
+  });
+  const { data: userSubscriptions } = useQuery({
+    ...orpc.billing.adminListUserSubscriptions.queryOptions({ input: { userId } }),
+    enabled: tab === "billing" && (billingConfig?.enabled ?? false),
+  });
+  const { data: walletTxns } = useQuery({
+    ...orpc.billing.adminListUserWalletTransactions.queryOptions({ input: { userId } }),
+    enabled: tab === "billing" && (billingConfig?.enabled ?? false),
+  });
+
+  const [adjustDialog, setAdjustDialog] = useState(false);
+  const [adjustAmount, setAdjustAmount] = useState("");
+  const [adjustNote, setAdjustNote] = useState("");
+
+  const adjustBalanceMutation = useMutation(
+    orpc.billing.adminAdjustUserBalance.mutationOptions({
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: orpc.billing.adminGetUserWallet.key() });
+        void queryClient.invalidateQueries({ queryKey: orpc.billing.adminListUserWalletTransactions.key() });
+        setAdjustDialog(false);
+        setAdjustAmount("");
+        setAdjustNote("");
+      },
+    }),
   );
 
   function invalidateUser() {
@@ -170,6 +203,64 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
         onConfirm={() => deleteMutation.mutate({ userId })}
         loading={deleteMutation.isPending}
       />
+
+      <Dialog open={adjustDialog} onOpenChange={(open) => { setAdjustDialog(open); if (!open) { setAdjustAmount(""); setAdjustNote(""); } }}>
+        <DialogPopup showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>{t("billingAdjustTitle")}</DialogTitle>
+            <DialogDescription>{t("billingAdjustDesc")}</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 px-5 py-4">
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="adjust-amount" className="text-xs font-medium text-foreground">{t("billingAdjustAmountLabel")}</label>
+              <input
+                id="adjust-amount"
+                autoFocus
+                type="number"
+                step="0.01"
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
+                placeholder={t("billingAdjustAmountPlaceholder")}
+                value={adjustAmount}
+                onChange={(e) => setAdjustAmount(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="adjust-note" className="text-xs font-medium text-foreground">{t("billingAdjustNoteLabel")}</label>
+              <input
+                id="adjust-note"
+                type="text"
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
+                placeholder={t("billingAdjustNotePlaceholder")}
+                value={adjustNote}
+                onChange={(e) => setAdjustNote(e.target.value)}
+              />
+            </div>
+            {adjustBalanceMutation.isError && (
+              <p className="text-xs text-destructive">{adjustBalanceMutation.error.message}</p>
+            )}
+          </div>
+          <DialogFooter>
+            <DialogClose
+              className="rounded-lg px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              disabled={adjustBalanceMutation.isPending}
+            >
+              {tc("cancel")}
+            </DialogClose>
+            <button
+              type="button"
+              disabled={adjustBalanceMutation.isPending || !adjustAmount || !Number.isFinite(parseFloat(adjustAmount)) || Math.round(parseFloat(adjustAmount) * 100) === 0}
+              onClick={() => {
+                const amountCents = Math.round(parseFloat(adjustAmount) * 100);
+                if (!amountCents || !Number.isFinite(amountCents)) return;
+                adjustBalanceMutation.mutate({ userId, amountCents, description: adjustNote || undefined });
+              }}
+              className="rounded-lg bg-foreground px-4 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
+            >
+              {adjustBalanceMutation.isPending ? tc("saving") : tc("save")}
+            </button>
+          </DialogFooter>
+        </DialogPopup>
+      </Dialog>
 
       {/* Header breadcrumb */}
       <div className="flex shrink-0 items-center gap-1.5 border-b border-border bg-card px-4 py-2.5">
@@ -360,6 +451,124 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
                         </div>
                         <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${new Date(s.expiresAt) > new Date() ? "bg-green-500/10 text-green-600 dark:text-green-400" : "bg-muted text-muted-foreground"}`}>
                           {new Date(s.expiresAt) > new Date() ? t("sessionActive") : t("sessionExpired")}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </SectionCard>
+            </>
+          )}
+
+          {/* ── Billing ── */}
+          {tab === "billing" && (
+            <>
+              <SectionCard title={t("billingWalletTitle")}>
+                <div className="flex flex-col divide-y divide-border">
+                  <InfoRow label={t("billingBalanceLabel")}>
+                    <span className="font-semibold text-foreground">
+                      {userWallet
+                        ? (userWallet.balanceCents / 100).toLocaleString("en-US", { style: "currency", currency: userWallet.currency })
+                        : "—"}
+                    </span>
+                  </InfoRow>
+                  <InfoRow label={t("billingCurrencyLabel")}>
+                    {userWallet?.currency ?? "—"}
+                  </InfoRow>
+                </div>
+                <div className="mt-3 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setAdjustDialog(true)}
+                    className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+                  >
+                    <Wallet className="h-3.5 w-3.5" />
+                    {t("billingAdjustButton")}
+                  </button>
+                </div>
+              </SectionCard>
+
+              <SectionCard title={t("billingActiveSubsTitle")}>
+                {!userSubscriptions || userSubscriptions.filter((s) => s.status !== "canceled").length === 0 ? (
+                  <p className="text-sm text-muted-foreground">{t("billingNoActiveSubs")}</p>
+                ) : (
+                  <div className="flex flex-col divide-y divide-border">
+                    {userSubscriptions.filter((s) => s.status !== "canceled").map((s) => (
+                      <div key={s.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+                        <div>
+                          <p className="text-sm font-medium text-foreground">{s.productName} — {s.planName}</p>
+                          <p className="mt-0.5 text-xs text-muted-foreground">
+                            {(s.priceCents / 100).toLocaleString("en-US", { style: "currency", currency: s.currency })} / {tBilling(`durations.${s.duration}`)}
+                            {s.currentPeriodEnd && (
+                              <> · {t("billingSubRenews")} {new Date(s.currentPeriodEnd).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</>
+                            )}
+                          </p>
+                        </div>
+                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                          s.status === "active" ? "bg-green-500/10 text-green-600 dark:text-green-400"
+                          : s.status === "trialing" ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                          : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                        }`}>
+                          {s.status === "active" ? t("billingStatusActive") : s.status === "trialing" ? t("billingStatusTrialing") : t("billingStatusPastDue")}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </SectionCard>
+
+              <SectionCard title={t("billingSubHistoryTitle")}>
+                {!userSubscriptions || userSubscriptions.filter((s) => s.status === "canceled").length === 0 ? (
+                  <p className="text-sm text-muted-foreground">{t("billingNoSubHistory")}</p>
+                ) : (
+                  <div className="flex flex-col divide-y divide-border">
+                    {userSubscriptions.filter((s) => s.status === "canceled").map((s) => (
+                      <div key={s.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+                        <p className="text-sm text-foreground">{s.productName} — {s.planName}</p>
+                        <span className="text-xs text-muted-foreground">
+                          {t("billingSubCanceledAt")} {s.canceledAt ? new Date(s.canceledAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </SectionCard>
+
+              <SectionCard title={t("billingWalletTxnsTitle")}>
+                {!walletTxns || walletTxns.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">{t("billingNoWalletTxns")}</p>
+                ) : (
+                  <div className="overflow-hidden rounded-lg border border-border">
+                    <div className="grid grid-cols-[80px_90px_90px_1fr_100px] border-b border-border bg-muted/40 px-4 py-2 text-xs font-medium text-muted-foreground">
+                      <span>{t("billingTxnTypeCol")}</span>
+                      <span>{t("billingTxnAmountCol")}</span>
+                      <span>{t("billingTxnBalanceCol")}</span>
+                      <span>{t("billingTxnNoteCol")}</span>
+                      <span>{t("billingTxnDateCol")}</span>
+                    </div>
+                    {walletTxns.map((txn, i) => (
+                      <div
+                        key={txn.id}
+                        className={`grid grid-cols-[80px_90px_90px_1fr_100px] items-center px-4 py-3 text-xs ${i < walletTxns.length - 1 ? "border-b border-border" : ""}`}
+                      >
+                        <span className={`w-fit rounded-full px-2 py-0.5 font-medium ${
+                          txn.type === "topup" ? "bg-green-500/10 text-green-600 dark:text-green-400"
+                          : txn.type === "charge" ? "bg-red-500/10 text-red-600 dark:text-red-400"
+                          : txn.type === "refund" ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                          : "bg-muted text-muted-foreground"
+                        }`}>
+                          {tBilling(`wallet.types.${txn.type}` as Parameters<typeof tBilling>[0])}
+                        </span>
+                        <span className={txn.amountCents >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}>
+                          {txn.amountCents >= 0 ? "+" : ""}
+                          {(txn.amountCents / 100).toLocaleString("en-US", { style: "currency", currency: txn.currency })}
+                        </span>
+                        <span className="text-foreground">
+                          {(txn.balanceAfterCents / 100).toLocaleString("en-US", { style: "currency", currency: txn.currency })}
+                        </span>
+                        <span className="truncate text-muted-foreground">{txn.description ?? "—"}</span>
+                        <span className="text-muted-foreground">
+                          {new Date(txn.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                         </span>
                       </div>
                     ))}

@@ -58,3 +58,5 @@ dev-dist
 .dev.vars*
 
 .open-next
+
+next.config.ts

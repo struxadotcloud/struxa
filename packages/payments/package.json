@@ -1,0 +1,22 @@
+{
+  "name": "@struxa/payments",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {},
+  "dependencies": {
+    "@simpay/typescript": "^1.0.3",
+    "stripe": "^17.7.0",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@struxa/config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}

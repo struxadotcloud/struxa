@@ -29,6 +29,13 @@
       "when": 1748000000000,
       "tag": "0003_add_user_locale",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1781635601735,
+      "tag": "0004_noisy_black_bolt",
+      "breakpoints": true
     }
   ]
 }

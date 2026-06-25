@@ -5,6 +5,7 @@ import { ORPCError } from "@orpc/server";
 import { db } from "@struxa/db";
 import { backups, nodes, servers, subusers } from "@struxa/db";
 import { createWingsClient } from "../lib/wings-client";
+import { safeDecrypt } from "../lib/crypto";
 import { signBackupDownloadToken } from "../lib/jwt";
 import { recordActivity } from "../services/activity";
 import { protectedProcedure } from "../index";
@@ -126,7 +127,7 @@ export const backupsRouter = {
         context.session.user.id,
         server.uuid,
         backup.uuid,
-        node.token,
+        safeDecrypt(node.token),
       );
       const url = `${node.scheme}://${node.fqdn}:${node.daemonListen}/download/backup?token=${token}`;
       return { url };

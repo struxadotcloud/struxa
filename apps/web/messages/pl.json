@@ -40,7 +40,8 @@
     "next": "Dalej",
     "prev": "Wstecz",
     "edit": "Edytuj",
-    "purgeFromNode": "Usuń pliki z węzła"
+    "purgeFromNode": "Usuń pliki z węzła",
+    "page": "Strona {page}"
   },
   "auth": {
     "login": {
@@ -157,7 +158,9 @@
     "panel": {
       "gameServers": "Serwery gier",
       "account": "Konto",
-      "allServers": "Wszystkie serwery"
+      "allServers": "Wszystkie serwery",
+      "wallet": "Portfel",
+      "shop": "Sklep"
     },
     "server": {
       "console": "Konsola",
@@ -179,7 +182,8 @@
       "servers": "Serwery",
       "users": "Użytkownicy",
       "activity": "Działalność",
-      "settings": "Ustawienia"
+      "settings": "Ustawienia",
+      "billing": "Rozliczenia"
     }
   },
   "panel": {
@@ -416,7 +420,11 @@
       "statServerId": "ID serwera",
       "statNode": "Węzeł",
       "statEgg": "Jajko",
-      "statSftpHost": "Host SFTP"
+      "statSftpHost": "Host SFTP",
+      "selectEggTitle": "Wybierz typ gry",
+      "selectEggDescription": "Wybierz typ gry do tej reinstalacji.",
+      "selectEggLabel": "Typ gry",
+      "reinstallContinue": "Kontynuuj"
     },
     "activity": {
       "colTimestamp": "Znacznik czasu",
@@ -451,6 +459,136 @@
       "eventUsersAdd": "Użytkownicy: Dodaj",
       "eventUsersUpdate": "Użytkownicy: Aktualizuj",
       "eventUsersRemove": "Użytkownicy: Usuń"
+    },
+    "billing": {
+      "title": "Rozliczenia",
+      "subtitle": "Wybierz plan odpowiedni dla Twoich potrzeb.",
+      "shopTitle": "Sklep",
+      "shopSubtitle": "Wybierz plan odpowiedni dla Twoich potrzeb.",
+      "empty": "Brak dostępnych kategorii planów.",
+      "backToCategories": "Wszystkie kategorie",
+      "noPlans": "Brak dostępnych planów w tej kategorii.",
+      "plans": "plany",
+      "plan": "plan",
+      "featured": "Polecany",
+      "getStarted": "Rozpocznij",
+      "selectPlan": "Wybierz plan",
+      "soldOut": "Wyprzedane",
+      "startingFrom": "Zaczynając od",
+      "walletBalance": "Portfel: {balance}",
+      "topUpRequired": "Doładuj, aby kupić",
+      "purchaseSuccess": "Serwer wdrożony! Przekierowuję…",
+      "purchaseDialog": {
+        "title": "Skonfiguruj swój serwer",
+        "stepDuration": "Okres rozliczeniowy",
+        "stepInstaller": "Instalator",
+        "stepConfig": "Konfiguracja",
+        "stepConfirm": "Potwierdź",
+        "serverName": "Nazwa serwera",
+        "serverNamePlaceholder": "Mój serwer gry",
+        "chooseInstaller": "Wybierz instalator",
+        "noInstallers": "Brak skonfigurowanych instalatorów dla tego planu.",
+        "noConfig": "Brak konfigurowalnych opcji dla tego instalatora.",
+        "dockerImage": "Obraz Docker",
+        "showMore": "Pokaż {count} więcej",
+        "showLess": "Pokaż mniej",
+        "envVars": "Zmienne środowiskowe",
+        "back": "Wróć",
+        "next": "Dalej",
+        "deploying": "Wdrażanie…",
+        "deploy": "Wdróż serwer",
+        "priceLabel": "{price} / {duration}",
+        "summaryPlan": "Plan",
+        "summaryDuration": "Czas trwania",
+        "summaryInstaller": "Instalator",
+        "summaryImage": "Obraz Docker",
+        "summaryTotal": "Łącznie",
+        "noAllocations": "Brak dostępnych slotów serwerowych. Skontaktuj się z pomocą techniczną."
+      },
+      "errors": {
+        "insufficientFunds": "Niewystarczające saldo portfela. Najpierw doładuj.",
+        "currencyMismatch": "Waluta Twojego portfela nie pasuje do tego planu.",
+        "alreadySubscribed": "Masz już aktywną subskrypcję dla tego planu.",
+        "noAllocations": "Brak dostępnych slotów serwerowych. Skontaktuj się z pomocą techniczną.",
+        "noCapacity": "Ten plan jest obecnie wyprzedany. Spróbuj ponownie później.",
+        "purchaseFailed": "Zakup nie powiódł się. Spróbuj ponownie."
+      },
+      "durations": {
+        "7day": "7 dni",
+        "1month": "Miesięcznie",
+        "3months": "3 miesiące",
+        "6months": "6 miesięcy",
+        "1year": "Rocznie"
+      },
+      "specs": {
+        "cpu": "vCPU",
+        "ram": "GB RAM",
+        "disk": "GB dysku",
+        "backups": "Kopie zapasowe",
+        "allocations": "Alokacje",
+        "databases": "Bazy danych"
+      },
+      "wallet": {
+        "title": "Mój portfel",
+        "backToBilling": "Rozliczenia",
+        "balance": "Saldo",
+        "topUp": "Doładuj",
+        "viewWallet": "Zobacz portfel",
+        "transactions": "Historia transakcji",
+        "noTransactions": "Brak transakcji",
+        "noTransactionsHint": "Aktywność portfela pojawi się tutaj po pierwszym doładowaniu.",
+        "balanceAfter": "Saldo po",
+        "topUpSuccess": "Portfel doładowany pomyślnie",
+        "topUpError": "Nie udało się rozpocząć procesu płatności. Spróbuj ponownie.",
+        "noGateway": "Nie skonfigurowano aktywnego dostawcy płatności. Skontaktuj się z administratorem.",
+        "topUpSheet": {
+          "title": "Doładuj portfel",
+          "description": "Wybierz kwotę do dodania do salda portfela.",
+          "customAmount": "Własna kwota",
+          "customAmountPlaceholder": "Wprowadź kwotę",
+          "total": "Łącznie",
+          "confirm": "Przejdź do płatności",
+          "processing": "Przetwarzanie…"
+        },
+        "chooseProvider": "Wybierz metodę płatności",
+        "chooseProviderDesc": "Wybierz, jak chcesz doładować portfel.",
+        "back": "Wróć",
+        "types": {
+          "topup": "Doładowanie",
+          "refund": "Zwrot",
+          "charge": "Opłata",
+          "adjustment": "Korekta",
+          "expired": "Wygasłe"
+        },
+        "txDescriptions": {
+          "referral_bonus": "Bonus polecający",
+          "referral_commission": "Prowizja polecającego",
+          "wallet_topup": "Doładowanie portfela przez dostawcę płatności",
+          "wallet_topup_via": "Doładowanie portfela przez {provider}"
+        },
+        "referral": {
+          "title": "Program polecający",
+          "subtitle": "Udostępnij swój kod i zarabiaj nagrody, gdy znajomi doładowują portfel.",
+          "yourCode": "Twój kod polecający",
+          "yourCodeDesc": "Udostępnij ten kod znajomym, aby zarabiać nagrody.",
+          "create": "Utwórz",
+          "save": "Zapisz",
+          "cancel": "Anuluj",
+          "codePlaceholderCreate": "np. MOJKOD",
+          "enterCode": "Masz kod polecający?",
+          "enterCodeDesc": "Wprowadź kod znajomego, aby odebrać nagrodę.",
+          "codePlaceholder": "np. STRUXA-ABCD",
+          "apply": "Zastosuj",
+          "applySuccess": "Kod polecający zastosowany! Twój bonus zostanie przyznany przy każdym doładowaniu.",
+          "usageCount": "Używany przez {count} {count, plural, one {osobę} few {osoby} many {osób} other {osób}}",
+          "errorSelfReferral": "Nie możesz użyć własnego kodu polecającego.",
+          "errorAlreadyApplied": "Zastosowałeś już kod polecający.",
+          "errorCodeNotFound": "Kod polecający nie został znaleziony lub nie jest już aktywny.",
+          "errorCodeTaken": "Ten kod jest już zajęty. Spróbuj innego.",
+          "errorGeneric": "Coś poszło nie tak. Spróbuj ponownie.",
+          "editCode": "Edytuj kod polecający"
+        }
+      }
     }
   },
   "account": {
@@ -984,7 +1122,34 @@
       "banDialogTitle": "Zablokuj {name}",
       "banDialogDesc": "Ten użytkownik zostanie zablokowany na swoim koncie.",
       "deleteDialogTitle": "Usunąć {name}?",
-      "deleteDialogDesc": "Ta czynność jest trwała i nie można jej cofnąć. Wszystkie serwery należące do tego użytkownika pozostaną, ale staną się bez właściciela."
+      "deleteDialogDesc": "Ta czynność jest trwała i nie można jej cofnąć. Wszystkie serwery należące do tego użytkownika pozostaną, ale staną się bez właściciela.",
+      "tabBilling": "Rozliczenia",
+      "billingWalletTitle": "Portfel",
+      "billingBalanceLabel": "Saldo",
+      "billingCurrencyLabel": "Waluta",
+      "billingAdjustButton": "Dostosuj saldo",
+      "billingAdjustTitle": "Dostosuj saldo",
+      "billingAdjustDesc": "Wprowadź kwotę dodatnią, aby dodać środki, lub ujemną, aby je odjąć. Opcjonalna notatka pojawi się w historii transakcji użytkownika.",
+      "billingAdjustAmountLabel": "Kwota",
+      "billingAdjustAmountPlaceholder": "np. 10.00 lub -5.00",
+      "billingAdjustNoteLabel": "Notatka (opcjonalna)",
+      "billingAdjustNotePlaceholder": "Pozostaw puste, aby pominąć w historii transakcji",
+      "billingActiveSubsTitle": "Aktywne subskrypcje",
+      "billingSubHistoryTitle": "Historia subskrypcji",
+      "billingNoActiveSubs": "Brak aktywnych subskrypcji.",
+      "billingNoSubHistory": "Brak historii subskrypcji.",
+      "billingWalletTxnsTitle": "Transakcje portfela",
+      "billingNoWalletTxns": "Brak transakcji.",
+      "billingSubRenews": "Odnawia się",
+      "billingSubCanceledAt": "Anulowano",
+      "billingTxnTypeCol": "Typ",
+      "billingTxnAmountCol": "Kwota",
+      "billingTxnBalanceCol": "Saldo",
+      "billingTxnNoteCol": "Notatka",
+      "billingTxnDateCol": "Data",
+      "billingStatusActive": "Aktywna",
+      "billingStatusTrialing": "W okresie próbnym",
+      "billingStatusPastDue": "Po terminie"
     },
     "activity": {
       "timestampColumn": "Znacznik czasu",
@@ -999,7 +1164,8 @@
       "totalEvents": "Łączna liczba wydarzeń",
       "serverEvents": "Wydarzenia serwerowe",
       "userModeration": "Moderacja użytkowników",
-      "infrastructure": "Infrastruktura"
+      "infrastructure": "Infrastruktura",
+      "billingEvents": "Rozliczenia"
     },
     "settings": {
       "title": "Ustawienia",
@@ -1133,6 +1299,172 @@
       "loading": "Ładowanie…",
       "viewEditor": "Edytor",
       "viewPreview": "Podgląd"
+    },
+    "billing": {
+      "title": "Rozliczenia",
+      "tabs": {
+        "settings": "Ustawienia",
+        "providers": "Dostawcy",
+        "catalog": "Katalog"
+      },
+      "settings": {
+        "general": {
+          "title": "Ogólne",
+          "description": "Włącz płatności i ustaw domyślną walutę.",
+          "enableBilling": "Włącz płatności",
+          "defaultCurrency": "Domyślna waluta",
+          "searchCurrencies": "Wyszukaj waluty…",
+          "noResults": "Brak wyników"
+        },
+        "trials": {
+          "title": "Okresy próbne",
+          "description": "Zaoferuj bezpłatny okres próbny przed naliczeniem opłat.",
+          "enableTrials": "Włącz bezpłatne okresy próbne",
+          "trialDays": "Domyślny czas trwania okresu próbnego (dni)"
+        },
+        "tax": {
+          "title": "Podatek",
+          "description": "Skonfiguruj naliczanie podatku na fakturach.",
+          "enableTax": "Włącz naliczanie podatku",
+          "defaultVatRate": "Domyślna stawka VAT (%)",
+          "requireVatNumber": "Wymagaj numeru VAT dla klientów z UE"
+        },
+        "referral": {
+          "title": "Program polecający",
+          "description": "Nagradzaj użytkowników za pozyskiwanie nowych klientów.",
+          "enableReferral": "Włącz program polecający",
+          "refereeDiscount": "Bonus dla poleconego (%)",
+          "refereeDiscountDesc": "Bonus dodawany do portfela poleconego przy każdym doładowaniu.",
+          "referrerReward": "Prowizja polecającego (%)",
+          "referrerRewardDesc": "Prowizja naliczana polecającemu przy każdym doładowaniu przez poleconego."
+        }
+      },
+      "providers": {
+        "title": "Dostawcy płatności",
+        "addProvider": "Dodaj dostawcę",
+        "empty": "Nie skonfigurowano żadnych dostawców płatności.",
+        "nameColumn": "Dostawca",
+        "keyColumn": "Klucz API",
+        "statusColumn": "Status",
+        "providerType": "Typ dostawcy",
+        "name": "Nazwa wyświetlana",
+        "namePlaceholder": "np. Stripe Produkcja",
+        "publicKey": "Klucz publiczny",
+        "secretKey": "Klucz tajny",
+        "isDefault": "Ustaw jako domyślny",
+        "isDefaultDescription": "Użyj tego dostawcy domyślnie dla nowych transakcji.",
+        "isActive": "Aktywny",
+        "statusSection": "Status",
+        "editTitle": "Edytuj dostawcę",
+        "editDescription": "Zaktualizuj dane uwierzytelniające i konfigurację tego dostawcy.",
+        "addTitle": "Dodaj dostawcę",
+        "addDescription": "Podłącz bramkę płatniczą, aby zacząć przyjmować płatności.",
+        "deleteTitle": "Usuń dostawcę",
+        "deleteDescription": "Spowoduje to usunięcie konfiguracji dostawcy. Istniejące subskrypcje powiązane z tym dostawcą nie będą miały wpływu.",
+        "webhookSecret": "Tajny klucz webhooka",
+        "webhookSecretPlaceholder": "whsec_…",
+        "keepExisting": "Pozostaw puste, aby zachować istniejący klucz",
+        "webhookEndpointLabel": "Endpoint webhooka",
+        "webhookEndpointHint": "Skieruj webhook swojego dostawcy na ten adres URL",
+        "copied": "Skopiowano",
+        "stripe": "Stripe",
+        "simpay": "SimPay",
+        "apiPassword": "Hasło API",
+        "apiPasswordPlaceholder": "Twoje hasło API SimPay",
+        "serviceId": "ID usługi",
+        "serviceIdPlaceholder": "Twoje ID usługi SimPay",
+        "signatureKey": "Klucz podpisu IPN",
+        "signatureKeyPlaceholder": "Twój klucz podpisu IPN SimPay",
+        "active": "Aktywny",
+        "inactive": "Nieaktywny"
+      },
+      "catalog": {
+        "back": "Wróć",
+        "planCount": "{count, plural, one {# plan} few {# plany} many {# planów} other {# planów}}",
+        "uploadFailed": "Przesyłanie nie powiodło się.",
+        "categories": {
+          "title": "Kategorie",
+          "add": "Dodaj kategorię",
+          "addDescription": "Utwórz nową kategorię, aby grupować plany.",
+          "edit": "Edytuj kategorię",
+          "editDescription": "Zaktualizuj nazwę, slug i status kategorii.",
+          "delete": "Usuń kategorię",
+          "deleteDescription": "Produkty w tej kategorii będą niekategoryzowane.",
+          "statusSection": "Status",
+          "icon": "Ikona",
+          "bannerUrl": "Baner",
+          "preview": "Podgląd",
+          "uploading": "Przesyłanie…",
+          "changeBanner": "Zmień baner",
+          "uploadBanner": "Prześlij baner",
+          "iconUploading": "…",
+          "previewName": "Nazwa kategorii",
+          "previewDescription": "Krótki opis",
+          "name": "Nazwa",
+          "slug": "Slug",
+          "description": "Opis",
+          "sortOrder": "Kolejność sortowania",
+          "isActive": "Aktywny",
+          "empty": "Brak kategorii."
+        },
+        "plans": {
+          "title": "Plany",
+          "add": "Dodaj plan",
+          "addDescription": "Zdefiniuj nowy plan cenowy dla tej kategorii.",
+          "edit": "Edytuj plan",
+          "editDescription": "Zaktualizuj szczegóły planu, limity zasobów i ceny.",
+          "delete": "Usuń plan",
+          "deleteDescription": "Aktywne subskrypcje w ramach tego planu nie będą miały wpływu.",
+          "statusSection": "Widoczność",
+          "previewName": "Nazwa planu",
+          "previewDescription": "Krótki opis",
+          "name": "Nazwa",
+          "description": "Opis",
+          "isFeatured": "Polecany plan",
+          "isFeaturedDescription": "Oznacz ten plan jako polecaną/rekomendowaną opcję dla nowych klientów.",
+          "featured": "Polecany",
+          "isActive": "Aktywny",
+          "active": "Aktywny",
+          "inactive": "Nieaktywny",
+          "public": "Publiczny",
+          "unlisted": "Niepubliczny",
+          "isPublic": "Publicznie widoczny",
+          "isPublicDescription": "Pokaż ten plan na publicznych stronach cenowych.",
+          "resources": "Alokacja zasobów",
+          "cpu": "CPU",
+          "ram": "RAM",
+          "disk": "Dysk",
+          "backups": "Kopie zapasowe",
+          "allocations": "Alokacje",
+          "databases": "Bazy danych",
+          "eggs": "Jajka",
+          "selectEggs": "Wybierz jajka…",
+          "searchEggs": "Wyszukaj jajka…",
+          "nodes": "Węzły",
+          "selectNodes": "Dowolny węzeł…",
+          "searchNodes": "Wyszukaj węzły…",
+          "noResults": "Brak wyników",
+          "planCount": "{count, plural, one {# plan} few {# plany} many {# planów} other {# planów}}",
+          "prices": "Cennik",
+          "noPrices": "Nie dodano jeszcze żadnych poziomów cenowych.",
+          "addPrice": "Dodaj poziom",
+          "noneInProduct": "Brak planów w tej kategorii.",
+          "durations": {
+            "7day": "7 dni",
+            "1month": "1 miesiąc",
+            "3months": "3 miesiące",
+            "6months": "6 miesięcy",
+            "1year": "1 rok"
+          },
+          "durationShort": {
+            "7day": "7 dni",
+            "1month": "mies.",
+            "3months": "3 mies.",
+            "6months": "6 mies.",
+            "1year": "rok"
+          }
+        }
+      }
     }
   },
   "setup": {

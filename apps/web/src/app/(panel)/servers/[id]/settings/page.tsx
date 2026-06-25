@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { use } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Server, Copy, Terminal, Globe, ChevronDown, ExternalLink } from "lucide-react";
+import { Server, Copy, Terminal, Globe, ChevronDown, ExternalLink, AlertTriangle } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
   DropdownMenu,
@@ -26,6 +26,9 @@ import { useTranslations } from "next-intl";
 import { orpc, queryClient } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
 import Loader from "@/components/loader";
+import { cn } from "@struxa/ui/lib/utils";
+import { useMediaQuery } from "@struxa/ui/hooks/use-media-query";
+import { Sheet, SheetPopup, SheetHeader, SheetTitle, SheetDescription } from "@struxa/ui/components/sheet";
 
 function StatRow({
   icon: Icon,
@@ -224,6 +227,9 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
   const { data: session, isPending } = authClient.useSession();
   const { id } = use(params);
   const [reinstallConfirm, setReinstallConfirm] = useState(false);
+  const [reinstallStep, setReinstallStep] = useState<1 | 2>(1);
+  const [selectedEggId, setSelectedEggId] = useState<string | null>(null);
+  const isMobile = useMediaQuery("max-sm");
   const [nameStatus, setNameStatus] = useState<SaveStatus | undefined>(undefined);
   const [imageStatus, setImageStatus] = useState<SaveStatus | undefined>(undefined);
   const [varStatuses, setVarStatuses] = useState<Record<string, SaveStatus>>({});
@@ -236,10 +242,16 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
     orpc.servers.get.queryOptions({ input: { id } }),
   );
 
+  const { data: planEggs = [] } = useQuery(
+    orpc.servers.listPlanEggs.queryOptions({ input: { serverId: id } }),
+  );
+
   const reinstallMutation = useMutation({
     ...orpc.servers.reinstall.mutationOptions(),
     onSuccess: () => {
       setReinstallConfirm(false);
+      setReinstallStep(1);
+      setSelectedEggId(null);
       void queryClient.invalidateQueries(orpc.servers.get.queryOptions({ input: { id } }));
     },
     onError: (error) => toast.error(error.message),
@@ -307,6 +319,12 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
     void navigator.clipboard.writeText(text);
   }
 
+  function closeReinstall() {
+    setReinstallConfirm(false);
+    setReinstallStep(1);
+    setSelectedEggId(null);
+  }
+
   const serverVars = (server?.serverVariables ?? []) as ServerVariable[];
 
   const egg = server?.egg as { name?: string; dockerImages?: string | null } | undefined;
@@ -317,6 +335,113 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
   } catch {}
 
   const currentImage = server?.image ?? "";
+
+  const eggPickerBody = (
+    <div className="px-5 py-4 flex flex-col gap-1.5">
+      {planEggs.map((egg) => {
+        const selected = selectedEggId === egg.id;
+        return (
+          <button
+            key={egg.id}
+            type="button"
+            onClick={() => setSelectedEggId(egg.id)}
+            className={cn(
+              "flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all",
+              selected ? "border-foreground bg-foreground/5 shadow-sm" : "border-border hover:border-foreground/30",
+            )}
+          >
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted">
+              <Server className="size-3.5 text-muted-foreground" />
+            </div>
+            <span className="flex-1 text-sm font-medium">{egg.name}</span>
+            <div className={cn(
+              "flex h-4 w-4 items-center justify-center rounded-full border transition-colors",
+              selected ? "border-foreground bg-foreground" : "border-border",
+            )}>
+              {selected && <div className="h-1.5 w-1.5 rounded-full bg-background" />}
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  const confirmBody = (
+    <div className="px-5 py-4">
+      <div className="flex items-start gap-3 rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3">
+        <AlertTriangle className="mt-0.5 size-4 shrink-0 text-destructive" />
+        <p className="text-xs text-destructive/80 leading-relaxed">{t("reinstallDialogDescription")}</p>
+      </div>
+    </div>
+  );
+
+  const reinstallModalContent = planEggs.length > 0 && reinstallStep === 1 ? (
+    <>
+      <DialogHeader>
+        <DialogTitle>{t("selectEggTitle")}</DialogTitle>
+        <DialogDescription>{t("selectEggDescription")}</DialogDescription>
+      </DialogHeader>
+      {eggPickerBody}
+      <DialogFooter>
+        <Button variant="outline" size="sm" onClick={closeReinstall}>{t("cancel")}</Button>
+        <Button size="sm" disabled={!selectedEggId} onClick={() => setReinstallStep(2)}>{t("reinstallContinue")}</Button>
+      </DialogFooter>
+    </>
+  ) : (
+    <>
+      <DialogHeader>
+        <DialogTitle>{t("reinstallDialogTitle", { name: server?.name ?? "" })}</DialogTitle>
+      </DialogHeader>
+      {confirmBody}
+      <DialogFooter>
+        <Button variant="outline" size="sm" onClick={() => planEggs.length > 0 ? setReinstallStep(1) : closeReinstall()}>
+          {t("cancel")}
+        </Button>
+        <Button
+          variant="destructive"
+          size="sm"
+          disabled={reinstallMutation.isPending}
+          onClick={() => reinstallMutation.mutate({ serverId: id, eggId: selectedEggId ?? undefined })}
+        >
+          {reinstallMutation.isPending ? t("reinstalling") : t("reinstall")}
+        </Button>
+      </DialogFooter>
+    </>
+  );
+
+  const reinstallSheetContent = planEggs.length > 0 && reinstallStep === 1 ? (
+    <>
+      <SheetHeader>
+        <SheetTitle>{t("selectEggTitle")}</SheetTitle>
+        <SheetDescription>{t("selectEggDescription")}</SheetDescription>
+      </SheetHeader>
+      {eggPickerBody}
+      <DialogFooter>
+        <Button variant="outline" size="sm" onClick={closeReinstall}>{t("cancel")}</Button>
+        <Button size="sm" disabled={!selectedEggId} onClick={() => setReinstallStep(2)}>{t("reinstallContinue")}</Button>
+      </DialogFooter>
+    </>
+  ) : (
+    <>
+      <SheetHeader>
+        <SheetTitle>{t("reinstallDialogTitle", { name: server?.name ?? "" })}</SheetTitle>
+      </SheetHeader>
+      {confirmBody}
+      <DialogFooter>
+        <Button variant="outline" size="sm" onClick={() => planEggs.length > 0 ? setReinstallStep(1) : closeReinstall()}>
+          {t("cancel")}
+        </Button>
+        <Button
+          variant="destructive"
+          size="sm"
+          disabled={reinstallMutation.isPending}
+          onClick={() => reinstallMutation.mutate({ serverId: id, eggId: selectedEggId ?? undefined })}
+        >
+          {reinstallMutation.isPending ? t("reinstalling") : t("reinstall")}
+        </Button>
+      </DialogFooter>
+    </>
+  );
 
   return (
     <>
@@ -468,29 +593,19 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
             </SettingRow>
           </SectionCard>
 
-          <Dialog open={reinstallConfirm} onOpenChange={(open) => { if (!open) setReinstallConfirm(false); }}>
-            <DialogPopup showCloseButton={false} className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>{t("reinstallDialogTitle", { name: server?.name ?? "" })}</DialogTitle>
-                <DialogDescription>
-                  {t("reinstallDialogDescription")}
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter>
-                <Button variant="outline" size="sm" onClick={() => setReinstallConfirm(false)}>
-                  {t("cancel")}
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  disabled={reinstallMutation.isPending}
-                  onClick={() => reinstallMutation.mutate({ serverId: id })}
-                >
-                  {reinstallMutation.isPending ? t("reinstalling") : t("reinstall")}
-                </Button>
-              </DialogFooter>
-            </DialogPopup>
-          </Dialog>
+          {isMobile ? (
+            <Sheet open={reinstallConfirm} onOpenChange={(open) => { if (!open) closeReinstall(); }}>
+              <SheetPopup side="bottom" showCloseButton={false} className="rounded-t-2xl">
+                {reinstallSheetContent}
+              </SheetPopup>
+            </Sheet>
+          ) : (
+            <Dialog open={reinstallConfirm} onOpenChange={(open) => { if (!open) closeReinstall(); }}>
+              <DialogPopup showCloseButton={false} className="max-w-md">
+                {reinstallModalContent}
+              </DialogPopup>
+            </Dialog>
+          )}
         </div>
 
         <aside className="flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm md:w-[240px]">

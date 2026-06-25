@@ -37,8 +37,12 @@ import {
   LogOut,
   ShieldCheck,
   ChevronLeft,
+  Wallet,
+  ShoppingBag,
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import { useQuery } from "@tanstack/react-query";
+import { orpc } from "@/utils/orpc";
 
 export function PanelSidebar() {
   const t = useTranslations("nav");
@@ -61,8 +65,26 @@ export function PanelSidebar() {
   const serverId = isServerPage ? (params.id as string) : null;
   const activeServerTab = pathname.split("/servers/")[1]?.split("/")[1] ?? "console";
 
+  const { data: billingConfig } = useQuery(orpc.billing.getConfig.queryOptions());
+  const { data: wallet } = useQuery({
+    ...orpc.billing.getWallet.queryOptions(),
+    enabled: !!billingConfig?.enabled,
+  });
+
+  function formatBalance(cents: number, currency: string) {
+    try {
+      return new Intl.NumberFormat(undefined, { style: "currency", currency, minimumFractionDigits: 2 }).format(cents / 100);
+    } catch {
+      return (cents / 100).toFixed(2);
+    }
+  }
+
   const NAV_PRIMARY = [
     { key: "servers", label: t("panel.gameServers"), icon: Server, href: "/" },
+    ...(billingConfig?.enabled ? [
+      { key: "wallet", label: t("panel.wallet"), icon: Wallet, href: "/billing/wallet" },
+      { key: "shop", label: t("panel.shop"), icon: ShoppingBag, href: "/billing" },
+    ] : []),
     { key: "account", label: t("panel.account"), icon: User, href: "/account" },
   ];
 
@@ -127,6 +149,11 @@ export function PanelSidebar() {
               <div className="min-w-0 flex-1 text-left">
                 <p className="truncate text-sm font-medium text-foreground">{user?.name ?? "—"}</p>
               </div>
+              {billingConfig?.enabled && wallet && (
+                <span className="shrink-0 text-[10px] font-semibold tabular-nums text-muted-foreground bg-muted rounded px-1.5 py-0.5 leading-none">
+                  {formatBalance(wallet.balanceCents, wallet.currency)}
+                </span>
+              )}
             </DropdownMenuTrigger>
             <DropdownMenuContent side="right" align="start" className="w-52 rounded-xl border border-border bg-card p-1 shadow-lg">
               {user?.role === "admin" && (
@@ -198,7 +225,11 @@ export function PanelSidebar() {
                     <SidebarMenuItem key={item.key}>
                       <SidebarMenuButton
                         render={<Link href={item.href as never} />}
-                        isActive={pathname === "/" ? item.key === "servers" : pathname.startsWith(item.href) && item.href !== "/"}
+                        isActive={
+                          item.key === "servers" ? pathname === "/" :
+                          item.key === "shop" ? (pathname === "/billing" || (pathname.startsWith("/billing/") && !pathname.startsWith("/billing/wallet"))) :
+                          pathname.startsWith(item.href)
+                        }
                         tooltip={item.label}
                         className="h-auto gap-2 rounded-lg py-2 px-3 text-sm transition-colors duration-150"
                       >

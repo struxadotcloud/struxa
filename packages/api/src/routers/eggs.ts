@@ -17,6 +17,19 @@ const EggVariableSchema = z.object({
 });
 
 export const eggsRouter = {
+  listAll: adminProcedure.handler(async () => {
+    const rows = await db.query.eggs.findMany({
+      with: { nest: true },
+      orderBy: (eggs, { asc }) => [asc(eggs.nestId), asc(eggs.name)],
+    });
+    return rows.map((e) => ({
+      id: e.id,
+      name: e.name,
+      nestId: e.nestId,
+      nestName: e.nest.name,
+    }));
+  }),
+
   listByNest: protectedProcedure
     .input(z.object({ nestId: z.string().uuid() }))
     .handler(async ({ input }) => {
