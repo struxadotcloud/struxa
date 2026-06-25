@@ -248,9 +248,11 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
             </DialogClose>
             <button
               type="button"
-              disabled={adjustBalanceMutation.isPending || !adjustAmount || isNaN(parseFloat(adjustAmount)) || parseFloat(adjustAmount) === 0}
+              disabled={adjustBalanceMutation.isPending || !adjustAmount || !Number.isFinite(parseFloat(adjustAmount)) || parseFloat(adjustAmount) === 0}
               onClick={() => {
-                const amountCents = Math.round(parseFloat(adjustAmount) * 100);
+                const parsed = parseFloat(adjustAmount);
+                if (!Number.isFinite(parsed) || parsed === 0) return;
+                const amountCents = Math.round(parsed * 100);
                 adjustBalanceMutation.mutate({ userId, amountCents, description: adjustNote || undefined });
               }}
               className="rounded-lg bg-foreground px-4 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"

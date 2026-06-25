@@ -633,6 +633,13 @@ function SettingsTab() {
         toast.success(tc("saved"));
         invalidateBillingConfig();
       },
+      onError: () => {
+        toast.error(tc("error"));
+        if (data) {
+          setGeneral({ enabled: data.enabled, currency: data.defaultCurrency });
+          setReferral({ enabled: data.referralEnabled, refereeDiscount: data.refereeDiscountPercent, referrerReward: data.referrerRewardPercent });
+        }
+      },
     }),
   );
 
@@ -804,7 +811,7 @@ function SettingsTab() {
                       max={100}
                       value={ref.refereeDiscount}
                       onChange={(e) => {
-                        const next = { ...(referral ?? ref), refereeDiscount: Number(e.target.value) };
+                        const next = { ...(referral ?? ref), refereeDiscount: Math.round(Number(e.target.value)) };
                         setReferral(next);
                         saveReferral(next);
                       }}
@@ -818,7 +825,7 @@ function SettingsTab() {
                       max={100}
                       value={ref.referrerReward}
                       onChange={(e) => {
-                        const next = { ...(referral ?? ref), referrerReward: Number(e.target.value) };
+                        const next = { ...(referral ?? ref), referrerReward: Math.round(Number(e.target.value)) };
                         setReferral(next);
                         saveReferral(next);
                       }}

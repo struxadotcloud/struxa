@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { orpc } from "@/utils/orpc";
 import { cn } from "@struxa/ui/lib/utils";
 import { Button } from "@struxa/ui/components/button";
+import { useMediaQuery } from "@struxa/ui/hooks/use-media-query";
 import { Input } from "@struxa/ui/components/input";
 import {
   Dialog,
@@ -74,17 +75,6 @@ const PROVIDER_ICON: Record<string, React.ElementType> = {
 
 const PRESET_AMOUNTS = [5, 10, 25, 50];
 
-function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 639px)");
-    setIsMobile(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
-  return isMobile;
-}
 
 function TopUpForm({
   currency,
@@ -156,7 +146,7 @@ export default function WalletPage() {
   const tc = useTranslations("common");
   const router = useRouter();
   const searchParams = useSearchParams();
-  const isMobile = useIsMobile();
+  const isMobile = useMediaQuery("max-sm");
   const [open, setOpen] = useState(false);
   const [topupStep, setTopupStep] = useState<"provider" | "amount">("provider");
   const [selectedGatewayId, setSelectedGatewayId] = useState<string | null>(null);
