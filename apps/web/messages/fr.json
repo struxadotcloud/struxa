@@ -40,7 +40,8 @@
     "next": "Suivant",
     "prev": "Pr?c?dent",
     "edit": "Modifier",
-    "purgeFromNode": "Purger les fichiers du nœud"
+    "purgeFromNode": "Purger les fichiers du nœud",
+    "page": "Page {page}"
   },
   "auth": {
     "login": {
@@ -157,7 +158,9 @@
     "panel": {
       "gameServers": "Serveurs de jeux",
       "account": "Compte",
-      "allServers": "Tous les serveurs"
+      "allServers": "Tous les serveurs",
+      "wallet": "Portefeuille",
+      "shop": "Boutique"
     },
     "server": {
       "console": "Console",
@@ -179,7 +182,8 @@
       "servers": "Serveurs",
       "users": "Utilisateurs",
       "activity": "Activité",
-      "settings": "Paramètres"
+      "settings": "Paramètres",
+      "billing": "Facturation"
     }
   },
   "panel": {
@@ -416,7 +420,11 @@
       "statServerId": "ID du serveur",
       "statNode": "Nœud",
       "statEgg": "Egg",
-      "statSftpHost": "Hôte SFTP"
+      "statSftpHost": "Hôte SFTP",
+      "selectEggTitle": "Choisir le type de jeu",
+      "selectEggDescription": "Sélectionnez le type de jeu pour cette réinstallation.",
+      "selectEggLabel": "Type de jeu",
+      "reinstallContinue": "Continuer"
     },
     "activity": {
       "colTimestamp": "Horodatage",
@@ -451,6 +459,136 @@
       "eventUsersAdd": "Utilisateurs : Ajouter",
       "eventUsersUpdate": "Utilisateurs : Mettre à jour",
       "eventUsersRemove": "Utilisateurs : Supprimer"
+    },
+    "billing": {
+      "title": "Facturation",
+      "subtitle": "Choisissez un plan adapté à vos besoins.",
+      "shopTitle": "Boutique",
+      "shopSubtitle": "Choisissez un plan adapté à vos besoins.",
+      "empty": "Aucune catégorie de plans disponible pour l'instant.",
+      "backToCategories": "Toutes les catégories",
+      "noPlans": "Aucun plan disponible dans cette catégorie pour l'instant.",
+      "plans": "plans",
+      "plan": "plan",
+      "featured": "Vedette",
+      "getStarted": "Commencer",
+      "selectPlan": "Choisir un plan",
+      "soldOut": "Épuisé",
+      "startingFrom": "À partir de",
+      "walletBalance": "Portefeuille : {balance}",
+      "topUpRequired": "Recharger pour acheter",
+      "purchaseSuccess": "Serveur déployé ! Redirection…",
+      "purchaseDialog": {
+        "title": "Configurer votre serveur",
+        "stepDuration": "Période de facturation",
+        "stepInstaller": "Installateur",
+        "stepConfig": "Configurer",
+        "stepConfirm": "Confirmer",
+        "serverName": "Nom du serveur",
+        "serverNamePlaceholder": "Mon serveur de jeu",
+        "chooseInstaller": "Choisir un installateur",
+        "noInstallers": "Aucun installateur configuré pour ce plan.",
+        "noConfig": "Aucune option configurable pour cet installateur.",
+        "dockerImage": "Image Docker",
+        "showMore": "Afficher {count} de plus",
+        "showLess": "Afficher moins",
+        "envVars": "Variables d'environnement",
+        "back": "Retour",
+        "next": "Suivant",
+        "deploying": "Déploiement…",
+        "deploy": "Déployer le serveur",
+        "priceLabel": "{price} / {duration}",
+        "summaryPlan": "Plan",
+        "summaryDuration": "Durée",
+        "summaryInstaller": "Installateur",
+        "summaryImage": "Image Docker",
+        "summaryTotal": "Total",
+        "noAllocations": "Aucun slot serveur disponible. Veuillez contacter le support."
+      },
+      "errors": {
+        "insufficientFunds": "Solde insuffisant. Veuillez recharger d'abord.",
+        "currencyMismatch": "La devise de votre portefeuille ne correspond pas à ce plan.",
+        "alreadySubscribed": "Vous avez déjà un abonnement actif pour ce plan.",
+        "noAllocations": "Aucun slot serveur disponible. Veuillez contacter le support.",
+        "noCapacity": "Ce plan est actuellement épuisé. Veuillez réessayer plus tard.",
+        "purchaseFailed": "Achat échoué. Veuillez réessayer."
+      },
+      "durations": {
+        "7day": "7 jours",
+        "1month": "Mensuel",
+        "3months": "3 mois",
+        "6months": "6 mois",
+        "1year": "Annuel"
+      },
+      "specs": {
+        "cpu": "vCPU",
+        "ram": "Go RAM",
+        "disk": "Go disque",
+        "backups": "Sauvegardes",
+        "allocations": "Allocations",
+        "databases": "Bases de données"
+      },
+      "wallet": {
+        "title": "Mon portefeuille",
+        "backToBilling": "Facturation",
+        "balance": "Solde",
+        "topUp": "Recharger",
+        "viewWallet": "Voir le portefeuille",
+        "transactions": "Historique des transactions",
+        "noTransactions": "Aucune transaction",
+        "noTransactionsHint": "Votre activité de portefeuille apparaîtra ici après votre premier rechargement.",
+        "balanceAfter": "Solde après",
+        "topUpSuccess": "Portefeuille rechargé avec succès",
+        "topUpError": "Impossible de démarrer le paiement. Veuillez réessayer.",
+        "noGateway": "Aucun fournisseur de paiement actif configuré. Contactez votre administrateur.",
+        "topUpSheet": {
+          "title": "Recharger le portefeuille",
+          "description": "Sélectionnez un montant à ajouter à votre solde.",
+          "customAmount": "Montant personnalisé",
+          "customAmountPlaceholder": "Saisir le montant",
+          "total": "Total",
+          "confirm": "Procéder au paiement",
+          "processing": "Traitement…"
+        },
+        "chooseProvider": "Choisir un mode de paiement",
+        "chooseProviderDesc": "Sélectionnez comment vous souhaitez recharger votre portefeuille.",
+        "back": "Retour",
+        "types": {
+          "topup": "Rechargement",
+          "refund": "Remboursement",
+          "charge": "Débit",
+          "adjustment": "Ajustement",
+          "expired": "Expiré"
+        },
+        "txDescriptions": {
+          "referral_bonus": "Bonus de parrainage",
+          "referral_commission": "Commission de parrainage",
+          "wallet_topup": "Rechargement du portefeuille via le fournisseur de paiement",
+          "wallet_topup_via": "Rechargement du portefeuille via {provider}"
+        },
+        "referral": {
+          "title": "Programme de parrainage",
+          "subtitle": "Partagez votre code et gagnez des récompenses quand vos amis rechargent.",
+          "yourCode": "Votre code de parrainage",
+          "yourCodeDesc": "Partagez ce code avec vos amis pour gagner des récompenses.",
+          "create": "Créer",
+          "save": "Enregistrer",
+          "cancel": "Annuler",
+          "codePlaceholderCreate": "ex. MONCODE",
+          "enterCode": "Vous avez un code de parrainage ?",
+          "enterCodeDesc": "Entrez le code d'un ami pour obtenir votre récompense.",
+          "codePlaceholder": "ex. STRUXA-ABCD",
+          "apply": "Appliquer",
+          "applySuccess": "Code de parrainage appliqué ! Votre bonus sera crédité à chaque rechargement.",
+          "usageCount": "Utilisé par {count} {count, plural, one {personne} other {personnes}}",
+          "errorSelfReferral": "Vous ne pouvez pas utiliser votre propre code de parrainage.",
+          "errorAlreadyApplied": "Vous avez déjà appliqué un code de parrainage.",
+          "errorCodeNotFound": "Code de parrainage introuvable ou plus actif.",
+          "errorCodeTaken": "Ce code est déjà pris. Essayez-en un autre.",
+          "errorGeneric": "Une erreur s'est produite. Veuillez réessayer.",
+          "editCode": "Modifier le code de parrainage"
+        }
+      }
     }
   },
   "account": {
@@ -984,7 +1122,34 @@
       "banDialogTitle": "Interdire {name}",
       "banDialogDesc": "Cet utilisateur sera exclu de son compte.",
       "deleteDialogTitle": "Supprimer {name} ?",
-      "deleteDialogDesc": "Cette action est permanente et ne peut être annulée. Tous les serveurs appartenant à cet utilisateur resteront mais deviendront sans propriétaire."
+      "deleteDialogDesc": "Cette action est permanente et ne peut être annulée. Tous les serveurs appartenant à cet utilisateur resteront mais deviendront sans propriétaire.",
+      "tabBilling": "Facturation",
+      "billingWalletTitle": "Portefeuille",
+      "billingBalanceLabel": "Solde",
+      "billingCurrencyLabel": "Devise",
+      "billingAdjustButton": "Ajuster le solde",
+      "billingAdjustTitle": "Ajuster le solde",
+      "billingAdjustDesc": "Entrez un montant positif pour ajouter des fonds, ou négatif pour en retirer. La note optionnelle apparaîtra dans l'historique des transactions de l'utilisateur.",
+      "billingAdjustAmountLabel": "Montant",
+      "billingAdjustAmountPlaceholder": "ex. 10.00 ou -5.00",
+      "billingAdjustNoteLabel": "Note (optionnelle)",
+      "billingAdjustNotePlaceholder": "Laisser vide pour omettre de l'historique",
+      "billingActiveSubsTitle": "Abonnements actifs",
+      "billingSubHistoryTitle": "Historique des abonnements",
+      "billingNoActiveSubs": "Aucun abonnement actif.",
+      "billingNoSubHistory": "Aucun abonnement passé.",
+      "billingWalletTxnsTitle": "Transactions du portefeuille",
+      "billingNoWalletTxns": "Aucune transaction.",
+      "billingSubRenews": "Se renouvelle",
+      "billingSubCanceledAt": "Annulé",
+      "billingTxnTypeCol": "Type",
+      "billingTxnAmountCol": "Montant",
+      "billingTxnBalanceCol": "Solde",
+      "billingTxnNoteCol": "Note",
+      "billingTxnDateCol": "Date",
+      "billingStatusActive": "Actif",
+      "billingStatusTrialing": "En essai",
+      "billingStatusPastDue": "En retard"
     },
     "activity": {
       "timestampColumn": "Horodatage",
@@ -999,7 +1164,8 @@
       "totalEvents": "Total des événements",
       "serverEvents": "Événements du serveur",
       "userModeration": "Modération des utilisateurs",
-      "infrastructure": "Infrastructure"
+      "infrastructure": "Infrastructure",
+      "billingEvents": "Facturation"
     },
     "settings": {
       "title": "Paramètres",
@@ -1133,6 +1299,172 @@
       "loading": "Chargement…",
       "viewEditor": "Éditeur",
       "viewPreview": "Aperçu"
+    },
+    "billing": {
+      "title": "Facturation",
+      "tabs": {
+        "settings": "Paramètres",
+        "providers": "Fournisseurs",
+        "catalog": "Catalogue"
+      },
+      "settings": {
+        "general": {
+          "title": "Général",
+          "description": "Activer la facturation et définir la devise par défaut.",
+          "enableBilling": "Activer la facturation",
+          "defaultCurrency": "Devise par défaut",
+          "searchCurrencies": "Rechercher des devises…",
+          "noResults": "Aucun résultat"
+        },
+        "trials": {
+          "title": "Périodes d'essai",
+          "description": "Offrir une période d'essai gratuite avant la facturation.",
+          "enableTrials": "Activer les essais gratuits",
+          "trialDays": "Durée d'essai par défaut (jours)"
+        },
+        "tax": {
+          "title": "Taxe",
+          "description": "Configurer la collecte de taxes pour les factures.",
+          "enableTax": "Activer la collecte de taxes",
+          "defaultVatRate": "Taux de TVA par défaut (%)",
+          "requireVatNumber": "Exiger un numéro de TVA pour les clients de l'UE"
+        },
+        "referral": {
+          "title": "Programme de parrainage",
+          "description": "Récompenser les utilisateurs qui amènent de nouveaux clients.",
+          "enableReferral": "Activer le programme de parrainage",
+          "refereeDiscount": "Bonus pour le parrainé (%)",
+          "refereeDiscountDesc": "Bonus ajouté au portefeuille du parrainé à chaque rechargement.",
+          "referrerReward": "Commission du parrain (%)",
+          "referrerRewardDesc": "Commission créditée au parrain à chaque rechargement du parrainé."
+        }
+      },
+      "providers": {
+        "title": "Fournisseurs de paiement",
+        "addProvider": "Ajouter un fournisseur",
+        "empty": "Aucun fournisseur de paiement configuré.",
+        "nameColumn": "Fournisseur",
+        "keyColumn": "Clé API",
+        "statusColumn": "Statut",
+        "providerType": "Type de fournisseur",
+        "name": "Nom d'affichage",
+        "namePlaceholder": "ex. Stripe Production",
+        "publicKey": "Clé publique",
+        "secretKey": "Clé secrète",
+        "isDefault": "Définir par défaut",
+        "isDefaultDescription": "Utiliser ce fournisseur par défaut pour les nouvelles transactions.",
+        "isActive": "Actif",
+        "statusSection": "Statut",
+        "editTitle": "Modifier le fournisseur",
+        "editDescription": "Mettre à jour les identifiants et la configuration de ce fournisseur.",
+        "addTitle": "Ajouter un fournisseur",
+        "addDescription": "Connecter une passerelle de paiement pour commencer à accepter des paiements.",
+        "deleteTitle": "Supprimer le fournisseur",
+        "deleteDescription": "Cela supprimera la configuration du fournisseur. Les abonnements existants liés à ce fournisseur ne seront pas affectés.",
+        "webhookSecret": "Secret du webhook",
+        "webhookSecretPlaceholder": "whsec_…",
+        "keepExisting": "Laisser vide pour conserver la clé existante",
+        "webhookEndpointLabel": "Point de terminaison webhook",
+        "webhookEndpointHint": "Pointez le webhook de votre fournisseur vers cette URL",
+        "copied": "Copié",
+        "stripe": "Stripe",
+        "simpay": "SimPay",
+        "apiPassword": "Mot de passe API",
+        "apiPasswordPlaceholder": "Votre mot de passe API SimPay",
+        "serviceId": "ID de service",
+        "serviceIdPlaceholder": "Votre ID de service SimPay",
+        "signatureKey": "Clé de signature IPN",
+        "signatureKeyPlaceholder": "Votre clé de signature IPN SimPay",
+        "active": "Actif",
+        "inactive": "Inactif"
+      },
+      "catalog": {
+        "back": "Retour",
+        "planCount": "{count, plural, one {# plan} other {# plans}}",
+        "uploadFailed": "Échec de l'envoi.",
+        "categories": {
+          "title": "Catégories",
+          "add": "Ajouter une catégorie",
+          "addDescription": "Créer une nouvelle catégorie pour regrouper des plans.",
+          "edit": "Modifier la catégorie",
+          "editDescription": "Mettre à jour le nom, le slug et le statut de la catégorie.",
+          "delete": "Supprimer la catégorie",
+          "deleteDescription": "Les produits de cette catégorie seront sans catégorie.",
+          "statusSection": "Statut",
+          "icon": "Icône",
+          "bannerUrl": "Bannière",
+          "preview": "Aperçu",
+          "uploading": "Chargement…",
+          "changeBanner": "Changer la bannière",
+          "uploadBanner": "Télécharger la bannière",
+          "iconUploading": "…",
+          "previewName": "Nom de la catégorie",
+          "previewDescription": "Courte description",
+          "name": "Nom",
+          "slug": "Slug",
+          "description": "Description",
+          "sortOrder": "Ordre de tri",
+          "isActive": "Actif",
+          "empty": "Aucune catégorie pour l'instant."
+        },
+        "plans": {
+          "title": "Plans",
+          "add": "Ajouter un plan",
+          "addDescription": "Définir un nouveau plan tarifaire pour cette catégorie.",
+          "edit": "Modifier le plan",
+          "editDescription": "Mettre à jour les détails du plan, les limites de ressources et les tarifs.",
+          "delete": "Supprimer le plan",
+          "deleteDescription": "Les abonnements actifs à ce plan ne seront pas affectés.",
+          "statusSection": "Visibilité",
+          "previewName": "Nom du plan",
+          "previewDescription": "Courte description",
+          "name": "Nom",
+          "description": "Description",
+          "isFeatured": "Plan vedette",
+          "isFeaturedDescription": "Marquer ce plan comme option vedette/recommandée pour les nouveaux clients.",
+          "featured": "Vedette",
+          "isActive": "Actif",
+          "active": "Actif",
+          "inactive": "Inactif",
+          "public": "Public",
+          "unlisted": "Non répertorié",
+          "isPublic": "Visible publiquement",
+          "isPublicDescription": "Afficher ce plan sur les pages de tarification publiques.",
+          "resources": "Allocation des ressources",
+          "cpu": "CPU",
+          "ram": "RAM",
+          "disk": "Disque",
+          "backups": "Sauvegardes",
+          "allocations": "Allocations",
+          "databases": "Bases de données",
+          "eggs": "Eggs",
+          "selectEggs": "Sélectionner des eggs…",
+          "searchEggs": "Rechercher des eggs…",
+          "nodes": "Nœuds",
+          "selectNodes": "N'importe quel nœud…",
+          "searchNodes": "Rechercher des nœuds…",
+          "noResults": "Aucun résultat",
+          "planCount": "{count, plural, one {# plan} other {# plans}}",
+          "prices": "Tarification",
+          "noPrices": "Aucun niveau de tarification ajouté pour l'instant.",
+          "addPrice": "Ajouter un niveau",
+          "noneInProduct": "Aucun plan dans cette catégorie pour l'instant.",
+          "durations": {
+            "7day": "7 jours",
+            "1month": "1 mois",
+            "3months": "3 mois",
+            "6months": "6 mois",
+            "1year": "1 an"
+          },
+          "durationShort": {
+            "7day": "7 j.",
+            "1month": "mois",
+            "3months": "3 mois",
+            "6months": "6 mois",
+            "1year": "an"
+          }
+        }
+      }
     }
   },
   "setup": {

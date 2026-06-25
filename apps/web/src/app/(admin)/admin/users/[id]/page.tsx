@@ -248,16 +248,15 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
             </DialogClose>
             <button
               type="button"
-              disabled={adjustBalanceMutation.isPending || !adjustAmount || !Number.isFinite(parseFloat(adjustAmount)) || parseFloat(adjustAmount) === 0}
+              disabled={adjustBalanceMutation.isPending || !adjustAmount || !Number.isFinite(parseFloat(adjustAmount)) || Math.round(parseFloat(adjustAmount) * 100) === 0}
               onClick={() => {
-                const parsed = parseFloat(adjustAmount);
-                if (!Number.isFinite(parsed) || parsed === 0) return;
-                const amountCents = Math.round(parsed * 100);
+                const amountCents = Math.round(parseFloat(adjustAmount) * 100);
+                if (!amountCents || !Number.isFinite(amountCents)) return;
                 adjustBalanceMutation.mutate({ userId, amountCents, description: adjustNote || undefined });
               }}
               className="rounded-lg bg-foreground px-4 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
             >
-              {adjustBalanceMutation.isPending ? "…" : tc("save")}
+              {adjustBalanceMutation.isPending ? tc("saving") : tc("save")}
             </button>
           </DialogFooter>
         </DialogPopup>
@@ -510,7 +509,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
                           : s.status === "trialing" ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
                           : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
                         }`}>
-                          {s.status}
+                          {s.status === "active" ? t("billingStatusActive") : s.status === "trialing" ? t("billingStatusTrialing") : t("billingStatusPastDue")}
                         </span>
                       </div>
                     ))}

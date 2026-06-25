@@ -40,7 +40,7 @@ async function addWalletCredits(
   });
 }
 
-async function creditWallet(payload: Extract<WebhookPayload, { type: "topup.succeeded" }>) {
+async function creditWallet(payload: Extract<WebhookPayload, { type: "topup.succeeded" }>, gatewayProvider: string) {
   try {
     await db.transaction(async (tx) => {
       const walletRow = await tx.query.billingWallet.findFirst({ where: eq(billingWallet.userId, payload.userId) });
@@ -63,7 +63,7 @@ async function creditWallet(payload: Extract<WebhookPayload, { type: "topup.succ
         balanceAfterCents: balanceAfter,
         currency,
         type: "topup",
-        description: null,
+        description: `wallet_topup:${gatewayProvider}`,
       });
 
       // Insert last — unique constraint on providerTransactionId prevents double-processing
@@ -156,7 +156,7 @@ export async function POST(
   const payload = await handleWebhook(provider, { rawBody, headers, config, gatewayId: gateway.id, sourceIp });
 
   if (payload?.type === "topup.succeeded") {
-    await creditWallet(payload);
+    await creditWallet(payload, gateway.provider);
   }
 
   return new Response("OK", { status: 200 });

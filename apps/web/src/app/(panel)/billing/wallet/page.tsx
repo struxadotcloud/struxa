@@ -137,7 +137,21 @@ function TopUpForm({
 }
 
 const DURATION_KEYS = new Set(["7day", "1month", "3months", "6months", "1year"]);
-const TX_DESC_KEYS = new Set(["referral_bonus", "referral_commission"]);
+const DURATION_LEGACY: Record<string, string> = {
+  "7 Days": "7day", "7 days": "7day",
+  "1 Month": "1month", "1 month": "1month", "Monthly": "1month", "monthly": "1month",
+  "3 Months": "3months", "3 months": "3months",
+  "6 Months": "6months", "6 months": "6months",
+  "1 Year": "1year", "1 year": "1year", "Yearly": "1year", "yearly": "1year",
+};
+const TX_DESC_KEYS = new Set(["referral_bonus", "referral_commission", "wallet_topup"]);
+const TX_DESC_LEGACY: Record<string, string> = {
+  "Wallet top-up via payment provider": "wallet_topup",
+};
+const PROVIDER_DISPLAY: Record<string, string> = {
+  stripe: "Stripe",
+  simpay: "SimPay",
+};
 
 export default function WalletPage() {
   const t = useTranslations("panel.billing.wallet");
@@ -380,14 +394,20 @@ export default function WalletPage() {
                       <p className="truncate text-sm font-medium text-foreground">
                         {t(`types.${tx.type as TxType}`)}
                         {tx.description && (() => {
-                          const desc = tx.description;
+                          const desc = TX_DESC_LEGACY[tx.description] ?? tx.description;
+                          if (desc.startsWith("wallet_topup:")) {
+                            const providerKey = desc.slice("wallet_topup:".length);
+                            const providerName = PROVIDER_DISPLAY[providerKey] ?? providerKey;
+                            return <span className="ml-1.5 font-normal text-muted-foreground">— {t("txDescriptions.wallet_topup_via", { provider: providerName })}</span>;
+                          }
                           if (TX_DESC_KEYS.has(desc)) {
                             return <span className="ml-1.5 font-normal text-muted-foreground">— {t(`txDescriptions.${desc}`)}</span>;
                           }
                           const sep = desc.lastIndexOf(" — ");
                           if (sep !== -1) {
-                            const suffix = desc.slice(sep + 3);
-                            if (DURATION_KEYS.has(suffix)) {
+                            const rawSuffix = desc.slice(sep + 3);
+                            const suffix = DURATION_KEYS.has(rawSuffix) ? rawSuffix : (DURATION_LEGACY[rawSuffix] ?? null);
+                            if (suffix) {
                               return <span className="ml-1.5 font-normal text-muted-foreground">— {desc.slice(0, sep)} — {tBilling(`durations.${suffix}`)}</span>;
                             }
                           }

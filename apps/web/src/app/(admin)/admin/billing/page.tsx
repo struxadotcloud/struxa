@@ -151,159 +151,15 @@ interface Plan {
 
 const DURATIONS: Duration[] = ["7day", "1month", "3months", "6months", "1year"];
 
+const _cn = new Intl.DisplayNames(["en"], { type: "currency" });
 const CURRENCIES = [
-  { value: "AED", label: "UAE Dirham" },
-  { value: "AFN", label: "Afghan Afghani" },
-  { value: "ALL", label: "Albanian Lek" },
-  { value: "AMD", label: "Armenian Dram" },
-  { value: "ANG", label: "Netherlands Antillean Guilder" },
-  { value: "AOA", label: "Angolan Kwanza" },
-  { value: "ARS", label: "Argentine Peso" },
-  { value: "AUD", label: "Australian Dollar" },
-  { value: "AWG", label: "Aruban Florin" },
-  { value: "AZN", label: "Azerbaijani Manat" },
-  { value: "BAM", label: "Bosnia-Herzegovina Convertible Mark" },
-  { value: "BBD", label: "Barbadian Dollar" },
-  { value: "BDT", label: "Bangladeshi Taka" },
-  { value: "BGN", label: "Bulgarian Lev" },
-  { value: "BHD", label: "Bahraini Dinar" },
-  { value: "BIF", label: "Burundian Franc" },
-  { value: "BMD", label: "Bermudan Dollar" },
-  { value: "BND", label: "Brunei Dollar" },
-  { value: "BOB", label: "Bolivian Boliviano" },
-  { value: "BRL", label: "Brazilian Real" },
-  { value: "BSD", label: "Bahamian Dollar" },
-  { value: "BTN", label: "Bhutanese Ngultrum" },
-  { value: "BWP", label: "Botswanan Pula" },
-  { value: "BYN", label: "Belarusian Ruble" },
-  { value: "BZD", label: "Belize Dollar" },
-  { value: "CAD", label: "Canadian Dollar" },
-  { value: "CDF", label: "Congolese Franc" },
-  { value: "CHF", label: "Swiss Franc" },
-  { value: "CLP", label: "Chilean Peso" },
-  { value: "CNY", label: "Chinese Yuan" },
-  { value: "COP", label: "Colombian Peso" },
-  { value: "CRC", label: "Costa Rican Colón" },
-  { value: "CUP", label: "Cuban Peso" },
-  { value: "CVE", label: "Cape Verdean Escudo" },
-  { value: "CZK", label: "Czech Koruna" },
-  { value: "DJF", label: "Djiboutian Franc" },
-  { value: "DKK", label: "Danish Krone" },
-  { value: "DOP", label: "Dominican Peso" },
-  { value: "DZD", label: "Algerian Dinar" },
-  { value: "EGP", label: "Egyptian Pound" },
-  { value: "ERN", label: "Eritrean Nakfa" },
-  { value: "ETB", label: "Ethiopian Birr" },
-  { value: "EUR", label: "Euro" },
-  { value: "FJD", label: "Fijian Dollar" },
-  { value: "FKP", label: "Falkland Islands Pound" },
-  { value: "GBP", label: "British Pound Sterling" },
-  { value: "GEL", label: "Georgian Lari" },
-  { value: "GHS", label: "Ghanaian Cedi" },
-  { value: "GIP", label: "Gibraltar Pound" },
-  { value: "GMD", label: "Gambian Dalasi" },
-  { value: "GNF", label: "Guinean Franc" },
-  { value: "GTQ", label: "Guatemalan Quetzal" },
-  { value: "GYD", label: "Guyanaese Dollar" },
-  { value: "HKD", label: "Hong Kong Dollar" },
-  { value: "HNL", label: "Honduran Lempira" },
-  { value: "HTG", label: "Haitian Gourde" },
-  { value: "HUF", label: "Hungarian Forint" },
-  { value: "IDR", label: "Indonesian Rupiah" },
-  { value: "ILS", label: "Israeli New Shekel" },
-  { value: "INR", label: "Indian Rupee" },
-  { value: "IQD", label: "Iraqi Dinar" },
-  { value: "IRR", label: "Iranian Rial" },
-  { value: "ISK", label: "Icelandic Króna" },
-  { value: "JMD", label: "Jamaican Dollar" },
-  { value: "JOD", label: "Jordanian Dinar" },
-  { value: "JPY", label: "Japanese Yen" },
-  { value: "KES", label: "Kenyan Shilling" },
-  { value: "KGS", label: "Kyrgystani Som" },
-  { value: "KHR", label: "Cambodian Riel" },
-  { value: "KMF", label: "Comorian Franc" },
-  { value: "KRW", label: "South Korean Won" },
-  { value: "KWD", label: "Kuwaiti Dinar" },
-  { value: "KYD", label: "Cayman Islands Dollar" },
-  { value: "KZT", label: "Kazakhstani Tenge" },
-  { value: "LAK", label: "Laotian Kip" },
-  { value: "LBP", label: "Lebanese Pound" },
-  { value: "LKR", label: "Sri Lankan Rupee" },
-  { value: "LRD", label: "Liberian Dollar" },
-  { value: "LSL", label: "Lesotho Loti" },
-  { value: "LYD", label: "Libyan Dinar" },
-  { value: "MAD", label: "Moroccan Dirham" },
-  { value: "MDL", label: "Moldovan Leu" },
-  { value: "MGA", label: "Malagasy Ariary" },
-  { value: "MKD", label: "Macedonian Denar" },
-  { value: "MMK", label: "Myanmar Kyat" },
-  { value: "MNT", label: "Mongolian Tögrög" },
-  { value: "MOP", label: "Macanese Pataca" },
-  { value: "MRU", label: "Mauritanian Ouguiya" },
-  { value: "MUR", label: "Mauritian Rupee" },
-  { value: "MVR", label: "Maldivian Rufiyaa" },
-  { value: "MWK", label: "Malawian Kwacha" },
-  { value: "MXN", label: "Mexican Peso" },
-  { value: "MYR", label: "Malaysian Ringgit" },
-  { value: "MZN", label: "Mozambican Metical" },
-  { value: "NAD", label: "Namibian Dollar" },
-  { value: "NGN", label: "Nigerian Naira" },
-  { value: "NIO", label: "Nicaraguan Córdoba" },
-  { value: "NOK", label: "Norwegian Krone" },
-  { value: "NPR", label: "Nepalese Rupee" },
-  { value: "NZD", label: "New Zealand Dollar" },
-  { value: "OMR", label: "Omani Rial" },
-  { value: "PAB", label: "Panamanian Balboa" },
-  { value: "PEN", label: "Peruvian Sol" },
-  { value: "PGK", label: "Papua New Guinean Kina" },
-  { value: "PHP", label: "Philippine Peso" },
-  { value: "PKR", label: "Pakistani Rupee" },
-  { value: "PLN", label: "Polish Złoty" },
-  { value: "PYG", label: "Paraguayan Guaraní" },
-  { value: "QAR", label: "Qatari Rial" },
-  { value: "RON", label: "Romanian Leu" },
-  { value: "RSD", label: "Serbian Dinar" },
-  { value: "RUB", label: "Russian Ruble" },
-  { value: "RWF", label: "Rwandan Franc" },
-  { value: "SAR", label: "Saudi Riyal" },
-  { value: "SBD", label: "Solomon Islands Dollar" },
-  { value: "SCR", label: "Seychellois Rupee" },
-  { value: "SDG", label: "Sudanese Pound" },
-  { value: "SEK", label: "Swedish Krona" },
-  { value: "SGD", label: "Singapore Dollar" },
-  { value: "SHP", label: "Saint Helena Pound" },
-  { value: "SOS", label: "Somali Shilling" },
-  { value: "SRD", label: "Surinamese Dollar" },
-  { value: "STN", label: "São Tomé and Príncipe Dobra" },
-  { value: "SYP", label: "Syrian Pound" },
-  { value: "SZL", label: "Swazi Lilangeni" },
-  { value: "THB", label: "Thai Baht" },
-  { value: "TJS", label: "Tajikistani Somoni" },
-  { value: "TMT", label: "Turkmenistani Manat" },
-  { value: "TND", label: "Tunisian Dinar" },
-  { value: "TOP", label: "Tongan Paʻanga" },
-  { value: "TRY", label: "Turkish Lira" },
-  { value: "TTD", label: "Trinidad and Tobago Dollar" },
-  { value: "TWD", label: "New Taiwan Dollar" },
-  { value: "TZS", label: "Tanzanian Shilling" },
-  { value: "UAH", label: "Ukrainian Hryvnia" },
-  { value: "UGX", label: "Ugandan Shilling" },
-  { value: "USD", label: "US Dollar" },
-  { value: "UYU", label: "Uruguayan Peso" },
-  { value: "UZS", label: "Uzbekistani Som" },
-  { value: "VES", label: "Venezuelan Bolívar" },
-  { value: "VND", label: "Vietnamese Dong" },
-  { value: "VUV", label: "Vanuatu Vatu" },
-  { value: "WST", label: "Samoan Tala" },
-  { value: "XAF", label: "Central African CFA Franc" },
-  { value: "XCD", label: "East Caribbean Dollar" },
-  { value: "XOF", label: "West African CFA Franc" },
-  { value: "XPF", label: "CFP Franc" },
-  { value: "YER", label: "Yemeni Rial" },
-  { value: "ZAR", label: "South African Rand" },
-  { value: "ZMW", label: "Zambian Kwacha" },
-  { value: "ZWL", label: "Zimbabwean Dollar" },
-];
+  "AED","AFN","ALL","AMD","ANG","AOA","ARS","AUD","AWG","AZN","BAM","BBD","BDT","BGN","BHD","BIF","BMD","BND","BOB","BRL","BSD","BTN","BWP","BYN","BZD",
+  "CAD","CDF","CHF","CLP","CNY","COP","CRC","CUP","CVE","CZK","DJF","DKK","DOP","DZD","EGP","ERN","ETB","EUR","FJD","FKP","GBP","GEL","GHS","GIP","GMD",
+  "GNF","GTQ","GYD","HKD","HNL","HTG","HUF","IDR","ILS","INR","IQD","IRR","ISK","JMD","JOD","JPY","KES","KGS","KHR","KMF","KRW","KWD","KYD","KZT","LAK",
+  "LBP","LKR","LRD","LSL","LYD","MAD","MDL","MGA","MKD","MMK","MNT","MOP","MRU","MUR","MVR","MWK","MXN","MYR","MZN","NAD","NGN","NIO","NOK","NPR","NZD",
+  "OMR","PAB","PEN","PGK","PHP","PKR","PLN","PYG","QAR","RON","RSD","RUB","RWF","SAR","SBD","SCR","SDG","SEK","SGD","SHP","SOS","SRD","STN","SYP","SZL",
+  "THB","TJS","TMT","TND","TOP","TRY","TTD","TWD","TZS","UAH","UGX","USD","UYU","UZS","VES","VND","VUV","WST","XAF","XCD","XOF","XPF","YER","ZAR","ZMW","ZWL",
+].map((c) => ({ value: c, label: _cn.of(c) ?? c }));
 
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -533,17 +389,19 @@ function PlanPreviewCard({
     ? prices.reduce((a, b) => a.price < b.price ? a : b)
     : null;
 
+  const ts = useTranslations("panel.billing.specs");
+  const tp = useTranslations("admin.billing.catalog.plans");
   const specs = [
-    { icon: <Cpu className="size-3.5 shrink-0" />, value: resources.cpu, unit: "vCPU" },
-    { icon: <MemoryStick className="size-3.5 shrink-0" />, value: resources.ram, unit: "GB RAM" },
-    { icon: <HardDrive className="size-3.5 shrink-0" />, value: resources.disk, unit: "GB Disk" },
-    { icon: <Archive className="size-3.5 shrink-0" />, value: resources.backups, unit: "Backups" },
-    { icon: <Network className="size-3.5 shrink-0" />, value: resources.allocations, unit: "Allocations" },
-    { icon: <Database className="size-3.5 shrink-0" />, value: resources.databases, unit: "Databases" },
+    { icon: <Cpu className="size-3.5 shrink-0" />, value: resources.cpu, unit: ts("cpu") },
+    { icon: <MemoryStick className="size-3.5 shrink-0" />, value: resources.ram, unit: ts("ram") },
+    { icon: <HardDrive className="size-3.5 shrink-0" />, value: resources.disk, unit: ts("disk") },
+    { icon: <Archive className="size-3.5 shrink-0" />, value: resources.backups, unit: ts("backups") },
+    { icon: <Network className="size-3.5 shrink-0" />, value: resources.allocations, unit: ts("allocations") },
+    { icon: <Database className="size-3.5 shrink-0" />, value: resources.databases, unit: ts("databases") },
   ];
 
   const durationShort: Record<Duration, string> = {
-    "7day": "7 days", "1month": "mo", "3months": "3 mo", "6months": "6 mo", "1year": "yr",
+    "7day": tp("durationShort.7day"), "1month": tp("durationShort.1month"), "3months": tp("durationShort.3months"), "6months": tp("durationShort.6months"), "1year": tp("durationShort.1year"),
   };
 
   return (
@@ -811,7 +669,9 @@ function SettingsTab() {
                       max={100}
                       value={ref.refereeDiscount}
                       onChange={(e) => {
-                        const next = { ...(referral ?? ref), refereeDiscount: Math.round(Number(e.target.value)) };
+                        const raw = Number(e.target.value);
+                        if (!Number.isFinite(raw)) return;
+                        const next = { ...(referral ?? ref), refereeDiscount: Math.max(0, Math.min(100, Math.round(raw))) };
                         setReferral(next);
                         saveReferral(next);
                       }}
@@ -825,7 +685,9 @@ function SettingsTab() {
                       max={100}
                       value={ref.referrerReward}
                       onChange={(e) => {
-                        const next = { ...(referral ?? ref), referrerReward: Math.round(Number(e.target.value)) };
+                        const raw = Number(e.target.value);
+                        if (!Number.isFinite(raw)) return;
+                        const next = { ...(referral ?? ref), referrerReward: Math.max(0, Math.min(100, Math.round(raw))) };
                         setReferral(next);
                         saveReferral(next);
                       }}
@@ -1289,6 +1151,7 @@ function EggsDrawerContent({ value, onChange, groups, searchPlaceholder, noResul
 function CatalogTab() {
   const t = useTranslations("admin.billing.catalog");
   const tc = useTranslations("common");
+  const ts = useTranslations("panel.billing.specs");
   const isMobile = useMediaQuery("max-sm");
 
   const { data: categories = [], isLoading: catsLoading } = useQuery(orpc.billing.adminListCategories.queryOptions());
@@ -1366,8 +1229,8 @@ function CatalogTab() {
   const [nodesDrawerOpen, setNodesDrawerOpen] = useState(false);
 
   const nodeGroups = useMemo(
-    () => allNodes.length === 0 ? [] : [{ id: "all", label: "Nodes", items: allNodes.map((n) => ({ id: n.id, label: n.name })) }],
-    [allNodes],
+    () => allNodes.length === 0 ? [] : [{ id: "all", label: t("plans.nodes"), items: allNodes.map((n) => ({ id: n.id, label: n.name })) }],
+    [allNodes, t],
   );
   const nodeNameById = useMemo(() => new Map(allNodes.map((n) => [n.id, n.name])), [allNodes]);
 
@@ -1385,13 +1248,13 @@ function CatalogTab() {
       const res = await fetch("/api/files/upload/billing-image", { method: "POST", body: fd });
       if (!res.ok) {
         const body = await res.json().catch(() => ({})) as { error?: string };
-        setError(body.error ?? "Upload failed.");
+        setError(body.error ?? t("uploadFailed"));
       } else {
         const data = await res.json() as { url: string };
         onUrl(data.url);
       }
     } catch {
-      setError("Upload failed.");
+      setError(t("uploadFailed"));
     } finally {
       setUploading(false);
     }
@@ -1461,6 +1324,9 @@ function CatalogTab() {
   }
   function savePlan() {
     const prices = planForm.prices.map((p) => ({ duration: p.duration, priceCents: Math.round(p.price * 100) }));
+    if (prices.some((p) => !Number.isFinite(p.priceCents) || p.priceCents < 0)) return;
+    const { cpu, ram, disk, backups, allocations, databases } = planForm.resources;
+    if ([cpu, ram, disk, backups, allocations, databases].some((v) => !Number.isFinite(v) || v < 0)) return;
     const payload = {
       categoryId: planForm.categoryId || undefined,
       name: planForm.name,
@@ -1888,7 +1754,7 @@ function CatalogTab() {
                         onChange={(e) => setPlanForm((s) => ({ ...s, resources: { ...s.resources, cpu: Number(e.target.value) } }))}
                         className="w-20 text-right"
                       />
-                      <span className="text-xs text-muted-foreground">vCPU</span>
+                      <span className="text-xs text-muted-foreground">{ts("cpu")}</span>
                     </div>
                   </SettingRow>
                   <SettingRow label={t("plans.ram")}>

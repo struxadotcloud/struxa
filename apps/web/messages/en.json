@@ -43,7 +43,6 @@
     "edit": "Edit",
     "purgeFromNode": "Purge files from node"
   },
-
   "auth": {
     "login": {
       "title": "Welcome back",
@@ -155,7 +154,6 @@
       "or": "or"
     }
   },
-
   "nav": {
     "panel": {
       "gameServers": "Game Servers",
@@ -188,7 +186,6 @@
       "billing": "Billing"
     }
   },
-
   "panel": {
     "billing": {
       "title": "Billing",
@@ -292,7 +289,9 @@
         },
         "txDescriptions": {
           "referral_bonus": "Referral Bonus",
-          "referral_commission": "Referral Commission"
+          "referral_commission": "Referral Commission",
+          "wallet_topup": "Wallet top-up via payment provider",
+          "wallet_topup_via": "Wallet top-up via {provider}"
         },
         "referral": {
           "title": "Referral Program",
@@ -307,7 +306,7 @@
           "enterCodeDesc": "Enter a friend's code to claim your reward.",
           "codePlaceholder": "e.g. STRUXA-ABCD",
           "apply": "Apply",
-          "applySuccess": "Referral code applied! Your bonus will be credited on your first top-up.",
+          "applySuccess": "Referral code applied! Your bonus will be credited on every top-up.",
           "usageCount": "Used by {count} {count, plural, one {person} other {people}}",
           "errorSelfReferral": "You can't use your own referral code.",
           "errorAlreadyApplied": "You've already applied a referral code.",
@@ -592,7 +591,6 @@
       "eventUsersRemove": "Users: Remove"
     }
   },
-
   "account": {
     "tabs": {
       "profile": "Profile",
@@ -740,7 +738,6 @@
       "saveFailed": "Failed to save language preference"
     }
   },
-
   "admin": {
     "dashboard": {
       "title": "Dashboard",
@@ -1149,7 +1146,10 @@
       "billingTxnAmountCol": "Amount",
       "billingTxnBalanceCol": "Balance",
       "billingTxnNoteCol": "Note",
-      "billingTxnDateCol": "Date"
+      "billingTxnDateCol": "Date",
+      "billingStatusActive": "Active",
+      "billingStatusTrialing": "Trialing",
+      "billingStatusPastDue": "Past Due"
     },
     "activity": {
       "timestampColumn": "Timestamp",
@@ -1164,7 +1164,8 @@
       "totalEvents": "Total Events",
       "serverEvents": "Server Events",
       "userModeration": "User Moderation",
-      "infrastructure": "Infrastructure"
+      "infrastructure": "Infrastructure",
+      "billingEvents": "Billing"
     },
     "settings": {
       "title": "Settings",
@@ -1299,7 +1300,6 @@
       "viewEditor": "Editor",
       "viewPreview": "Preview"
     },
-
     "billing": {
       "title": "Billing",
       "tabs": {
@@ -1334,9 +1334,9 @@
           "description": "Reward users for bringing new customers.",
           "enableReferral": "Enable referral program",
           "refereeDiscount": "Referee bonus (%)",
-          "refereeDiscountDesc": "Bonus added to the referee's wallet on first top-up.",
+          "refereeDiscountDesc": "Bonus added to the referee's wallet on every top-up.",
           "referrerReward": "Referrer commission (%)",
-          "referrerRewardDesc": "Commission credited to the referrer on the referee's first top-up."
+          "referrerRewardDesc": "Commission credited to the referrer on every top-up by the referee."
         }
       },
       "providers": {
@@ -1380,6 +1380,8 @@
       },
       "catalog": {
         "back": "Back",
+        "planCount": "{count, plural, one {# plan} other {# plans}}",
+        "uploadFailed": "Upload failed.",
         "categories": {
           "title": "Categories",
           "add": "Add category",
@@ -1453,12 +1455,18 @@
             "3months": "3 Months",
             "6months": "6 Months",
             "1year": "1 Year"
+          },
+          "durationShort": {
+            "7day": "7 days",
+            "1month": "mo",
+            "3months": "3 mo",
+            "6months": "6 mo",
+            "1year": "yr"
           }
         }
       }
     }
   },
-
   "setup": {
     "steps": {
       "adminAccount": "Admin Account",

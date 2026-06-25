@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { Activity, Server, Users, Layers } from "lucide-react";
+import { Activity, Server, Users, Layers, CreditCard } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
@@ -42,6 +42,7 @@ const EVENT_STYLES: Record<string, { color: string; bg: string }> = {
   dbhost:   { color: "#22c55e", bg: "rgba(34,197,94,0.12)" },
   location: { color: "#f59e0b", bg: "rgba(245,158,11,0.12)" },
   settings: { color: "#71717a", bg: "rgba(113,113,122,0.10)" },
+  billing: { color: "#10b981", bg: "rgba(16,185,129,0.12)" },
 };
 
 function getEventStyle(event: string): { color: string; bg: string } {
@@ -54,6 +55,7 @@ function getEventStyle(event: string): { color: string; bg: string } {
   if (event.startsWith("admin:database-host.")) return EVENT_STYLES.dbhost!;
   if (event.startsWith("admin:location.")) return EVENT_STYLES.location!;
   if (event.startsWith("admin:settings.")) return EVENT_STYLES.settings!;
+  if (event.startsWith("admin:billing.")) return EVENT_STYLES.billing!;
   return { color: "#71717a", bg: "rgba(113,113,122,0.10)" };
 }
 
@@ -90,7 +92,17 @@ const EVENT_LABELS: Record<string, string> = {
   "admin:location.create":        "Location: Create",
   "admin:location.update":        "Location: Update",
   "admin:location.delete":        "Location: Delete",
-  "admin:settings.update":        "Settings: Update",
+  "admin:settings.update":           "Settings: Update",
+  "admin:billing.category.create":   "Billing: Create Category",
+  "admin:billing.category.update":   "Billing: Update Category",
+  "admin:billing.category.delete":   "Billing: Delete Category",
+  "admin:billing.product.create":    "Billing: Create Plan",
+  "admin:billing.product.update":    "Billing: Update Plan",
+  "admin:billing.product.delete":    "Billing: Delete Plan",
+  "admin:billing.gateway.create":    "Billing: Add Gateway",
+  "admin:billing.gateway.update":    "Billing: Update Gateway",
+  "admin:billing.gateway.delete":    "Billing: Remove Gateway",
+  "admin:billing.wallet.adjust":     "Billing: Adjust Wallet",
 };
 
 function getEventLabel(event: string): string {
@@ -120,6 +132,13 @@ function getEventDetails(eventType: string, propertiesJson: string | null): stri
   let props: Record<string, unknown>;
   try { props = JSON.parse(propertiesJson) as Record<string, unknown>; } catch { return null; }
 
+  if (eventType === "admin:billing.wallet.adjust" && typeof props.amountCents === "number") {
+    const sign = props.amountCents >= 0 ? "+" : "";
+    return `${sign}${(props.amountCents / 100).toFixed(2)}`;
+  }
+  if (eventType === "admin:billing.gateway.create" && typeof props.name === "string" && typeof props.provider === "string") {
+    return `${props.name} (${props.provider})`;
+  }
   if (typeof props.name === "string") return props.name;
   if (typeof props.short === "string") {
     return props.long && typeof props.long === "string" ? `${props.short} — ${props.long}` : props.short;
@@ -170,6 +189,7 @@ export default function AdminActivityPage() {
     e.eventType.startsWith("admin:egg.") ||
     e.eventType.startsWith("admin:settings.")
   ).length;
+  const billingCount = entries.filter((e) => e.eventType.startsWith("admin:billing.")).length;
 
   return (
     <>
@@ -240,6 +260,9 @@ export default function AdminActivityPage() {
           </StatRow>
           <StatRow icon={Layers} label={t("infrastructure")}>
             <span className="text-xl font-bold" style={{ color: "#f59e0b" }}>{infraCount}</span>
+          </StatRow>
+          <StatRow icon={CreditCard} label={t("billingEvents")}>
+            <span className="text-xl font-bold" style={{ color: "#10b981" }}>{billingCount}</span>
           </StatRow>
         </aside>
       </div>
