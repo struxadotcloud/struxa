@@ -172,7 +172,7 @@ export default function WalletPage() {
   const TX_PAGE_SIZE = 10;
 
   const { data: wallet, refetch: refetchWallet } = useQuery(orpc.billing.getWallet.queryOptions());
-  const { data: txRaw = [], isLoading: txLoading } = useQuery(
+  const { data: txRaw = [], isLoading: txLoading, refetch: refetchTransactions } = useQuery(
     orpc.billing.listWalletTransactions.queryOptions({ limit: TX_PAGE_SIZE + 1, offset: txPage * TX_PAGE_SIZE }),
   );
   const hasNextPage = txRaw.length > TX_PAGE_SIZE;
@@ -241,11 +241,12 @@ export default function WalletPage() {
       successHandled.current = true;
       toast.success(t("topUpSuccess"));
       void refetchWallet();
+      void refetchTransactions();
       const url = new URL(window.location.href);
       url.searchParams.delete("topup");
       router.replace((url.pathname + (url.search || "")) as never);
     }
-  }, [searchParams, t, refetchWallet, router]);
+  }, [searchParams, t, refetchWallet, refetchTransactions, router]);
 
   const currency = wallet?.currency ?? "USD";
 

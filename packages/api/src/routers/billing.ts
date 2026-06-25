@@ -866,7 +866,7 @@ export const billingRouter = {
       if (!priceRow?.plan) throw new ORPCError("NOT_FOUND", { message: "Plan or price not found" });
 
       const plan = priceRow.plan;
-      if (!plan.isActive) throw new ORPCError("NOT_FOUND", { message: "Plan is not active" });
+      if (!plan.isActive || !plan.isPublic) throw new ORPCError("NOT_FOUND", { message: "Plan is not active" });
 
       const planLimits = plan.resourceLimits as {
         cpu?: number; ram?: number; disk?: number;
@@ -1294,11 +1294,15 @@ export const billingRouter = {
             where: eq(billingWallet.userId, input.userId),
           });
         }
-        const balanceAfter = (wallet!.balanceCents) + input.amountCents;
         await tx
           .update(billingWallet)
           .set({ balanceCents: sql`${billingWallet.balanceCents} + ${input.amountCents}` })
           .where(eq(billingWallet.userId, input.userId));
+        const refreshed = await tx.query.billingWallet.findFirst({
+          where: eq(billingWallet.userId, input.userId),
+          columns: { balanceCents: true },
+        });
+        const balanceAfter = refreshed?.balanceCents ?? (wallet!.balanceCents + input.amountCents);
         await tx.insert(billingWalletTransactions).values({
           id: randomUUID(),
           userId: input.userId,

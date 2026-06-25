@@ -93,7 +93,14 @@ async function creditWallet(payload: Extract<WebhookPayload, { type: "topup.succ
         const refereeDiscountPercent = Number(s.billing_referral_referee_discount_percent) || 0;
         const referrerRewardPercent = Number(s.billing_referral_referrer_reward_percent) || 0;
 
-        await tx.update(billingReferralRedemptions).set({ firstTopupAt: new Date() }).where(eq(billingReferralRedemptions.id, redemption.id));
+        const claimed = await tx
+          .update(billingReferralRedemptions)
+          .set({ firstTopupAt: new Date() })
+          .where(and(
+            eq(billingReferralRedemptions.id, redemption.id),
+            isNull(billingReferralRedemptions.firstTopupAt),
+          ));
+        if ((claimed as unknown as [{ affectedRows: number }])[0].affectedRows !== 1) return;
 
         if (refereeDiscountPercent > 0) {
           const bonusCents = Math.round(payload.amountCents * refereeDiscountPercent / 100);

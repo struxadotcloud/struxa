@@ -16,8 +16,16 @@ const fileEnv = Object.fromEntries(
     }),
 );
 
-spawnSync("go", ["run", "."], {
+const result = spawnSync("go", ["run", "."], {
   stdio: "inherit",
   cwd: dir,
   env: { ...process.env, ...fileEnv, GOCACHE: resolve(dir, ".go-cache") },
 });
+
+if (result.error) {
+  console.error(result.error);
+  process.exit(1);
+}
+if (result.status !== 0) {
+  process.exit(result.status ?? 1);
+}

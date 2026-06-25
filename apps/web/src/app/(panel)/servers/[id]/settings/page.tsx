@@ -28,7 +28,7 @@ import { authClient } from "@/lib/auth-client";
 import Loader from "@/components/loader";
 import { cn } from "@struxa/ui/lib/utils";
 import { useMediaQuery } from "@struxa/ui/hooks/use-media-query";
-import { Sheet, SheetPopup } from "@struxa/ui/components/sheet";
+import { Sheet, SheetPopup, SheetHeader, SheetTitle, SheetDescription } from "@struxa/ui/components/sheet";
 
 function StatRow({
   icon: Icon,
@@ -336,39 +336,52 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
 
   const currentImage = server?.image ?? "";
 
+  const eggPickerBody = (
+    <div className="px-5 py-4 flex flex-col gap-1.5">
+      {planEggs.map((egg) => {
+        const selected = selectedEggId === egg.id;
+        return (
+          <button
+            key={egg.id}
+            type="button"
+            onClick={() => setSelectedEggId(egg.id)}
+            className={cn(
+              "flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all",
+              selected ? "border-foreground bg-foreground/5 shadow-sm" : "border-border hover:border-foreground/30",
+            )}
+          >
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted">
+              <Server className="size-3.5 text-muted-foreground" />
+            </div>
+            <span className="flex-1 text-sm font-medium">{egg.name}</span>
+            <div className={cn(
+              "flex h-4 w-4 items-center justify-center rounded-full border transition-colors",
+              selected ? "border-foreground bg-foreground" : "border-border",
+            )}>
+              {selected && <div className="h-1.5 w-1.5 rounded-full bg-background" />}
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  const confirmBody = (
+    <div className="px-5 py-4">
+      <div className="flex items-start gap-3 rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3">
+        <AlertTriangle className="mt-0.5 size-4 shrink-0 text-destructive" />
+        <p className="text-xs text-destructive/80 leading-relaxed">{t("reinstallDialogDescription")}</p>
+      </div>
+    </div>
+  );
+
   const reinstallModalContent = planEggs.length > 0 && reinstallStep === 1 ? (
     <>
       <DialogHeader>
         <DialogTitle>{t("selectEggTitle")}</DialogTitle>
         <DialogDescription>{t("selectEggDescription")}</DialogDescription>
       </DialogHeader>
-      <div className="px-5 py-4 flex flex-col gap-1.5">
-        {planEggs.map((egg) => {
-          const selected = selectedEggId === egg.id;
-          return (
-            <button
-              key={egg.id}
-              type="button"
-              onClick={() => setSelectedEggId(egg.id)}
-              className={cn(
-                "flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all",
-                selected ? "border-foreground bg-foreground/5 shadow-sm" : "border-border hover:border-foreground/30",
-              )}
-            >
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted">
-                <Server className="size-3.5 text-muted-foreground" />
-              </div>
-              <span className="flex-1 text-sm font-medium">{egg.name}</span>
-              <div className={cn(
-                "flex h-4 w-4 items-center justify-center rounded-full border transition-colors",
-                selected ? "border-foreground bg-foreground" : "border-border",
-              )}>
-                {selected && <div className="h-1.5 w-1.5 rounded-full bg-background" />}
-              </div>
-            </button>
-          );
-        })}
-      </div>
+      {eggPickerBody}
       <DialogFooter>
         <Button variant="outline" size="sm" onClick={closeReinstall}>{t("cancel")}</Button>
         <Button size="sm" disabled={!selectedEggId} onClick={() => setReinstallStep(2)}>{t("reinstallContinue")}</Button>
@@ -379,12 +392,41 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
       <DialogHeader>
         <DialogTitle>{t("reinstallDialogTitle", { name: server?.name ?? "" })}</DialogTitle>
       </DialogHeader>
-      <div className="px-5 py-4">
-        <div className="flex items-start gap-3 rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3">
-          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-destructive" />
-          <p className="text-xs text-destructive/80 leading-relaxed">{t("reinstallDialogDescription")}</p>
-        </div>
-      </div>
+      {confirmBody}
+      <DialogFooter>
+        <Button variant="outline" size="sm" onClick={() => planEggs.length > 0 ? setReinstallStep(1) : closeReinstall()}>
+          {t("cancel")}
+        </Button>
+        <Button
+          variant="destructive"
+          size="sm"
+          disabled={reinstallMutation.isPending}
+          onClick={() => reinstallMutation.mutate({ serverId: id, eggId: selectedEggId ?? undefined })}
+        >
+          {reinstallMutation.isPending ? t("reinstalling") : t("reinstall")}
+        </Button>
+      </DialogFooter>
+    </>
+  );
+
+  const reinstallSheetContent = planEggs.length > 0 && reinstallStep === 1 ? (
+    <>
+      <SheetHeader>
+        <SheetTitle>{t("selectEggTitle")}</SheetTitle>
+        <SheetDescription>{t("selectEggDescription")}</SheetDescription>
+      </SheetHeader>
+      {eggPickerBody}
+      <DialogFooter>
+        <Button variant="outline" size="sm" onClick={closeReinstall}>{t("cancel")}</Button>
+        <Button size="sm" disabled={!selectedEggId} onClick={() => setReinstallStep(2)}>{t("reinstallContinue")}</Button>
+      </DialogFooter>
+    </>
+  ) : (
+    <>
+      <SheetHeader>
+        <SheetTitle>{t("reinstallDialogTitle", { name: server?.name ?? "" })}</SheetTitle>
+      </SheetHeader>
+      {confirmBody}
       <DialogFooter>
         <Button variant="outline" size="sm" onClick={() => planEggs.length > 0 ? setReinstallStep(1) : closeReinstall()}>
           {t("cancel")}
@@ -554,7 +596,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
           {isMobile ? (
             <Sheet open={reinstallConfirm} onOpenChange={(open) => { if (!open) closeReinstall(); }}>
               <SheetPopup side="bottom" showCloseButton={false} className="rounded-t-2xl">
-                {reinstallModalContent}
+                {reinstallSheetContent}
               </SheetPopup>
             </Sheet>
           ) : (

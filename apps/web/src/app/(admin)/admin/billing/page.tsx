@@ -1224,6 +1224,7 @@ function EggsDrawerContent({ value, onChange, groups, searchPlaceholder, noResul
           <svg className="size-3.5 shrink-0 text-muted-foreground" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
           <input
             autoFocus
+            aria-label={searchPlaceholder}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={searchPlaceholder}
@@ -1358,7 +1359,7 @@ function CatalogTab() {
   const [nodesDrawerOpen, setNodesDrawerOpen] = useState(false);
 
   const nodeGroups = useMemo(
-    () => [{ id: "all", label: "Nodes", items: allNodes.map((n) => ({ id: n.id, label: n.name })) }],
+    () => allNodes.length === 0 ? [] : [{ id: "all", label: "Nodes", items: allNodes.map((n) => ({ id: n.id, label: n.name })) }],
     [allNodes],
   );
   const nodeNameById = useMemo(() => new Map(allNodes.map((n) => [n.id, n.name])), [allNodes]);

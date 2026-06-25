@@ -212,8 +212,9 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
           </DialogHeader>
           <div className="flex flex-col gap-3 px-5 py-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-foreground">{t("billingAdjustAmountLabel")}</label>
+              <label htmlFor="adjust-amount" className="text-xs font-medium text-foreground">{t("billingAdjustAmountLabel")}</label>
               <input
+                id="adjust-amount"
                 autoFocus
                 type="number"
                 step="0.01"
@@ -224,8 +225,9 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-foreground">{t("billingAdjustNoteLabel")}</label>
+              <label htmlFor="adjust-note" className="text-xs font-medium text-foreground">{t("billingAdjustNoteLabel")}</label>
               <input
+                id="adjust-note"
                 type="text"
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
                 placeholder={t("billingAdjustNotePlaceholder")}
@@ -246,7 +248,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
             </DialogClose>
             <button
               type="button"
-              disabled={adjustBalanceMutation.isPending || !adjustAmount || isNaN(parseFloat(adjustAmount))}
+              disabled={adjustBalanceMutation.isPending || !adjustAmount || isNaN(parseFloat(adjustAmount)) || parseFloat(adjustAmount) === 0}
               onClick={() => {
                 const amountCents = Math.round(parseFloat(adjustAmount) * 100);
                 adjustBalanceMutation.mutate({ userId, amountCents, description: adjustNote || undefined });
@@ -537,11 +539,11 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
                 ) : (
                   <div className="overflow-hidden rounded-lg border border-border">
                     <div className="grid grid-cols-[80px_90px_90px_1fr_100px] border-b border-border bg-muted/40 px-4 py-2 text-xs font-medium text-muted-foreground">
-                      <span>Type</span>
-                      <span>Amount</span>
-                      <span>Balance</span>
-                      <span>Note</span>
-                      <span>Date</span>
+                      <span>{t("billingTxnTypeCol")}</span>
+                      <span>{t("billingTxnAmountCol")}</span>
+                      <span>{t("billingTxnBalanceCol")}</span>
+                      <span>{t("billingTxnNoteCol")}</span>
+                      <span>{t("billingTxnDateCol")}</span>
                     </div>
                     {walletTxns.map((txn, i) => (
                       <div
@@ -554,7 +556,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
                           : txn.type === "refund" ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
                           : "bg-muted text-muted-foreground"
                         }`}>
-                          {txn.type}
+                          {tBilling(`wallet.types.${txn.type}` as Parameters<typeof tBilling>[0])}
                         </span>
                         <span className={txn.amountCents >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}>
                           {txn.amountCents >= 0 ? "+" : ""}

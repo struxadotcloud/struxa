@@ -34,6 +34,10 @@ func main() {
 		log.Fatalf("[watchkeeper] failed to connect to database: %v", err)
 	}
 
+	if os.Getenv("DATABASE_ENCRYPTION_KEY") == "" {
+		log.Fatal("[watchkeeper] DATABASE_ENCRYPTION_KEY is not set")
+	}
+
 	log.Println("[watchkeeper] starting")
 
 	var wg sync.WaitGroup

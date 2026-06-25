@@ -923,7 +923,6 @@ function PlanCard({
         walletBalanceCents={walletBalanceCents}
         onPurchase={(priceId, eggId, serverName, dockerImage, envVars) => {
           onPurchase(priceId, eggId, serverName, dockerImage, envVars);
-          setDialogOpen(false);
         }}
         isPurchasing={isPurchasing}
       />

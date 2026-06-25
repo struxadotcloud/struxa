@@ -11,10 +11,7 @@ const nextConfig: NextConfig = {
   typedRoutes: true,
   reactCompiler: true,
   images: {
-    remotePatterns: [
-      { protocol: "https", hostname: "**" },
-      { protocol: "http", hostname: "**" },
-    ],
+    remotePatterns: [],
   },
   allowedDevOrigins: ["tunnel.strikx.dev"],
 };

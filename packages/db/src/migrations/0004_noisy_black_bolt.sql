@@ -224,7 +224,7 @@ CREATE TABLE `billing_transactions` (
 	`currency` varchar(3) NOT NULL DEFAULT 'USD',
 	`description` text,
 	`failure_message` text,
-	`provider_transaction_id` varchar(255),
+	`provider_transaction_id` varchar(255) UNIQUE,
 	`provider_charge_id` varchar(255),
 	`created_at` timestamp(3) NOT NULL DEFAULT (now()),
 	`updated_at` timestamp(3) NOT NULL DEFAULT (now()),

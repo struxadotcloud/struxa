@@ -233,7 +233,7 @@
         "summaryInstaller": "Installer",
         "summaryImage": "Docker Image",
         "summaryTotal": "Total",
-        "noAllocations": "No servers slots available. Please contact support."
+        "noAllocations": "No server slots available. Please contact support."
       },
       "errors": {
         "insufficientFunds": "Insufficient wallet balance. Please top up first.",
@@ -1144,7 +1144,12 @@
       "billingWalletTxnsTitle": "Wallet Transactions",
       "billingNoWalletTxns": "No transactions yet.",
       "billingSubRenews": "Renews",
-      "billingSubCanceledAt": "Canceled"
+      "billingSubCanceledAt": "Canceled",
+      "billingTxnTypeCol": "Type",
+      "billingTxnAmountCol": "Amount",
+      "billingTxnBalanceCol": "Balance",
+      "billingTxnNoteCol": "Note",
+      "billingTxnDateCol": "Date"
     },
     "activity": {
       "timestampColumn": "Timestamp",

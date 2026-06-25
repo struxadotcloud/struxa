@@ -59,9 +59,13 @@ func billingTick(db *sql.DB) {
 	}
 	_ = rows.Err()
 
+	const maxConcurrent = 10
+	sem := make(chan struct{}, maxConcurrent)
 	for _, s := range subs {
+		sem <- struct{}{}
 		go func(sub expiredSubRow) {
 			defer func() {
+				<-sem
 				if r := recover(); r != nil {
 					log.Printf("[billing] panic processing sub %s: %v", sub.id, r)
 				}
@@ -78,7 +82,9 @@ func processExpiredSubscription(db *sql.DB, sub expiredSubRow) {
 		Scan(&priceCents, &duration)
 	if err != nil {
 		log.Printf("[billing] fetch price for sub %s: %v", sub.id, err)
-		suspendSubscription(db, sub)
+		if err == sql.ErrNoRows {
+			suspendSubscription(db, sub)
+		}
 		return
 	}
 
@@ -93,7 +99,9 @@ func processExpiredSubscription(db *sql.DB, sub expiredSubRow) {
 		Scan(&walletId, &balanceCents)
 	if err != nil {
 		log.Printf("[billing] fetch wallet for user %s: %v", sub.userId, err)
-		suspendSubscription(db, sub)
+		if err == sql.ErrNoRows {
+			suspendSubscription(db, sub)
+		}
 		return
 	}
 
@@ -144,7 +152,12 @@ func processExpiredSubscription(db *sql.DB, sub expiredSubRow) {
 		return
 	}
 
-	balanceAfter := balanceCents - priceCents
+	var balanceAfter int
+	if err := tx.QueryRow(`SELECT balance_cents FROM billing_wallet WHERE user_id=?`, sub.userId).Scan(&balanceAfter); err != nil {
+		_ = tx.Rollback()
+		log.Printf("[billing] read balance after debit for sub %s: %v", sub.id, err)
+		return
+	}
 	invoiceId := billingUUID()
 	invoiceItemId := billingUUID()
 	walletTxId := billingUUID()
@@ -247,10 +260,6 @@ func suspendSubscription(db *sql.DB, sub expiredSubRow) {
 	}
 
 	for _, srv := range srvs {
-		if _, err := db.Exec(`UPDATE servers SET suspended=1 WHERE id=?`, srv.id); err != nil {
-			log.Printf("[billing] suspend server %s: %v", srv.uuid, err)
-			continue
-		}
 		tok, err := crypto.DecryptToken(srv.token)
 		if err != nil {
 			log.Printf("[billing] failed to decrypt token for server %s: %v", srv.uuid, err)
@@ -259,6 +268,10 @@ func suspendSubscription(db *sql.DB, sub expiredSubRow) {
 		client := wings.New(srv.scheme, srv.fqdn, srv.listen, tok)
 		if err := client.SendPowerAction(srv.uuid, "kill"); err != nil {
 			log.Printf("[billing] kill server %s: %v", srv.uuid, err)
+			continue
+		}
+		if _, err := db.Exec(`UPDATE servers SET suspended=1 WHERE id=?`, srv.id); err != nil {
+			log.Printf("[billing] suspend server %s: %v", srv.uuid, err)
 		}
 	}
 

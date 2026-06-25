@@ -628,7 +628,8 @@ export const serversRouter = {
 
         let dockerImages: Record<string, string> = {};
         try { dockerImages = JSON.parse(newEgg.dockerImages as unknown as string) as Record<string, string>; } catch {}
-        const newImage = Object.values(dockerImages)[0] ?? server.image;
+        const newImage = Object.values(dockerImages)[0];
+        if (!newImage) throw new ORPCError("BAD_REQUEST", { message: "Egg has no docker images configured" });
 
         const existingVars = await db.query.serverVariables.findMany({
           where: eq(serverVariables.serverId, server.id),
@@ -645,28 +646,29 @@ export const serversRouter = {
 
         const newInvocation = buildInvocation(newEgg.startup, varMap);
 
-        await db.delete(serverVariables).where(eq(serverVariables.serverId, server.id));
-        if (newEgg.variables.length > 0) {
-          await db.insert(serverVariables).values(
-            newEgg.variables.map((v) => ({
-              id: randomUUID(),
-              serverId: server.id,
-              variableId: v.id,
-              variableValue: varMap[v.envVariable] ?? v.defaultValue ?? "",
-            })),
-          );
-        }
-
-        await db
-          .update(servers)
-          .set({
-            eggId: input.eggId,
-            image: newImage,
-            startup: newEgg.startup,
-            invocation: newInvocation,
-            status: "installing",
-          })
-          .where(eq(servers.id, server.id));
+        await db.transaction(async (tx) => {
+          await tx.delete(serverVariables).where(eq(serverVariables.serverId, server.id));
+          if (newEgg.variables.length > 0) {
+            await tx.insert(serverVariables).values(
+              newEgg.variables.map((v) => ({
+                id: randomUUID(),
+                serverId: server.id,
+                variableId: v.id,
+                variableValue: varMap[v.envVariable] ?? v.defaultValue ?? "",
+              })),
+            );
+          }
+          await tx
+            .update(servers)
+            .set({
+              eggId: input.eggId,
+              image: newImage,
+              startup: newEgg.startup,
+              invocation: newInvocation,
+              status: "installing",
+            })
+            .where(eq(servers.id, server.id));
+        });
       } else {
         await db
           .update(servers)
