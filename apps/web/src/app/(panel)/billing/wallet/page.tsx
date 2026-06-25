@@ -190,7 +190,7 @@ export default function WalletPage() {
       void queryClient.invalidateQueries({ queryKey: orpc.billing.getReferralCode.key() });
       setNewCode("");
     },
-    onError: (err: unknown) => {
+    onError: (err: Error) => {
       const code = (err as { data?: { code?: string } })?.data?.code;
       if (code === "CODE_TAKEN") toast.error(tr("errorCodeTaken"));
       else toast.error(tr("errorGeneric"));
@@ -204,7 +204,7 @@ export default function WalletPage() {
       setEditingCode(false);
       setEditCode("");
     },
-    onError: (err: unknown) => {
+    onError: (err: Error) => {
       const code = (err as { data?: { code?: string } })?.data?.code;
       if (code === "CODE_TAKEN") toast.error(tr("errorCodeTaken"));
       else toast.error(tr("errorGeneric"));
@@ -217,7 +217,7 @@ export default function WalletPage() {
       toast.success(tr("applySuccess"));
       setInputCode("");
     },
-    onError: (err: unknown) => {
+    onError: (err: Error) => {
       const code = (err as { data?: { code?: string } })?.data?.code;
       if (code === "SELF_REFERRAL") toast.error(tr("errorSelfReferral"));
       else if (code === "ALREADY_APPLIED") toast.error(tr("errorAlreadyApplied"));
