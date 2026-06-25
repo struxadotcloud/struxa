@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/stripsior/struxa/watchkeeper/internal/crypto"
 	"github.com/stripsior/struxa/watchkeeper/internal/wings"
 )
 
@@ -86,7 +87,12 @@ func fetchServers(db *sql.DB, nodeID string) ([]serverRow, error) {
 }
 
 func processNode(db *sql.DB, node nodeRow) {
-	client := wings.New(node.scheme, node.fqdn, node.daemonListen, node.token)
+	token, err := crypto.DecryptToken(node.token)
+	if err != nil {
+		log.Printf("[status] failed to decrypt token for node %s: %v", node.id, err)
+		return
+	}
+	client := wings.New(node.scheme, node.fqdn, node.daemonListen, token)
 	utilization, err := client.GetUtilization()
 	if err != nil {
 		log.Printf("[status] could not reach node %s (%s): %v", node.id, node.fqdn, err)

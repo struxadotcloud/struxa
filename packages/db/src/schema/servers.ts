@@ -46,6 +46,7 @@ export const servers = mysqlTable(
     startup: text("startup").notNull(),
     skipScripts: boolean("skip_scripts").notNull().default(false),
     invocation: text("invocation").notNull(),
+    subscriptionId: varchar("subscription_id", { length: 36 }),
     createdAt: timestamp("created_at", { fsp: 3 }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { fsp: 3 })
       .defaultNow()
@@ -56,5 +57,6 @@ export const servers = mysqlTable(
     index("servers_userId_idx").on(table.userId),
     index("servers_nodeId_idx").on(table.nodeId),
     index("servers_eggId_idx").on(table.eggId),
+    index("servers_subscriptionId_idx").on(table.subscriptionId),
   ],
 );

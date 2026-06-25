@@ -1,0 +1,8 @@
+{
+  "name": "@struxa/watchkeeper",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "bun run dev.mjs"
+  }
+}

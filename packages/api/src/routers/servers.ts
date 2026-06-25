@@ -4,6 +4,7 @@ import { z } from "zod";
 import { ORPCError } from "@orpc/server";
 import { db } from "@struxa/db";
 import {
+  billingSubscriptions,
   eggVariables,
   eggs,
   nodeAllocations,
@@ -13,6 +14,7 @@ import {
   subusers,
 } from "@struxa/db";
 import { createWingsClient } from "../lib/wings-client";
+import { safeDecrypt } from "../lib/crypto";
 import { signWsToken } from "../lib/jwt";
 import { buildInvocation } from "../services/wings-servers";
 import { recordActivity } from "../services/activity";
@@ -584,7 +586,7 @@ export const serversRouter = {
     }),
 
   reinstall: protectedProcedure
-    .input(z.object({ serverId: z.string() }))
+    .input(z.object({ serverId: z.string(), eggId: z.string().uuid().optional() }))
     .handler(async ({ context, input }) => {
       const server = await db.query.servers.findFirst({
         where: eq(servers.uuid, input.serverId),
@@ -597,12 +599,82 @@ export const serversRouter = {
         throw new ORPCError("FORBIDDEN");
       }
 
-      const previousStatus = server.status;
+      if (input.eggId && input.eggId !== server.eggId) {
+        if (!isAdmin) {
+          if (!server.subscriptionId) throw new ORPCError("FORBIDDEN");
+          const sub = await db.query.billingSubscriptions.findFirst({
+            where: and(
+              eq(billingSubscriptions.id, server.subscriptionId),
+              or(
+                eq(billingSubscriptions.status, "active"),
+                eq(billingSubscriptions.status, "trialing"),
+              ),
+            ),
+            with: { plan: { columns: { resourceLimits: true } } },
+          });
+          if (!sub) throw new ORPCError("FORBIDDEN");
+          const limits = sub.plan?.resourceLimits as { eggs?: string[] } | null;
+          const allowedEggs = limits?.eggs ?? [];
+          if (!allowedEggs.includes(input.eggId)) {
+            throw new ORPCError("BAD_REQUEST", { data: { code: "EGG_NOT_ALLOWED" } });
+          }
+        }
 
-      await db
-        .update(servers)
-        .set({ status: "installing" })
-        .where(eq(servers.id, server.id));
+        const newEgg = await db.query.eggs.findFirst({
+          where: eq(eggs.id, input.eggId),
+          with: { variables: true },
+        });
+        if (!newEgg) throw new ORPCError("NOT_FOUND", { message: "Egg not found" });
+
+        let dockerImages: Record<string, string> = {};
+        try { dockerImages = JSON.parse(newEgg.dockerImages as unknown as string) as Record<string, string>; } catch {}
+        const newImage = Object.values(dockerImages)[0] ?? server.image;
+
+        const existingVars = await db.query.serverVariables.findMany({
+          where: eq(serverVariables.serverId, server.id),
+          with: { variable: { columns: { envVariable: true } } },
+        });
+        const existingVarMap = Object.fromEntries(
+          existingVars.map((v) => [v.variable?.envVariable ?? "", v.variableValue ?? ""]),
+        );
+
+        const varMap: Record<string, string> = {};
+        for (const v of newEgg.variables) {
+          varMap[v.envVariable] = existingVarMap[v.envVariable] ?? v.defaultValue ?? "";
+        }
+
+        const newInvocation = buildInvocation(newEgg.startup, varMap);
+
+        await db.delete(serverVariables).where(eq(serverVariables.serverId, server.id));
+        if (newEgg.variables.length > 0) {
+          await db.insert(serverVariables).values(
+            newEgg.variables.map((v) => ({
+              id: randomUUID(),
+              serverId: server.id,
+              variableId: v.id,
+              variableValue: varMap[v.envVariable] ?? v.defaultValue ?? "",
+            })),
+          );
+        }
+
+        await db
+          .update(servers)
+          .set({
+            eggId: input.eggId,
+            image: newImage,
+            startup: newEgg.startup,
+            invocation: newInvocation,
+            status: "installing",
+          })
+          .where(eq(servers.id, server.id));
+      } else {
+        await db
+          .update(servers)
+          .set({ status: "installing" })
+          .where(eq(servers.id, server.id));
+      }
+
+      const previousStatus = server.status;
 
       try {
         const client = createWingsClient(server.node as typeof nodes.$inferSelect);
@@ -621,6 +693,47 @@ export const serversRouter = {
         serverId: server.id,
         ip: context.ip,
       });
+    }),
+
+  listPlanEggs: protectedProcedure
+    .input(z.object({ serverId: z.string() }))
+    .handler(async ({ context, input }) => {
+      const server = await db.query.servers.findFirst({
+        where: eq(servers.uuid, input.serverId),
+      });
+      if (!server) throw new ORPCError("NOT_FOUND");
+
+      const isAdmin = context.session.user.role === "admin";
+      if (!isAdmin && server.userId !== context.session.user.id) {
+        const subuser = await db.query.subusers.findFirst({
+          where: and(eq(subusers.serverId, server.id), eq(subusers.userId, context.session.user.id)),
+        });
+        if (!subuser) throw new ORPCError("FORBIDDEN");
+      }
+
+      if (!server.subscriptionId) return [];
+
+      const sub = await db.query.billingSubscriptions.findFirst({
+        where: and(
+          eq(billingSubscriptions.id, server.subscriptionId),
+          or(
+            eq(billingSubscriptions.status, "active"),
+            eq(billingSubscriptions.status, "trialing"),
+          ),
+        ),
+        with: { plan: { columns: { resourceLimits: true } } },
+      });
+      if (!sub) return [];
+
+      const limits = sub.plan?.resourceLimits as { eggs?: string[] } | null;
+      const eggIds = limits?.eggs ?? [];
+      if (eggIds.length === 0) return [];
+
+      const rows = await db.query.eggs.findMany({
+        where: inArray(eggs.id, eggIds),
+        columns: { id: true, name: true },
+      });
+      return rows;
     }),
 
   create: adminProcedure
@@ -820,7 +933,7 @@ export const serversRouter = {
       const node = server.node as typeof nodes.$inferSelect;
       const token = await signWsToken(
         { user_uuid: userId, server_uuid: server.uuid, permissions },
-        node.token,
+        safeDecrypt(node.token),
       );
 
       const wsScheme = node.scheme === "https" ? "wss" : "ws";
