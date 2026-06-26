@@ -797,7 +797,7 @@ export default function NodesPage() {
                 <DropdownMenuContent
                   align="end"
                   sideOffset={4}
-                  className="min-w-44 rounded-xl border border-border bg-card p-1 shadow-lg"
+                  className="min-w-56 rounded-xl border border-border bg-card p-1 shadow-lg"
                 >
                   <DropdownMenuItem
                     onClick={() => setShowCreateLocation(true)}
