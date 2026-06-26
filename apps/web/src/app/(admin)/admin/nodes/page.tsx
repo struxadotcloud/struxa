@@ -797,13 +797,13 @@ export default function NodesPage() {
                 <DropdownMenuContent
                   align="end"
                   sideOffset={4}
-                  className="rounded-xl border border-border bg-card p-1 shadow-lg"
+                  className="min-w-44 rounded-xl border border-border bg-card p-1 shadow-lg"
                 >
                   <DropdownMenuItem
                     onClick={() => setShowCreateLocation(true)}
                     className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground"
                   >
-                    <MapPin className="h-3.5 w-3.5" />
+                    <MapPin className="h-3.5 w-3.5 shrink-0" />
                     {t("createLocation")}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="my-1 border-border" />
@@ -811,7 +811,7 @@ export default function NodesPage() {
                     onClick={() => setShowCreateNode(true)}
                     className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground"
                   >
-                    <Server className="h-3.5 w-3.5" />
+                    <Server className="h-3.5 w-3.5 shrink-0" />
                     {t("createNode")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
