@@ -117,7 +117,7 @@ func runSchedule(db *sql.DB, sched scheduleRow) error {
 		return fmt.Errorf("mark processing: %w", err)
 	}
 
-	log.Printf("[schedules] running schedule %q for server %s", sched.name, serverUUID)
+	log.Printf("[schedules] running schedule %q for server %q", sched.name, serverUUID)
 
 	client := wings.New(nodeScheme, nodeFQDN, nodeListen, nodeToken)
 	taskErr := executeTasks(client, serverUUID, tasks)
@@ -138,7 +138,7 @@ func executeTasks(client *wings.Client, serverUUID string, tasks []taskRow) erro
 			time.Sleep(time.Duration(t.timeOffset) * time.Second)
 		}
 		if err := executeTask(client, serverUUID, t); err != nil {
-			log.Printf("[schedules] task %s (%s) failed: %v", t.id, t.action, err)
+			log.Printf("[schedules] task %q (%q) failed: %v", t.id, t.action, err)
 			if !t.continueOnFail {
 				return err
 			}

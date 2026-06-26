@@ -15,6 +15,9 @@ type Client struct {
 }
 
 func New(scheme, fqdn string, port int, token string) *Client {
+	if scheme != "http" && scheme != "https" {
+		scheme = "https"
+	}
 	return &Client{
 		baseURL: fmt.Sprintf("%s://%s:%d", scheme, fqdn, port),
 		token:   token,
@@ -45,7 +48,7 @@ func (c *Client) do(method, path string, body any) (*http.Response, error) {
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		resp.Body.Close()
-		return nil, fmt.Errorf("wings error %d %s", resp.StatusCode, path)
+		return nil, fmt.Errorf("wings error %d %q", resp.StatusCode, path)
 	}
 	return resp, nil
 }

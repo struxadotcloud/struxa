@@ -63,7 +63,7 @@ func main() {
 	log.Println("[migrate] running migrations...")
 	for _, entry := range j.Entries {
 		if err := applyMigration(db, migrationsDir, entry); err != nil {
-			log.Fatalf("[migrate] %s failed: %v", entry.Tag, err)
+			log.Fatalf("[migrate] %q failed: %v", entry.Tag, err)
 		}
 	}
 	log.Println("[migrate] done")
@@ -95,9 +95,12 @@ func readJournal(dir string) (*journal, error) {
 }
 
 func applyMigration(db *sql.DB, dir string, entry journalEntry) error {
+	if strings.ContainsAny(entry.Tag, "/\\.") {
+		return fmt.Errorf("invalid migration tag: %q", entry.Tag)
+	}
 	content, err := os.ReadFile(filepath.Join(dir, entry.Tag+".sql"))
 	if err != nil {
-		return fmt.Errorf("read %s.sql: %w", entry.Tag, err)
+		return fmt.Errorf("read %q.sql: %w", entry.Tag, err)
 	}
 
 	sum := sha256.Sum256(content)
@@ -108,22 +111,22 @@ func applyMigration(db *sql.DB, dir string, entry journalEntry) error {
 		return err
 	}
 	if count > 0 {
-		log.Printf("[migrate] skip %s (already applied)", entry.Tag)
+		log.Printf("[migrate] skip %q (already applied)", entry.Tag)
 		return nil
 	}
 
-	log.Printf("[migrate] applying %s", entry.Tag)
+	log.Printf("[migrate] applying %q", entry.Tag)
 
 	for _, stmt := range splitStatements(string(content)) {
 		if _, err := db.Exec(stmt); err != nil {
-			return fmt.Errorf("exec statement in %s: %w", entry.Tag, err)
+			return fmt.Errorf("exec statement in %q: %w", entry.Tag, err)
 		}
 	}
 
 	_, err = db.Exec(`INSERT INTO __drizzle_migrations (hash, created_at) VALUES (?, ?)`,
 		hash, time.Now().UnixMilli())
 	if err != nil {
-		return fmt.Errorf("record migration %s: %w", entry.Tag, err)
+		return fmt.Errorf("record migration %q: %w", entry.Tag, err)
 	}
 	return nil
 }
