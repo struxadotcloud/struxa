@@ -15,6 +15,9 @@ type Client struct {
 }
 
 func New(scheme, fqdn string, port int, token string) *Client {
+	if scheme != "http" && scheme != "https" {
+		scheme = "https"
+	}
 	return &Client{
 		baseURL: fmt.Sprintf("%s://%s:%d", scheme, fqdn, port),
 		token:   token,

@@ -26,7 +26,8 @@ export async function POST(
   const body = (await req.json()) as RestoreCompleteBody;
 
   if (!body.successful) {
-    console.error(`Backup restore failed for ${uuid} on server ${body.server_uuid}`);
+    const safeServerUUID = String(body.server_uuid).replace(/[\r\n]/g, "");
+    console.error(`Backup restore failed for ${uuid} on server ${safeServerUUID}`);
   }
 
   return new Response(null, { status: 204 });
