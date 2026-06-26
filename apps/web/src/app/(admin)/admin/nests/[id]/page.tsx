@@ -31,6 +31,13 @@ function inputClass() {
 
 const PAGE_SIZE = 15;
 
+function getPageNumbers(current: number, total: number): (number | "…")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  if (current <= 4) return [1, 2, 3, 4, 5, "…", total];
+  if (current >= total - 3) return [1, "…", total - 4, total - 3, total - 2, total - 1, total];
+  return [1, "…", current - 1, current, current + 1, "…", total];
+}
+
 export default function NestDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const t = useTranslations("admin.nests");
   const tc = useTranslations("common");
@@ -152,6 +159,8 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
       },
     ];
   }
+
+  const pageNumbers = getPageNumbers(page, totalPages);
 
   return (
     <>
@@ -321,21 +330,23 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
             </div>
           </div>
 
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-foreground">{t("eggsTitle")}</h2>
+            <div className="relative flex items-center">
+              <Search className="absolute left-2.5 h-3.5 w-3.5 text-muted-foreground/50" />
+              <input
+                className="rounded-lg border border-border bg-background py-1.5 pl-8 pr-3 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
+                placeholder={t("searchEggs")}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+          </div>
+
           <div className="overflow-x-auto">
             <div className="min-w-[500px] overflow-hidden rounded-xl border border-border bg-card shadow-sm">
               <div className="grid grid-cols-[1fr_220px_36px] border-b border-border bg-muted/40 px-4 py-2.5">
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-medium text-muted-foreground">{t("nameColumn")}</span>
-                  <div className="relative flex items-center">
-                    <Search className="absolute left-2 h-3 w-3 text-muted-foreground/50" />
-                    <input
-                      className="rounded-md border border-border bg-background py-0.5 pl-6 pr-2 text-xs text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
-                      placeholder={t("searchEggs")}
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                    />
-                  </div>
-                </div>
+                <span className="text-xs font-medium text-muted-foreground">{t("nameColumn")}</span>
                 <span className="text-xs font-medium text-muted-foreground">{t("startupColumn")}</span>
                 <span />
               </div>
@@ -381,30 +392,43 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
           </div>
 
           {totalPages > 1 && (
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">
-                {t("pageInfo", { page, total: totalPages, count: filtered.length })}
-              </span>
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  disabled={page <= 1}
-                  onClick={() => setPage((p) => p - 1)}
-                  className="flex items-center gap-1 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-30"
-                >
-                  <ChevronLeft className="h-3 w-3" />
-                  {tc("prev")}
-                </button>
-                <button
-                  type="button"
-                  disabled={page >= totalPages}
-                  onClick={() => setPage((p) => p + 1)}
-                  className="flex items-center gap-1 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-30"
-                >
-                  {tc("next")}
-                  <ChevronRight className="h-3 w-3" />
-                </button>
-              </div>
+            <div className="flex items-center justify-center gap-1">
+              <button
+                type="button"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => p - 1)}
+                className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-card text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-30"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+              </button>
+              {pageNumbers.map((n, i) =>
+                n === "…" ? (
+                  <span key={`ellipsis-${i}`} className="flex h-7 w-7 items-center justify-center text-xs text-muted-foreground">
+                    …
+                  </span>
+                ) : (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setPage(n)}
+                    className={`flex h-7 w-7 items-center justify-center rounded-md text-xs font-medium transition-colors ${
+                      n === page
+                        ? "bg-foreground text-background"
+                        : "border border-border bg-card text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    {n}
+                  </button>
+                )
+              )}
+              <button
+                type="button"
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => p + 1)}
+                className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-card text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-30"
+              >
+                <ChevronRight className="h-3.5 w-3.5" />
+              </button>
             </div>
           )}
         </div>

@@ -911,7 +911,6 @@
       "urlPlaceholder": "https://raw.githubusercontent.com/.../egg.json",
       "nameColumn": "Name",
       "startupColumn": "Startup Command",
-      "pageInfo": "Page {page} of {total} · {count} eggs",
       "eggsTitle": "Eggs",
       "searchEggs": "Search eggs...",
       "deleteEggTitle": "Delete egg?",
