@@ -59,6 +59,7 @@
       "submitting": "Anmelden…",
       "noAccount": "Noch kein Konto?",
       "register": "Registrieren",
+      "forgotPassword": "Passwort vergessen?",
       "signInFailed": "Anmeldung nicht möglich."
     },
     "register": {
@@ -148,10 +149,40 @@
         "description": "Bei der Anmeldung ist ein Fehler aufgetreten. Bitte starten Sie den Vorgang erneut."
       }
     },
+    "forgotPassword": {
+      "title": "Passwort vergessen?",
+      "subtitle": "Gib deine E-Mail-Adresse ein und wir senden dir einen Reset-Link.",
+      "emailLabel": "E-Mail",
+      "emailPlaceholder": "du@beispiel.de",
+      "emailRequired": "E-Mail-Adresse ist erforderlich.",
+      "emailInvalid": "Gib eine gültige E-Mail-Adresse ein.",
+      "submit": "Reset-Link senden",
+      "submitting": "Senden…",
+      "successTitle": "Prüfe deinen Posteingang",
+      "successMessage": "Falls diese E-Mail registriert ist, ist ein Reset-Link unterwegs.",
+      "backToLogin": "Zurück zur Anmeldung",
+      "requestFailed": "Reset-Link konnte nicht gesendet werden."
+    },
+    "resetPassword": {
+      "title": "Neues Passwort festlegen",
+      "subtitle": "Wähle ein sicheres Passwort für dein Konto.",
+      "passwordLabel": "Neues Passwort",
+      "passwordPlaceholder": "Neues Passwort erstellen",
+      "confirmLabel": "Passwort bestätigen",
+      "confirmPlaceholder": "Passwort wiederholen",
+      "passwordMinLength": "Das Passwort muss mindestens 8 Zeichen lang sein.",
+      "passwordsNoMatch": "Die Passwörter stimmen nicht überein.",
+      "submit": "Passwort zurücksetzen",
+      "submitting": "Speichern…",
+      "invalidToken": "Dieser Reset-Link ist ungültig oder abgelaufen.",
+      "resetFailed": "Passwort konnte nicht zurückgesetzt werden.",
+      "backToLogin": "Zurück zur Anmeldung"
+    },
     "social": {
       "continueWith": "Weiter mit {provider}",
       "redirecting": "Weiterleitung…",
-      "or": "oder"
+      "or": "oder",
+      "tagline": "Spielserver bereitstellen, überwachen und verwalten — alles an einem Ort."
     }
   },
   "nav": {

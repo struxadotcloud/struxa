@@ -59,6 +59,7 @@
       "submitting": "Iniciando sesión…",
       "noAccount": "¿Aún no tienes cuenta?",
       "register": "Registro",
+      "forgotPassword": "¿Olvidaste tu contraseña?",
       "signInFailed": "No se puede iniciar sesión."
     },
     "register": {
@@ -148,10 +149,40 @@
         "description": "Algo salió mal durante el inicio de sesión. Por favor inicie el proceso nuevamente."
       }
     },
+    "forgotPassword": {
+      "title": "¿Olvidaste tu contraseña?",
+      "subtitle": "Ingresa tu correo y te enviaremos un enlace para restablecer tu contraseña.",
+      "emailLabel": "Correo electrónico",
+      "emailPlaceholder": "tu@ejemplo.com",
+      "emailRequired": "El correo electrónico es obligatorio.",
+      "emailInvalid": "Ingresa una dirección de correo válida.",
+      "submit": "Enviar enlace de restablecimiento",
+      "submitting": "Enviando…",
+      "successTitle": "Revisa tu bandeja de entrada",
+      "successMessage": "Si ese correo está registrado, el enlace ya está en camino.",
+      "backToLogin": "Volver al inicio de sesión",
+      "requestFailed": "No se pudo enviar el enlace de restablecimiento."
+    },
+    "resetPassword": {
+      "title": "Establecer nueva contraseña",
+      "subtitle": "Elige una contraseña segura para tu cuenta.",
+      "passwordLabel": "Nueva contraseña",
+      "passwordPlaceholder": "Crea una nueva contraseña",
+      "confirmLabel": "Confirmar contraseña",
+      "confirmPlaceholder": "Repite tu contraseña",
+      "passwordMinLength": "La contraseña debe tener al menos 8 caracteres.",
+      "passwordsNoMatch": "Las contraseñas no coinciden.",
+      "submit": "Restablecer contraseña",
+      "submitting": "Guardando…",
+      "invalidToken": "Este enlace de restablecimiento es inválido o ha expirado.",
+      "resetFailed": "No se pudo restablecer la contraseña.",
+      "backToLogin": "Volver al inicio de sesión"
+    },
     "social": {
       "continueWith": "Continuar con {provider}",
       "redirecting": "Redirigiendo…",
-      "or": "o"
+      "or": "o",
+      "tagline": "Despliega, monitorea y administra tus servidores de juego desde un solo lugar."
     }
   },
   "nav": {

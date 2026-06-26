@@ -1,11 +1,11 @@
 "use client";
 
+import type * as React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@struxa/ui/components/button";
-import { Alert, AlertDescription } from "@struxa/ui/components/alert";
 import { Input } from "@struxa/ui/components/input";
 import { Label } from "@struxa/ui/components/label";
 
@@ -14,6 +14,17 @@ import { authClient } from "@/lib/auth-client";
 import { syncLocaleFromDB } from "@/lib/sync-locale";
 
 const emailPattern = /\S+@\S+\.\S+/;
+
+function FieldError({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="flex items-center gap-1 text-xs text-destructive">
+      <svg className="h-3 w-3 shrink-0" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+        <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm-.75 3.75a.75.75 0 0 1 1.5 0v3.5a.75.75 0 0 1-1.5 0v-3.5zm.75 6.5a.875.875 0 1 1 0-1.75.875.875 0 0 1 0 1.75z" />
+      </svg>
+      {children}
+    </p>
+  );
+}
 
 export default function RegisterPage() {
   const t = useTranslations("auth.register");
@@ -71,13 +82,8 @@ export default function RegisterPage() {
   };
 
   return (
-    <AuthShell title={t("title")} subtitle={t("subtitle")}>
+    <AuthShell title={t("title")} subtitle={t("subtitle")} reverse>
       <form className="space-y-3.5" onSubmit={handleSubmit}>
-        {error ? (
-          <Alert variant="error">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        ) : null}
         <div className="grid gap-2">
           <Label htmlFor="displayName">{t("displayNameLabel")}</Label>
           <Input
@@ -101,7 +107,7 @@ export default function RegisterPage() {
             type="email"
             value={email}
           />
-          {showEmailError ? <p className="text-xs text-rose-500">{emailError}</p> : null}
+          {showEmailError ? <FieldError>{emailError}</FieldError> : null}
         </div>
         <div className="grid gap-2">
           <Label htmlFor="password">{t("passwordLabel")}</Label>
@@ -115,11 +121,12 @@ export default function RegisterPage() {
             type="password"
             value={password}
           />
-          {showPasswordError ? <p className="text-xs text-rose-500">{passwordError}</p> : null}
+          {showPasswordError ? <FieldError>{passwordError}</FieldError> : null}
         </div>
         <Button className="w-full" type="submit" disabled={isDisabled}>
           {isSubmitting ? t("submitting") : t("submit")}
         </Button>
+        {error ? <FieldError>{error}</FieldError> : null}
       </form>
 
       <p className="text-center text-sm text-muted-foreground">

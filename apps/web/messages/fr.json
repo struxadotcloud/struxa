@@ -59,6 +59,7 @@
       "submitting": "Connexion…",
       "noAccount": "Pas encore de compte ?",
       "register": "Registre",
+      "forgotPassword": "Mot de passe oublié ?",
       "signInFailed": "Impossible de se connecter."
     },
     "register": {
@@ -148,10 +149,40 @@
         "description": "Une erreur s'est produite lors de la connexion. Veuillez recommencer le processus."
       }
     },
+    "forgotPassword": {
+      "title": "Mot de passe oublié ?",
+      "subtitle": "Entrez votre adresse e-mail et nous vous enverrons un lien de réinitialisation.",
+      "emailLabel": "E-mail",
+      "emailPlaceholder": "vous@exemple.fr",
+      "emailRequired": "L'adresse e-mail est requise.",
+      "emailInvalid": "Entrez une adresse e-mail valide.",
+      "submit": "Envoyer le lien de réinitialisation",
+      "submitting": "Envoi…",
+      "successTitle": "Vérifiez votre boîte de réception",
+      "successMessage": "Si cet e-mail est enregistré, un lien de réinitialisation est en route.",
+      "backToLogin": "Retour à la connexion",
+      "requestFailed": "Impossible d'envoyer le lien de réinitialisation."
+    },
+    "resetPassword": {
+      "title": "Définir un nouveau mot de passe",
+      "subtitle": "Choisissez un mot de passe fort pour votre compte.",
+      "passwordLabel": "Nouveau mot de passe",
+      "passwordPlaceholder": "Créez un nouveau mot de passe",
+      "confirmLabel": "Confirmer le mot de passe",
+      "confirmPlaceholder": "Répétez votre mot de passe",
+      "passwordMinLength": "Le mot de passe doit comporter au moins 8 caractères.",
+      "passwordsNoMatch": "Les mots de passe ne correspondent pas.",
+      "submit": "Réinitialiser le mot de passe",
+      "submitting": "Enregistrement…",
+      "invalidToken": "Ce lien de réinitialisation est invalide ou a expiré.",
+      "resetFailed": "Impossible de réinitialiser le mot de passe.",
+      "backToLogin": "Retour à la connexion"
+    },
     "social": {
       "continueWith": "Continuez avec {provider}",
       "redirecting": "Redirection…",
-      "or": "ou"
+      "or": "ou",
+      "tagline": "Déployez, surveillez et gérez vos serveurs de jeu depuis un seul endroit."
     }
   },
   "nav": {
