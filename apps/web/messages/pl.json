@@ -206,8 +206,7 @@
     },
     "admin": {
       "dashboard": "Panel",
-      "locations": "Lokalizacje",
-      "nodes": "Węzły",
+      "nodes": "Lokalizacje i węzły",
       "nestsAndEggs": "Gniazda i jaja",
       "databaseHosts": "Hosty baz danych",
       "servers": "Serwery",
@@ -808,8 +807,12 @@
       "emptySearch": "Żadna lokalizacja nie pasuje do Twojego wyszukiwania."
     },
     "nodes": {
-      "title": "Węzły",
-      "searchPlaceholder": "Wyszukaj węzły...",
+      "title": "Lokalizacje i węzły",
+      "searchPlaceholder": "Szukaj lokalizacji i węzłów...",
+      "create": "Utwórz",
+      "createLocation": "Utwórz lokalizację",
+      "createNode": "Utwórz węzeł",
+      "unassigned": "Nieprzypisane",
       "newNode": "Nowy węzeł",
       "dialogTitle": "Nowy węzeł",
       "dialogDesc": "Dodaj węzeł Wings do tego panelu w celu wdrażania serwerów.",

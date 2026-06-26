@@ -206,8 +206,7 @@
     },
     "admin": {
       "dashboard": "Panel",
-      "locations": "Ubicaciones",
-      "nodes": "Nodos",
+      "nodes": "Ubicaciones & Nodos",
       "nestsAndEggs": "Nidos y huevos",
       "databaseHosts": "Hosts de bases de datos",
       "servers": "Servidores",
@@ -808,8 +807,12 @@
       "emptySearch": "Ninguna ubicación coincide con su búsqueda."
     },
     "nodes": {
-      "title": "Nodos",
-      "searchPlaceholder": "Buscar nodos...",
+      "title": "Ubicaciones & Nodos",
+      "searchPlaceholder": "Buscar ubicaciones y nodos...",
+      "create": "Crear",
+      "createLocation": "Crear ubicación",
+      "createNode": "Crear nodo",
+      "unassigned": "Sin asignar",
       "newNode": "Nuevo nodo",
       "dialogTitle": "Nuevo nodo",
       "dialogDesc": "Agregue un nodo Wings a este panel para implementar servidores.",

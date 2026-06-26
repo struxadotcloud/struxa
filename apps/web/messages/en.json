@@ -206,8 +206,7 @@
     },
     "admin": {
       "dashboard": "Dashboard",
-      "locations": "Locations",
-      "nodes": "Nodes",
+      "nodes": "Locations & Nodes",
       "nestsAndEggs": "Nests & Eggs",
       "databaseHosts": "Database Hosts",
       "servers": "Servers",
@@ -808,8 +807,12 @@
       "emptySearch": "No locations match your search."
     },
     "nodes": {
-      "title": "Nodes",
-      "searchPlaceholder": "Search nodes...",
+      "title": "Locations & Nodes",
+      "searchPlaceholder": "Search locations and nodes...",
+      "create": "Create",
+      "createLocation": "Create Location",
+      "createNode": "Create Node",
+      "unassigned": "Unassigned",
       "newNode": "New Node",
       "dialogTitle": "New Node",
       "dialogDesc": "Add a Wings node to this panel for deploying servers.",

@@ -206,8 +206,7 @@
     },
     "admin": {
       "dashboard": "Armaturenbrett",
-      "locations": "Standorte",
-      "nodes": "Knoten",
+      "nodes": "Standorte & Knoten",
       "nestsAndEggs": "Nester und Eier",
       "databaseHosts": "Datenbankhosts",
       "servers": "Server",
@@ -808,8 +807,12 @@
       "emptySearch": "Zu Ihrer Suche passen keine Standorte."
     },
     "nodes": {
-      "title": "Knoten",
-      "searchPlaceholder": "Knoten durchsuchen...",
+      "title": "Standorte & Knoten",
+      "searchPlaceholder": "Standorte und Knoten suchen...",
+      "create": "Erstellen",
+      "createLocation": "Standort erstellen",
+      "createNode": "Knoten erstellen",
+      "unassigned": "Nicht zugewiesen",
       "newNode": "Neuer Knoten",
       "dialogTitle": "Neuer Knoten",
       "dialogDesc": "Fügen Sie diesem Bereich einen Wings-Knoten zum Bereitstellen von Servern hinzu.",

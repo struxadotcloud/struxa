@@ -206,8 +206,7 @@
     },
     "admin": {
       "dashboard": "Tableau de bord",
-      "locations": "Emplacements",
-      "nodes": "Nœuds",
+      "nodes": "Emplacements & Nœuds",
       "nestsAndEggs": "Nids et œufs",
       "databaseHosts": "Hôtes de base de données",
       "servers": "Serveurs",
@@ -808,8 +807,12 @@
       "emptySearch": "Aucun emplacement ne correspond à votre recherche."
     },
     "nodes": {
-      "title": "Nœuds",
-      "searchPlaceholder": "Rechercher des nœuds...",
+      "title": "Emplacements & Nœuds",
+      "searchPlaceholder": "Rechercher des emplacements et des nœuds...",
+      "create": "Créer",
+      "createLocation": "Créer un emplacement",
+      "createNode": "Créer un nœud",
+      "unassigned": "Non assigné",
       "newNode": "Nouveau nœud",
       "dialogTitle": "Nouveau nœud",
       "dialogDesc": "Ajoutez un nœud Wings à ce panneau pour déployer des serveurs.",
