@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   Plus,
@@ -10,8 +10,6 @@ import {
   Trash2,
   Search,
   Pencil,
-  Check,
-  X,
   MapPin,
   Server,
 } from "lucide-react";
@@ -32,6 +30,16 @@ import {
   DialogDescription,
   DialogClose,
 } from "@struxa/ui/components/dialog";
+import {
+  Sheet,
+  SheetPopup,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+  SheetClose,
+  SheetPanel,
+} from "@struxa/ui/components/sheet";
+import { useIsMobile } from "@struxa/ui/hooks/use-media-query";
 import { orpc, queryClient } from "@/utils/orpc";
 import { ContextMenu, RowMenu, type ActionItem } from "@/components/context-menu";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -111,6 +119,148 @@ function inputCls(small?: boolean) {
   return `w-full rounded-lg border border-border bg-background px-3 ${small ? "py-1" : "py-2"} text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors`;
 }
 
+type LocationData = { id: string; name: string; short: string; long: string | null };
+
+function LocationEditModal({
+  location,
+  onClose,
+  onSave,
+  isPending,
+  error,
+}: {
+  location: LocationData | null;
+  onClose: () => void;
+  onSave: (form: { name: string; short: string; long: string }) => void;
+  isPending: boolean;
+  error?: string;
+}) {
+  const tl = useTranslations("admin.locations");
+  const tc = useTranslations("common");
+  const isMobile = useIsMobile();
+  const [form, setForm] = useState({ name: "", short: "", long: "" });
+
+  useEffect(() => {
+    if (location) setForm({ name: location.name, short: location.short, long: location.long ?? "" });
+  }, [location]);
+
+  function handleOpenChange(open: boolean) {
+    if (!open) onClose();
+  }
+
+  const inputBase =
+    "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors";
+
+  const fields = (
+    <div className="flex flex-col gap-4">
+      <div>
+        <label className="mb-1.5 block text-xs font-medium text-foreground">
+          {tl("shortCodeLabel")} <span className="text-destructive">*</span>
+        </label>
+        <input
+          className={inputBase}
+          placeholder={tl("shortCodePlaceholder")}
+          value={form.short}
+          onChange={(e) => setForm((f) => ({ ...f, short: e.target.value }))}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") onSave(form);
+            if (e.key === "Escape") onClose();
+          }}
+        />
+      </div>
+      <div>
+        <label className="mb-1.5 block text-xs font-medium text-foreground">
+          {tl("nameLabel")} <span className="text-destructive">*</span>
+        </label>
+        <input
+          autoFocus
+          className={inputBase}
+          placeholder={tl("namePlaceholder")}
+          value={form.name}
+          onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") onSave(form);
+            if (e.key === "Escape") onClose();
+          }}
+        />
+      </div>
+      <div>
+        <label className="mb-1.5 block text-xs font-medium text-foreground">
+          {tl("descriptionLabel")}
+        </label>
+        <input
+          className={inputBase}
+          placeholder={tl("descriptionPlaceholder")}
+          value={form.long}
+          onChange={(e) => setForm((f) => ({ ...f, long: e.target.value }))}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") onSave(form);
+            if (e.key === "Escape") onClose();
+          }}
+        />
+      </div>
+      {error && <p className="text-xs text-destructive">{error}</p>}
+    </div>
+  );
+
+  const saveDisabled = !form.name.trim() || !form.short.trim() || isPending;
+
+  if (isMobile) {
+    return (
+      <Sheet open={!!location} onOpenChange={handleOpenChange}>
+        <SheetPopup side="bottom" showCloseButton={false}>
+          <SheetHeader>
+            <SheetTitle>{tl("editTitle")}</SheetTitle>
+          </SheetHeader>
+          <SheetPanel>{fields}</SheetPanel>
+          <SheetFooter>
+            <SheetClose
+              className="rounded-lg px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              disabled={isPending}
+            >
+              {tc("cancel")}
+            </SheetClose>
+            <button
+              type="button"
+              onClick={() => onSave(form)}
+              disabled={saveDisabled}
+              className="rounded-lg bg-foreground px-4 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
+            >
+              {isPending ? tc("saving") : tc("save")}
+            </button>
+          </SheetFooter>
+        </SheetPopup>
+      </Sheet>
+    );
+  }
+
+  return (
+    <Dialog open={!!location} onOpenChange={handleOpenChange}>
+      <DialogPopup showCloseButton={false}>
+        <DialogHeader>
+          <DialogTitle>{tl("editTitle")}</DialogTitle>
+        </DialogHeader>
+        <div className="flex flex-col gap-4 px-5 py-4">{fields}</div>
+        <DialogFooter>
+          <DialogClose
+            className="rounded-lg px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            disabled={isPending}
+          >
+            {tc("cancel")}
+          </DialogClose>
+          <button
+            type="button"
+            onClick={() => onSave(form)}
+            disabled={saveDisabled}
+            className="rounded-lg bg-foreground px-4 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
+          >
+            {isPending ? tc("saving") : tc("save")}
+          </button>
+        </DialogFooter>
+      </DialogPopup>
+    </Dialog>
+  );
+}
+
 const defaultNodeForm = {
   name: "",
   locationId: "",
@@ -156,8 +306,7 @@ export default function NodesPage() {
   const [showCreateLocation, setShowCreateLocation] = useState(false);
   const [locationForm, setLocationForm] = useState({ name: "", short: "", long: "" });
 
-  const [editingLocationId, setEditingLocationId] = useState<string | null>(null);
-  const [editLocationForm, setEditLocationForm] = useState({ name: "", short: "", long: "" });
+  const [editingLocation, setEditingLocation] = useState<LocationData | null>(null);
 
   const [confirmDeleteNode, setConfirmDeleteNode] = useState<string | null>(null);
   const [confirmDeleteLocation, setConfirmDeleteLocation] = useState<string | null>(null);
@@ -230,27 +379,18 @@ export default function NodesPage() {
     closeCreateLocation();
   }
 
-  async function handleUpdateLocation() {
-    if (!editingLocationId || !editLocationForm.name.trim() || !editLocationForm.short.trim())
-      return;
-    await updateLocationMutation.mutateAsync({ id: editingLocationId, ...editLocationForm });
-    setEditingLocationId(null);
+  async function handleUpdateLocation(form: { name: string; short: string; long: string }) {
+    if (!editingLocation || !form.name.trim() || !form.short.trim()) return;
+    await updateLocationMutation.mutateAsync({ id: editingLocation.id, ...form });
+    setEditingLocation(null);
   }
 
-  function locationActions(loc: {
-    id: string;
-    name: string;
-    short: string;
-    long: string | null;
-  }): ActionItem[] {
+  function locationActions(loc: LocationData): ActionItem[] {
     return [
       {
         label: tc("edit"),
         icon: Pencil,
-        onClick: () => {
-          setEditingLocationId(loc.id);
-          setEditLocationForm({ name: loc.name, short: loc.short, long: loc.long ?? "" });
-        },
+        onClick: () => setEditingLocation(loc),
       },
       "separator",
       {
@@ -592,6 +732,14 @@ export default function NodesPage() {
         </DialogPopup>
       </Dialog>
 
+      <LocationEditModal
+        location={editingLocation}
+        onClose={() => setEditingLocation(null)}
+        onSave={(form) => void handleUpdateLocation(form)}
+        isPending={updateLocationMutation.isPending}
+        error={updateLocationMutation.isError ? updateLocationMutation.error.message : undefined}
+      />
+
       <ConfirmDialog
         open={confirmDeleteNode !== null}
         onOpenChange={(open) => {
@@ -714,103 +862,44 @@ export default function NodesPage() {
 
                   return (
                     <div key={loc.id}>
-                      {editingLocationId === loc.id ? (
-                        <div
-                          className={`flex items-center gap-2 bg-muted/30 px-4 py-2 ${showBottomBorder ? "border-b border-border" : ""}`}
-                        >
-                          <input
-                            autoFocus
-                            className="w-24 shrink-0 rounded-lg border border-border bg-background px-2 py-1 text-xs text-foreground outline-none focus:border-ring transition-colors"
-                            value={editLocationForm.short}
-                            onChange={(e) =>
-                              setEditLocationForm((f) => ({ ...f, short: e.target.value }))
-                            }
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") void handleUpdateLocation();
-                              if (e.key === "Escape") setEditingLocationId(null);
-                            }}
-                          />
-                          <input
-                            className="flex-1 rounded-lg border border-border bg-background px-2 py-1 text-xs text-foreground outline-none focus:border-ring transition-colors"
-                            value={editLocationForm.name}
-                            onChange={(e) =>
-                              setEditLocationForm((f) => ({ ...f, name: e.target.value }))
-                            }
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") void handleUpdateLocation();
-                              if (e.key === "Escape") setEditingLocationId(null);
-                            }}
-                          />
-                          <input
-                            className="flex-1 rounded-lg border border-border bg-background px-2 py-1 text-xs text-foreground outline-none focus:border-ring transition-colors placeholder:text-muted-foreground/50"
-                            placeholder={tl("descriptionPlaceholder")}
-                            value={editLocationForm.long}
-                            onChange={(e) =>
-                              setEditLocationForm((f) => ({ ...f, long: e.target.value }))
-                            }
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") void handleUpdateLocation();
-                              if (e.key === "Escape") setEditingLocationId(null);
-                            }}
-                          />
-                          <div className="flex items-center gap-1">
-                            <button
-                              type="button"
-                              onClick={() => void handleUpdateLocation()}
-                              disabled={updateLocationMutation.isPending}
-                              className="flex h-6 w-6 items-center justify-center rounded text-green-500 hover:bg-muted transition-colors disabled:opacity-40"
-                            >
-                              <Check className="h-3.5 w-3.5" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setEditingLocationId(null)}
-                              className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                            >
-                              <X className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <ContextMenu items={locationActions(loc)}>
-                          {({ onContextMenu }) => (
-                            <div
-                              onContextMenu={onContextMenu}
-                              className={`flex items-center justify-between bg-muted/30 px-4 py-2.5 ${showBottomBorder ? "border-b border-border" : ""}`}
-                            >
-                              <div className="flex items-center gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => toggleCollapse(loc.id)}
-                                  className="flex items-center text-muted-foreground hover:text-foreground transition-colors"
-                                >
-                                  {isCollapsed ? (
-                                    <ChevronRight className="h-3.5 w-3.5" />
-                                  ) : (
-                                    <ChevronDown className="h-3.5 w-3.5" />
-                                  )}
-                                </button>
-                                <span className="font-mono rounded bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground">
-                                  {loc.short}
-                                </span>
-                                <span className="text-sm font-medium text-foreground">
-                                  {loc.name}
-                                </span>
-                                {loc.long && (
-                                  <span className="text-xs text-muted-foreground">{loc.long}</span>
+                      <ContextMenu items={locationActions(loc)}>
+                        {({ onContextMenu }) => (
+                          <div
+                            onContextMenu={onContextMenu}
+                            className={`flex items-center justify-between bg-muted/30 px-4 py-2.5 ${showBottomBorder ? "border-b border-border" : ""}`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => toggleCollapse(loc.id)}
+                                className="flex items-center text-muted-foreground hover:text-foreground transition-colors"
+                              >
+                                {isCollapsed ? (
+                                  <ChevronRight className="h-3.5 w-3.5" />
+                                ) : (
+                                  <ChevronDown className="h-3.5 w-3.5" />
                                 )}
-                              </div>
-                              <div className="flex items-center gap-3">
-                                <span className="flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                                  <Server className="h-3 w-3" />
-                                  {allNodes.filter((n) => n.locationId === loc.id).length}
-                                </span>
-                                <RowMenu items={locationActions(loc)} />
-                              </div>
+                              </button>
+                              <span className="font-mono rounded bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground">
+                                {loc.short}
+                              </span>
+                              <span className="text-sm font-medium text-foreground">
+                                {loc.name}
+                              </span>
+                              {loc.long && (
+                                <span className="text-xs text-muted-foreground">{loc.long}</span>
+                              )}
                             </div>
-                          )}
-                        </ContextMenu>
-                      )}
+                            <div className="flex items-center gap-3">
+                              <span className="flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                                <Server className="h-3 w-3" />
+                                {allNodes.filter((n) => n.locationId === loc.id).length}
+                              </span>
+                              <RowMenu items={locationActions(loc)} />
+                            </div>
+                          </div>
+                        )}
+                      </ContextMenu>
 
                       {!isCollapsed &&
                         locNodes.map((node, ni) => {

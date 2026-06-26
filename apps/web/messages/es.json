@@ -790,6 +790,7 @@
       "title": "Ubicaciones",
       "searchPlaceholder": "Buscar ubicaciones...",
       "newLocation": "Nueva ubicación",
+      "editTitle": "Editar ubicación",
       "dialogTitle": "Nueva ubicación",
       "dialogDesc": "Agregue una nueva ubicación geográfica para agrupar nodos.",
       "nameLabel": "Nombre",

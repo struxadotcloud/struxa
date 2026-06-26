@@ -790,6 +790,7 @@
       "title": "Standorte",
       "searchPlaceholder": "Standorte suchen...",
       "newLocation": "Neuer Standort",
+      "editTitle": "Standort bearbeiten",
       "dialogTitle": "Neuer Standort",
       "dialogDesc": "Fügen Sie einen neuen geografischen Standort zum Gruppieren von Knoten hinzu.",
       "nameLabel": "Name",

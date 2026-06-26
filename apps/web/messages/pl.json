@@ -790,6 +790,7 @@
       "title": "Lokalizacje",
       "searchPlaceholder": "Wyszukaj lokalizacje...",
       "newLocation": "Nowa lokalizacja",
+      "editTitle": "Edytuj lokalizację",
       "dialogTitle": "Nowa lokalizacja",
       "dialogDesc": "Dodaj nową lokalizację geograficzną do grupowania węzłów.",
       "nameLabel": "Nazwa",

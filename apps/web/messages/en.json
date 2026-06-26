@@ -790,6 +790,7 @@
       "title": "Locations",
       "searchPlaceholder": "Search locations...",
       "newLocation": "New Location",
+      "editTitle": "Edit Location",
       "dialogTitle": "New Location",
       "dialogDesc": "Add a new geographic location for grouping nodes.",
       "nameLabel": "Name",

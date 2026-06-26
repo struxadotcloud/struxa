@@ -790,6 +790,7 @@
       "title": "Emplacements",
       "searchPlaceholder": "Rechercher des lieux...",
       "newLocation": "Nouvel emplacement",
+      "editTitle": "Modifier l'emplacement",
       "dialogTitle": "Nouvel emplacement",
       "dialogDesc": "Ajoutez un nouvel emplacement géographique pour regrouper les nœuds.",
       "nameLabel": "Nom",
