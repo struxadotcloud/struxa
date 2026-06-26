@@ -909,7 +909,6 @@
       "pasteJsonTab": "Paste JSON",
       "fromUrlTab": "From URL",
       "urlPlaceholder": "https://raw.githubusercontent.com/.../egg.json",
-      "nameColumn": "Name",
       "startupColumn": "Startup Command",
       "eggsTitle": "Eggs",
       "searchEggs": "Search eggs...",
