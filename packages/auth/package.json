@@ -12,6 +12,7 @@
   "scripts": {},
   "dependencies": {
     "@better-auth/api-key": "catalog:",
+    "@better-auth/i18n": "catalog:",
     "@struxa/db": "workspace:*",
     "@struxa/env": "workspace:*",
     "@types/nodemailer": "^8.0.0",

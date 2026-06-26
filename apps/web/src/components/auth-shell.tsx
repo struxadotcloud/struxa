@@ -11,6 +11,7 @@ type AuthShellProps = {
   title: string;
   subtitle: string;
   children: React.ReactNode;
+  reverse?: boolean;
 };
 
 function GithubIcon({ className }: { className?: string }) {
@@ -34,7 +35,20 @@ const PROVIDER_META: Record<string, { label: string; icon: React.FC<{ className?
   discord: { label: "Discord", icon: DiscordIcon, color: "hover:bg-[#5865F2] hover:text-white hover:border-[#5865F2]" },
 };
 
-export default function AuthShell({ title, subtitle, children }: AuthShellProps) {
+function Logo({ logoUrl, appName, className }: { logoUrl: string | null; appName: string; className?: string }) {
+  if (logoUrl) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={logoUrl} alt={appName} className={className ?? "h-7 w-auto"} />;
+  }
+  return (
+    <>
+      <Image src="/logo-dark.svg" alt="Struxa" width={96} height={28} priority className={`w-auto dark:hidden ${className ?? "h-7"}`} />
+      <Image src="/logo-white.svg" alt="Struxa" width={96} height={28} priority className={`hidden w-auto dark:block ${className ?? "h-7"}`} />
+    </>
+  );
+}
+
+export default function AuthShell({ title, subtitle, children, reverse }: AuthShellProps) {
   const t = useTranslations("auth.social");
   const { appName, logoUrl, socialProviders } = useAuthSettings();
   const [loadingProvider, setLoadingProvider] = useState<string | null>(null);
@@ -49,26 +63,33 @@ export default function AuthShell({ title, subtitle, children }: AuthShellProps)
   }
 
   return (
-    <main className="min-h-svh bg-background">
-      <div className="mx-auto flex min-h-svh max-w-xl items-center justify-center px-4 py-8">
-        <div className="flex w-full max-w-sm flex-col items-center gap-6">
-          <div className="flex flex-col items-center gap-2 text-center">
-            <div className="mb-1">
-              {logoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={logoUrl} alt={appName} className="h-7 w-auto" />
-              ) : (
-                <>
-                  <Image src="/logo-dark.svg" alt="Struxa" width={96} height={28} priority className="h-7 w-auto dark:hidden" />
-                  <Image src="/logo-white.svg" alt="Struxa" width={96} height={28} priority className="hidden h-7 w-auto dark:block" />
-                </>
-              )}
-            </div>
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">{title}</h1>
+    <main className="min-h-svh bg-background lg:grid lg:grid-cols-2">
+      {/* Branding panel — desktop only */}
+      <div className={`relative hidden lg:flex lg:flex-col lg:justify-between bg-muted/40 border-border px-12 py-10 ${reverse ? "lg:order-2 lg:items-end border-l" : "lg:order-1 lg:items-start border-r"}`}>
+        <Logo logoUrl={logoUrl} appName={appName} className="h-7" />
+        <div className={`flex flex-col gap-2 ${reverse ? "items-end text-right" : "items-start text-left"}`}>
+          <p className="text-2xl font-semibold tracking-tight text-foreground">{appName}</p>
+          <p className="text-sm text-muted-foreground max-w-xs">
+            {t("tagline")}
+          </p>
+        </div>
+        <p className="text-xs text-muted-foreground/60">© {new Date().getFullYear()} Struxa</p>
+      </div>
+
+      {/* Form panel */}
+      <div className={`flex min-h-svh flex-col items-center justify-center px-4 py-10 lg:min-h-0 lg:py-16 ${reverse ? "lg:order-1" : "lg:order-2"}`}>
+        <div className="flex w-full max-w-sm flex-col gap-6">
+          {/* Logo shown only on mobile */}
+          <div className="flex justify-center lg:hidden">
+            <Logo logoUrl={logoUrl} appName={appName} className="h-7" />
+          </div>
+
+          <div className="flex flex-col gap-1 text-center">
+            <h1 className="text-xl font-semibold tracking-tight text-foreground">{title}</h1>
             <p className="text-sm text-muted-foreground">{subtitle}</p>
           </div>
 
-          <div className="flex w-full flex-col gap-4 rounded-2xl border bg-card p-6 shadow-sm">
+          <div className="flex flex-col gap-4">
             {socialProviders.length > 0 && (
               <>
                 <div className="flex flex-col gap-2">

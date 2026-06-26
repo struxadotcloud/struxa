@@ -2,7 +2,7 @@
 
 import type * as React from "react";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@struxa/ui/components/button";
@@ -10,11 +10,7 @@ import { Input } from "@struxa/ui/components/input";
 import { Label } from "@struxa/ui/components/label";
 
 import AuthShell from "@/components/auth-shell";
-import { useAuthSettings } from "@/components/auth-settings-context";
 import { authClient } from "@/lib/auth-client";
-import { syncLocaleFromDB } from "@/lib/sync-locale";
-
-const emailPattern = /\S+@\S+\.\S+/;
 
 function FieldError({ children }: { children: React.ReactNode }) {
   return (
@@ -27,80 +23,65 @@ function FieldError({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function LoginPage() {
-  const t = useTranslations("auth.login");
+export default function ResetPasswordForm() {
+  const t = useTranslations("auth.resetPassword");
   const router = useRouter();
-  const { smtpEnabled } = useAuthSettings();
-  const [email, setEmail] = useState("");
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token");
+
   const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
-  const [touchedEmail, setTouchedEmail] = useState(false);
   const [touchedPassword, setTouchedPassword] = useState(false);
+  const [touchedConfirm, setTouchedConfirm] = useState(false);
 
-  const normalizedEmail = email.trim();
-  const emailError = !normalizedEmail
-    ? t("emailRequired")
-    : emailPattern.test(normalizedEmail)
-      ? null
-      : t("emailInvalid");
   const passwordError = password.length >= 8 ? null : t("passwordMinLength");
-  const showEmailError = Boolean(emailError && (hasSubmitted || touchedEmail));
+  const confirmError = password === confirm ? null : t("passwordsNoMatch");
   const showPasswordError = Boolean(passwordError && (hasSubmitted || touchedPassword));
-  const isDisabled = Boolean(emailError || passwordError || isSubmitting);
+  const showConfirmError = Boolean(confirmError && (hasSubmitted || touchedConfirm));
+  const isDisabled = Boolean(isSubmitting);
+
+  if (!token) {
+    return (
+      <AuthShell title={t("title")} subtitle={t("subtitle")}>
+        <div className="flex flex-col gap-3 text-center">
+          <FieldError>{t("invalidToken")}</FieldError>
+          <a
+            className="text-sm font-medium text-foreground transition-colors hover:text-foreground/80"
+            href="/forgot-password"
+          >
+            {t("backToLogin")}
+          </a>
+        </div>
+      </AuthShell>
+    );
+  }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setHasSubmitted(true);
     setError(null);
-    if (emailError || passwordError) {
-      setError(t("fixHighlighted"));
-      return;
-    }
+    if (passwordError || confirmError) return;
     setIsSubmitting(true);
-    const { error: signInError } = await authClient.signIn.email({
-      email: normalizedEmail,
-      password,
+    const { error: resetError } = await authClient.resetPassword({
+      newPassword: password,
+      token,
     });
     setIsSubmitting(false);
-    if (signInError) {
-      setError(signInError.message ?? t("signInFailed"));
+    if (resetError) {
+      setError(resetError.message ?? t("resetFailed"));
       return;
     }
-    await syncLocaleFromDB();
-    router.push("/");
+    router.push("/login");
   };
 
   return (
     <AuthShell title={t("title")} subtitle={t("subtitle")}>
       <form className="space-y-3.5" onSubmit={handleSubmit}>
         <div className="grid gap-2">
-          <Label htmlFor="email">{t("emailLabel")}</Label>
-          <Input
-            aria-invalid={showEmailError || undefined}
-            id="email"
-            name="email"
-            onChange={(event) => setEmail(event.target.value)}
-            onBlur={() => setTouchedEmail(true)}
-            placeholder={t("emailPlaceholder")}
-            type="email"
-            value={email}
-          />
-          {showEmailError ? <FieldError>{emailError}</FieldError> : null}
-        </div>
-        <div className="grid gap-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="password">{t("passwordLabel")}</Label>
-            {smtpEnabled ? (
-              <a
-                className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-                href="/forgot-password"
-              >
-                {t("forgotPassword")}
-              </a>
-            ) : null}
-          </div>
+          <Label htmlFor="password">{t("passwordLabel")}</Label>
           <Input
             aria-invalid={showPasswordError || undefined}
             id="password"
@@ -113,6 +94,20 @@ export default function LoginPage() {
           />
           {showPasswordError ? <FieldError>{passwordError}</FieldError> : null}
         </div>
+        <div className="grid gap-2">
+          <Label htmlFor="confirm">{t("confirmLabel")}</Label>
+          <Input
+            aria-invalid={showConfirmError || undefined}
+            id="confirm"
+            name="confirm"
+            onChange={(event) => setConfirm(event.target.value)}
+            onBlur={() => setTouchedConfirm(true)}
+            placeholder={t("confirmPlaceholder")}
+            type="password"
+            value={confirm}
+          />
+          {showConfirmError ? <FieldError>{confirmError}</FieldError> : null}
+        </div>
         <Button className="w-full" type="submit" disabled={isDisabled}>
           {isSubmitting ? t("submitting") : t("submit")}
         </Button>
@@ -120,12 +115,11 @@ export default function LoginPage() {
       </form>
 
       <p className="text-center text-sm text-muted-foreground">
-        {t("noAccount")}{" "}
         <a
           className="font-medium text-foreground transition-colors hover:text-foreground/80"
-          href="/register"
+          href="/login"
         >
-          {t("register")}
+          {t("backToLogin")}
         </a>
       </p>
     </AuthShell>

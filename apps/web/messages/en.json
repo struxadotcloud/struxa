@@ -59,6 +59,7 @@
       "submitting": "Signing in…",
       "noAccount": "No account yet?",
       "register": "Register",
+      "forgotPassword": "Forgot password?",
       "signInFailed": "Unable to sign in."
     },
     "register": {
@@ -148,10 +149,40 @@
         "description": "Something went wrong during sign-in. Please start the process again."
       }
     },
+    "forgotPassword": {
+      "title": "Forgot your password?",
+      "subtitle": "Enter your email and we'll send you a reset link.",
+      "emailLabel": "Email",
+      "emailPlaceholder": "you@example.com",
+      "emailRequired": "Email is required.",
+      "emailInvalid": "Enter a valid email address.",
+      "submit": "Send reset link",
+      "submitting": "Sending…",
+      "successTitle": "Check your inbox",
+      "successMessage": "If that email is registered, a reset link is on its way.",
+      "backToLogin": "Back to sign in",
+      "requestFailed": "Unable to send reset link."
+    },
+    "resetPassword": {
+      "title": "Set a new password",
+      "subtitle": "Choose a strong password for your account.",
+      "passwordLabel": "New password",
+      "passwordPlaceholder": "Create a new password",
+      "confirmLabel": "Confirm password",
+      "confirmPlaceholder": "Repeat your password",
+      "passwordMinLength": "Password must be at least 8 characters.",
+      "passwordsNoMatch": "Passwords do not match.",
+      "submit": "Reset password",
+      "submitting": "Saving…",
+      "invalidToken": "This reset link is invalid or has expired.",
+      "resetFailed": "Unable to reset password.",
+      "backToLogin": "Back to sign in"
+    },
     "social": {
       "continueWith": "Continue with {provider}",
       "redirecting": "Redirecting…",
-      "or": "or"
+      "or": "or",
+      "tagline": "Deploy, monitor, and manage your game servers from one place."
     }
   },
   "nav": {

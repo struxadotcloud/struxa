@@ -3,6 +3,7 @@ import { db, settings } from "@struxa/db";
 import * as schema from "@struxa/db/schema/auth";
 import { env } from "@struxa/env/server";
 import { apiKey } from "@better-auth/api-key";
+import { i18n } from "@better-auth/i18n";
 import { betterAuth } from "better-auth";
 import { APIError, createAuthMiddleware } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
@@ -125,6 +126,68 @@ async function buildAuth(): Promise<AuthInstance> {
       admin(),
       twoFactor({ issuer: appName }),
       apiKey(),
+      i18n({
+        detection: ["cookie", "header"],
+        localeCookie: "NEXT_LOCALE",
+        translations: {
+          pl: {
+            INVALID_EMAIL_OR_PASSWORD: "Nieprawidłowy adres e-mail lub hasło.",
+            USER_NOT_FOUND: "Nie znaleziono użytkownika.",
+            USER_EMAIL_NOT_FOUND: "Nie znaleziono użytkownika z tym adresem e-mail.",
+            INVALID_PASSWORD: "Nieprawidłowe hasło.",
+            EMAIL_NOT_VERIFIED: "Adres e-mail nie został zweryfikowany.",
+            USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL: "Użytkownik z tym adresem e-mail już istnieje.",
+            PASSWORD_TOO_SHORT: "Hasło jest za krótkie.",
+            PASSWORD_TOO_LONG: "Hasło jest za długie.",
+            SESSION_EXPIRED: "Sesja wygasła. Zaloguj się ponownie.",
+            CREDENTIAL_ACCOUNT_NOT_FOUND: "Nie znaleziono konta.",
+            FAILED_TO_CREATE_USER: "Nie udało się utworzyć konta. Spróbuj ponownie.",
+            FAILED_TO_CREATE_SESSION: "Nie udało się utworzyć sesji. Spróbuj ponownie.",
+          },
+          de: {
+            INVALID_EMAIL_OR_PASSWORD: "Ungültige E-Mail-Adresse oder Passwort.",
+            USER_NOT_FOUND: "Benutzer nicht gefunden.",
+            USER_EMAIL_NOT_FOUND: "Kein Benutzer mit dieser E-Mail-Adresse gefunden.",
+            INVALID_PASSWORD: "Ungültiges Passwort.",
+            EMAIL_NOT_VERIFIED: "E-Mail-Adresse ist nicht verifiziert.",
+            USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL: "Ein Benutzer mit dieser E-Mail-Adresse existiert bereits.",
+            PASSWORD_TOO_SHORT: "Das Passwort ist zu kurz.",
+            PASSWORD_TOO_LONG: "Das Passwort ist zu lang.",
+            SESSION_EXPIRED: "Sitzung abgelaufen. Bitte erneut anmelden.",
+            CREDENTIAL_ACCOUNT_NOT_FOUND: "Konto nicht gefunden.",
+            FAILED_TO_CREATE_USER: "Konto konnte nicht erstellt werden. Bitte erneut versuchen.",
+            FAILED_TO_CREATE_SESSION: "Sitzung konnte nicht erstellt werden. Bitte erneut versuchen.",
+          },
+          es: {
+            INVALID_EMAIL_OR_PASSWORD: "Correo electrónico o contraseña incorrectos.",
+            USER_NOT_FOUND: "Usuario no encontrado.",
+            USER_EMAIL_NOT_FOUND: "No se encontró ningún usuario con ese correo electrónico.",
+            INVALID_PASSWORD: "Contraseña incorrecta.",
+            EMAIL_NOT_VERIFIED: "El correo electrónico no está verificado.",
+            USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL: "Ya existe un usuario con este correo electrónico.",
+            PASSWORD_TOO_SHORT: "La contraseña es demasiado corta.",
+            PASSWORD_TOO_LONG: "La contraseña es demasiado larga.",
+            SESSION_EXPIRED: "La sesión ha expirado. Inicia sesión de nuevo.",
+            CREDENTIAL_ACCOUNT_NOT_FOUND: "Cuenta no encontrada.",
+            FAILED_TO_CREATE_USER: "No se pudo crear la cuenta. Inténtalo de nuevo.",
+            FAILED_TO_CREATE_SESSION: "No se pudo crear la sesión. Inténtalo de nuevo.",
+          },
+          fr: {
+            INVALID_EMAIL_OR_PASSWORD: "Adresse e-mail ou mot de passe incorrect.",
+            USER_NOT_FOUND: "Utilisateur introuvable.",
+            USER_EMAIL_NOT_FOUND: "Aucun utilisateur trouvé avec cette adresse e-mail.",
+            INVALID_PASSWORD: "Mot de passe incorrect.",
+            EMAIL_NOT_VERIFIED: "L'adresse e-mail n'est pas vérifiée.",
+            USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL: "Un utilisateur avec cette adresse e-mail existe déjà.",
+            PASSWORD_TOO_SHORT: "Le mot de passe est trop court.",
+            PASSWORD_TOO_LONG: "Le mot de passe est trop long.",
+            SESSION_EXPIRED: "Session expirée. Veuillez vous reconnecter.",
+            CREDENTIAL_ACCOUNT_NOT_FOUND: "Compte introuvable.",
+            FAILED_TO_CREATE_USER: "Impossible de créer le compte. Veuillez réessayer.",
+            FAILED_TO_CREATE_SESSION: "Impossible de créer la session. Veuillez réessayer.",
+          },
+        },
+      }),
       ...(env.TURNSTILE_SECRET_KEY
         ? [
             captcha({

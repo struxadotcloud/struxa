@@ -59,6 +59,7 @@
       "submitting": "Logowanie…",
       "noAccount": "Nie masz jeszcze konta?",
       "register": "Rejestr",
+      "forgotPassword": "Nie pamiętasz hasła?",
       "signInFailed": "Nie można się zalogować."
     },
     "register": {
@@ -148,10 +149,40 @@
         "description": "Coś poszło nie tak podczas logowania. Rozpocznij proces ponownie."
       }
     },
+    "forgotPassword": {
+      "title": "Nie pamiętasz hasła?",
+      "subtitle": "Wpisz swój adres e-mail, a wyślemy Ci link do resetowania hasła.",
+      "emailLabel": "E-mail",
+      "emailPlaceholder": "ty@example.com",
+      "emailRequired": "Adres e-mail jest wymagany.",
+      "emailInvalid": "Wpisz prawidłowy adres e-mail.",
+      "submit": "Wyślij link do resetowania",
+      "submitting": "Wysyłanie…",
+      "successTitle": "Sprawdź swoją skrzynkę",
+      "successMessage": "Jeśli ten adres e-mail jest zarejestrowany, link do resetowania jest już w drodze.",
+      "backToLogin": "Wróć do logowania",
+      "requestFailed": "Nie można wysłać linku do resetowania."
+    },
+    "resetPassword": {
+      "title": "Ustaw nowe hasło",
+      "subtitle": "Wybierz silne hasło dla swojego konta.",
+      "passwordLabel": "Nowe hasło",
+      "passwordPlaceholder": "Utwórz nowe hasło",
+      "confirmLabel": "Potwierdź hasło",
+      "confirmPlaceholder": "Powtórz hasło",
+      "passwordMinLength": "Hasło musi mieć co najmniej 8 znaków.",
+      "passwordsNoMatch": "Hasła nie są zgodne.",
+      "submit": "Resetuj hasło",
+      "submitting": "Zapisywanie…",
+      "invalidToken": "Ten link do resetowania jest nieprawidłowy lub wygasł.",
+      "resetFailed": "Nie można zresetować hasła.",
+      "backToLogin": "Wróć do logowania"
+    },
     "social": {
       "continueWith": "Kontynuuj z {provider}",
       "redirecting": "Przekierowywanie…",
-      "or": "Lub"
+      "or": "Lub",
+      "tagline": "Wdrażaj, monitoruj i zarządzaj serwerami gier z jednego miejsca."
     }
   },
   "nav": {

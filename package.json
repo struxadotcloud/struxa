@@ -22,6 +22,7 @@
       "@orpc/zod": "^1.13.14",
       "better-auth": "1.6.9",
       "@better-auth/api-key": "1.6.9",
+      "@better-auth/i18n": "1.6.9",
       "jose": "^5.10.0",
       "croner": "^9.0.0",
       "@types/react": "^19.2.10",

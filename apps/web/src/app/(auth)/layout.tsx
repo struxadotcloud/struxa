@@ -7,10 +7,11 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
   const complete = await checkSetupComplete();
   if (!complete) redirect("/setup");
 
-  const { appName, logoUrl, socialProviders } = await getInstanceSettings();
+  const { appName, logoUrl, socialProviders, raw } = await getInstanceSettings();
+  const smtpEnabled = raw.smtp_enabled === "true" && !!raw.smtp_host;
 
   return (
-    <AuthSettingsProvider value={{ appName, logoUrl, socialProviders }}>
+    <AuthSettingsProvider value={{ appName, logoUrl, socialProviders, smtpEnabled }}>
       {children}
     </AuthSettingsProvider>
   );
