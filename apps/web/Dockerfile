@@ -9,6 +9,7 @@ WORKDIR /repo
 # Install deps — layer cached until lockfile or any package.json changes
 COPY bun.lock package.json ./
 COPY apps/web/package.json          ./apps/web/
+COPY apps/watchkeeper/package.json  ./apps/watchkeeper/
 COPY packages/db/package.json       ./packages/db/
 COPY packages/api/package.json      ./packages/api/
 COPY packages/auth/package.json     ./packages/auth/
