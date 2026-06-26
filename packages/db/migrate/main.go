@@ -100,7 +100,7 @@ func applyMigration(db *sql.DB, dir string, entry journalEntry) error {
 	}
 	content, err := os.ReadFile(filepath.Join(dir, entry.Tag+".sql"))
 	if err != nil {
-		return fmt.Errorf("read %s.sql: %w", entry.Tag, err)
+		return fmt.Errorf("read %q.sql: %w", entry.Tag, err)
 	}
 
 	sum := sha256.Sum256(content)
@@ -119,14 +119,14 @@ func applyMigration(db *sql.DB, dir string, entry journalEntry) error {
 
 	for _, stmt := range splitStatements(string(content)) {
 		if _, err := db.Exec(stmt); err != nil {
-			return fmt.Errorf("exec statement in %s: %w", entry.Tag, err)
+			return fmt.Errorf("exec statement in %q: %w", entry.Tag, err)
 		}
 	}
 
 	_, err = db.Exec(`INSERT INTO __drizzle_migrations (hash, created_at) VALUES (?, ?)`,
 		hash, time.Now().UnixMilli())
 	if err != nil {
-		return fmt.Errorf("record migration %s: %w", entry.Tag, err)
+		return fmt.Errorf("record migration %q: %w", entry.Tag, err)
 	}
 	return nil
 }
