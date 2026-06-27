@@ -21,6 +21,14 @@ import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import Loader from "@/components/loader";
+import {
+  Dialog,
+  DialogPopup,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from "@struxa/ui/components/dialog";
 
 function fmtUptime(ms: number): string {
   if (ms <= 0) return "—";
@@ -173,6 +181,7 @@ const EMPTY_HISTORY = Array(60).fill(0) as number[];
 export default function ServerPage({ params }: { params: Promise<{ id: string }> }) {
   const t = useTranslations("panel.console");
   const tStatus = useTranslations("panel.serverStatus");
+  const tc = useTranslations("common");
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
   const { id } = use(params);
@@ -199,8 +208,21 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
   const [diskHistory, setDiskHistory] = useState<number[]>(EMPTY_HISTORY);
   const [rxHistory, setRxHistory] = useState<number[]>(EMPTY_HISTORY);
   const [txHistory, setTxHistory] = useState<number[]>(EMPTY_HISTORY);
+  const [eulaDialogOpen, setEulaDialogOpen] = useState(false);
+  const [javaDialogOpen, setJavaDialogOpen] = useState(false);
+  const eulaShownRef = useRef(false);
+  const javaShownRef = useRef(false);
 
   const { data: server } = useQuery(orpc.servers.get.queryOptions({ input: { id } }));
+  const eggFeaturesRef = useRef<string[]>([]);
+  useEffect(() => {
+    try {
+      const parsed = JSON.parse(server?.egg?.features ?? "[]") as string[];
+      eggFeaturesRef.current = Array.isArray(parsed) ? parsed : [];
+    } catch {
+      eggFeaturesRef.current = [];
+    }
+  }, [server?.egg?.features]);
 
   const [reconnectKey, setReconnectKey] = useState(0);
 
@@ -236,6 +258,15 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
           } else if (msg.event === "console output") {
             const line = msg.args?.[0] ?? "";
             setLines((prev) => [...prev.slice(-499), line]);
+            const features = eggFeaturesRef.current;
+            if (features.includes("eula") && !eulaShownRef.current && /you need to agree to the eula/i.test(line)) {
+              eulaShownRef.current = true;
+              setEulaDialogOpen(true);
+            }
+            if (features.includes("java_version") && !javaShownRef.current && /unsupported java|requires java/i.test(line)) {
+              javaShownRef.current = true;
+              setJavaDialogOpen(true);
+            }
           } else if (msg.event === "stats") {
             try {
               const raw = JSON.parse(msg.args?.[0] ?? "{}") as {
@@ -320,6 +351,25 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
     ...orpc.servers.power.mutationOptions(),
     onError: (error) => toast.error(error.message),
   });
+
+  const [eulaAccepting, setEulaAccepting] = useState(false);
+  async function acceptEula() {
+    setEulaAccepting(true);
+    try {
+      const res = await fetch(`/api/servers/${id}/files/write?file=${encodeURIComponent("/eula.txt")}`, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: "#By changing the setting below to TRUE you are indicating your agreement to our EULA (https://aka.ms/MinecraftEULA).\neula=true\n",
+      });
+      if (!res.ok) throw new Error(await res.text());
+      setEulaDialogOpen(false);
+      toast.success(t("eulaAcceptedToast"));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to accept EULA");
+    } finally {
+      setEulaAccepting(false);
+    }
+  }
 
   function sendCommand() {
     if (!command.trim() || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
@@ -493,6 +543,50 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
           </div>
         </aside>
       </div>
+
+      <Dialog open={eulaDialogOpen} onOpenChange={setEulaDialogOpen}>
+        <DialogPopup showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>{t("eulaTitle")}</DialogTitle>
+            <DialogDescription>{t("eulaDescription")}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <button
+              type="button"
+              onClick={() => setEulaDialogOpen(false)}
+              className="rounded-lg px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted"
+            >
+              {tc("cancel")}
+            </button>
+            <button
+              type="button"
+              disabled={eulaAccepting}
+              onClick={() => void acceptEula()}
+              className="rounded-lg bg-green-500/20 px-3 py-1.5 text-sm font-medium text-green-400 transition-colors hover:bg-green-500/30 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {t("eulaAccept")}
+            </button>
+          </DialogFooter>
+        </DialogPopup>
+      </Dialog>
+
+      <Dialog open={javaDialogOpen} onOpenChange={setJavaDialogOpen}>
+        <DialogPopup>
+          <DialogHeader>
+            <DialogTitle>{t("javaTitle")}</DialogTitle>
+            <DialogDescription>{t("javaDescription")}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <button
+              type="button"
+              onClick={() => { setJavaDialogOpen(false); router.push(`/servers/${id}/settings`); }}
+              className="rounded-lg bg-blue-500/20 px-3 py-1.5 text-sm font-medium text-blue-400 transition-colors hover:bg-blue-500/30"
+            >
+              {t("javaGoToSettings")}
+            </button>
+          </DialogFooter>
+        </DialogPopup>
+      </Dialog>
     </>
   );
 }
