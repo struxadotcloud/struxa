@@ -608,7 +608,8 @@
           "referral_bonus": "Empfehlungsbonus",
           "referral_commission": "Empfehlungsprovision",
           "wallet_topup": "Geldbörse über Zahlungsanbieter aufgeladen",
-          "wallet_topup_via": "Geldbörse aufgeladen via {provider}"
+          "wallet_topup_via": "Geldbörse aufgeladen via {provider}",
+          "extension": "Verlängerung"
         },
         "referral": {
           "title": "Empfehlungsprogramm",

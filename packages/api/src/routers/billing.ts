@@ -1258,7 +1258,7 @@ export const billingRouter = {
       const durationDays = DURATION_DAYS[priceRow.duration] ?? 30;
       const durationLabel = DURATION_LABELS[priceRow.duration] ?? priceRow.duration;
       const planName = sub.plan?.name ?? "";
-      const txDescription = `${planName} — +${durationLabel}`;
+      const txDescription = `${planName} — extension:${priceRow.duration}`;
       const priceCents = priceRow.priceCents;
 
       const wallet = await db.query.billingWallet.findFirst({

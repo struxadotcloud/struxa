@@ -406,6 +406,13 @@ export default function WalletPage() {
                           const sep = desc.lastIndexOf(" — ");
                           if (sep !== -1) {
                             const rawSuffix = desc.slice(sep + 3);
+                            if (rawSuffix.startsWith("extension:")) {
+                              const durKey = rawSuffix.slice("extension:".length);
+                              const dur = DURATION_KEYS.has(durKey) ? durKey : null;
+                              if (dur) {
+                                return <span className="ml-1.5 font-normal text-muted-foreground">— {desc.slice(0, sep)} — {t("txDescriptions.extension")} ({tBilling(`durations.${dur}`)})</span>;
+                              }
+                            }
                             const suffix = DURATION_KEYS.has(rawSuffix) ? rawSuffix : (DURATION_LEGACY[rawSuffix] ?? null);
                             if (suffix) {
                               return <span className="ml-1.5 font-normal text-muted-foreground">— {desc.slice(0, sep)} — {tBilling(`durations.${suffix}`)}</span>;

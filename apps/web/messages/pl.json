@@ -608,7 +608,8 @@
           "referral_bonus": "Bonus polecający",
           "referral_commission": "Prowizja polecającego",
           "wallet_topup": "Doładowanie portfela przez dostawcę płatności",
-          "wallet_topup_via": "Doładowanie portfela przez {provider}"
+          "wallet_topup_via": "Doładowanie portfela przez {provider}",
+          "extension": "Przedłużenie"
         },
         "referral": {
           "title": "Program polecający",

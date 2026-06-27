@@ -608,7 +608,8 @@
           "referral_bonus": "Bonus de parrainage",
           "referral_commission": "Commission de parrainage",
           "wallet_topup": "Rechargement du portefeuille via le fournisseur de paiement",
-          "wallet_topup_via": "Rechargement du portefeuille via {provider}"
+          "wallet_topup_via": "Rechargement du portefeuille via {provider}",
+          "extension": "Prolongation"
         },
         "referral": {
           "title": "Programme de parrainage",

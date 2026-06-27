@@ -321,7 +321,8 @@
           "referral_bonus": "Referral Bonus",
           "referral_commission": "Referral Commission",
           "wallet_topup": "Wallet top-up via payment provider",
-          "wallet_topup_via": "Wallet top-up via {provider}"
+          "wallet_topup_via": "Wallet top-up via {provider}",
+          "extension": "Extension"
         },
         "referral": {
           "title": "Referral Program",
