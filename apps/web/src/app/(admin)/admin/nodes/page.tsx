@@ -178,7 +178,10 @@ function NodeRow({
             {node.fqdn}:{node.daemonListen}
           </span>
           <span className="text-xs text-muted-foreground">
-            {(node.memory / 1024).toFixed(1)} GB · {(node.disk / 1024).toFixed(1)} GB
+            {t("resources", {
+              memory: (node.memory / 1024).toFixed(1),
+              disk: (node.disk / 1024).toFixed(1),
+            })}
           </span>
           <div className="flex items-center justify-end">
             <RowMenu items={actions} />
@@ -446,7 +449,7 @@ export default function NodesPage() {
   }
 
   async function handleCreateLocation() {
-    if (!locationForm.name.trim() || !locationForm.short.trim()) return;
+    if (!locationForm.name.trim() || !locationForm.short.trim() || createLocationMutation.isPending) return;
     try {
       await createLocationMutation.mutateAsync(locationForm);
       closeCreateLocation();
@@ -456,7 +459,7 @@ export default function NodesPage() {
   }
 
   async function handleUpdateLocation(form: { name: string; short: string; long: string }) {
-    if (!editingLocation || !form.name.trim() || !form.short.trim()) return;
+    if (!editingLocation || !form.name.trim() || !form.short.trim() || updateLocationMutation.isPending) return;
     try {
       await updateLocationMutation.mutateAsync({ id: editingLocation.id, ...form });
       setEditingLocation(null);

@@ -141,10 +141,13 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
       setIsFetchingUrl(true);
       try {
         const res = await fetch(importUrl.trim());
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) {
+          setUrlFetchError(t("urlFetchFailed", { status: res.status }));
+          return;
+        }
         json = await res.text();
       } catch (e) {
-        setUrlFetchError(e instanceof Error ? e.message : String(e));
+        setUrlFetchError(e instanceof Error ? e.message : t("urlFetchFailed", { status: "?" }));
         return;
       } finally {
         setIsFetchingUrl(false);
@@ -278,10 +281,11 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
               />
             )}
 
-            {(urlFetchError ?? (importMutation.isError ? importMutation.error.message : null)) && (
-              <span className="text-xs text-destructive">
-                {urlFetchError ?? importMutation.error?.message}
-              </span>
+            {importMode === "url" && urlFetchError && (
+              <span className="text-xs text-destructive">{urlFetchError}</span>
+            )}
+            {importMutation.isError && (
+              <span className="text-xs text-destructive">{importMutation.error.message}</span>
             )}
           </div>
 
