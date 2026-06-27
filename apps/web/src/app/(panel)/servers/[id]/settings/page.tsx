@@ -223,6 +223,7 @@ type ServerVariable = {
 
 export default function SettingsPage({ params }: { params: Promise<{ id: string }> }) {
   const t = useTranslations("panel.settings");
+  const tBilling = useTranslations("panel.billing");
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
   const { id } = use(params);
@@ -634,7 +635,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
                             selected ? "border-foreground bg-foreground/5 shadow-sm" : "border-border hover:border-foreground/30",
                           )}
                         >
-                          <span className="text-sm font-medium">{price.duration}</span>
+                          <span className="text-sm font-medium">{tBilling(`durations.${price.duration}`)}</span>
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-semibold">{formatCents(price.priceCents)}</span>
                             <div className={cn(
