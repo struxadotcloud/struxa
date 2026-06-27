@@ -22,7 +22,6 @@ import {
 } from "@struxa/ui/components/dropdown-menu";
 import {
   LayoutDashboard,
-  MapPin,
   Server,
   Package,
   Database,
@@ -59,7 +58,6 @@ export function AdminSidebar() {
 
   const NAV_ITEMS = [
     { key: "dashboard", label: t("dashboard"), icon: LayoutDashboard, href: "/admin" },
-    { key: "locations", label: t("locations"), icon: MapPin, href: "/admin/locations" },
     { key: "nodes", label: t("nodes"), icon: Server, href: "/admin/nodes" },
     { key: "nests", label: t("nestsAndEggs"), icon: Package, href: "/admin/nests" },
     { key: "database-hosts", label: t("databaseHosts"), icon: Database, href: "/admin/database-hosts" },
