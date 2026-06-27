@@ -1178,6 +1178,184 @@ export const billingRouter = {
       return { subscriptionId, invoiceId, serverId, serverUuid };
     }),
 
+  getServerSubscription: protectedProcedure
+    .input(z.object({ serverId: z.string().uuid() }))
+    .handler(async ({ context, input }) => {
+      const server = await db.query.servers.findFirst({
+        where: eq(servers.uuid, input.serverId),
+        columns: { subscriptionId: true, userId: true },
+      });
+      if (!server || server.userId !== context.session.user.id) throw new ORPCError("NOT_FOUND");
+      if (!server.subscriptionId) throw new ORPCError("NOT_FOUND");
+
+      const sub = await db.query.billingSubscriptions.findFirst({
+        where: eq(billingSubscriptions.id, server.subscriptionId),
+        with: {
+          plan: { columns: { id: true, name: true } },
+          price: { columns: { priceCents: true, duration: true } },
+        },
+      });
+      if (!sub) throw new ORPCError("NOT_FOUND");
+
+      const availablePrices = await db.query.billingPlanPrices.findMany({
+        where: and(
+          eq(billingPlanPrices.planId, sub.planId),
+          eq(billingPlanPrices.isActive, true),
+        ),
+        columns: { id: true, duration: true, priceCents: true },
+        orderBy: [asc(billingPlanPrices.priceCents)],
+      });
+
+      return {
+        subscriptionId: sub.id,
+        status: sub.status,
+        currentPeriodEnd: sub.currentPeriodEnd,
+        planName: sub.plan?.name ?? "",
+        currency: sub.currency,
+        cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
+        availablePrices: availablePrices.map((p) => ({
+          id: p.id,
+          duration: p.duration,
+          priceCents: p.priceCents,
+        })),
+      };
+    }),
+
+  extendSubscription: protectedProcedure
+    .input(z.object({ subscriptionId: z.string().uuid(), priceId: z.string().uuid() }))
+    .handler(async ({ context, input }) => {
+      const userId = context.session.user.id;
+
+      const sub = await db.query.billingSubscriptions.findFirst({
+        where: and(
+          eq(billingSubscriptions.id, input.subscriptionId),
+          eq(billingSubscriptions.userId, userId),
+        ),
+      });
+      if (!sub) throw new ORPCError("NOT_FOUND");
+      if (!["active", "trialing", "past_due"].includes(sub.status)) {
+        throw new ORPCError("BAD_REQUEST", { message: "Subscription cannot be extended" });
+      }
+
+      const priceRow = await db.query.billingPlanPrices.findFirst({
+        where: and(
+          eq(billingPlanPrices.id, input.priceId),
+          eq(billingPlanPrices.planId, sub.planId),
+          eq(billingPlanPrices.isActive, true),
+        ),
+      });
+      if (!priceRow) throw new ORPCError("NOT_FOUND", { message: "Price not found for this plan" });
+
+      const durationDays = DURATION_DAYS[priceRow.duration] ?? 30;
+      const priceCents = priceRow.priceCents;
+
+      const wallet = await db.query.billingWallet.findFirst({
+        where: eq(billingWallet.userId, userId),
+      });
+      if ((wallet?.balanceCents ?? 0) < priceCents) {
+        throw new ORPCError("BAD_REQUEST", { data: { code: "INSUFFICIENT_FUNDS" } });
+      }
+
+      const settingsRows = await db.select().from(settings);
+      const currency = ((Object.fromEntries(settingsRows.map((r) => [r.key, r.value ?? ""]))).billing_default_currency || "USD").toUpperCase();
+
+      const invoiceId = randomUUID();
+      const invoiceItemId = randomUUID();
+      const walletTxId = randomUUID();
+      const transactionId = randomUUID();
+      const now = new Date();
+      const newPeriodEnd = new Date((sub.currentPeriodEnd ?? now).getTime() + durationDays * 86400 * 1000);
+
+      const invoiceNumber = `INV-${Date.now()}-${randomBytes(3).toString("hex").toUpperCase()}`;
+
+      await db.transaction(async (tx) => {
+        let balanceAfter = (wallet?.balanceCents ?? 0) - priceCents;
+
+        if (priceCents > 0) {
+          const result = await tx
+            .update(billingWallet)
+            .set({ balanceCents: sql`${billingWallet.balanceCents} - ${priceCents}` })
+            .where(and(
+              eq(billingWallet.userId, userId),
+              gte(billingWallet.balanceCents, priceCents),
+            ));
+          if ((result as unknown as [{ affectedRows: number }])[0].affectedRows !== 1) {
+            throw new ORPCError("BAD_REQUEST", { data: { code: "INSUFFICIENT_FUNDS" } });
+          }
+          const refreshed = await tx.query.billingWallet.findFirst({
+            where: eq(billingWallet.userId, userId),
+            columns: { balanceCents: true },
+          });
+          balanceAfter = refreshed?.balanceCents ?? balanceAfter;
+        }
+
+        await tx
+          .update(billingSubscriptions)
+          .set({ currentPeriodEnd: newPeriodEnd, cancelAtPeriodEnd: false, canceledAt: null })
+          .where(eq(billingSubscriptions.id, sub.id));
+
+        await tx.insert(billingInvoices).values({
+          id: invoiceId,
+          userId,
+          subscriptionId: sub.id,
+          invoiceNumber,
+          status: "paid",
+          currency,
+          subtotalCents: priceCents,
+          discountCents: 0,
+          totalCents: priceCents,
+          amountPaidCents: priceCents,
+          amountDueCents: 0,
+          paidAt: now,
+        });
+
+        await tx.insert(billingInvoiceItems).values({
+          id: invoiceItemId,
+          invoiceId,
+          description: `${sub.planId} — ${priceRow.duration} (extension)`,
+          quantity: 1,
+          unitAmountCents: priceCents,
+          totalCents: priceCents,
+          currency,
+          periodStart: sub.currentPeriodEnd ?? now,
+          periodEnd: newPeriodEnd,
+        });
+
+        if (priceCents > 0) {
+          await tx.insert(billingWalletTransactions).values({
+            id: walletTxId,
+            userId,
+            invoiceId,
+            amountCents: -priceCents,
+            balanceAfterCents: balanceAfter,
+            currency,
+            type: "charge",
+            description: `Extension — ${priceRow.duration}`,
+          });
+
+          await tx.insert(billingTransactions).values({
+            id: transactionId,
+            userId,
+            invoiceId,
+            type: "payment",
+            status: "succeeded",
+            amountCents: priceCents,
+            currency,
+            description: `Extension — ${priceRow.duration}`,
+          });
+        }
+      });
+
+      recordActivity({
+        eventType: "billing.subscription.extend",
+        userId,
+        ip: context.ip,
+        properties: { subscriptionId: sub.id, priceId: priceRow.id, amountCents: priceCents, newPeriodEnd },
+      });
+
+      return { newPeriodEnd };
+    }),
+
   cancelSubscription: protectedProcedure
     .input(z.object({ subscriptionId: z.string().uuid() }))
     .handler(async ({ context, input }) => {

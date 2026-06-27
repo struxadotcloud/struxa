@@ -229,6 +229,8 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
   const [reinstallConfirm, setReinstallConfirm] = useState(false);
   const [reinstallStep, setReinstallStep] = useState<1 | 2>(1);
   const [selectedEggId, setSelectedEggId] = useState<string | null>(null);
+  const [extendOpen, setExtendOpen] = useState(false);
+  const [extendPriceId, setExtendPriceId] = useState<string | null>(null);
   const isMobile = useMediaQuery("max-sm");
   const [nameStatus, setNameStatus] = useState<SaveStatus | undefined>(undefined);
   const [imageStatus, setImageStatus] = useState<SaveStatus | undefined>(undefined);
@@ -245,6 +247,28 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
   const { data: planEggs = [] } = useQuery(
     orpc.servers.listPlanEggs.queryOptions({ input: { serverId: id } }),
   );
+
+  const subscriptionQuery = useQuery({
+    ...orpc.billing.getServerSubscription.queryOptions({ input: { serverId: id } }),
+    enabled: !!(server?.subscriptionId),
+  });
+
+  const extendMutation = useMutation({
+    ...orpc.billing.extendSubscription.mutationOptions(),
+    onSuccess: () => {
+      setExtendOpen(false);
+      setExtendPriceId(null);
+      void queryClient.invalidateQueries(orpc.billing.getServerSubscription.queryOptions({ input: { serverId: id } }));
+      toast.success(t("subscriptionExtendSuccess"));
+    },
+    onError: (error: Error & { data?: { code?: string } }) => {
+      if (error.data?.code === "INSUFFICIENT_FUNDS") {
+        toast.error(t("subscriptionExtendInsufficientFunds"));
+      } else {
+        toast.error(error.message);
+      }
+    },
+  });
 
   const reinstallMutation = useMutation({
     ...orpc.servers.reinstall.mutationOptions(),
@@ -577,6 +601,116 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
               );
             })}
           </SectionCard>
+
+          {server?.subscriptionId && (
+            <SectionCard title={t("subscriptionTitle")} description={t("subscriptionDescription")}>
+              {subscriptionQuery.data ? (() => {
+                const sub = subscriptionQuery.data;
+                const periodEnd = sub.currentPeriodEnd ? new Date(sub.currentPeriodEnd) : null;
+                const expiringSoon = periodEnd ? (periodEnd.getTime() - Date.now()) < 7 * 24 * 60 * 60 * 1000 : false;
+                const selectedPrice = sub.availablePrices.find((p) => p.id === extendPriceId) ?? sub.availablePrices[0] ?? null;
+                if (!extendPriceId && selectedPrice) setExtendPriceId(selectedPrice.id);
+
+                const formatCents = (cents: number) =>
+                  new Intl.NumberFormat(undefined, { style: "currency", currency: sub.currency, minimumFractionDigits: 2 }).format(cents / 100);
+
+                const extendDialogBody = (
+                  <div className="px-5 py-4 flex flex-col gap-2">
+                    {expiringSoon && (
+                      <div className="flex items-center gap-2 rounded-lg border border-amber-400/30 bg-amber-400/10 px-3 py-2 mb-1">
+                        <AlertTriangle className="size-3.5 shrink-0 text-amber-500" />
+                        <span className="text-xs text-amber-600">{t("subscriptionExtendExpiringSoon")}</span>
+                      </div>
+                    )}
+                    {sub.availablePrices.map((price) => {
+                      const selected = extendPriceId === price.id;
+                      return (
+                        <button
+                          key={price.id}
+                          type="button"
+                          onClick={() => setExtendPriceId(price.id)}
+                          className={cn(
+                            "flex items-center justify-between rounded-xl border px-4 py-3 text-left transition-all",
+                            selected ? "border-foreground bg-foreground/5 shadow-sm" : "border-border hover:border-foreground/30",
+                          )}
+                        >
+                          <span className="text-sm font-medium">{price.duration}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold">{formatCents(price.priceCents)}</span>
+                            <div className={cn(
+                              "flex h-4 w-4 items-center justify-center rounded-full border transition-colors",
+                              selected ? "border-foreground bg-foreground" : "border-border",
+                            )}>
+                              {selected && <div className="h-1.5 w-1.5 rounded-full bg-background" />}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                );
+
+                const extendDialogFooter = (
+                  <DialogFooter>
+                    <Button variant="outline" size="sm" onClick={() => setExtendOpen(false)}>{t("cancel")}</Button>
+                    <Button
+                      size="sm"
+                      disabled={!extendPriceId || extendMutation.isPending}
+                      onClick={() => extendPriceId && extendMutation.mutate({ subscriptionId: sub.subscriptionId, priceId: extendPriceId })}
+                    >
+                      {extendMutation.isPending ? t("subscriptionExtending") : t("subscriptionExtendConfirm")}
+                    </Button>
+                  </DialogFooter>
+                );
+
+                return (
+                  <>
+                    <SettingRow label={t("subscriptionExpiresLabel")}>
+                      <div className="flex items-center gap-2">
+                        {expiringSoon && <AlertTriangle className="size-3.5 text-amber-500" />}
+                        <span className={cn("text-sm font-medium", expiringSoon ? "text-amber-600" : "text-foreground")}>
+                          {periodEnd ? periodEnd.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : "—"}
+                        </span>
+                      </div>
+                    </SettingRow>
+                    <SettingRow label={t("subscriptionExtendLabel")} description={t("subscriptionExtendDescription")}>
+                      <button
+                        type="button"
+                        onClick={() => setExtendOpen(true)}
+                        className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+                      >
+                        {t("subscriptionExtendButton")}
+                      </button>
+                    </SettingRow>
+
+                    {isMobile ? (
+                      <Sheet open={extendOpen} onOpenChange={(open) => { if (!open) setExtendOpen(false); }}>
+                        <SheetPopup side="bottom" showCloseButton={false} className="rounded-t-2xl">
+                          <SheetHeader>
+                            <SheetTitle>{t("subscriptionExtendDialogTitle")}</SheetTitle>
+                            <SheetDescription>{t("subscriptionExtendDialogDescription")}</SheetDescription>
+                          </SheetHeader>
+                          {extendDialogBody}
+                          {extendDialogFooter}
+                        </SheetPopup>
+                      </Sheet>
+                    ) : (
+                      <Dialog open={extendOpen} onOpenChange={(open) => { if (!open) setExtendOpen(false); }}>
+                        <DialogPopup showCloseButton={false} className="max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>{t("subscriptionExtendDialogTitle")}</DialogTitle>
+                            <DialogDescription>{t("subscriptionExtendDialogDescription")}</DialogDescription>
+                          </DialogHeader>
+                          {extendDialogBody}
+                          {extendDialogFooter}
+                        </DialogPopup>
+                      </Dialog>
+                    )}
+                  </>
+                );
+              })() : null}
+            </SectionCard>
+          )}
 
           <SectionCard title={t("dangerZoneTitle")} description={t("dangerZoneDescription")}>
             <SettingRow
