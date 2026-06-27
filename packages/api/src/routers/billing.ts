@@ -41,13 +41,6 @@ const DURATION_DAYS: Record<string, number> = {
   "1year": 365,
 };
 
-const DURATION_LABELS: Record<string, string> = {
-  "7day": "7 Days",
-  "1month": "1 Month",
-  "3months": "3 Months",
-  "6months": "6 Months",
-  "1year": "1 Year",
-};
 
 function slugify(s: string) {
   return s.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
@@ -1256,10 +1249,10 @@ export const billingRouter = {
       if (!priceRow) throw new ORPCError("NOT_FOUND", { message: "Price not found for this plan" });
 
       const durationDays = DURATION_DAYS[priceRow.duration] ?? 30;
-      const durationLabel = DURATION_LABELS[priceRow.duration] ?? priceRow.duration;
       const planName = sub.plan?.name ?? "";
       const txDescription = `${planName} — extension:${priceRow.duration}`;
       const priceCents = priceRow.priceCents;
+      const currency = sub.currency;
 
       const wallet = await db.query.billingWallet.findFirst({
         where: eq(billingWallet.userId, userId),
@@ -1268,17 +1261,15 @@ export const billingRouter = {
         throw new ORPCError("BAD_REQUEST", { data: { code: "INSUFFICIENT_FUNDS" } });
       }
 
-      const settingsRows = await db.select().from(settings);
-      const currency = ((Object.fromEntries(settingsRows.map((r) => [r.key, r.value ?? ""]))).billing_default_currency || "USD").toUpperCase();
-
       const invoiceId = randomUUID();
       const invoiceItemId = randomUUID();
       const walletTxId = randomUUID();
       const transactionId = randomUUID();
       const now = new Date();
-      const newPeriodEnd = new Date((sub.currentPeriodEnd ?? now).getTime() + durationDays * 86400 * 1000);
 
       const invoiceNumber = `INV-${Date.now()}-${randomBytes(3).toString("hex").toUpperCase()}`;
+
+      let newPeriodEnd: Date = new Date((sub.currentPeriodEnd ?? now).getTime() + durationDays * 86400 * 1000);
 
       await db.transaction(async (tx) => {
         let balanceAfter = (wallet?.balanceCents ?? 0) - priceCents;
@@ -1303,8 +1294,18 @@ export const billingRouter = {
 
         await tx
           .update(billingSubscriptions)
-          .set({ currentPeriodEnd: newPeriodEnd, cancelAtPeriodEnd: false, canceledAt: null })
+          .set({
+            currentPeriodEnd: sql`DATE_ADD(COALESCE(${billingSubscriptions.currentPeriodEnd}, NOW()), INTERVAL ${durationDays} DAY)`,
+            cancelAtPeriodEnd: false,
+            canceledAt: null,
+          })
           .where(eq(billingSubscriptions.id, sub.id));
+
+        const updatedSub = await tx.query.billingSubscriptions.findFirst({
+          where: eq(billingSubscriptions.id, sub.id),
+          columns: { currentPeriodEnd: true },
+        });
+        newPeriodEnd = updatedSub?.currentPeriodEnd ?? newPeriodEnd;
 
         await tx.insert(billingInvoices).values({
           id: invoiceId,

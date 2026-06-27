@@ -254,6 +254,12 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
     enabled: !!(server?.subscriptionId),
   });
 
+  useEffect(() => {
+    if (!extendPriceId && subscriptionQuery.data?.availablePrices[0]) {
+      setExtendPriceId(subscriptionQuery.data.availablePrices[0].id);
+    }
+  }, [subscriptionQuery.data, extendPriceId]);
+
   const extendMutation = useMutation({
     ...orpc.billing.extendSubscription.mutationOptions(),
     onSuccess: () => {
@@ -609,9 +615,6 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
                 const sub = subscriptionQuery.data;
                 const periodEnd = sub.currentPeriodEnd ? new Date(sub.currentPeriodEnd) : null;
                 const expiringSoon = periodEnd ? (periodEnd.getTime() - Date.now()) < 7 * 24 * 60 * 60 * 1000 : false;
-                const selectedPrice = sub.availablePrices.find((p) => p.id === extendPriceId) ?? sub.availablePrices[0] ?? null;
-                if (!extendPriceId && selectedPrice) setExtendPriceId(selectedPrice.id);
-
                 const formatCents = (cents: number) =>
                   new Intl.NumberFormat(undefined, { style: "currency", currency: sub.currency, minimumFractionDigits: 2 }).format(cents / 100);
 
