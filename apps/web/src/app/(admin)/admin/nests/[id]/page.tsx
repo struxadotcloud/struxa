@@ -62,6 +62,8 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
 
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [isFetchingUrl, setIsFetchingUrl] = useState(false);
+  const [urlFetchError, setUrlFetchError] = useState<string | null>(null);
   const [nestName, setNestName] = useState("");
   const [nestAuthor, setNestAuthor] = useState("");
   const [nestDescription, setNestDescription] = useState("");
@@ -82,6 +84,9 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   useEffect(() => setPage(1), [search]);
+  useEffect(() => {
+    if (totalPages > 0 && page > totalPages) setPage(totalPages);
+  }, [totalPages, page]);
 
   useEffect(() => {
     if (nest) {
@@ -126,18 +131,34 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
     if (importFileRef.current) importFileRef.current.value = "";
   }
 
+  const isImporting = importMutation.isPending || isFetchingUrl;
+
   async function handleImport() {
     let json = importJson.trim();
+    setUrlFetchError(null);
     if (importMode === "url") {
       if (!importUrl.trim()) return;
-      const res = await fetch(importUrl.trim());
-      json = await res.text();
+      setIsFetchingUrl(true);
+      try {
+        const res = await fetch(importUrl.trim());
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        json = await res.text();
+      } catch (e) {
+        setUrlFetchError(e instanceof Error ? e.message : String(e));
+        return;
+      } finally {
+        setIsFetchingUrl(false);
+      }
     }
     if (!json) return;
-    await importMutation.mutateAsync({ nestId, json });
-    setImportJson("");
-    setImportUrl("");
-    setShowImport(false);
+    try {
+      await importMutation.mutateAsync({ nestId, json });
+      setImportJson("");
+      setImportUrl("");
+      setShowImport(false);
+    } catch {
+      // error shown via importMutation.isError
+    }
   }
 
   async function handleSaveNest() {
@@ -188,17 +209,19 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
           <div className="flex flex-col gap-4 px-5 py-4">
             <input
               ref={importFileRef}
+              id="egg-import-file"
               type="file"
               accept=".json"
               className="hidden"
               onChange={handleFileChange}
             />
-            <div
+            <button
+              type="button"
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               onClick={() => importFileRef.current?.click()}
-              className={`flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed px-4 py-6 text-center transition-colors ${
+              className={`flex w-full cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed px-4 py-6 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                 isDragging
                   ? "border-ring bg-muted/60"
                   : "border-border bg-muted/20 hover:border-ring/50 hover:bg-muted/40"
@@ -206,7 +229,7 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
             >
               <FileJson className="h-8 w-8 text-muted-foreground/60" />
               <span className="text-sm text-muted-foreground">{t("dropzoneLabel")}</span>
-            </div>
+            </button>
 
             <div className="flex gap-0 border-b border-border">
               <button
@@ -238,7 +261,7 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
                 autoFocus
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
                 rows={8}
-                placeholder='{"name": "...", "startup": "...", ...}'
+                placeholder={t("jsonPlaceholder")}
                 value={importJson}
                 onChange={(e) => setImportJson(e.target.value)}
               />
@@ -255,8 +278,10 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
               />
             )}
 
-            {importMutation.isError && (
-              <span className="text-xs text-destructive">{importMutation.error.message}</span>
+            {(urlFetchError ?? (importMutation.isError ? importMutation.error.message : null)) && (
+              <span className="text-xs text-destructive">
+                {urlFetchError ?? importMutation.error?.message}
+              </span>
             )}
           </div>
 
@@ -267,10 +292,10 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
             <button
               type="button"
               onClick={handleImport}
-              disabled={importMutation.isPending}
+              disabled={isImporting}
               className="rounded-lg bg-foreground px-4 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
             >
-              {importMutation.isPending ? tc("importing") : tc("import")}
+              {isImporting ? tc("importing") : tc("import")}
             </button>
           </DialogFooter>
         </DialogPopup>
@@ -395,6 +420,7 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
             <div className="flex items-center justify-center gap-1">
               <button
                 type="button"
+                aria-label={t("prevPage")}
                 disabled={page <= 1}
                 onClick={() => setPage((p) => p - 1)}
                 className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-card text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-30"
@@ -410,6 +436,7 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
                   <button
                     key={n}
                     type="button"
+                    aria-current={n === page ? "page" : undefined}
                     onClick={() => setPage(n)}
                     className={`flex h-7 w-7 items-center justify-center rounded-md text-xs font-medium transition-colors ${
                       n === page
@@ -423,6 +450,7 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
               )}
               <button
                 type="button"
+                aria-label={t("nextPage")}
                 disabled={page >= totalPages}
                 onClick={() => setPage((p) => p + 1)}
                 className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-card text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-30"

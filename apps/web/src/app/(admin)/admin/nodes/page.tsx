@@ -121,6 +121,74 @@ function inputCls(small?: boolean) {
 
 type LocationData = { id: string; name: string; short: string; long: string | null };
 
+type NodeItem = {
+  id: string;
+  name: string;
+  fqdn: string;
+  daemonListen: number;
+  scheme: string;
+  maintenanceMode: boolean;
+  memory: number;
+  disk: number;
+  locationId: string;
+};
+
+function NodeRow({
+  node,
+  isLast,
+  onDelete,
+}: {
+  node: NodeItem;
+  isLast: boolean;
+  onDelete: (id: string) => void;
+}) {
+  const t = useTranslations("admin.nodes");
+  const tc = useTranslations("common");
+  const actions: ActionItem[] = [
+    { label: tc("delete"), icon: Trash2, onClick: () => onDelete(node.id), destructive: true },
+  ];
+  return (
+    <ContextMenu items={actions}>
+      {({ onContextMenu }) => (
+        <div
+          onContextMenu={onContextMenu}
+          className={`grid grid-cols-[24px_1fr_200px_160px_48px] items-center pl-10 pr-4 py-3 hover:bg-muted/40 transition-colors ${!isLast ? "border-b border-border" : ""}`}
+        >
+          <NodeStatusDot
+            fqdn={node.fqdn}
+            daemonListen={node.daemonListen}
+            scheme={node.scheme}
+            maintenanceMode={node.maintenanceMode}
+          />
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/admin/nodes/${node.id}` as never}
+              className="text-sm font-medium text-foreground transition-colors hover:text-green-500"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {node.name}
+            </Link>
+            {node.maintenanceMode && (
+              <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                {t("maintenance")}
+              </span>
+            )}
+          </div>
+          <span className="text-xs text-muted-foreground">
+            {node.fqdn}:{node.daemonListen}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {(node.memory / 1024).toFixed(1)} GB · {(node.disk / 1024).toFixed(1)} GB
+          </span>
+          <div className="flex items-center justify-end">
+            <RowMenu items={actions} />
+          </div>
+        </div>
+      )}
+    </ContextMenu>
+  );
+}
+
 function LocationEditModal({
   location,
   onClose,
@@ -329,7 +397,7 @@ export default function NodesPage() {
     : allLocations;
 
   const assignedIds = new Set(allLocations.map((l) => l.id));
-  const unassignedNodes = allNodes.filter((n) => !assignedIds.has(n.locationId ?? ""));
+  const unassignedNodes = allNodes.filter((n) => !assignedIds.has(n.locationId));
   const visibleUnassigned = q
     ? unassignedNodes.filter(
         (n) => n.name.toLowerCase().includes(q) || n.fqdn.toLowerCase().includes(q),
@@ -364,8 +432,12 @@ export default function NodesPage() {
 
   async function handleCreateNode() {
     if (!nodeForm.name.trim() || !nodeForm.locationId || !nodeForm.fqdn.trim()) return;
-    await createNodeMutation.mutateAsync(nodeForm);
-    closeCreateNode();
+    try {
+      await createNodeMutation.mutateAsync(nodeForm);
+      closeCreateNode();
+    } catch {
+      // error shown via createNodeMutation.isError
+    }
   }
 
   function closeCreateLocation() {
@@ -375,14 +447,22 @@ export default function NodesPage() {
 
   async function handleCreateLocation() {
     if (!locationForm.name.trim() || !locationForm.short.trim()) return;
-    await createLocationMutation.mutateAsync(locationForm);
-    closeCreateLocation();
+    try {
+      await createLocationMutation.mutateAsync(locationForm);
+      closeCreateLocation();
+    } catch {
+      // error shown via createLocationMutation.isError
+    }
   }
 
   async function handleUpdateLocation(form: { name: string; short: string; long: string }) {
     if (!editingLocation || !form.name.trim() || !form.short.trim()) return;
-    await updateLocationMutation.mutateAsync({ id: editingLocation.id, ...form });
-    setEditingLocation(null);
+    try {
+      await updateLocationMutation.mutateAsync({ id: editingLocation.id, ...form });
+      setEditingLocation(null);
+    } catch {
+      // error shown via updateLocationMutation.isError (surfaced through LocationEditModal)
+    }
   }
 
   function locationActions(loc: LocationData): ActionItem[] {
@@ -402,70 +482,9 @@ export default function NodesPage() {
     ];
   }
 
-  function nodeActions(node: { id: string }): ActionItem[] {
-    return [
-      {
-        label: tc("delete"),
-        icon: Trash2,
-        onClick: () => setConfirmDeleteNode(node.id),
-        destructive: true,
-      },
-    ];
-  }
-
   const hasAny = allLocations.length > 0 || allNodes.length > 0;
   const noResults =
     !isLoading && hasAny && visibleLocations.length === 0 && visibleUnassigned.length === 0;
-
-  function NodeRow({
-    node,
-    isLast,
-  }: {
-    node: (typeof allNodes)[number];
-    isLast: boolean;
-  }) {
-    const actions = nodeActions(node);
-    return (
-      <ContextMenu items={actions}>
-        {({ onContextMenu }) => (
-          <div
-            onContextMenu={onContextMenu}
-            className={`grid grid-cols-[24px_1fr_200px_160px_48px] items-center pl-10 pr-4 py-3 hover:bg-muted/40 transition-colors ${!isLast ? "border-b border-border" : ""}`}
-          >
-            <NodeStatusDot
-              fqdn={node.fqdn}
-              daemonListen={node.daemonListen}
-              scheme={node.scheme}
-              maintenanceMode={node.maintenanceMode}
-            />
-            <div className="flex items-center gap-2">
-              <Link
-                href={`/admin/nodes/${node.id}` as never}
-                className="text-sm font-medium text-foreground transition-colors hover:text-green-500"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {node.name}
-              </Link>
-              {node.maintenanceMode && (
-                <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                  {t("maintenance")}
-                </span>
-              )}
-            </div>
-            <span className="text-xs text-muted-foreground">
-              {node.fqdn}:{node.daemonListen}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {(node.memory / 1024).toFixed(1)} GB · {(node.disk / 1024).toFixed(1)} GB
-            </span>
-            <div className="flex items-center justify-end">
-              <RowMenu items={actions} />
-            </div>
-          </div>
-        )}
-      </ContextMenu>
-    );
-  }
 
   return (
     <>
@@ -589,7 +608,7 @@ export default function NodesPage() {
                   <DropdownMenuTrigger className="flex w-full items-center justify-between rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors hover:border-ring data-[popup-open]:border-ring">
                     <span className={nodeForm.locationId ? "text-foreground" : "text-muted-foreground/50"}>
                       {nodeForm.locationId
-                        ? (allLocations.find((l) => l.id === nodeForm.locationId)?.name ?? "Select…")
+                        ? (allLocations.find((l) => l.id === nodeForm.locationId)?.name ?? t("locationPlaceholder"))
                         : t("locationPlaceholder")}
                     </span>
                     <ChevronDown className="ml-2 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -908,7 +927,7 @@ export default function NodesPage() {
                             ni === locNodes.length - 1 &&
                             visibleUnassigned.length === 0;
                           return (
-                            <NodeRow key={node.id} node={node} isLast={isAbsoluteLast} />
+                            <NodeRow key={node.id} node={node} isLast={isAbsoluteLast} onDelete={setConfirmDeleteNode} />
                           );
                         })}
                     </div>
@@ -948,6 +967,7 @@ export default function NodesPage() {
                           key={node.id}
                           node={node}
                           isLast={ni === visibleUnassigned.length - 1}
+                          onDelete={setConfirmDeleteNode}
                         />
                       ))}
                   </div>
