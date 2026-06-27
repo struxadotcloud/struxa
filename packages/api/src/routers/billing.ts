@@ -41,6 +41,14 @@ const DURATION_DAYS: Record<string, number> = {
   "1year": 365,
 };
 
+const DURATION_LABELS: Record<string, string> = {
+  "7day": "7 Days",
+  "1month": "1 Month",
+  "3months": "3 Months",
+  "6months": "6 Months",
+  "1year": "1 Year",
+};
+
 function slugify(s: string) {
   return s.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
 }
@@ -1231,6 +1239,7 @@ export const billingRouter = {
           eq(billingSubscriptions.id, input.subscriptionId),
           eq(billingSubscriptions.userId, userId),
         ),
+        with: { plan: { columns: { name: true } } },
       });
       if (!sub) throw new ORPCError("NOT_FOUND");
       if (!["active", "trialing", "past_due"].includes(sub.status)) {
@@ -1247,6 +1256,9 @@ export const billingRouter = {
       if (!priceRow) throw new ORPCError("NOT_FOUND", { message: "Price not found for this plan" });
 
       const durationDays = DURATION_DAYS[priceRow.duration] ?? 30;
+      const durationLabel = DURATION_LABELS[priceRow.duration] ?? priceRow.duration;
+      const planName = sub.plan?.name ?? "";
+      const txDescription = `${planName} — +${durationLabel}`;
       const priceCents = priceRow.priceCents;
 
       const wallet = await db.query.billingWallet.findFirst({
@@ -1312,7 +1324,7 @@ export const billingRouter = {
         await tx.insert(billingInvoiceItems).values({
           id: invoiceItemId,
           invoiceId,
-          description: `${sub.planId} — ${priceRow.duration} (extension)`,
+          description: txDescription,
           quantity: 1,
           unitAmountCents: priceCents,
           totalCents: priceCents,
@@ -1330,7 +1342,7 @@ export const billingRouter = {
             balanceAfterCents: balanceAfter,
             currency,
             type: "charge",
-            description: `Extension — ${priceRow.duration}`,
+            description: txDescription,
           });
 
           await tx.insert(billingTransactions).values({
@@ -1341,7 +1353,7 @@ export const billingRouter = {
             status: "succeeded",
             amountCents: priceCents,
             currency,
-            description: `Extension — ${priceRow.duration}`,
+            description: txDescription,
           });
         }
       });
