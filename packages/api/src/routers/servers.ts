@@ -450,6 +450,7 @@ export const serversRouter = {
           status: true, suspended: true, powerState: true, memory: true, disk: true,
           cpu: true, swap: true, io: true, threads: true, oomDisabled: true,
           image: true, startup: true, invocation: true, skipScripts: true, userId: true,
+          subscriptionId: true,
         },
         with: {
           allocation: { columns: { ip: true, ipAlias: true, port: true } },
