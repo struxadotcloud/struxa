@@ -376,7 +376,17 @@
       "statsMemory": "Memory",
       "statsDisk": "Disk",
       "statsInbound": "Inbound",
-      "statsOutbound": "Outbound"
+      "statsOutbound": "Outbound",
+      "eulaTitle": "Minecraft EULA",
+      "eulaDescription": "This server requires you to agree to the Minecraft End User License Agreement before it can start. By accepting, you agree to the terms at aka.ms/MinecraftEULA.",
+      "eulaAccept": "Accept & Continue",
+      "eulaAcceptedToast": "EULA accepted. Restart the server to apply.",
+      "eulaErrorToast": "Failed to accept EULA",
+      "javaTitle": "Java Version Mismatch",
+      "javaDescription": "The server requires a different Java version. Update the JAVA_VERSION startup variable in Settings to match your server's requirements.",
+      "javaApply": "Apply & Restart",
+      "javaImageUpdatedToast": "Docker image updated. Restart the server to apply.",
+      "javaGoToSettings": "Go to Settings"
     },
     "server": {
       "suspended": "Suspended",

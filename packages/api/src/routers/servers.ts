@@ -456,7 +456,7 @@ export const serversRouter = {
           allocation: { columns: { ip: true, ipAlias: true, port: true } },
           node: { columns: { name: true, fqdn: true, daemonSFTP: true } },
           egg: {
-            columns: { id: true, uuid: true, name: true, startup: true, dockerImages: true },
+            columns: { id: true, uuid: true, name: true, startup: true, dockerImages: true, features: true },
             with: {
               variables: {
                 columns: {

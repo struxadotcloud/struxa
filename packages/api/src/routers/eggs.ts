@@ -237,6 +237,7 @@ export const eggsRouter = {
           rules?: string;
         }>;
         docker_images?: Record<string, string>;
+        features?: string[] | null;
       };
 
       const id = randomUUID();
@@ -250,6 +251,7 @@ export const eggsRouter = {
         description: raw.description ?? null,
         startup: raw.startup ?? "",
         dockerImages: JSON.stringify(raw.docker_images ?? {}),
+        features: raw.features?.length ? JSON.stringify(raw.features) : null,
         stopCommand: raw.config?.stop ?? null,
         configFiles: raw.config?.files ?? null,
         configStartup: raw.config?.startup ?? null,

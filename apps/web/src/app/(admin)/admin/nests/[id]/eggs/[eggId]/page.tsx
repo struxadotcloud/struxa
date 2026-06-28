@@ -212,7 +212,14 @@ export default function EggDetailPage({
   const nest = nests?.find((n) => n.id === nestId);
 
   const updateMutation = useMutation(
-    orpc.eggs.update.mutationOptions({ onSuccess: () => invalidateEgg(eggId) }),
+    orpc.eggs.update.mutationOptions({
+      onSuccess: (updatedEgg) => {
+        queryClient.setQueryData(
+          orpc.eggs.get.queryOptions({ input: { id: eggId } }).queryKey,
+          updatedEgg,
+        );
+      },
+    }),
   );
   const addVariableMutation = useMutation(
     orpc.eggs.addVariable.mutationOptions({ onSuccess: () => invalidateEgg(eggId) }),

@@ -245,7 +245,17 @@
       "statsMemory": "Speicher",
       "statsDisk": "Festplatte",
       "statsInbound": "Eingehend",
-      "statsOutbound": "Ausgehend"
+      "statsOutbound": "Ausgehend",
+      "eulaTitle": "Minecraft EULA",
+      "eulaDescription": "Dieser Server erfordert deine Zustimmung zur Minecraft-Endnutzerlizenzvereinbarung, bevor er gestartet werden kann. Mit der Annahme stimmst du den Bedingungen unter aka.ms/MinecraftEULA zu.",
+      "eulaAccept": "Akzeptieren & Fortfahren",
+      "eulaAcceptedToast": "EULA akzeptiert. Starte den Server neu, um die Änderungen anzuwenden.",
+      "eulaErrorToast": "EULA konnte nicht akzeptiert werden",
+      "javaTitle": "Java-Versionskonflikt",
+      "javaDescription": "Der Server erfordert eine andere Java-Version. Aktualisiere die Startvariable JAVA_VERSION in den Einstellungen entsprechend.",
+      "javaApply": "Anwenden & Neu starten",
+      "javaImageUpdatedToast": "Docker-Image aktualisiert. Starte den Server neu, um die Änderungen anzuwenden.",
+      "javaGoToSettings": "Zu den Einstellungen"
     },
     "server": {
       "suspended": "Gesperrt",

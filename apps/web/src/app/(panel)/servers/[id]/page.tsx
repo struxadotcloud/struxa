@@ -21,6 +21,21 @@ import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import Loader from "@/components/loader";
+import {
+  Dialog,
+  DialogPopup,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from "@struxa/ui/components/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@struxa/ui/components/dropdown-menu";
+import { ChevronDown } from "lucide-react";
 
 function fmtUptime(ms: number): string {
   if (ms <= 0) return "—";
@@ -173,6 +188,7 @@ const EMPTY_HISTORY = Array(60).fill(0) as number[];
 export default function ServerPage({ params }: { params: Promise<{ id: string }> }) {
   const t = useTranslations("panel.console");
   const tStatus = useTranslations("panel.serverStatus");
+  const tc = useTranslations("common");
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
   const { id } = use(params);
@@ -199,8 +215,37 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
   const [diskHistory, setDiskHistory] = useState<number[]>(EMPTY_HISTORY);
   const [rxHistory, setRxHistory] = useState<number[]>(EMPTY_HISTORY);
   const [txHistory, setTxHistory] = useState<number[]>(EMPTY_HISTORY);
+  const [eulaDialogOpen, setEulaDialogOpen] = useState(false);
+  const [javaDialogOpen, setJavaDialogOpen] = useState(false);
+  const [javaSelectedImage, setJavaSelectedImage] = useState("");
+  const eulaShownRef = useRef(false);
+  const javaShownRef = useRef(false);
 
   const { data: server } = useQuery(orpc.servers.get.queryOptions({ input: { id } }));
+  const eggFeaturesRef = useRef<string[]>([]);
+  const serverImageRef = useRef("");
+  useEffect(() => {
+    const prev = eggFeaturesRef.current;
+    try {
+      const parsed = JSON.parse(server?.egg?.features ?? "[]") as string[];
+      eggFeaturesRef.current = Array.isArray(parsed) ? parsed : [];
+    } catch {
+      eggFeaturesRef.current = [];
+    }
+    serverImageRef.current = server?.image ?? "";
+    const features = eggFeaturesRef.current;
+    if (prev.length === 0 && features.length > 0) {
+      if (features.includes("eula") && !eulaShownRef.current && lines.some((l) => /you need to agree to the eula/i.test(l))) {
+        eulaShownRef.current = true;
+        setEulaDialogOpen(true);
+      }
+      if (features.includes("java_version") && !javaShownRef.current && lines.some((l) => /unrecognized option|could not create the java virtual machine|unsupported java|requires java/i.test(l))) {
+        javaShownRef.current = true;
+        setJavaSelectedImage(serverImageRef.current);
+        setJavaDialogOpen(true);
+      }
+    }
+  }, [server?.egg?.features, server?.image, lines]);
 
   const [reconnectKey, setReconnectKey] = useState(0);
 
@@ -236,6 +281,16 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
           } else if (msg.event === "console output") {
             const line = msg.args?.[0] ?? "";
             setLines((prev) => [...prev.slice(-499), line]);
+            const features = eggFeaturesRef.current;
+            if (features.includes("eula") && !eulaShownRef.current && /you need to agree to the eula/i.test(line)) {
+              eulaShownRef.current = true;
+              setEulaDialogOpen(true);
+            }
+            if (features.includes("java_version") && !javaShownRef.current && /unrecognized option|could not create the java virtual machine|unsupported java|requires java/i.test(line)) {
+              javaShownRef.current = true;
+              setJavaSelectedImage(serverImageRef.current);
+              setJavaDialogOpen(true);
+            }
           } else if (msg.event === "stats") {
             try {
               const raw = JSON.parse(msg.args?.[0] ?? "{}") as {
@@ -321,6 +376,35 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
     onError: (error) => toast.error(error.message),
   });
 
+  const [eulaAccepting, setEulaAccepting] = useState(false);
+  async function acceptEula() {
+    setEulaAccepting(true);
+    try {
+      const res = await fetch(`/api/servers/${id}/files/write?file=${encodeURIComponent("/eula.txt")}`, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: "#By changing the setting below to TRUE you are indicating your agreement to our EULA (https://aka.ms/MinecraftEULA).\neula=true\n",
+      });
+      if (!res.ok) throw new Error(await res.text());
+      setEulaDialogOpen(false);
+      toast.success(t("eulaAcceptedToast"));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t("eulaErrorToast"));
+    } finally {
+      setEulaAccepting(false);
+    }
+  }
+
+  const updateImageMutation = useMutation({
+    ...orpc.servers.updateDockerImage.mutationOptions(),
+    onSuccess: () => {
+      setJavaDialogOpen(false);
+      void queryClient.invalidateQueries(orpc.servers.get.queryOptions({ input: { id } }));
+      toast.success(t("javaImageUpdatedToast"));
+    },
+    onError: (error) => toast.error(error.message),
+  });
+
   function sendCommand() {
     if (!command.trim() || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
     wsRef.current.send(JSON.stringify({ event: "send command", args: [command.trim()] }));
@@ -346,6 +430,13 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
       : wsStatus === "starting" || wsStatus === "stopping"
         ? "#f59e0b"
         : "#71717a";
+
+  const dockerImageOptions: { tag: string; label: string }[] = (() => {
+    try {
+      const parsed = JSON.parse(server?.egg?.dockerImages ?? "{}") as Record<string, string>;
+      return Object.entries(parsed).map(([alias, tag]) => ({ tag, label: alias || tag }));
+    } catch { return []; }
+  })();
 
   return (
     <>
@@ -493,6 +584,80 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
           </div>
         </aside>
       </div>
+
+      <Dialog open={eulaDialogOpen} onOpenChange={(open) => { if (!open) eulaShownRef.current = false; setEulaDialogOpen(open); }}>
+        <DialogPopup showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>{t("eulaTitle")}</DialogTitle>
+            <DialogDescription>{t("eulaDescription")}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <button
+              type="button"
+              onClick={() => setEulaDialogOpen(false)}
+              className="rounded-lg px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted"
+            >
+              {tc("cancel")}
+            </button>
+            <button
+              type="button"
+              disabled={eulaAccepting}
+              onClick={() => void acceptEula()}
+              className="rounded-lg bg-green-500/20 px-3 py-1.5 text-sm font-medium text-green-400 transition-colors hover:bg-green-500/30 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {t("eulaAccept")}
+            </button>
+          </DialogFooter>
+        </DialogPopup>
+      </Dialog>
+
+      <Dialog open={javaDialogOpen} onOpenChange={(open) => { if (!open) javaShownRef.current = false; setJavaDialogOpen(open); }}>
+        <DialogPopup showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>{t("javaTitle")}</DialogTitle>
+            <DialogDescription>{t("javaDescription")}</DialogDescription>
+          </DialogHeader>
+          {dockerImageOptions.length > 0 && (
+            <div className="px-5 py-3">
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex w-full items-center justify-between rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors hover:border-border/80 hover:bg-muted data-[popup-open]:border-ring">
+                  <span className="truncate">{dockerImageOptions.find((o) => o.tag === javaSelectedImage)?.label ?? javaSelectedImage}</span>
+                  <ChevronDown className="ml-2 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="shadow-md">
+                  {dockerImageOptions.map(({ tag, label }) => (
+                    <DropdownMenuItem
+                      key={tag}
+                      onClick={() => setJavaSelectedImage(tag)}
+                      className="flex cursor-pointer items-center gap-2.5 text-sm"
+                    >
+                      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${tag === javaSelectedImage ? "bg-green-500" : "bg-transparent"}`} />
+                      {label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
+          <DialogFooter>
+            <button
+              type="button"
+              onClick={() => setJavaDialogOpen(false)}
+              className="rounded-lg px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted"
+            >
+              {tc("cancel")}
+            </button>
+            <button
+              type="button"
+              disabled={updateImageMutation.isPending || !javaSelectedImage}
+              onClick={() => updateImageMutation.mutate({ serverId: id, image: javaSelectedImage })}
+              className="rounded-lg bg-blue-500/20 px-3 py-1.5 text-sm font-medium text-blue-400 transition-colors hover:bg-blue-500/30 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {t("javaApply")}
+            </button>
+          </DialogFooter>
+        </DialogPopup>
+      </Dialog>
     </>
   );
 }
