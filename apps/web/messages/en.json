@@ -202,7 +202,8 @@
       "backups": "Backups",
       "network": "Network",
       "settings": "Settings",
-      "activity": "Activity"
+      "activity": "Activity",
+      "plugins": "Plugins"
     },
     "admin": {
       "dashboard": "Dashboard",
@@ -407,6 +408,27 @@
       "saving": "Saving…",
       "save": "Save",
       "dropToUpload": "Drop files to upload"
+    },
+    "plugins": {
+      "searchPlaceholder": "Search Modrinth plugins…",
+      "featuredTitle": "Featured Plugins",
+      "searchResultsTitle": "Search Results",
+      "noResults": "No plugins found",
+      "downloads": "{count} downloads",
+      "install": "Install",
+      "installing": "Installing…",
+      "installSuccess": "Plugin queued for download. Check the Files tab in a moment.",
+      "installError": "Failed to install plugin",
+      "versionLabel": "Version",
+      "notSupported": "Plugin installer is not available for this server type.",
+      "notSupportedHint": "Ask an administrator to enable the minecraft_plugins feature on this egg.",
+      "modrinthLink": "View on Modrinth",
+      "loadingVersions": "Loading versions…",
+      "noVersions": "No compatible versions found",
+      "author": "by {author}",
+      "updated": "Updated",
+      "categories": "Categories",
+      "selectVersion": "Select a version"
     },
     "databases": {
       "createTitle": "New Database",

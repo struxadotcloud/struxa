@@ -39,6 +39,7 @@ import {
   ChevronLeft,
   Wallet,
   ShoppingBag,
+  Package,
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { useQuery } from "@tanstack/react-query";
@@ -98,6 +99,7 @@ export function PanelSidebar() {
     { key: "network", label: t("server.network"), icon: Globe },
     { key: "settings", label: t("server.settings"), icon: Settings },
     { key: "activity", label: t("server.activity"), icon: Activity },
+    { key: "plugins", label: t("server.plugins"), icon: Package },
   ];
 
   return (
