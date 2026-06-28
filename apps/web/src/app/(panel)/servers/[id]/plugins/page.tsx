@@ -737,25 +737,8 @@ export default function PluginsPage({ params }: { params: Promise<{ id: string }
   if (isPending || !session) return <Loader />;
 
   if (server && eggFeatures !== null && !eggFeatures.includes("minecraft_plugins")) {
-    return (
-      <div className="flex flex-1 flex-col bg-background">
-        <div className="flex shrink-0 items-center gap-2 border-b border-border bg-card px-4 py-2.5">
-          <Puzzle className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium text-foreground">{t("featuredTitle")}</span>
-        </div>
-        <div className="flex flex-1 items-center justify-center p-6">
-          <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-xl border border-border bg-card p-8 text-center shadow-sm">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-muted">
-              <Puzzle className="h-5 w-5 text-muted-foreground" />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <p className="text-sm font-semibold text-foreground">{t("notSupported")}</p>
-              <p className="text-xs leading-relaxed text-muted-foreground">{t("notSupportedHint")}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    router.replace(`/servers/${id}`);
+    return null;
   }
 
   const sectionTitle = debouncedQuery.trim() ? t("searchResultsTitle") : t("featuredTitle");
