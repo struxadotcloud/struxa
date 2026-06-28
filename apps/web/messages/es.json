@@ -202,7 +202,8 @@
       "backups": "Copias de seguridad",
       "network": "Red",
       "settings": "Ajustes",
-      "activity": "Actividad"
+      "activity": "Actividad",
+      "plugins": "Plugins"
     },
     "admin": {
       "dashboard": "Panel",
@@ -264,6 +265,26 @@
       "suspendedDescription": "El acceso a este servidor ha sido restringido por un administrador. Contacta al soporte si crees que es un error.",
       "installingTitle": "Instalación en progreso",
       "installingDescription": "El servidor se está instalando actualmente. Esto suele tardar uno o dos minutos según la configuración del egg. La página se actualizará automáticamente cuando esté listo."
+    },
+    "plugins": {
+      "searchPlaceholder": "Buscar plugins de Modrinth…",
+      "featuredTitle": "Plugins destacados",
+      "searchResultsTitle": "Resultados de búsqueda",
+      "noResults": "No se encontraron plugins",
+      "downloads": "{count} descargas",
+      "install": "Instalar",
+      "installing": "Instalando…",
+      "installSuccess": "Plugin en cola de descarga. Revisa la pestaña de archivos en un momento.",
+      "installError": "Error al instalar el plugin",
+      "loaderLabel": "Cargador",
+      "versionLabel": "Versión",
+      "selectVersion": "Seleccionar versión",
+      "modrinthLink": "Ver en Modrinth",
+      "loadingVersions": "Cargando versiones…",
+      "noVersions": "No se encontraron versiones compatibles",
+      "author": "por {author}",
+      "updated": "Actualizado",
+      "categories": "Categorías"
     },
     "files": {
       "newFile": "Nuevo archivo",

@@ -202,7 +202,8 @@
       "backups": "Kopie zapasowe",
       "network": "Sieć",
       "settings": "Ustawienia",
-      "activity": "Działalność"
+      "activity": "Działalność",
+      "plugins": "Wtyczki"
     },
     "admin": {
       "dashboard": "Panel",
@@ -264,6 +265,26 @@
       "suspendedDescription": "Dostęp do tego serwera został ograniczony przez administratora. Skontaktuj się z pomocą techniczną, jeśli uważasz, że to błąd.",
       "installingTitle": "Instalacja w toku",
       "installingDescription": "Serwer jest aktualnie instalowany. Zazwyczaj zajmuje to minutę lub dwie, w zależności od konfiguracji. Strona odświeży się automatycznie po zakończeniu."
+    },
+    "plugins": {
+      "searchPlaceholder": "Szukaj wtyczek na Modrinth…",
+      "featuredTitle": "Polecane wtyczki",
+      "searchResultsTitle": "Wyniki wyszukiwania",
+      "noResults": "Nie znaleziono wtyczek",
+      "downloads": "{count} pobrań",
+      "install": "Zainstaluj",
+      "installing": "Instalowanie…",
+      "installSuccess": "Wtyczka dodana do kolejki pobierania. Sprawdź zakładkę Pliki za chwilę.",
+      "installError": "Nie udało się zainstalować wtyczki",
+      "loaderLabel": "Loader",
+      "versionLabel": "Wersja",
+      "selectVersion": "Wybierz wersję",
+      "modrinthLink": "Zobacz na Modrinth",
+      "loadingVersions": "Ładowanie wersji…",
+      "noVersions": "Nie znaleziono kompatybilnych wersji",
+      "author": "przez {author}",
+      "updated": "Zaktualizowano",
+      "categories": "Kategorie"
     },
     "files": {
       "newFile": "Nowy plik",

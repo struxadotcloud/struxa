@@ -202,7 +202,8 @@
       "backups": "Sauvegardes",
       "network": "Réseau",
       "settings": "Paramètres",
-      "activity": "Activité"
+      "activity": "Activité",
+      "plugins": "Plugins"
     },
     "admin": {
       "dashboard": "Tableau de bord",
@@ -264,6 +265,26 @@
       "suspendedDescription": "L'accès à ce serveur a été restreint par un administrateur. Contactez le support si vous pensez que c'est une erreur.",
       "installingTitle": "Installation en cours",
       "installingDescription": "Votre serveur est en cours d'installation. Cela prend généralement une ou deux minutes selon la configuration de l'egg. La page se rafraîchira automatiquement une fois prête."
+    },
+    "plugins": {
+      "searchPlaceholder": "Rechercher des plugins Modrinth…",
+      "featuredTitle": "Plugins en vedette",
+      "searchResultsTitle": "Résultats de recherche",
+      "noResults": "Aucun plugin trouvé",
+      "downloads": "{count} téléchargements",
+      "install": "Installer",
+      "installing": "Installation…",
+      "installSuccess": "Plugin mis en file de téléchargement. Vérifiez l'onglet Fichiers dans un moment.",
+      "installError": "Échec de l'installation du plugin",
+      "loaderLabel": "Chargeur",
+      "versionLabel": "Version",
+      "selectVersion": "Sélectionner une version",
+      "modrinthLink": "Voir sur Modrinth",
+      "loadingVersions": "Chargement des versions…",
+      "noVersions": "Aucune version compatible trouvée",
+      "author": "par {author}",
+      "updated": "Mis à jour",
+      "categories": "Catégories"
     },
     "files": {
       "newFile": "Nouveau fichier",

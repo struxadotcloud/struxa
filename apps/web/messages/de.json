@@ -202,7 +202,8 @@
       "backups": "Backups",
       "network": "Netzwerk",
       "settings": "Einstellungen",
-      "activity": "Aktivität"
+      "activity": "Aktivität",
+      "plugins": "Plugins"
     },
     "admin": {
       "dashboard": "Armaturenbrett",
@@ -264,6 +265,26 @@
       "suspendedDescription": "Der Zugriff auf diesen Server wurde von einem Administrator eingeschränkt. Kontaktiere den Support, wenn du glaubst, dass dies ein Fehler ist.",
       "installingTitle": "Installation läuft",
       "installingDescription": "Der Server wird gerade installiert. Dies dauert normalerweise ein oder zwei Minuten, abhängig von der Egg-Konfiguration. Die Seite wird automatisch aktualisiert, sobald der Server bereit ist."
+    },
+    "plugins": {
+      "searchPlaceholder": "Modrinth-Plugins suchen…",
+      "featuredTitle": "Empfohlene Plugins",
+      "searchResultsTitle": "Suchergebnisse",
+      "noResults": "Keine Plugins gefunden",
+      "downloads": "{count} Downloads",
+      "install": "Installieren",
+      "installing": "Installiere…",
+      "installSuccess": "Plugin wird heruntergeladen. Überprüfe den Dateien-Tab in einem Moment.",
+      "installError": "Plugin konnte nicht installiert werden",
+      "loaderLabel": "Loader",
+      "versionLabel": "Version",
+      "selectVersion": "Version auswählen",
+      "modrinthLink": "Auf Modrinth ansehen",
+      "loadingVersions": "Versionen werden geladen…",
+      "noVersions": "Keine kompatiblen Versionen gefunden",
+      "author": "von {author}",
+      "updated": "Aktualisiert",
+      "categories": "Kategorien"
     },
     "files": {
       "newFile": "Neue Datei",
