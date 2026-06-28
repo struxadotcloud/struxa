@@ -210,11 +210,13 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
   const [txHistory, setTxHistory] = useState<number[]>(EMPTY_HISTORY);
   const [eulaDialogOpen, setEulaDialogOpen] = useState(false);
   const [javaDialogOpen, setJavaDialogOpen] = useState(false);
+  const [javaSelectedImage, setJavaSelectedImage] = useState("");
   const eulaShownRef = useRef(false);
   const javaShownRef = useRef(false);
 
   const { data: server } = useQuery(orpc.servers.get.queryOptions({ input: { id } }));
   const eggFeaturesRef = useRef<string[]>([]);
+  const serverImageRef = useRef("");
   useEffect(() => {
     try {
       const parsed = JSON.parse(server?.egg?.features ?? "[]") as string[];
@@ -222,7 +224,8 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
     } catch {
       eggFeaturesRef.current = [];
     }
-  }, [server?.egg?.features]);
+    serverImageRef.current = server?.image ?? "";
+  }, [server?.egg?.features, server?.image]);
 
   const [reconnectKey, setReconnectKey] = useState(0);
 
@@ -265,6 +268,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
             }
             if (features.includes("java_version") && !javaShownRef.current && /unrecognized option|could not create the java virtual machine|unsupported java|requires java/i.test(line)) {
               javaShownRef.current = true;
+              setJavaSelectedImage(serverImageRef.current);
               setJavaDialogOpen(true);
             }
           } else if (msg.event === "stats") {
@@ -371,6 +375,16 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
     }
   }
 
+  const updateImageMutation = useMutation({
+    ...orpc.servers.updateDockerImage.mutationOptions(),
+    onSuccess: () => {
+      setJavaDialogOpen(false);
+      void queryClient.invalidateQueries(orpc.servers.get.queryOptions({ input: { id } }));
+      toast.success(t("javaImageUpdatedToast"));
+    },
+    onError: (error) => toast.error(error.message),
+  });
+
   function sendCommand() {
     if (!command.trim() || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
     wsRef.current.send(JSON.stringify({ event: "send command", args: [command.trim()] }));
@@ -396,6 +410,13 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
       : wsStatus === "starting" || wsStatus === "stopping"
         ? "#f59e0b"
         : "#71717a";
+
+  const dockerImageOptions: { tag: string; label: string }[] = (() => {
+    try {
+      const parsed = JSON.parse(server?.egg?.dockerImages ?? "{}") as Record<string, string>;
+      return Object.entries(parsed).map(([alias, tag]) => ({ tag, label: alias || tag }));
+    } catch { return []; }
+  })();
 
   return (
     <>
@@ -571,18 +592,39 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
       </Dialog>
 
       <Dialog open={javaDialogOpen} onOpenChange={setJavaDialogOpen}>
-        <DialogPopup>
+        <DialogPopup showCloseButton={false}>
           <DialogHeader>
             <DialogTitle>{t("javaTitle")}</DialogTitle>
             <DialogDescription>{t("javaDescription")}</DialogDescription>
           </DialogHeader>
+          {dockerImageOptions.length > 0 && (
+            <div className="px-5 py-3">
+              <select
+                value={javaSelectedImage}
+                onChange={(e) => setJavaSelectedImage(e.target.value)}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-ring transition-colors"
+              >
+                {dockerImageOptions.map(({ tag, label }) => (
+                  <option key={tag} value={tag}>{label}</option>
+                ))}
+              </select>
+            </div>
+          )}
           <DialogFooter>
             <button
               type="button"
-              onClick={() => { setJavaDialogOpen(false); router.push(`/servers/${id}/settings`); }}
-              className="rounded-lg bg-blue-500/20 px-3 py-1.5 text-sm font-medium text-blue-400 transition-colors hover:bg-blue-500/30"
+              onClick={() => setJavaDialogOpen(false)}
+              className="rounded-lg px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted"
             >
-              {t("javaGoToSettings")}
+              {tc("cancel")}
+            </button>
+            <button
+              type="button"
+              disabled={updateImageMutation.isPending || !javaSelectedImage}
+              onClick={() => updateImageMutation.mutate({ serverId: id, image: javaSelectedImage })}
+              className="rounded-lg bg-blue-500/20 px-3 py-1.5 text-sm font-medium text-blue-400 transition-colors hover:bg-blue-500/30 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {t("javaApply")}
             </button>
           </DialogFooter>
         </DialogPopup>

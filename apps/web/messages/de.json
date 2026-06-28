@@ -252,6 +252,8 @@
       "eulaAcceptedToast": "EULA akzeptiert. Starte den Server neu, um die Änderungen anzuwenden.",
       "javaTitle": "Java-Versionskonflikt",
       "javaDescription": "Der Server erfordert eine andere Java-Version. Aktualisiere die Startvariable JAVA_VERSION in den Einstellungen entsprechend.",
+      "javaApply": "Anwenden & Neu starten",
+      "javaImageUpdatedToast": "Docker-Image aktualisiert. Starte den Server neu, um die Änderungen anzuwenden.",
       "javaGoToSettings": "Zu den Einstellungen"
     },
     "server": {

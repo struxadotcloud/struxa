@@ -383,6 +383,8 @@
       "eulaAcceptedToast": "EULA accepted. Restart the server to apply.",
       "javaTitle": "Java Version Mismatch",
       "javaDescription": "The server requires a different Java version. Update the JAVA_VERSION startup variable in Settings to match your server's requirements.",
+      "javaApply": "Apply & Restart",
+      "javaImageUpdatedToast": "Docker image updated. Restart the server to apply.",
       "javaGoToSettings": "Go to Settings"
     },
     "server": {

@@ -252,6 +252,8 @@
       "eulaAcceptedToast": "CLUF accepté. Redémarrez le serveur pour appliquer les modifications.",
       "javaTitle": "Version Java incompatible",
       "javaDescription": "Le serveur nécessite une version Java différente. Mettez à jour la variable de démarrage JAVA_VERSION dans les paramètres.",
+      "javaApply": "Appliquer et redémarrer",
+      "javaImageUpdatedToast": "Image Docker mise à jour. Redémarrez le serveur pour appliquer les modifications.",
       "javaGoToSettings": "Aller aux paramètres"
     },
     "server": {
