@@ -4,11 +4,16 @@ import { use, useState, useEffect, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { Search, ExternalLink, Download, Puzzle, X } from "lucide-react";
+import {
+  Search, ExternalLink, Download, Puzzle, X,
+  Code2, MessageSquare, CircleAlert, BookOpen, Heart,
+  ScrollText, Calendar, RefreshCw, Server, Gamepad2,
+} from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
+import rehypeSanitize from "rehype-sanitize";
 import { authClient } from "@/lib/auth-client";
 import { orpc } from "@/utils/orpc";
 import Loader from "@/components/loader";
@@ -55,6 +60,29 @@ interface ModrinthVersion {
   game_versions: string[];
   date_published: string;
   files: { url: string; filename: string; primary: boolean; size: number }[];
+}
+
+interface ModrinthProjectDetail {
+  game_versions: string[];
+  loaders: string[];
+  categories: string[];
+  additional_categories: string[];
+  license: { id: string; name: string; url: string | null } | null;
+  source_url: string | null;
+  discord_url: string | null;
+  issues_url: string | null;
+  wiki_url: string | null;
+  donation_urls: { id: string; platform: string; url: string }[];
+  published: string;
+  updated: string;
+  client_side: string;
+  server_side: string;
+}
+
+interface ModrinthMember {
+  role: string;
+  ordering: number;
+  user: { id: string; username: string; avatar_url: string | null; name: string | null };
 }
 
 const MODRINTH_API = "https://api.modrinth.com/v2";
@@ -309,9 +337,210 @@ function Readme({ body }: { body: string | null | undefined }) {
 
   return (
     <div className={PROSE}>
-      <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+      <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw, rehypeSanitize]}>
         {body}
       </ReactMarkdown>
+    </div>
+  );
+}
+
+const DONATE_LABELS: Record<string, string> = {
+  "ko-fi": "Ko-fi",
+  patreon: "Patreon",
+  "open-collective": "Open Collective",
+  github: "GitHub Sponsors",
+  bmac: "Buy Me a Coffee",
+  paypal: "PayPal",
+};
+
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+  const s = Math.floor(diff / 1000);
+  if (s < 60) return rtf.format(-s, "second");
+  const m = Math.floor(s / 60);
+  if (m < 60) return rtf.format(-m, "minute");
+  const h = Math.floor(m / 60);
+  if (h < 24) return rtf.format(-h, "hour");
+  const d = Math.floor(h / 24);
+  if (d < 30) return rtf.format(-d, "day");
+  const mo = Math.floor(d / 30);
+  if (mo < 12) return rtf.format(-mo, "month");
+  return rtf.format(-Math.floor(mo / 12), "year");
+}
+
+function MetaSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{title}</p>
+      {children}
+    </div>
+  );
+}
+
+function MetaLink({ href, icon: Icon, label }: { href: string; icon: React.ElementType; label: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-2 text-xs text-foreground hover:text-primary transition-colors"
+    >
+      <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+      {label}
+      <ExternalLink className="ml-auto h-3 w-3 text-muted-foreground/60" />
+    </a>
+  );
+}
+
+function ProjectMetadata({
+  detail,
+  members,
+}: {
+  detail: ModrinthProjectDetail | null | undefined;
+  members: ModrinthMember[] | null | undefined;
+}) {
+  if (detail === undefined) {
+    return (
+      <div className="flex flex-col gap-4">
+        {[80, 60, 100, 70].map((w, i) => (
+          <div key={i} className="flex flex-col gap-2">
+            <div className="h-2.5 w-16 rounded bg-muted animate-pulse" />
+            <div className={`h-3 rounded bg-muted animate-pulse`} style={{ width: `${w}%` }} />
+            <div className="h-3 w-3/4 rounded bg-muted animate-pulse" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (!detail) return null;
+
+  const allVersions = detail.game_versions;
+  const shownVersions = allVersions.slice(0, 7);
+  const extraVersions = allVersions.length - shownVersions.length;
+
+  const links: { href: string; icon: React.ElementType; label: string }[] = [
+    ...(detail.source_url ? [{ href: detail.source_url, icon: Code2, label: "View source" }] : []),
+    ...(detail.discord_url ? [{ href: detail.discord_url, icon: MessageSquare, label: "Join Discord" }] : []),
+    ...(detail.issues_url ? [{ href: detail.issues_url, icon: CircleAlert, label: "Report issues" }] : []),
+    ...(detail.wiki_url ? [{ href: detail.wiki_url, icon: BookOpen, label: "Wiki" }] : []),
+    ...detail.donation_urls.map((d) => ({
+      href: d.url,
+      icon: Heart,
+      label: `Donate on ${DONATE_LABELS[d.id] ?? d.platform}`,
+    })),
+  ];
+
+  const allCategories = [...detail.categories, ...detail.additional_categories];
+  const sortedMembers = [...(members ?? [])].sort((a, b) => a.ordering - b.ordering);
+
+  return (
+    <div className="flex flex-col gap-5">
+      {/* Compatibility */}
+      <MetaSection title="Compatibility">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Gamepad2 className="h-3.5 w-3.5 shrink-0" />
+            <span>Minecraft: Java Edition</span>
+          </div>
+          {allVersions.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {shownVersions.map((v) => (
+                <span key={v} className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">{v}</span>
+              ))}
+              {extraVersions > 0 && (
+                <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">+{extraVersions} more</span>
+              )}
+            </div>
+          )}
+          {detail.loaders.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {detail.loaders.map((l) => (
+                <span key={l} className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground capitalize">{l}</span>
+              ))}
+            </div>
+          )}
+          {detail.server_side !== "unsupported" && (
+            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+              <Server className="h-3 w-3 shrink-0" />
+              Server-side
+            </div>
+          )}
+        </div>
+      </MetaSection>
+
+      {/* Links */}
+      {links.length > 0 && (
+        <MetaSection title="Links">
+          <div className="flex flex-col gap-1.5">
+            {links.map((l) => <MetaLink key={l.href} {...l} />)}
+          </div>
+        </MetaSection>
+      )}
+
+      {/* Tags */}
+      {allCategories.length > 0 && (
+        <MetaSection title="Tags">
+          <div className="flex flex-wrap gap-1.5">
+            {allCategories.map((cat) => (
+              <span key={cat} className="rounded-full bg-muted px-2.5 py-1 text-[10px] font-medium text-muted-foreground capitalize">{cat}</span>
+            ))}
+          </div>
+        </MetaSection>
+      )}
+
+      {/* Creators */}
+      {sortedMembers.length > 0 && (
+        <MetaSection title="Creators">
+          <div className="flex flex-col gap-2">
+            {sortedMembers.map((m) => (
+              <div key={m.user.id} className="flex items-center gap-2">
+                <div className="h-7 w-7 shrink-0 overflow-hidden rounded-full bg-muted">
+                  {m.user.avatar_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={m.user.avatar_url} alt={m.user.username} className="h-7 w-7 object-cover" />
+                  ) : (
+                    <div className="h-7 w-7 flex items-center justify-center text-[10px] font-semibold text-muted-foreground">
+                      {m.user.username[0]?.toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <div className="flex min-w-0 flex-col">
+                  <span className="truncate text-xs font-medium text-foreground">{m.user.username}</span>
+                  <span className="text-[10px] text-muted-foreground">{m.role}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </MetaSection>
+      )}
+
+      {/* Details */}
+      <MetaSection title="Details">
+        <div className="flex flex-col gap-1.5">
+          {detail.license && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <ScrollText className="h-3.5 w-3.5 shrink-0" />
+              {detail.license.url ? (
+                <a href={detail.license.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                  {detail.license.name || detail.license.id}
+                </a>
+              ) : (
+                <span>{detail.license.name || detail.license.id}</span>
+              )}
+            </div>
+          )}
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Calendar className="h-3.5 w-3.5 shrink-0" />
+            Published {timeAgo(detail.published)}
+          </div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <RefreshCw className="h-3.5 w-3.5 shrink-0" />
+            Updated {timeAgo(detail.updated)}
+          </div>
+        </div>
+      </MetaSection>
     </div>
   );
 }
@@ -328,16 +557,26 @@ function PluginDetail({
   const t = useTranslations("panel.plugins");
   const isMobile = useIsMobile();
   const [body, setBody] = useState<string | null | undefined>(undefined);
+  const [detail, setDetail] = useState<ModrinthProjectDetail | null | undefined>(undefined);
+  const [members, setMembers] = useState<ModrinthMember[] | null | undefined>(undefined);
   const [selectedVersion, setSelectedVersion] = useState<ModrinthVersion | null>(null);
   const [installing, setInstalling] = useState(false);
   const [installSheetOpen, setInstallSheetOpen] = useState(false);
 
   useEffect(() => {
     setBody(undefined);
-    fetch(`${MODRINTH_API}/project/${plugin.project_id}`)
-      .then((r) => r.json() as Promise<{ body: string }>)
-      .then((d) => setBody(d.body ?? null))
-      .catch(() => setBody(null));
+    setDetail(undefined);
+    setMembers(undefined);
+    Promise.all([
+      fetch(`${MODRINTH_API}/project/${plugin.project_id}`).then((r) => r.json() as Promise<ModrinthProjectDetail & { body: string }>),
+      fetch(`${MODRINTH_API}/project/${plugin.project_id}/members`).then((r) => r.json() as Promise<ModrinthMember[]>),
+    ])
+      .then(([proj, mems]) => {
+        setBody(proj.body ?? null);
+        setDetail(proj);
+        setMembers(mems);
+      })
+      .catch(() => { setBody(null); setDetail(null); setMembers(null); });
   }, [plugin.project_id]);
 
   async function install() {
@@ -401,17 +640,7 @@ function PluginDetail({
               </div>
             </div>
 
-            {plugin.categories.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {plugin.categories.map((cat) => (
-                  <span key={cat} className="rounded-full bg-muted px-2.5 py-1 text-[10px] font-medium text-muted-foreground capitalize">
-                    {cat}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            <p className="text-xs leading-relaxed text-muted-foreground">{plugin.description}</p>
+            <ProjectMetadata detail={detail} members={members} />
 
             <div className="border-t border-border" />
 
@@ -454,28 +683,8 @@ function PluginDetail({
             </div>
           </SheetHeader>
 
-          <SheetPanel className="max-h-[60vh]">
-            <div className="flex flex-col gap-4">
-              {plugin.categories.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {plugin.categories.map((cat) => (
-                    <span key={cat} className="rounded-full bg-muted px-2.5 py-1 text-[10px] font-medium text-muted-foreground capitalize">
-                      {cat}
-                    </span>
-                  ))}
-                </div>
-              )}
-              <a
-                href={`https://modrinth.com/plugin/${plugin.slug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs text-primary"
-              >
-                <ExternalLink className="h-3 w-3" />
-                {t("modrinthLink")}
-              </a>
-              <Readme body={body} />
-            </div>
+          <SheetPanel className="max-h-[65vh]">
+            <ProjectMetadata detail={detail} members={members} />
           </SheetPanel>
 
           <SheetFooter variant="bare">
