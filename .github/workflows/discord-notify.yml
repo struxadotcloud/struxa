@@ -55,6 +55,10 @@ jobs:
             CHANGELOG="${CHANGELOG}### Credits\n${CREDITS}"
           fi
 
+          if [ -z "$CHANGELOG" ]; then
+            CHANGELOG="No notable changes."
+          fi
+
           if [ "$IS_PRERELEASE" = "true" ]; then
             ROLE_ID="1520757652223819871"
             TITLE="## 🚧 [${TAG}](${RELEASE_URL})"
