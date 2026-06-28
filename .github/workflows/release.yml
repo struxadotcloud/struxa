@@ -99,6 +99,7 @@ jobs:
           FEATURES=$(git log $RANGE --pretty=format:"- %s (%h)" --no-merges | grep -E "^- feat" || true)
           FIXES=$(git log $RANGE --pretty=format:"- %s (%h)" --no-merges | grep -E "^- fix" || true)
           OTHER=$(git log $RANGE --pretty=format:"- %s (%h)" --no-merges | grep -Ev "^- (feat|fix)" || true)
+          CREDITS=$(git log $RANGE --pretty=format:"%aN" --no-merges | sort -u | grep -vE '\[bot\]|^github-actions$' | sed 's|.*|[@&](https://github.com/&)|' | paste -sd $'\n' || true)
 
           {
             echo "body<<EOF"
@@ -117,6 +118,11 @@ jobs:
             if [ -n "$OTHER" ]; then
               echo "### Other Changes"
               echo "$OTHER"
+              echo ""
+            fi
+            if [ -n "$CREDITS" ]; then
+              echo "### Credits"
+              echo "$CREDITS"
               echo ""
             fi
             echo "## Docker Images"
@@ -159,6 +165,7 @@ jobs:
           tag_name: v${{ inputs.version }}
           name: v${{ inputs.version }}
           body: ${{ steps.changelog.outputs.body }}
+          draft: true
           prerelease: ${{ inputs.prerelease }}
           files: docker-compose.prod.yml
           token: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,102 @@
+name: Discord Release Notification
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  notify:
+    name: Send Discord Webhook
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build and send webhook
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          TAG: ${{ github.event.release.tag_name }}
+          RELEASE_URL: ${{ github.event.release.html_url }}
+          IS_PRERELEASE: ${{ github.event.release.prerelease }}
+        run: |
+          if [ "$IS_PRERELEASE" = "true" ]; then
+            PREV_TAG=$(git describe --tags --abbrev=0 "$TAG^" 2>/dev/null || echo "")
+          else
+            PREV_TAG=$(git tag --sort=-version:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | grep -v "^$TAG$" | head -1 || echo "")
+          fi
+
+          if [ -z "$PREV_TAG" ]; then
+            RANGE="HEAD"
+          else
+            RANGE="${PREV_TAG}..${TAG}"
+          fi
+
+          FEATURES=$(git log $RANGE --pretty=format:"- %s (%h)" --no-merges | grep -E "^- feat" || true)
+          FIXES=$(git log $RANGE --pretty=format:"- %s (%h)" --no-merges | grep -E "^- fix" || true)
+          OTHER=$(git log $RANGE --pretty=format:"- %s (%h)" --no-merges | grep -Ev "^- (feat|fix)" || true)
+          CREDITS=$(git log $RANGE --pretty=format:"%aN" --no-merges | sort -u | grep -vE '\[bot\]|^github-actions$' | sed 's|.*|[@&](https://github.com/&)|' | paste -sd $'\n' || true)
+
+          CHANGELOG=""
+          if [ -n "$FEATURES" ]; then
+            CHANGELOG="${CHANGELOG}### Features\n${FEATURES}\n"
+          fi
+          if [ -n "$FIXES" ]; then
+            CHANGELOG="${CHANGELOG}### Bug Fixes\n${FIXES}\n"
+          fi
+          if [ -n "$OTHER" ]; then
+            CHANGELOG="${CHANGELOG}### Other Changes\n${OTHER}\n"
+          fi
+          if [ -n "$CREDITS" ]; then
+            CHANGELOG="${CHANGELOG}### Credits\n${CREDITS}"
+          fi
+
+          if [ "$IS_PRERELEASE" = "true" ]; then
+            ROLE_ID="1520757652223819871"
+            TITLE="## 🚧 [${TAG}](${RELEASE_URL})"
+          else
+            ROLE_ID="1520472105836347515"
+            TITLE="## [${TAG}](${RELEASE_URL})"
+          fi
+
+          PAYLOAD=$(jq -n \
+            --arg ping "<@&${ROLE_ID}> ${TAG}" \
+            --arg title "$TITLE" \
+            --arg changelog "$(printf '%b' "$CHANGELOG")" \
+            --arg url "$RELEASE_URL" \
+            '{
+              flags: 32768,
+              components: [
+                { type: 10, content: $ping },
+                {
+                  type: 17,
+                  accentColor: 16757530,
+                  spoiler: false,
+                  components: [
+                    {
+                      type: 9,
+                      components: [
+                        { type: 10, content: $title }
+                      ],
+                      accessory: {
+                        type: 2,
+                        style: 5,
+                        label: "Changelog",
+                        url: $url
+                      }
+                    },
+                    { type: 14, divider: true, spacing: 1 },
+                    { type: 10, content: $changelog }
+                  ]
+                }
+              ]
+            }')
+
+          curl -fsSL -X POST \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD" \
+            "$DISCORD_WEBHOOK_URL"
