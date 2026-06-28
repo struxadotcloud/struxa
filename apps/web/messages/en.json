@@ -419,6 +419,7 @@
       "installing": "Installing…",
       "installSuccess": "Plugin queued for download. Check the Files tab in a moment.",
       "installError": "Failed to install plugin",
+      "loaderLabel": "Loader",
       "versionLabel": "Version",
       "notSupported": "Plugin installer is not available for this server type.",
       "notSupportedHint": "Ask an administrator to enable the minecraft_plugins feature on this egg.",

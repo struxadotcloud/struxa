@@ -148,66 +148,148 @@ function PluginCard({
   );
 }
 
-function VersionSelect({
+const LOADER_ORDER = ["paper", "purpur", "folia", "spigot", "bukkit"];
+
+function loaderLabel(loader: string) {
+  return loader.charAt(0).toUpperCase() + loader.slice(1);
+}
+
+function versionLabel(v: ModrinthVersion) {
+  const mc = v.game_versions[0];
+  return mc ? `${v.version_number} — MC ${mc}` : v.version_number;
+}
+
+function VersionPicker({
   projectId,
-  selectedVersionId,
   onSelect,
 }: {
   projectId: string;
-  selectedVersionId: string | null;
   onSelect: (v: ModrinthVersion | null) => void;
 }) {
   const t = useTranslations("panel.plugins");
-  const [versions, setVersions] = useState<ModrinthVersion[] | null>(null);
+  const [allVersions, setAllVersions] = useState<ModrinthVersion[] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedLoader, setSelectedLoader] = useState<string | null>(null);
+  const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
-    setVersions(null);
+    setAllVersions(null);
+    setSelectedLoader(null);
+    setSelectedVersionId(null);
     onSelect(null);
     fetch(`${MODRINTH_API}/project/${projectId}/version`)
       .then((r) => r.json() as Promise<ModrinthVersion[]>)
       .then((all) => {
-        const filtered = all.filter(
+        const compatible = all.filter(
           (v) => v.loaders.length === 0 || v.loaders.some((l) => PLUGIN_LOADERS.includes(l)),
         );
-        setVersions(filtered.length > 0 ? filtered : all);
-        if (filtered.length > 0) onSelect(filtered[0] ?? null);
-        else if (all.length > 0) onSelect(all[0] ?? null);
+        const pool = compatible.length > 0 ? compatible : all;
+        setAllVersions(pool);
+
+        const loaderCounts = new Map<string, number>();
+        for (const v of pool) {
+          for (const l of v.loaders) {
+            if (PLUGIN_LOADERS.includes(l)) loaderCounts.set(l, (loaderCounts.get(l) ?? 0) + 1);
+          }
+        }
+        const bestLoader =
+          LOADER_ORDER.find((l) => loaderCounts.has(l)) ??
+          (loaderCounts.size > 0 ? [...loaderCounts.keys()][0] : null);
+
+        const firstLoader = bestLoader ?? (pool[0]?.loaders[0] ?? null);
+        setSelectedLoader(firstLoader);
+
+        const firstVersion = firstLoader
+          ? (pool.find((v) => v.loaders.includes(firstLoader)) ?? pool[0])
+          : pool[0];
+        if (firstVersion) {
+          setSelectedVersionId(firstVersion.id);
+          onSelect(firstVersion);
+        }
       })
-      .catch(() => setVersions([]))
+      .catch(() => setAllVersions([]))
       .finally(() => setLoading(false));
-    // onSelect is intentionally omitted — it's a stable callback from parent
+    // onSelect intentionally omitted
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
-  if (loading) {
-    return (
-      <p className="text-xs text-muted-foreground animate-pulse">{t("loadingVersions")}</p>
-    );
+  const availableLoaders = allVersions
+    ? LOADER_ORDER.filter((l) => allVersions.some((v) => v.loaders.includes(l)))
+    : [];
+
+  const filteredVersions = allVersions && selectedLoader
+    ? allVersions.filter((v) => v.loaders.includes(selectedLoader))
+    : (allVersions ?? []);
+
+  const selectedVersion = filteredVersions.find((v) => v.id === selectedVersionId) ?? null;
+
+  function handleLoaderChange(loader: string | null) {
+    if (!loader) return;
+    setSelectedLoader(loader);
+    const first = filteredVersionsFor(loader)[0] ?? null;
+    setSelectedVersionId(first?.id ?? null);
+    onSelect(first);
   }
-  if (!versions || versions.length === 0) {
+
+  function filteredVersionsFor(loader: string) {
+    return allVersions?.filter((v) => v.loaders.includes(loader)) ?? [];
+  }
+
+  function handleVersionChange(id: string | null) {
+    if (!id) return;
+    const v = filteredVersions.find((v) => v.id === id) ?? null;
+    setSelectedVersionId(id);
+    onSelect(v);
+  }
+
+  if (loading) {
+    return <p className="text-xs text-muted-foreground animate-pulse">{t("loadingVersions")}</p>;
+  }
+  if (!allVersions || allVersions.length === 0) {
     return <p className="text-xs text-muted-foreground">{t("noVersions")}</p>;
   }
 
   return (
-    <Select
-      value={selectedVersionId ?? ""}
-      onValueChange={(val) => onSelect(versions.find((v) => v.id === val) ?? null)}
-    >
-      <SelectTrigger className="h-9 text-xs">
-        <SelectValue placeholder={t("selectVersion")} />
-      </SelectTrigger>
-      <SelectContent>
-        {versions.map((v) => (
-          <SelectItem key={v.id} value={v.id}>
-            {v.version_number}
-            {v.game_versions.length > 0 ? ` — ${v.game_versions[0]}` : ""}
-            {v.loaders.length > 0 ? ` (${v.loaders[0]})` : ""}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <div className="flex flex-col gap-3">
+      {availableLoaders.length > 1 && (
+        <div className="flex flex-col gap-1.5">
+          <p className="text-xs font-medium text-muted-foreground">{t("loaderLabel")}</p>
+          <Select value={selectedLoader ?? ""} onValueChange={handleLoaderChange}>
+            <SelectTrigger className="h-9 text-xs">
+              <SelectValue>
+                {selectedLoader ? loaderLabel(selectedLoader) : t("selectVersion")}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {availableLoaders.map((l) => (
+                <SelectItem key={l} value={l}>
+                  {loaderLabel(l)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      <div className="flex flex-col gap-1.5">
+        <p className="text-xs font-medium text-muted-foreground">{t("versionLabel")}</p>
+        <Select value={selectedVersionId ?? ""} onValueChange={handleVersionChange}>
+          <SelectTrigger className="h-9 text-xs">
+            <SelectValue>
+              {selectedVersion ? versionLabel(selectedVersion) : t("selectVersion")}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {filteredVersions.map((v) => (
+              <SelectItem key={v.id} value={v.id}>
+                {versionLabel(v)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
   );
 }
 
@@ -302,14 +384,10 @@ function PluginDetail({
             </div>
           )}
 
-          <div className="flex flex-col gap-2">
-            <p className="text-xs font-medium text-foreground">{t("versionLabel")}</p>
-            <VersionSelect
-              projectId={plugin.project_id}
-              selectedVersionId={selectedVersion?.id ?? null}
-              onSelect={setSelectedVersion}
-            />
-          </div>
+          <VersionPicker
+            projectId={plugin.project_id}
+            onSelect={setSelectedVersion}
+          />
         </div>
       </SheetPanel>
 
