@@ -263,7 +263,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
               eulaShownRef.current = true;
               setEulaDialogOpen(true);
             }
-            if (features.includes("java_version") && !javaShownRef.current && /unsupported java|requires java/i.test(line)) {
+            if (features.includes("java_version") && !javaShownRef.current && /unrecognized option|could not create the java virtual machine|unsupported java|requires java/i.test(line)) {
               javaShownRef.current = true;
               setJavaDialogOpen(true);
             }
