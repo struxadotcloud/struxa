@@ -72,6 +72,14 @@ export function PanelSidebar() {
     enabled: !!billingConfig?.enabled,
   });
 
+  const { data: serverFeatures } = useQuery({
+    ...orpc.servers.get.queryOptions({ input: { id: serverId ?? "" } }),
+    enabled: !!serverId,
+    select: (s) => {
+      try { return JSON.parse(s.egg?.features ?? "[]") as string[]; } catch { return [] as string[]; }
+    },
+  });
+
   function formatBalance(cents: number, currency: string) {
     try {
       return new Intl.NumberFormat(undefined, { style: "currency", currency, minimumFractionDigits: 2 }).format(cents / 100);
@@ -89,9 +97,12 @@ export function PanelSidebar() {
     { key: "account", label: t("panel.account"), icon: User, href: "/account" },
   ];
 
+  const hasPlugins = serverFeatures?.includes("minecraft_plugins") ?? false;
+
   const NAV_SERVER = [
     { key: "console", label: t("server.console"), icon: Terminal },
     { key: "files", label: t("server.files"), icon: FolderOpen },
+    ...(hasPlugins ? [{ key: "plugins", label: t("server.plugins"), icon: Package }] : []),
     { key: "databases", label: t("server.databases"), icon: Database },
     { key: "schedules", label: t("server.schedules"), icon: Clock },
     { key: "users", label: t("server.users"), icon: Users },
@@ -99,7 +110,6 @@ export function PanelSidebar() {
     { key: "network", label: t("server.network"), icon: Globe },
     { key: "settings", label: t("server.settings"), icon: Settings },
     { key: "activity", label: t("server.activity"), icon: Activity },
-    { key: "plugins", label: t("server.plugins"), icon: Package },
   ];
 
   return (
