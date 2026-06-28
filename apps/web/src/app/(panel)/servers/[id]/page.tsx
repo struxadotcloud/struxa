@@ -611,7 +611,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                   <span className="truncate">{dockerImageOptions.find((o) => o.tag === javaSelectedImage)?.label ?? javaSelectedImage}</span>
                   <ChevronDown className="ml-2 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-[var(--trigger-width)] shadow-md">
+                <DropdownMenuContent className="shadow-md">
                   {dockerImageOptions.map(({ tag, label }) => (
                     <DropdownMenuItem
                       key={tag}
