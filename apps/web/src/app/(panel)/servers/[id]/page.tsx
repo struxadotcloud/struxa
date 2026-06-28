@@ -29,6 +29,13 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@struxa/ui/components/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@struxa/ui/components/dropdown-menu";
+import { ChevronDown } from "lucide-react";
 
 function fmtUptime(ms: number): string {
   if (ms <= 0) return "—";
@@ -599,15 +606,24 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
           </DialogHeader>
           {dockerImageOptions.length > 0 && (
             <div className="px-5 py-3">
-              <select
-                value={javaSelectedImage}
-                onChange={(e) => setJavaSelectedImage(e.target.value)}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-ring transition-colors"
-              >
-                {dockerImageOptions.map(({ tag, label }) => (
-                  <option key={tag} value={tag}>{label}</option>
-                ))}
-              </select>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex w-full items-center justify-between rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors hover:border-border/80 hover:bg-muted data-[popup-open]:border-ring">
+                  <span className="truncate">{dockerImageOptions.find((o) => o.tag === javaSelectedImage)?.label ?? javaSelectedImage}</span>
+                  <ChevronDown className="ml-2 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-[var(--trigger-width)] shadow-md">
+                  {dockerImageOptions.map(({ tag, label }) => (
+                    <DropdownMenuItem
+                      key={tag}
+                      onClick={() => setJavaSelectedImage(tag)}
+                      className="flex cursor-pointer items-center gap-2.5 text-sm"
+                    >
+                      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${tag === javaSelectedImage ? "bg-green-500" : "bg-transparent"}`} />
+                      {label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           )}
           <DialogFooter>
