@@ -4,11 +4,19 @@ import { use, useState, useEffect, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { Search, Package, ExternalLink, Download, Puzzle } from "lucide-react";
+import { Search, ExternalLink, Download, Puzzle, X } from "lucide-react";
 import { toast } from "sonner";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 import { authClient } from "@/lib/auth-client";
 import { orpc } from "@/utils/orpc";
 import Loader from "@/components/loader";
+import { useIsMobile } from "@struxa/ui/hooks/use-media-query";
+import {
+  Dialog,
+  DialogPopup,
+} from "@struxa/ui/components/dialog";
 import {
   Sheet,
   SheetPopup,
@@ -16,6 +24,7 @@ import {
   SheetTitle,
   SheetPanel,
   SheetFooter,
+  SheetClose,
 } from "@struxa/ui/components/sheet";
 import {
   Select,
@@ -33,12 +42,8 @@ interface ModrinthProject {
   author: string;
   icon_url: string | null;
   downloads: number;
-  follows: number;
   categories: string[];
-  versions: string[];
   date_modified: string;
-  latest_version: string;
-  license: string;
   project_type: string;
 }
 
@@ -49,22 +54,73 @@ interface ModrinthVersion {
   loaders: string[];
   game_versions: string[];
   date_published: string;
-  files: {
-    url: string;
-    filename: string;
-    primary: boolean;
-    size: number;
-  }[];
+  files: { url: string; filename: string; primary: boolean; size: number }[];
 }
 
 const MODRINTH_API = "https://api.modrinth.com/v2";
 const PLUGIN_LOADERS = ["paper", "spigot", "bukkit", "purpur", "folia"];
+const LOADER_ORDER = ["paper", "purpur", "folia", "spigot", "bukkit"];
 const FACETS = encodeURIComponent(JSON.stringify([["project_type:plugin"]]));
+
+const PROSE = [
+  "text-sm text-foreground leading-relaxed",
+  "[&_h1]:text-xl [&_h1]:font-bold [&_h1]:mt-6 [&_h1]:mb-3 [&_h1]:text-foreground",
+  "[&_h2]:text-lg [&_h2]:font-semibold [&_h2]:mt-5 [&_h2]:mb-2 [&_h2]:text-foreground",
+  "[&_h3]:text-base [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-2 [&_h3]:text-foreground",
+  "[&_h4]:text-sm [&_h4]:font-semibold [&_h4]:mt-3 [&_h4]:mb-1 [&_h4]:text-foreground",
+  "[&_p]:mb-3 [&_p]:leading-relaxed [&_p]:text-muted-foreground",
+  "[&_ul]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1 [&_ul]:text-muted-foreground",
+  "[&_ol]:mb-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:space-y-1 [&_ol]:text-muted-foreground",
+  "[&_li]:leading-relaxed",
+  "[&_code]:bg-muted [&_code]:rounded [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:text-xs [&_code]:font-mono [&_code]:text-foreground",
+  "[&_pre]:bg-muted [&_pre]:rounded-lg [&_pre]:p-4 [&_pre]:overflow-x-auto [&_pre]:mb-3 [&_pre]:text-xs [&_pre]:font-mono",
+  "[&_pre_code]:bg-transparent [&_pre_code]:p-0",
+  "[&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-muted-foreground [&_blockquote]:mb-3",
+  "[&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_a]:decoration-primary/40 [&_a:hover]:decoration-primary",
+  "[&_img]:rounded-lg [&_img]:max-w-full [&_img]:my-3",
+  "[&_hr]:border-border [&_hr]:my-5",
+  "[&_table]:w-full [&_table]:text-sm [&_table]:border-collapse [&_table]:mb-3",
+  "[&_th]:border [&_th]:border-border [&_th]:bg-muted [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:text-xs [&_th]:font-semibold",
+  "[&_td]:border [&_td]:border-border [&_td]:px-3 [&_td]:py-2 [&_td]:text-xs",
+  "[&_strong]:font-semibold [&_strong]:text-foreground",
+  "[&_details]:mb-3 [&_details]:rounded-lg [&_details]:border [&_details]:border-border [&_details]:p-3",
+  "[&_summary]:cursor-pointer [&_summary]:font-medium [&_summary]:text-sm",
+].join(" ");
 
 function fmtDownloads(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K`;
   return String(n);
+}
+
+function loaderLabel(l: string) {
+  return l.charAt(0).toUpperCase() + l.slice(1);
+}
+
+function versionLabel(v: ModrinthVersion) {
+  const mc = v.game_versions[0];
+  return mc ? `${v.version_number} — MC ${mc}` : v.version_number;
+}
+
+function PluginIcon({ plugin, size = "md" }: { plugin: ModrinthProject; size?: "sm" | "md" | "lg" }) {
+  const dims = size === "lg" ? "h-16 w-16" : size === "md" ? "h-12 w-12" : "h-9 w-9";
+  const iconDims = size === "lg" ? "h-8 w-8" : size === "md" ? "h-6 w-6" : "h-4 w-4";
+  const rounded = size === "lg" ? "rounded-xl" : "rounded-lg";
+  return (
+    <div className={`${dims} shrink-0 overflow-hidden ${rounded} bg-muted flex items-center justify-center`}>
+      {plugin.icon_url ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={plugin.icon_url}
+          alt={plugin.title}
+          className={`${dims} object-cover`}
+          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+        />
+      ) : (
+        <Puzzle className={`${iconDims} text-muted-foreground`} />
+      )}
+    </div>
+  );
 }
 
 function PluginCardSkeleton() {
@@ -89,13 +145,7 @@ function PluginCardSkeleton() {
   );
 }
 
-function PluginCard({
-  plugin,
-  onClick,
-}: {
-  plugin: ModrinthProject;
-  onClick: () => void;
-}) {
+function PluginCard({ plugin, onClick }: { plugin: ModrinthProject; onClick: () => void }) {
   return (
     <button
       type="button"
@@ -103,25 +153,9 @@ function PluginCard({
       className="group flex flex-col gap-3 rounded-xl border border-border bg-card p-4 text-left transition-colors hover:border-primary/40 hover:bg-card/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <div className="flex items-start gap-3">
-        <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-muted flex items-center justify-center">
-          {plugin.icon_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={plugin.icon_url}
-              alt={plugin.title}
-              className="h-12 w-12 object-cover"
-              onError={(e) => {
-                (e.currentTarget as HTMLImageElement).style.display = "none";
-              }}
-            />
-          ) : (
-            <Puzzle className="h-6 w-6 text-muted-foreground" />
-          )}
-        </div>
+        <PluginIcon plugin={plugin} size="md" />
         <div className="flex min-w-0 flex-1 flex-col gap-0.5 pt-0.5">
-          <p className="truncate text-sm font-semibold text-foreground leading-tight">
-            {plugin.title}
-          </p>
+          <p className="truncate text-sm font-semibold text-foreground leading-tight">{plugin.title}</p>
           <p className="truncate text-xs text-muted-foreground">by {plugin.author}</p>
         </div>
         <div className="flex items-center gap-1 shrink-0 text-[10px] text-muted-foreground">
@@ -129,16 +163,11 @@ function PluginCard({
           {fmtDownloads(plugin.downloads)}
         </div>
       </div>
-      <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">
-        {plugin.description}
-      </p>
+      <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">{plugin.description}</p>
       {plugin.categories.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {plugin.categories.slice(0, 3).map((cat) => (
-            <span
-              key={cat}
-              className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground capitalize"
-            >
+            <span key={cat} className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground capitalize">
               {cat}
             </span>
           ))}
@@ -146,17 +175,6 @@ function PluginCard({
       )}
     </button>
   );
-}
-
-const LOADER_ORDER = ["paper", "purpur", "folia", "spigot", "bukkit"];
-
-function loaderLabel(loader: string) {
-  return loader.charAt(0).toUpperCase() + loader.slice(1);
-}
-
-function versionLabel(v: ModrinthVersion) {
-  const mc = v.game_versions[0];
-  return mc ? `${v.version_number} — MC ${mc}` : v.version_number;
 }
 
 function VersionPicker({
@@ -178,6 +196,7 @@ function VersionPicker({
     setSelectedLoader(null);
     setSelectedVersionId(null);
     onSelect(null);
+
     fetch(`${MODRINTH_API}/project/${projectId}/version`)
       .then((r) => r.json() as Promise<ModrinthVersion[]>)
       .then((all) => {
@@ -187,30 +206,19 @@ function VersionPicker({
         const pool = compatible.length > 0 ? compatible : all;
         setAllVersions(pool);
 
-        const loaderCounts = new Map<string, number>();
-        for (const v of pool) {
-          for (const l of v.loaders) {
-            if (PLUGIN_LOADERS.includes(l)) loaderCounts.set(l, (loaderCounts.get(l) ?? 0) + 1);
-          }
-        }
-        const bestLoader =
-          LOADER_ORDER.find((l) => loaderCounts.has(l)) ??
-          (loaderCounts.size > 0 ? [...loaderCounts.keys()][0] : null);
+        const counts = new Map<string, number>();
+        for (const v of pool)
+          for (const l of v.loaders)
+            if (PLUGIN_LOADERS.includes(l)) counts.set(l, (counts.get(l) ?? 0) + 1);
 
-        const firstLoader = bestLoader ?? (pool[0]?.loaders[0] ?? null);
-        setSelectedLoader(firstLoader);
+        const bestLoader = LOADER_ORDER.find((l) => counts.has(l)) ?? pool[0]?.loaders[0] ?? null;
+        setSelectedLoader(bestLoader);
 
-        const firstVersion = firstLoader
-          ? (pool.find((v) => v.loaders.includes(firstLoader)) ?? pool[0])
-          : pool[0];
-        if (firstVersion) {
-          setSelectedVersionId(firstVersion.id);
-          onSelect(firstVersion);
-        }
+        const first = bestLoader ? (pool.find((v) => v.loaders.includes(bestLoader)) ?? pool[0]) : pool[0];
+        if (first) { setSelectedVersionId(first.id); onSelect(first); }
       })
       .catch(() => setAllVersions([]))
       .finally(() => setLoading(false));
-    // onSelect intentionally omitted
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
@@ -227,13 +235,10 @@ function VersionPicker({
   function handleLoaderChange(loader: string | null) {
     if (!loader) return;
     setSelectedLoader(loader);
-    const first = filteredVersionsFor(loader)[0] ?? null;
+    const versions = allVersions?.filter((v) => v.loaders.includes(loader)) ?? [];
+    const first = versions[0] ?? null;
     setSelectedVersionId(first?.id ?? null);
     onSelect(first);
-  }
-
-  function filteredVersionsFor(loader: string) {
-    return allVersions?.filter((v) => v.loaders.includes(loader)) ?? [];
   }
 
   function handleVersionChange(id: string | null) {
@@ -244,8 +249,14 @@ function VersionPicker({
   }
 
   if (loading) {
-    return <p className="text-xs text-muted-foreground animate-pulse">{t("loadingVersions")}</p>;
+    return (
+      <div className="flex flex-col gap-3">
+        <div className="h-9 rounded-lg bg-muted animate-pulse" />
+        <div className="h-9 rounded-lg bg-muted animate-pulse" />
+      </div>
+    );
   }
+
   if (!allVersions || allVersions.length === 0) {
     return <p className="text-xs text-muted-foreground">{t("noVersions")}</p>;
   }
@@ -257,38 +268,50 @@ function VersionPicker({
           <p className="text-xs font-medium text-muted-foreground">{t("loaderLabel")}</p>
           <Select value={selectedLoader ?? ""} onValueChange={handleLoaderChange}>
             <SelectTrigger className="h-9 text-xs">
-              <SelectValue>
-                {selectedLoader ? loaderLabel(selectedLoader) : t("selectVersion")}
-              </SelectValue>
+              <SelectValue>{selectedLoader ? loaderLabel(selectedLoader) : t("selectVersion")}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               {availableLoaders.map((l) => (
-                <SelectItem key={l} value={l}>
-                  {loaderLabel(l)}
-                </SelectItem>
+                <SelectItem key={l} value={l}>{loaderLabel(l)}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
       )}
-
       <div className="flex flex-col gap-1.5">
         <p className="text-xs font-medium text-muted-foreground">{t("versionLabel")}</p>
         <Select value={selectedVersionId ?? ""} onValueChange={handleVersionChange}>
           <SelectTrigger className="h-9 text-xs">
-            <SelectValue>
-              {selectedVersion ? versionLabel(selectedVersion) : t("selectVersion")}
-            </SelectValue>
+            <SelectValue>{selectedVersion ? versionLabel(selectedVersion) : t("selectVersion")}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             {filteredVersions.map((v) => (
-              <SelectItem key={v.id} value={v.id}>
-                {versionLabel(v)}
-              </SelectItem>
+              <SelectItem key={v.id} value={v.id}>{versionLabel(v)}</SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
+    </div>
+  );
+}
+
+function Readme({ body }: { body: string | null | undefined }) {
+  if (body === undefined) {
+    return (
+      <div className="flex flex-col gap-3 animate-pulse">
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className={`h-3 rounded bg-muted ${i % 3 === 2 ? "w-3/4" : "w-full"}`} />
+        ))}
+      </div>
+    );
+  }
+  if (!body) return <p className="text-xs text-muted-foreground">No description available.</p>;
+
+  return (
+    <div className={PROSE}>
+      <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+        {body}
+      </ReactMarkdown>
     </div>
   );
 }
@@ -303,13 +326,23 @@ function PluginDetail({
   onClose: () => void;
 }) {
   const t = useTranslations("panel.plugins");
+  const isMobile = useIsMobile();
+  const [body, setBody] = useState<string | null | undefined>(undefined);
   const [selectedVersion, setSelectedVersion] = useState<ModrinthVersion | null>(null);
   const [installing, setInstalling] = useState(false);
+  const [installSheetOpen, setInstallSheetOpen] = useState(false);
+
+  useEffect(() => {
+    setBody(undefined);
+    fetch(`${MODRINTH_API}/project/${plugin.project_id}`)
+      .then((r) => r.json() as Promise<{ body: string }>)
+      .then((d) => setBody(d.body ?? null))
+      .catch(() => setBody(null));
+  }, [plugin.project_id]);
 
   async function install() {
     const file = selectedVersion?.files.find((f) => f.primary) ?? selectedVersion?.files[0];
     if (!file) return;
-
     setInstalling(true);
     try {
       const res = await fetch(`/api/servers/${serverId}/files/pull`, {
@@ -327,80 +360,149 @@ function PluginDetail({
     }
   }
 
+  const installBtn = (
+    <button
+      type="button"
+      onClick={install}
+      disabled={!selectedVersion || installing}
+      className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
+    >
+      {installing ? t("installing") : t("install")}
+    </button>
+  );
+
+  if (!isMobile) {
+    return (
+      <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+        <DialogPopup
+          showCloseButton={false}
+          className="flex max-w-5xl h-[85vh] p-0 overflow-hidden rounded-2xl shadow-2xl"
+        >
+          <button
+            type="button"
+            aria-label="Close"
+            onClick={onClose}
+            className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+
+          {/* Left column */}
+          <div className="flex w-72 shrink-0 flex-col gap-5 overflow-y-auto border-r border-border p-6">
+            <div className="flex items-start gap-3 pr-6">
+              <PluginIcon plugin={plugin} size="lg" />
+              <div className="flex min-w-0 flex-col gap-1 pt-1">
+                <p className="font-semibold text-foreground leading-tight">{plugin.title}</p>
+                <p className="text-xs text-muted-foreground">by {plugin.author}</p>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Download className="h-3 w-3" />
+                  {fmtDownloads(plugin.downloads)}
+                </div>
+              </div>
+            </div>
+
+            {plugin.categories.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {plugin.categories.map((cat) => (
+                  <span key={cat} className="rounded-full bg-muted px-2.5 py-1 text-[10px] font-medium text-muted-foreground capitalize">
+                    {cat}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <p className="text-xs leading-relaxed text-muted-foreground">{plugin.description}</p>
+
+            <div className="border-t border-border" />
+
+            <VersionPicker projectId={plugin.project_id} onSelect={setSelectedVersion} />
+
+            {installBtn}
+
+            <a
+              href={`https://modrinth.com/plugin/${plugin.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ExternalLink className="h-3 w-3" />
+              {t("modrinthLink")}
+            </a>
+          </div>
+
+          {/* Right column — README */}
+          <div className="flex-1 overflow-y-auto p-6">
+            <Readme body={body} />
+          </div>
+        </DialogPopup>
+      </Dialog>
+    );
+  }
+
+  /* ── Mobile ── */
   return (
     <>
-      <SheetHeader>
-        <div className="flex items-start gap-4 pr-8">
-          <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-muted flex items-center justify-center">
-            {plugin.icon_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={plugin.icon_url}
-                alt={plugin.title}
-                className="h-14 w-14 object-cover"
-                onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).style.display = "none";
-                }}
-              />
-            ) : (
-              <Puzzle className="h-7 w-7 text-muted-foreground" />
-            )}
-          </div>
-          <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <SheetTitle className="truncate">{plugin.title}</SheetTitle>
-            <p className="text-sm text-muted-foreground">by {plugin.author}</p>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Download className="h-3 w-3" />
-              {fmtDownloads(plugin.downloads)} downloads
+      <Sheet open onOpenChange={(open) => { if (!open) onClose(); }}>
+        <SheetPopup side="bottom" showCloseButton>
+          <SheetHeader>
+            <div className="flex items-center gap-3 pr-8">
+              <PluginIcon plugin={plugin} size="sm" />
+              <div className="flex min-w-0 flex-col gap-0.5">
+                <SheetTitle className="truncate text-base">{plugin.title}</SheetTitle>
+                <p className="text-xs text-muted-foreground">by {plugin.author} · <Download className="inline h-2.5 w-2.5" /> {fmtDownloads(plugin.downloads)}</p>
+              </div>
             </div>
-          </div>
-        </div>
-      </SheetHeader>
+          </SheetHeader>
 
-      <SheetPanel>
-        <div className="flex flex-col gap-5">
-          <a
-            href={`https://modrinth.com/plugin/${plugin.slug}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
-          >
-            <ExternalLink className="h-3 w-3" />
-            {t("modrinthLink")}
-          </a>
-
-          <p className="text-sm leading-relaxed text-foreground">{plugin.description}</p>
-
-          {plugin.categories.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {plugin.categories.map((cat) => (
-                <span
-                  key={cat}
-                  className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground capitalize"
-                >
-                  {cat}
-                </span>
-              ))}
+          <SheetPanel className="max-h-[60vh]">
+            <div className="flex flex-col gap-4">
+              {plugin.categories.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {plugin.categories.map((cat) => (
+                    <span key={cat} className="rounded-full bg-muted px-2.5 py-1 text-[10px] font-medium text-muted-foreground capitalize">
+                      {cat}
+                    </span>
+                  ))}
+                </div>
+              )}
+              <a
+                href={`https://modrinth.com/plugin/${plugin.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs text-primary"
+              >
+                <ExternalLink className="h-3 w-3" />
+                {t("modrinthLink")}
+              </a>
+              <Readme body={body} />
             </div>
-          )}
+          </SheetPanel>
 
-          <VersionPicker
-            projectId={plugin.project_id}
-            onSelect={setSelectedVersion}
-          />
-        </div>
-      </SheetPanel>
+          <SheetFooter variant="bare">
+            <button
+              type="button"
+              onClick={() => setInstallSheetOpen(true)}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              {t("install")}
+            </button>
+          </SheetFooter>
+        </SheetPopup>
+      </Sheet>
 
-      <SheetFooter>
-        <button
-          type="button"
-          onClick={install}
-          disabled={!selectedVersion || installing}
-          className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
-        >
-          {installing ? t("installing") : t("install")}
-        </button>
-      </SheetFooter>
+      <Sheet open={installSheetOpen} onOpenChange={setInstallSheetOpen}>
+        <SheetPopup side="bottom" showCloseButton>
+          <SheetHeader>
+            <SheetTitle>{t("install")} {plugin.title}</SheetTitle>
+          </SheetHeader>
+          <SheetPanel scrollFade={false}>
+            <VersionPicker projectId={plugin.project_id} onSelect={setSelectedVersion} />
+          </SheetPanel>
+          <SheetFooter variant="bare">
+            {installBtn}
+          </SheetFooter>
+        </SheetPopup>
+      </Sheet>
     </>
   );
 }
@@ -427,7 +529,6 @@ export default function PluginsPage({ params }: { params: Promise<{ id: string }
   const eggFeatures = server?.egg?.features
     ? (JSON.parse(server.egg.features) as string[])
     : null;
-  const isSupported = !server || eggFeatures === null || eggFeatures.includes("minecraft_plugins");
 
   const doSearch = useCallback((q: string) => {
     setSearchLoading(true);
@@ -441,9 +542,7 @@ export default function PluginsPage({ params }: { params: Promise<{ id: string }
       .finally(() => setSearchLoading(false));
   }, []);
 
-  useEffect(() => {
-    doSearch("");
-  }, [doSearch]);
+  useEffect(() => { doSearch(""); }, [doSearch]);
 
   function handleQueryChange(val: string) {
     setQuery(val);
@@ -460,7 +559,7 @@ export default function PluginsPage({ params }: { params: Promise<{ id: string }
     return (
       <div className="flex flex-1 flex-col bg-background">
         <div className="flex shrink-0 items-center gap-2 border-b border-border bg-card px-4 py-2.5">
-          <Package className="h-4 w-4 text-muted-foreground" />
+          <Puzzle className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm font-medium text-foreground">{t("featuredTitle")}</span>
         </div>
         <div className="flex flex-1 items-center justify-center p-6">
@@ -497,24 +596,16 @@ export default function PluginsPage({ params }: { params: Promise<{ id: string }
         </div>
 
         <div className="flex-1 overflow-y-auto p-4">
-          <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            {sectionTitle}
-          </p>
+          <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">{sectionTitle}</p>
 
           {searchLoading ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {Array.from({ length: 12 }).map((_, i) => (
-                <PluginCardSkeleton key={i} />
-              ))}
+              {Array.from({ length: 12 }).map((_, i) => <PluginCardSkeleton key={i} />)}
             </div>
           ) : results && results.length > 0 ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {results.map((plugin) => (
-                <PluginCard
-                  key={plugin.project_id}
-                  plugin={plugin}
-                  onClick={() => setSelectedPlugin(plugin)}
-                />
+                <PluginCard key={plugin.project_id} plugin={plugin} onClick={() => setSelectedPlugin(plugin)} />
               ))}
             </div>
           ) : (
@@ -526,17 +617,13 @@ export default function PluginsPage({ params }: { params: Promise<{ id: string }
         </div>
       </div>
 
-      <Sheet open={!!selectedPlugin} onOpenChange={(open) => { if (!open) setSelectedPlugin(null); }}>
-        <SheetPopup side="right">
-          {selectedPlugin && (
-            <PluginDetail
-              plugin={selectedPlugin}
-              serverId={id}
-              onClose={() => setSelectedPlugin(null)}
-            />
-          )}
-        </SheetPopup>
-      </Sheet>
+      {selectedPlugin && (
+        <PluginDetail
+          plugin={selectedPlugin}
+          serverId={id}
+          onClose={() => setSelectedPlugin(null)}
+        />
+      )}
     </>
   );
 }
