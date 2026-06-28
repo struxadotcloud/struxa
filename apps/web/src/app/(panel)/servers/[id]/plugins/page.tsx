@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import {
   Search, ExternalLink, Download, Puzzle, X,
   Code2, MessageSquare, CircleAlert, BookOpen, Heart,
-  ScrollText, Calendar, RefreshCw, Server, Gamepad2,
+  ScrollText, Calendar, RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
@@ -393,6 +393,14 @@ function MetaLink({ href, icon: Icon, label }: { href: string; icon: React.Eleme
   );
 }
 
+function safeUrl(u: string | null | undefined): string | undefined {
+  if (!u) return undefined;
+  try {
+    const p = new URL(u);
+    return p.protocol === "https:" || p.protocol === "http:" ? p.toString() : undefined;
+  } catch { return undefined; }
+}
+
 function ProjectMetadata({
   detail,
   members,
@@ -406,7 +414,7 @@ function ProjectMetadata({
         {[80, 60, 100, 70].map((w, i) => (
           <div key={i} className="flex flex-col gap-2">
             <div className="h-2.5 w-16 rounded bg-muted animate-pulse" />
-            <div className={`h-3 rounded bg-muted animate-pulse`} style={{ width: `${w}%` }} />
+            <div className="h-3 rounded bg-muted animate-pulse" style={{ width: `${w}%` }} />
             <div className="h-3 w-3/4 rounded bg-muted animate-pulse" />
           </div>
         ))}
@@ -416,20 +424,15 @@ function ProjectMetadata({
 
   if (!detail) return null;
 
-  const allVersions = detail.game_versions;
-  const shownVersions = allVersions.slice(0, 7);
-  const extraVersions = allVersions.length - shownVersions.length;
-
   const links: { href: string; icon: React.ElementType; label: string }[] = [
-    ...(detail.source_url ? [{ href: detail.source_url, icon: Code2, label: "View source" }] : []),
-    ...(detail.discord_url ? [{ href: detail.discord_url, icon: MessageSquare, label: "Join Discord" }] : []),
-    ...(detail.issues_url ? [{ href: detail.issues_url, icon: CircleAlert, label: "Report issues" }] : []),
-    ...(detail.wiki_url ? [{ href: detail.wiki_url, icon: BookOpen, label: "Wiki" }] : []),
-    ...detail.donation_urls.map((d) => ({
-      href: d.url,
-      icon: Heart,
-      label: `Donate on ${DONATE_LABELS[d.id] ?? d.platform}`,
-    })),
+    ...(safeUrl(detail.source_url) ? [{ href: safeUrl(detail.source_url)!, icon: Code2, label: "View source" }] : []),
+    ...(safeUrl(detail.discord_url) ? [{ href: safeUrl(detail.discord_url)!, icon: MessageSquare, label: "Join Discord" }] : []),
+    ...(safeUrl(detail.issues_url) ? [{ href: safeUrl(detail.issues_url)!, icon: CircleAlert, label: "Report issues" }] : []),
+    ...(safeUrl(detail.wiki_url) ? [{ href: safeUrl(detail.wiki_url)!, icon: BookOpen, label: "Wiki" }] : []),
+    ...detail.donation_urls.flatMap((d) => {
+      const url = safeUrl(d.url);
+      return url ? [{ href: url, icon: Heart, label: `Donate on ${DONATE_LABELS[d.id] ?? d.platform}` }] : [];
+    }),
   ];
 
   const allCategories = [...detail.categories, ...detail.additional_categories];
@@ -437,39 +440,6 @@ function ProjectMetadata({
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Compatibility */}
-      <MetaSection title="Compatibility">
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Gamepad2 className="h-3.5 w-3.5 shrink-0" />
-            <span>Minecraft: Java Edition</span>
-          </div>
-          {allVersions.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {shownVersions.map((v) => (
-                <span key={v} className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">{v}</span>
-              ))}
-              {extraVersions > 0 && (
-                <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">+{extraVersions} more</span>
-              )}
-            </div>
-          )}
-          {detail.loaders.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {detail.loaders.map((l) => (
-                <span key={l} className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground capitalize">{l}</span>
-              ))}
-            </div>
-          )}
-          {detail.server_side !== "unsupported" && (
-            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-              <Server className="h-3 w-3 shrink-0" />
-              Server-side
-            </div>
-          )}
-        </div>
-      </MetaSection>
-
       {/* Links */}
       {links.length > 0 && (
         <MetaSection title="Links">
@@ -522,8 +492,8 @@ function ProjectMetadata({
           {detail.license && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <ScrollText className="h-3.5 w-3.5 shrink-0" />
-              {detail.license.url ? (
-                <a href={detail.license.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+              {safeUrl(detail.license.url) ? (
+                <a href={safeUrl(detail.license.url)} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                   {detail.license.name || detail.license.id}
                 </a>
               ) : (
@@ -640,8 +610,6 @@ function PluginDetail({
               </div>
             </div>
 
-            <ProjectMetadata detail={detail} members={members} />
-
             <div className="border-t border-border" />
 
             <VersionPicker projectId={plugin.project_id} onSelect={setSelectedVersion} />
@@ -657,6 +625,10 @@ function PluginDetail({
               <ExternalLink className="h-3 w-3" />
               {t("modrinthLink")}
             </a>
+
+            <div className="border-t border-border" />
+
+            <ProjectMetadata detail={detail} members={members} />
           </div>
 
           {/* Right column — README */}
