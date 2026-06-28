@@ -225,6 +225,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
   const eggFeaturesRef = useRef<string[]>([]);
   const serverImageRef = useRef("");
   useEffect(() => {
+    const prev = eggFeaturesRef.current;
     try {
       const parsed = JSON.parse(server?.egg?.features ?? "[]") as string[];
       eggFeaturesRef.current = Array.isArray(parsed) ? parsed : [];
@@ -232,7 +233,19 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
       eggFeaturesRef.current = [];
     }
     serverImageRef.current = server?.image ?? "";
-  }, [server?.egg?.features, server?.image]);
+    const features = eggFeaturesRef.current;
+    if (prev.length === 0 && features.length > 0) {
+      if (features.includes("eula") && !eulaShownRef.current && lines.some((l) => /you need to agree to the eula/i.test(l))) {
+        eulaShownRef.current = true;
+        setEulaDialogOpen(true);
+      }
+      if (features.includes("java_version") && !javaShownRef.current && lines.some((l) => /unrecognized option|could not create the java virtual machine|unsupported java|requires java/i.test(l))) {
+        javaShownRef.current = true;
+        setJavaSelectedImage(serverImageRef.current);
+        setJavaDialogOpen(true);
+      }
+    }
+  }, [server?.egg?.features, server?.image, lines]);
 
   const [reconnectKey, setReconnectKey] = useState(0);
 
@@ -376,7 +389,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
       setEulaDialogOpen(false);
       toast.success(t("eulaAcceptedToast"));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to accept EULA");
+      toast.error(e instanceof Error ? e.message : t("eulaErrorToast"));
     } finally {
       setEulaAccepting(false);
     }
@@ -572,7 +585,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
         </aside>
       </div>
 
-      <Dialog open={eulaDialogOpen} onOpenChange={setEulaDialogOpen}>
+      <Dialog open={eulaDialogOpen} onOpenChange={(open) => { if (!open) eulaShownRef.current = false; setEulaDialogOpen(open); }}>
         <DialogPopup showCloseButton={false}>
           <DialogHeader>
             <DialogTitle>{t("eulaTitle")}</DialogTitle>
@@ -598,7 +611,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
         </DialogPopup>
       </Dialog>
 
-      <Dialog open={javaDialogOpen} onOpenChange={setJavaDialogOpen}>
+      <Dialog open={javaDialogOpen} onOpenChange={(open) => { if (!open) javaShownRef.current = false; setJavaDialogOpen(open); }}>
         <DialogPopup showCloseButton={false}>
           <DialogHeader>
             <DialogTitle>{t("javaTitle")}</DialogTitle>

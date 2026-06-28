@@ -250,6 +250,7 @@
       "eulaDescription": "Ten serwer wymaga akceptacji Umowy licencyjnej użytkownika końcowego Minecraft przed uruchomieniem. Akceptując, zgadzasz się z warunkami dostępnymi pod adresem aka.ms/MinecraftEULA.",
       "eulaAccept": "Akceptuj i kontynuuj",
       "eulaAcceptedToast": "EULA zaakceptowana. Uruchom ponownie serwer, aby zastosować zmiany.",
+      "eulaErrorToast": "Nie udało się zaakceptować EULA",
       "javaTitle": "Niezgodność wersji Java",
       "javaDescription": "Serwer wymaga innej wersji Java. Zaktualizuj zmienną startową JAVA_VERSION w ustawieniach.",
       "javaApply": "Zastosuj i uruchom ponownie",

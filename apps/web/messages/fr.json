@@ -250,6 +250,7 @@
       "eulaDescription": "Ce serveur nécessite que vous acceptiez le Contrat de licence utilisateur final de Minecraft avant de démarrer. En acceptant, vous acceptez les conditions disponibles sur aka.ms/MinecraftEULA.",
       "eulaAccept": "Accepter et continuer",
       "eulaAcceptedToast": "CLUF accepté. Redémarrez le serveur pour appliquer les modifications.",
+      "eulaErrorToast": "Impossible d'accepter le CLUF",
       "javaTitle": "Version Java incompatible",
       "javaDescription": "Le serveur nécessite une version Java différente. Mettez à jour la variable de démarrage JAVA_VERSION dans les paramètres.",
       "javaApply": "Appliquer et redémarrer",
