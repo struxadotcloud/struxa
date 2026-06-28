@@ -707,8 +707,8 @@ export default function PluginsPage({ params }: { params: Promise<{ id: string }
 
   const { data: server } = useQuery(orpc.servers.get.queryOptions({ input: { id } }));
 
-  const eggFeatures = server?.egg?.features
-    ? (JSON.parse(server.egg.features) as string[])
+  const eggFeatures = server
+    ? (() => { try { return JSON.parse(server.egg?.features ?? "[]") as string[]; } catch { return []; } })()
     : null;
 
   const doSearch = useCallback((q: string) => {
@@ -736,7 +736,7 @@ export default function PluginsPage({ params }: { params: Promise<{ id: string }
 
   if (isPending || !session) return <Loader />;
 
-  if (server && eggFeatures !== null && !eggFeatures.includes("minecraft_plugins")) {
+  if (eggFeatures !== null && !eggFeatures.includes("minecraft_plugins")) {
     router.replace(`/servers/${id}`);
     return null;
   }
