@@ -102,4 +102,4 @@ jobs:
           curl -sS -X POST \
             -H "Content-Type: application/json" \
             -d "$PAYLOAD" \
-            "$DISCORD_WEBHOOK_URL"
+            "${DISCORD_WEBHOOK_URL}?with_components=true"
