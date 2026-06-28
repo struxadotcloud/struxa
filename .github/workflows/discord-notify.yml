@@ -74,7 +74,6 @@ jobs:
                 { type: 10, content: $ping },
                 {
                   type: 17,
-                  accentColor: 16757530,
                   spoiler: false,
                   components: [
                     {
@@ -96,7 +95,7 @@ jobs:
               ]
             }')
 
-          curl -fsSL -X POST \
+          curl -sS -X POST \
             -H "Content-Type: application/json" \
             -d "$PAYLOAD" \
             "$DISCORD_WEBHOOK_URL"
