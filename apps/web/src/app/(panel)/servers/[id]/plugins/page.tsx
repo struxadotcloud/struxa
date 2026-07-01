@@ -105,7 +105,9 @@ const PROSE = [
   "[&_pre_code]:bg-transparent [&_pre_code]:p-0",
   "[&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-muted-foreground [&_blockquote]:mb-3",
   "[&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_a]:decoration-primary/40 [&_a:hover]:decoration-primary",
-  "[&_img]:rounded-lg [&_img]:max-w-full [&_img]:my-3",
+  "[&_img]:rounded-lg [&_img]:max-w-full [&_img]:my-3 [&_img]:align-middle",
+  "[&_p:has(>img:only-child)]:inline-block [&_p:has(>img:only-child)]:mb-2 [&_p:has(>img:only-child)]:mr-2 [&_p:has(>img:only-child)]:align-middle",
+  "[&_p:has(>a:only-child>img:only-child)]:inline-block [&_p:has(>a:only-child>img:only-child)]:mb-2 [&_p:has(>a:only-child>img:only-child)]:mr-2 [&_p:has(>a:only-child>img:only-child)]:align-middle",
   "[&_hr]:border-border [&_hr]:my-5",
   "[&_table]:w-full [&_table]:text-sm [&_table]:border-collapse [&_table]:mb-3",
   "[&_th]:border [&_th]:border-border [&_th]:bg-muted [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:text-xs [&_th]:font-semibold",
@@ -174,6 +176,7 @@ function PluginCardSkeleton() {
 }
 
 function PluginCard({ plugin, onClick }: { plugin: ModrinthProject; onClick: () => void }) {
+  const t = useTranslations("panel.plugins");
   return (
     <button
       type="button"
@@ -184,7 +187,7 @@ function PluginCard({ plugin, onClick }: { plugin: ModrinthProject; onClick: () 
         <PluginIcon plugin={plugin} size="md" />
         <div className="flex min-w-0 flex-1 flex-col gap-0.5 pt-0.5">
           <p className="truncate text-sm font-semibold text-foreground leading-tight">{plugin.title}</p>
-          <p className="truncate text-xs text-muted-foreground">by {plugin.author}</p>
+          <p className="truncate text-xs text-muted-foreground">{t("author", { author: plugin.author })}</p>
         </div>
         <div className="flex items-center gap-1 shrink-0 text-[10px] text-muted-foreground">
           <Download className="h-3 w-3" />
@@ -324,6 +327,7 @@ function VersionPicker({
 }
 
 function Readme({ body }: { body: string | null | undefined }) {
+  const t = useTranslations("panel.plugins");
   if (body === undefined) {
     return (
       <div className="flex flex-col gap-3 animate-pulse">
@@ -333,7 +337,7 @@ function Readme({ body }: { body: string | null | undefined }) {
       </div>
     );
   }
-  if (!body) return <p className="text-xs text-muted-foreground">No description available.</p>;
+  if (!body) return <p className="text-xs text-muted-foreground">{t("noDescription")}</p>;
 
   return (
     <div className={PROSE}>
@@ -408,6 +412,7 @@ function ProjectMetadata({
   detail: ModrinthProjectDetail | null | undefined;
   members: ModrinthMember[] | null | undefined;
 }) {
+  const t = useTranslations("panel.plugins");
   if (detail === undefined) {
     return (
       <div className="flex flex-col gap-4">
@@ -425,13 +430,13 @@ function ProjectMetadata({
   if (!detail) return null;
 
   const links: { href: string; icon: React.ElementType; label: string }[] = [
-    ...(safeUrl(detail.source_url) ? [{ href: safeUrl(detail.source_url)!, icon: Code2, label: "View source" }] : []),
-    ...(safeUrl(detail.discord_url) ? [{ href: safeUrl(detail.discord_url)!, icon: MessageSquare, label: "Join Discord" }] : []),
-    ...(safeUrl(detail.issues_url) ? [{ href: safeUrl(detail.issues_url)!, icon: CircleAlert, label: "Report issues" }] : []),
-    ...(safeUrl(detail.wiki_url) ? [{ href: safeUrl(detail.wiki_url)!, icon: BookOpen, label: "Wiki" }] : []),
+    ...(safeUrl(detail.source_url) ? [{ href: safeUrl(detail.source_url)!, icon: Code2, label: t("viewSource") }] : []),
+    ...(safeUrl(detail.discord_url) ? [{ href: safeUrl(detail.discord_url)!, icon: MessageSquare, label: t("joinDiscord") }] : []),
+    ...(safeUrl(detail.issues_url) ? [{ href: safeUrl(detail.issues_url)!, icon: CircleAlert, label: t("reportIssues") }] : []),
+    ...(safeUrl(detail.wiki_url) ? [{ href: safeUrl(detail.wiki_url)!, icon: BookOpen, label: t("wiki") }] : []),
     ...detail.donation_urls.flatMap((d) => {
       const url = safeUrl(d.url);
-      return url ? [{ href: url, icon: Heart, label: `Donate on ${DONATE_LABELS[d.id] ?? d.platform}` }] : [];
+      return url ? [{ href: url, icon: Heart, label: t("donateOn", { platform: DONATE_LABELS[d.id] ?? d.platform }) }] : [];
     }),
   ];
 
@@ -442,7 +447,7 @@ function ProjectMetadata({
     <div className="flex flex-col gap-5">
       {/* Links */}
       {links.length > 0 && (
-        <MetaSection title="Links">
+        <MetaSection title={t("links")}>
           <div className="flex flex-col gap-1.5">
             {links.map((l) => <MetaLink key={l.href} {...l} />)}
           </div>
@@ -451,7 +456,7 @@ function ProjectMetadata({
 
       {/* Tags */}
       {allCategories.length > 0 && (
-        <MetaSection title="Tags">
+        <MetaSection title={t("tags")}>
           <div className="flex flex-wrap gap-1.5">
             {allCategories.map((cat) => (
               <span key={cat} className="rounded-full bg-muted px-2.5 py-1 text-[10px] font-medium text-muted-foreground capitalize">{cat}</span>
@@ -462,7 +467,7 @@ function ProjectMetadata({
 
       {/* Creators */}
       {sortedMembers.length > 0 && (
-        <MetaSection title="Creators">
+        <MetaSection title={t("creators")}>
           <div className="flex flex-col gap-2">
             {sortedMembers.map((m) => (
               <div key={m.user.id} className="flex items-center gap-2">
@@ -487,7 +492,7 @@ function ProjectMetadata({
       )}
 
       {/* Details */}
-      <MetaSection title="Details">
+      <MetaSection title={t("details")}>
         <div className="flex flex-col gap-1.5">
           {detail.license && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -503,11 +508,11 @@ function ProjectMetadata({
           )}
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Calendar className="h-3.5 w-3.5 shrink-0" />
-            Published {timeAgo(detail.published)}
+            {t("publishedAgo", { time: timeAgo(detail.published) })}
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <RefreshCw className="h-3.5 w-3.5 shrink-0" />
-            Updated {timeAgo(detail.updated)}
+            {t("updatedAgo", { time: timeAgo(detail.updated) })}
           </div>
         </div>
       </MetaSection>
@@ -589,7 +594,7 @@ function PluginDetail({
         >
           <button
             type="button"
-            aria-label="Close"
+            aria-label={t("close")}
             onClick={onClose}
             className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
@@ -602,7 +607,7 @@ function PluginDetail({
               <PluginIcon plugin={plugin} size="lg" />
               <div className="flex min-w-0 flex-col gap-1 pt-1">
                 <p className="font-semibold text-foreground leading-tight">{plugin.title}</p>
-                <p className="text-xs text-muted-foreground">by {plugin.author}</p>
+                <p className="text-xs text-muted-foreground">{t("author", { author: plugin.author })}</p>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Download className="h-3 w-3" />
                   {fmtDownloads(plugin.downloads)}
@@ -650,7 +655,7 @@ function PluginDetail({
               <PluginIcon plugin={plugin} size="sm" />
               <div className="flex min-w-0 flex-col gap-0.5">
                 <SheetTitle className="truncate text-base">{plugin.title}</SheetTitle>
-                <p className="text-xs text-muted-foreground">by {plugin.author} · <Download className="inline h-2.5 w-2.5" /> {fmtDownloads(plugin.downloads)}</p>
+                <p className="text-xs text-muted-foreground">{t("author", { author: plugin.author })} · <Download className="inline h-2.5 w-2.5" /> {fmtDownloads(plugin.downloads)}</p>
               </div>
             </div>
           </SheetHeader>
@@ -708,19 +713,27 @@ export default function PluginsPage({ params }: { params: Promise<{ id: string }
   const { data: server } = useQuery(orpc.servers.get.queryOptions({ input: { id } }));
 
   const eggFeatures = server
-    ? (() => { try { return JSON.parse(server.egg?.features ?? "[]") as string[]; } catch { return []; } })()
+    ? (() => {
+        try {
+          const parsed: unknown = JSON.parse(server.egg?.features ?? "[]");
+          return Array.isArray(parsed) && parsed.every((f) => typeof f === "string") ? parsed : [];
+        } catch { return []; }
+      })()
     : null;
 
+  const searchSeq = useRef(0);
+
   const doSearch = useCallback((q: string) => {
+    const seq = ++searchSeq.current;
     setSearchLoading(true);
     const url = q.trim()
       ? `${MODRINTH_API}/search?query=${encodeURIComponent(q)}&facets=${FACETS}&limit=20`
       : `${MODRINTH_API}/search?facets=${FACETS}&limit=20&index=downloads`;
     fetch(url)
       .then((r) => r.json() as Promise<{ hits: ModrinthProject[] }>)
-      .then((data) => setResults(data.hits))
-      .catch(() => setResults([]))
-      .finally(() => setSearchLoading(false));
+      .then((data) => { if (seq === searchSeq.current) setResults(data.hits); })
+      .catch(() => { if (seq === searchSeq.current) setResults([]); })
+      .finally(() => { if (seq === searchSeq.current) setSearchLoading(false); });
   }, []);
 
   useEffect(() => { doSearch(""); }, [doSearch]);
@@ -734,12 +747,13 @@ export default function PluginsPage({ params }: { params: Promise<{ id: string }
     }, 300);
   }
 
-  if (isPending || !session) return <Loader />;
+  const unsupported = eggFeatures !== null && !eggFeatures.includes("minecraft_plugins");
 
-  if (eggFeatures !== null && !eggFeatures.includes("minecraft_plugins")) {
-    router.replace(`/servers/${id}`);
-    return null;
-  }
+  useEffect(() => {
+    if (unsupported) router.replace(`/servers/${id}`);
+  }, [unsupported, router, id]);
+
+  if (isPending || !session || unsupported) return <Loader />;
 
   const sectionTitle = debouncedQuery.trim() ? t("searchResultsTitle") : t("featuredTitle");
 

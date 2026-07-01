@@ -76,7 +76,10 @@ export function PanelSidebar() {
     ...orpc.servers.get.queryOptions({ input: { id: serverId ?? "" } }),
     enabled: !!serverId,
     select: (s) => {
-      try { return JSON.parse(s.egg?.features ?? "[]") as string[]; } catch { return [] as string[]; }
+      try {
+        const parsed: unknown = JSON.parse(s.egg?.features ?? "[]");
+        return Array.isArray(parsed) && parsed.every((f) => typeof f === "string") ? parsed : [];
+      } catch { return [] as string[]; }
     },
   });
 
