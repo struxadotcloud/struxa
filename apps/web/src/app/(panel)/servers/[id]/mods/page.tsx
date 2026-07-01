@@ -88,7 +88,7 @@ interface ModrinthMember {
 const MODRINTH_API = "https://api.modrinth.com/v2";
 const MOD_LOADERS = ["fabric", "forge", "neoforge", "quilt"];
 const LOADER_ORDER = ["fabric", "forge", "neoforge", "quilt"];
-const FACETS = encodeURIComponent(JSON.stringify([["project_type:mod"]]));
+const FACETS = encodeURIComponent(JSON.stringify([["project_type:mod"], ["server_side!=unsupported"]]));
 
 const PROSE = [
   "text-sm text-foreground leading-relaxed",
