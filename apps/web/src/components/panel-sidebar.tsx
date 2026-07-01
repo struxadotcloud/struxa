@@ -40,6 +40,7 @@ import {
   Wallet,
   ShoppingBag,
   Package,
+  Box,
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { useQuery } from "@tanstack/react-query";
@@ -101,11 +102,13 @@ export function PanelSidebar() {
   ];
 
   const hasPlugins = serverFeatures?.includes("minecraft_plugins") ?? false;
+  const hasMods = serverFeatures?.includes("minecraft_mods") ?? false;
 
   const NAV_SERVER = [
     { key: "console", label: t("server.console"), icon: Terminal },
     { key: "files", label: t("server.files"), icon: FolderOpen },
     ...(hasPlugins ? [{ key: "plugins", label: t("server.plugins"), icon: Package }] : []),
+    ...(hasMods ? [{ key: "mods", label: t("server.mods"), icon: Box }] : []),
     { key: "databases", label: t("server.databases"), icon: Database },
     { key: "schedules", label: t("server.schedules"), icon: Clock },
     { key: "users", label: t("server.users"), icon: Users },
