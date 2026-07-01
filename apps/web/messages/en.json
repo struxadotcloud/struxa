@@ -457,6 +457,7 @@
       "installError": "Failed to install mod",
       "loaderLabel": "Loader",
       "versionLabel": "Version",
+      "mcVersionLabel": "MC {version}",
       "notSupported": "Mod installer is not available for this server type.",
       "notSupportedHint": "Ask an administrator to enable the minecraft_mods feature on this egg.",
       "modrinthLink": "View on Modrinth",

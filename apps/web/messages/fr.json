@@ -314,6 +314,7 @@
       "installError": "Échec de l'installation du mod",
       "loaderLabel": "Chargeur",
       "versionLabel": "Version",
+      "mcVersionLabel": "MC {version}",
       "notSupported": "L'installateur de mods n'est pas disponible pour ce type de serveur.",
       "notSupportedHint": "Demandez à un administrateur d'activer la fonctionnalité minecraft_mods sur cet egg.",
       "selectVersion": "Sélectionner une version",

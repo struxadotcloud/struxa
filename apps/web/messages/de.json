@@ -314,6 +314,7 @@
       "installError": "Mod konnte nicht installiert werden",
       "loaderLabel": "Loader",
       "versionLabel": "Version",
+      "mcVersionLabel": "MC {version}",
       "notSupported": "Der Mod-Installer ist für diesen Servertyp nicht verfügbar.",
       "notSupportedHint": "Bitte einen Administrator, die minecraft_mods-Funktion für dieses Egg zu aktivieren.",
       "selectVersion": "Version auswählen",

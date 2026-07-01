@@ -2,7 +2,7 @@
 
 import { use, useState, useEffect, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
 import {
   Search, ExternalLink, Download, Box, X,
@@ -15,6 +15,7 @@ import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize from "rehype-sanitize";
 import { authClient } from "@/lib/auth-client";
+import { parseEggFeatures } from "@/lib/egg-features";
 import { orpc } from "@/utils/orpc";
 import Loader from "@/components/loader";
 import { useIsMobile } from "@struxa/ui/hooks/use-media-query";
@@ -87,7 +88,7 @@ interface ModrinthMember {
 
 const MODRINTH_API = "https://api.modrinth.com/v2";
 const MOD_LOADERS = ["fabric", "forge", "neoforge", "quilt"];
-const LOADER_ORDER = ["fabric", "forge", "neoforge", "quilt"];
+const LOADER_ORDER = MOD_LOADERS;
 const FACETS = encodeURIComponent(JSON.stringify([["project_type:mod"], ["server_side!=unsupported"]]));
 
 const PROSE = [
@@ -127,9 +128,9 @@ function loaderLabel(l: string) {
   return l.charAt(0).toUpperCase() + l.slice(1);
 }
 
-function versionLabel(v: ModrinthVersion) {
+function versionLabel(v: ModrinthVersion, mcLabel: (version: string) => string) {
   const mc = v.game_versions[0];
-  return mc ? `${v.version_number} — MC ${mc}` : v.version_number;
+  return mc ? `${v.version_number} — ${mcLabel(mc)}` : v.version_number;
 }
 
 function ModIcon({ mod, size = "md" }: { mod: ModrinthProject; size?: "sm" | "md" | "lg" }) {
@@ -216,6 +217,7 @@ function VersionPicker({
   onSelect: (v: ModrinthVersion | null) => void;
 }) {
   const t = useTranslations("panel.mods");
+  const mcLabel = (version: string) => t("mcVersionLabel", { version });
   const [allVersions, setAllVersions] = useState<ModrinthVersion[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedLoader, setSelectedLoader] = useState<string | null>(null);
@@ -313,11 +315,11 @@ function VersionPicker({
         <p className="text-xs font-medium text-muted-foreground">{t("versionLabel")}</p>
         <Select value={selectedVersionId ?? ""} onValueChange={handleVersionChange}>
           <SelectTrigger className="h-9 text-xs">
-            <SelectValue>{selectedVersion ? versionLabel(selectedVersion) : t("selectVersion")}</SelectValue>
+            <SelectValue>{selectedVersion ? versionLabel(selectedVersion, mcLabel) : t("selectVersion")}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             {filteredVersions.map((v) => (
-              <SelectItem key={v.id} value={v.id}>{versionLabel(v)}</SelectItem>
+              <SelectItem key={v.id} value={v.id}>{versionLabel(v, mcLabel)}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -357,9 +359,9 @@ const DONATE_LABELS: Record<string, string> = {
   paypal: "PayPal",
 };
 
-function timeAgo(dateStr: string): string {
+function timeAgo(dateStr: string, locale: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
-  const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
   const s = Math.floor(diff / 1000);
   if (s < 60) return rtf.format(-s, "second");
   const m = Math.floor(s / 60);
@@ -413,6 +415,7 @@ function ProjectMetadata({
   members: ModrinthMember[] | null | undefined;
 }) {
   const t = useTranslations("panel.mods");
+  const locale = useLocale();
   if (detail === undefined) {
     return (
       <div className="flex flex-col gap-4">
@@ -508,11 +511,11 @@ function ProjectMetadata({
           )}
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Calendar className="h-3.5 w-3.5 shrink-0" />
-            {t("publishedAgo", { time: timeAgo(detail.published) })}
+            {t("publishedAgo", { time: timeAgo(detail.published, locale) })}
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <RefreshCw className="h-3.5 w-3.5 shrink-0" />
-            {t("updatedAgo", { time: timeAgo(detail.updated) })}
+            {t("updatedAgo", { time: timeAgo(detail.updated, locale) })}
           </div>
         </div>
       </MetaSection>
@@ -564,11 +567,14 @@ function ModDetail({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: file.url, root: "/mods" }),
       });
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) {
+        console.error("mod install failed:", await res.text().catch(() => res.statusText));
+        throw new Error();
+      }
       toast.success(t("installSuccess"));
       onClose();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("installError"));
+    } catch {
+      toast.error(t("installError"));
     } finally {
       setInstalling(false);
     }
@@ -712,14 +718,7 @@ export default function ModsPage({ params }: { params: Promise<{ id: string }> }
 
   const { data: server } = useQuery(orpc.servers.get.queryOptions({ input: { id } }));
 
-  const eggFeatures = server
-    ? (() => {
-        try {
-          const parsed: unknown = JSON.parse(server.egg?.features ?? "[]");
-          return Array.isArray(parsed) && parsed.every((f) => typeof f === "string") ? parsed : [];
-        } catch { return []; }
-      })()
-    : null;
+  const eggFeatures = server ? parseEggFeatures(server.egg?.features) : null;
 
   const searchSeq = useRef(0);
 
@@ -753,7 +752,7 @@ export default function ModsPage({ params }: { params: Promise<{ id: string }> }
     if (unsupported) router.replace(`/servers/${id}`);
   }, [unsupported, router, id]);
 
-  if (isPending || !session || unsupported) return <Loader />;
+  if (isPending || !session || !server || unsupported) return <Loader />;
 
   const sectionTitle = debouncedQuery.trim() ? t("searchResultsTitle") : t("featuredTitle");
 

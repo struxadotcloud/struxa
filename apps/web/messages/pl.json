@@ -314,6 +314,7 @@
       "installError": "Nie udało się zainstalować moda",
       "loaderLabel": "Loader",
       "versionLabel": "Wersja",
+      "mcVersionLabel": "MC {version}",
       "notSupported": "Instalator modów nie jest dostępny dla tego typu serwera.",
       "notSupportedHint": "Poproś administratora o włączenie funkcji minecraft_mods dla tego egg.",
       "selectVersion": "Wybierz wersję",

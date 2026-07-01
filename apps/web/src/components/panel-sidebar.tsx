@@ -43,6 +43,7 @@ import {
   Box,
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import { parseEggFeatures } from "@/lib/egg-features";
 import { useQuery } from "@tanstack/react-query";
 import { orpc } from "@/utils/orpc";
 
@@ -76,12 +77,7 @@ export function PanelSidebar() {
   const { data: serverFeatures } = useQuery({
     ...orpc.servers.get.queryOptions({ input: { id: serverId ?? "" } }),
     enabled: !!serverId,
-    select: (s) => {
-      try {
-        const parsed: unknown = JSON.parse(s.egg?.features ?? "[]");
-        return Array.isArray(parsed) && parsed.every((f) => typeof f === "string") ? parsed : [];
-      } catch { return [] as string[]; }
-    },
+    select: (s) => parseEggFeatures(s.egg?.features),
   });
 
   function formatBalance(cents: number, currency: string) {

@@ -15,6 +15,7 @@ import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize from "rehype-sanitize";
 import { authClient } from "@/lib/auth-client";
+import { parseEggFeatures } from "@/lib/egg-features";
 import { orpc } from "@/utils/orpc";
 import Loader from "@/components/loader";
 import { useIsMobile } from "@struxa/ui/hooks/use-media-query";
@@ -712,14 +713,7 @@ export default function PluginsPage({ params }: { params: Promise<{ id: string }
 
   const { data: server } = useQuery(orpc.servers.get.queryOptions({ input: { id } }));
 
-  const eggFeatures = server
-    ? (() => {
-        try {
-          const parsed: unknown = JSON.parse(server.egg?.features ?? "[]");
-          return Array.isArray(parsed) && parsed.every((f) => typeof f === "string") ? parsed : [];
-        } catch { return []; }
-      })()
-    : null;
+  const eggFeatures = server ? parseEggFeatures(server.egg?.features) : null;
 
   const searchSeq = useRef(0);
 
