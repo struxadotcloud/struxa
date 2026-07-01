@@ -39,8 +39,11 @@ import {
   ChevronLeft,
   Wallet,
   ShoppingBag,
+  Package,
+  Box,
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import { parseEggFeatures } from "@/lib/egg-features";
 import { useQuery } from "@tanstack/react-query";
 import { orpc } from "@/utils/orpc";
 
@@ -71,6 +74,12 @@ export function PanelSidebar() {
     enabled: !!billingConfig?.enabled,
   });
 
+  const { data: serverFeatures } = useQuery({
+    ...orpc.servers.get.queryOptions({ input: { id: serverId ?? "" } }),
+    enabled: !!serverId,
+    select: (s) => parseEggFeatures(s.egg?.features),
+  });
+
   function formatBalance(cents: number, currency: string) {
     try {
       return new Intl.NumberFormat(undefined, { style: "currency", currency, minimumFractionDigits: 2 }).format(cents / 100);
@@ -88,9 +97,14 @@ export function PanelSidebar() {
     { key: "account", label: t("panel.account"), icon: User, href: "/account" },
   ];
 
+  const hasPlugins = serverFeatures?.includes("minecraft_plugins") ?? false;
+  const hasMods = serverFeatures?.includes("minecraft_mods") ?? false;
+
   const NAV_SERVER = [
     { key: "console", label: t("server.console"), icon: Terminal },
     { key: "files", label: t("server.files"), icon: FolderOpen },
+    ...(hasPlugins ? [{ key: "plugins", label: t("server.plugins"), icon: Package }] : []),
+    ...(hasMods ? [{ key: "mods", label: t("server.mods"), icon: Box }] : []),
     { key: "databases", label: t("server.databases"), icon: Database },
     { key: "schedules", label: t("server.schedules"), icon: Clock },
     { key: "users", label: t("server.users"), icon: Users },
