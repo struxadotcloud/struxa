@@ -19,6 +19,7 @@ jobs:
 
       - name: Build and send webhook
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           TAG: ${{ github.event.release.tag_name }}
           RELEASE_URL: ${{ github.event.release.html_url }}
@@ -36,10 +37,49 @@ jobs:
             RANGE="${PREV_TAG}..${TAG}"
           fi
 
-          FEATURES=$(git log $RANGE --pretty=format:"- %s (%h)" --no-merges | grep -E "^- feat" || true)
-          FIXES=$(git log $RANGE --pretty=format:"- %s (%h)" --no-merges | grep -E "^- fix" || true)
-          OTHER=$(git log $RANGE --pretty=format:"- %s (%h)" --no-merges | grep -Ev "^- (feat|fix)" || true)
-          CREDITS=$(git log $RANGE --pretty=format:"%aN" --no-merges | sort -u | grep -vE '\[bot\]|^github-actions$' | sed 's|.*|[@&](https://github.com/&)|' | paste -sd $'\n' || true)
+          REPO="${{ github.repository }}"
+          MAX_LINES=5
+
+          # Link #123 references to their GitHub issue/PR (GitHub redirects
+          # /issues/N to /pull/N automatically when N is a PR).
+          linkify() {
+            sed -E "s~(^|[^A-Za-z0-9_])#([0-9]+)~\1[#\2](https://github.com/${REPO}/issues/\2)~g"
+          }
+
+          # Keep only the first MAX_LINES entries of a category, appending "…" when trimmed.
+          truncate_lines() {
+            local input="$1" total
+            [ -z "$input" ] && return
+            total=$(printf '%s\n' "$input" | wc -l)
+            if [ "$total" -gt "$MAX_LINES" ]; then
+              printf '%s\n' "$input" | head -n "$MAX_LINES"
+              echo "…"
+            else
+              printf '%s\n' "$input"
+            fi
+          }
+
+          FEATURES=$(git log $RANGE --pretty=format:"- %s (%h)" --no-merges | grep -E "^- feat" | linkify || true)
+          FIXES=$(git log $RANGE --pretty=format:"- %s (%h)" --no-merges | grep -E "^- fix" | linkify || true)
+          OTHER=$(git log $RANGE --pretty=format:"- %s (%h)" --no-merges | grep -Ev "^- (feat|fix)" | linkify || true)
+
+          # Resolve the actual GitHub username per commit via the API instead of
+          # guessing from the freeform display name, so mentions tag the right account.
+          declare -A seen
+          CREDITS=""
+          while IFS=' ' read -r sha email name; do
+            [[ "$email" == *"[bot]"* || "$name" == *"[bot]"* || "$email" == *"github-actions"* ]] && continue
+            [[ -n "${seen[$email]:-}" ]] && continue
+            seen[$email]=1
+            login=$(gh api "repos/${REPO}/commits/${sha}" --jq '.author.login // empty' 2>/dev/null || true)
+            CREDITS="${CREDITS}${login:-$name}"$'\n'
+          done < <(git log $RANGE --pretty=format:"%H %ae %aN" --no-merges)
+          CREDITS=$(printf '%s' "$CREDITS" | sed '/^$/d' | sort -u | sed 's|.*|[@&](https://github.com/&)|')
+
+          FEATURES=$(truncate_lines "$FEATURES")
+          FIXES=$(truncate_lines "$FIXES")
+          OTHER=$(truncate_lines "$OTHER")
+          CREDITS=$(truncate_lines "$CREDITS")
 
           CHANGELOG=""
           if [ -n "$FEATURES" ]; then

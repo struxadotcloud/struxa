@@ -80,6 +80,8 @@ jobs:
 
       - name: Generate changelog
         id: changelog
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ "${{ inputs.prerelease }}" = "true" ]; then
             # For pre-releases, diff against the immediately preceding tag (stable or pre-release)
@@ -99,7 +101,19 @@ jobs:
           FEATURES=$(git log $RANGE --pretty=format:"- %s (%h)" --no-merges | grep -E "^- feat" || true)
           FIXES=$(git log $RANGE --pretty=format:"- %s (%h)" --no-merges | grep -E "^- fix" || true)
           OTHER=$(git log $RANGE --pretty=format:"- %s (%h)" --no-merges | grep -Ev "^- (feat|fix)" || true)
-          CREDITS=$(git log $RANGE --pretty=format:"%aN" --no-merges | sort -u | grep -vE '\[bot\]|^github-actions$' | sed 's|.*|[@&](https://github.com/&)|' | paste -sd $'\n' || true)
+
+          # Resolve the actual GitHub username per commit via the API instead of
+          # guessing from the freeform display name, so credits tag the right account.
+          declare -A seen
+          CREDITS=""
+          while IFS=' ' read -r sha email name; do
+            [[ "$email" == *"[bot]"* || "$name" == *"[bot]"* || "$email" == *"github-actions"* ]] && continue
+            [[ -n "${seen[$email]:-}" ]] && continue
+            seen[$email]=1
+            login=$(gh api "repos/${{ github.repository }}/commits/${sha}" --jq '.author.login // empty' 2>/dev/null || true)
+            CREDITS="${CREDITS}${login:-$name}"$'\n'
+          done < <(git log $RANGE --pretty=format:"%H %ae %aN" --no-merges)
+          CREDITS=$(printf '%s' "$CREDITS" | sed '/^$/d' | sort -u | sed 's|.*|[@&](https://github.com/&)|')
 
           {
             echo "body<<EOF"
