@@ -14,6 +14,7 @@ import {
   Server,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -197,13 +198,11 @@ function LocationEditModal({
   onClose,
   onSave,
   isPending,
-  error,
 }: {
   location: LocationData | null;
   onClose: () => void;
   onSave: (form: { name: string; short: string; long: string }) => void;
   isPending: boolean;
-  error?: string;
 }) {
   const tl = useTranslations("admin.locations");
   const tc = useTranslations("common");
@@ -269,7 +268,6 @@ function LocationEditModal({
           }}
         />
       </div>
-      {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   );
 
@@ -355,17 +353,27 @@ export default function NodesPage() {
   const { data: locations, isLoading: locationsLoading } = useQuery(orpc.locations.list.queryOptions());
   const isLoading = nodesLoading || locationsLoading;
 
-  const createNodeMutation = useMutation(orpc.nodes.create.mutationOptions({ onSuccess: invalidateNodes }));
-  const deleteNodeMutation = useMutation(orpc.nodes.delete.mutationOptions({ onSuccess: invalidateNodes }));
+  const createNodeMutation = useMutation(orpc.nodes.create.mutationOptions({
+    onSuccess: () => { invalidateNodes(); toast.success(tc("created")); },
+  }));
+  const deleteNodeMutation = useMutation(orpc.nodes.delete.mutationOptions({
+    onSuccess: () => { invalidateNodes(); toast.success(tc("deleted")); },
+  }));
 
   const createLocationMutation = useMutation(
-    orpc.locations.create.mutationOptions({ onSuccess: invalidateLocations }),
+    orpc.locations.create.mutationOptions({
+      onSuccess: () => { invalidateLocations(); toast.success(tc("created")); },
+    }),
   );
   const updateLocationMutation = useMutation(
-    orpc.locations.update.mutationOptions({ onSuccess: invalidateLocations }),
+    orpc.locations.update.mutationOptions({
+      onSuccess: () => { invalidateLocations(); toast.success(tc("saved")); },
+    }),
   );
   const deleteLocationMutation = useMutation(
-    orpc.locations.delete.mutationOptions({ onSuccess: invalidateLocations }),
+    orpc.locations.delete.mutationOptions({
+      onSuccess: () => { invalidateLocations(); toast.success(tc("deleted")); },
+    }),
   );
 
   const [search, setSearch] = useState("");
@@ -439,7 +447,7 @@ export default function NodesPage() {
       await createNodeMutation.mutateAsync(nodeForm);
       closeCreateNode();
     } catch {
-      // error shown via createNodeMutation.isError
+      // error toasted globally via MutationCache.onError
     }
   }
 
@@ -454,7 +462,7 @@ export default function NodesPage() {
       await createLocationMutation.mutateAsync(locationForm);
       closeCreateLocation();
     } catch {
-      // error shown via createLocationMutation.isError
+      // error toasted globally via MutationCache.onError
     }
   }
 
@@ -464,7 +472,7 @@ export default function NodesPage() {
       await updateLocationMutation.mutateAsync({ id: editingLocation.id, ...form });
       setEditingLocation(null);
     } catch {
-      // error shown via updateLocationMutation.isError (surfaced through LocationEditModal)
+      // error toasted globally via MutationCache.onError
     }
   }
 
@@ -550,9 +558,6 @@ export default function NodesPage() {
                 }}
               />
             </div>
-            {createLocationMutation.isError && (
-              <p className="text-xs text-destructive">{createLocationMutation.error.message}</p>
-            )}
           </div>
           <DialogFooter>
             <DialogClose
@@ -726,9 +731,6 @@ export default function NodesPage() {
                 />
               </div>
             </div>
-            {createNodeMutation.isError && (
-              <p className="text-xs text-destructive">{createNodeMutation.error.message}</p>
-            )}
           </div>
           <DialogFooter>
             <DialogClose
@@ -759,7 +761,6 @@ export default function NodesPage() {
         onClose={() => setEditingLocation(null)}
         onSave={(form) => void handleUpdateLocation(form)}
         isPending={updateLocationMutation.isPending}
-        error={updateLocationMutation.isError ? updateLocationMutation.error.message : undefined}
       />
 
       <ConfirmDialog

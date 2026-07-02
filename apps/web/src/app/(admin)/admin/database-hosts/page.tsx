@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogPopup,
@@ -24,8 +25,12 @@ export default function DatabaseHostsPage() {
   const tc = useTranslations("common");
 
   const { data: hosts, isLoading } = useQuery(orpc.databaseHosts.list.queryOptions());
-  const createMutation = useMutation(orpc.databaseHosts.create.mutationOptions({ onSuccess: invalidate }));
-  const deleteMutation = useMutation(orpc.databaseHosts.delete.mutationOptions({ onSuccess: invalidate }));
+  const createMutation = useMutation(orpc.databaseHosts.create.mutationOptions({
+    onSuccess: () => { invalidate(); toast.success(tc("saved")); },
+  }));
+  const deleteMutation = useMutation(orpc.databaseHosts.delete.mutationOptions({
+    onSuccess: () => { invalidate(); toast.success(tc("deleted")); },
+  }));
   const testMutation = useMutation(orpc.databaseHosts.testConnection.mutationOptions());
 
   const [showCreate, setShowCreate] = useState(false);
@@ -127,9 +132,6 @@ export default function DatabaseHostsPage() {
                 />
               </div>
             </div>
-            {createMutation.isError && (
-              <p className="text-xs text-destructive">{createMutation.error.message}</p>
-            )}
           </div>
           <DialogFooter>
             <DialogClose

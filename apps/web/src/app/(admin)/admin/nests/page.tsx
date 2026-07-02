@@ -14,6 +14,7 @@ import {
   DialogClose,
 } from "@struxa/ui/components/dialog";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { orpc, queryClient } from "@/utils/orpc";
 import { ContextMenu, RowMenu, type ActionItem } from "@/components/context-menu";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -27,8 +28,12 @@ export default function NestsPage() {
   const tc = useTranslations("common");
 
   const { data: nests, isLoading } = useQuery(orpc.nests.list.queryOptions());
-  const createMutation = useMutation(orpc.nests.create.mutationOptions({ onSuccess: invalidate }));
-  const deleteMutation = useMutation(orpc.nests.delete.mutationOptions({ onSuccess: invalidate }));
+  const createMutation = useMutation(orpc.nests.create.mutationOptions({
+    onSuccess: () => { invalidate(); toast.success(tc("saved")); },
+  }));
+  const deleteMutation = useMutation(orpc.nests.delete.mutationOptions({
+    onSuccess: () => { invalidate(); toast.success(tc("deleted")); },
+  }));
 
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
@@ -102,9 +107,6 @@ export default function NestsPage() {
                 onKeyDown={(e) => { if (e.key === "Enter") void handleCreate(); if (e.key === "Escape") closeCreate(); }}
               />
             </div>
-            {createMutation.isError && (
-              <p className="text-xs text-destructive">{createMutation.error.message}</p>
-            )}
           </div>
           <DialogFooter>
             <DialogClose

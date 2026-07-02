@@ -16,6 +16,7 @@ import {
   DialogClose,
 } from "@struxa/ui/components/dialog";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
 import Loader from "@/components/loader";
@@ -53,6 +54,7 @@ function PermissionPill({ perm, active }: { perm: Permission; active: boolean })
 
 export default function UsersPage({ params }: { params: Promise<{ id: string }> }) {
   const t = useTranslations("panel.users");
+  const tc = useTranslations("common");
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
   const { id } = use(params);
@@ -76,7 +78,10 @@ export default function UsersPage({ params }: { params: Promise<{ id: string }> 
   const createMutation = useMutation(orpc.subusers.create.mutationOptions());
   const deleteMutation = useMutation({
     ...orpc.subusers.delete.mutationOptions(),
-    onSuccess: () => void queryClient.invalidateQueries(orpc.subusers.list.queryOptions({ input: { serverId: serverId ?? "" } })),
+    onSuccess: () => {
+      void queryClient.invalidateQueries(orpc.subusers.list.queryOptions({ input: { serverId: serverId ?? "" } }));
+      toast.success(tc("deleted"));
+    },
   });
 
   function closeInvite() {
@@ -89,6 +94,7 @@ export default function UsersPage({ params }: { params: Promise<{ id: string }> 
     if (!serverId || !inviteEmail.trim()) return;
     await createMutation.mutateAsync({ serverId, email: inviteEmail.trim(), permissions: invitePermissions });
     void queryClient.invalidateQueries(orpc.subusers.list.queryOptions({ input: { serverId } }));
+    toast.success(t("inviteSuccess"));
     closeInvite();
   }
 
@@ -153,9 +159,6 @@ export default function UsersPage({ params }: { params: Promise<{ id: string }> 
                 })}
               </div>
             </div>
-            {createMutation.isError && (
-              <p className="text-xs text-destructive">{createMutation.error.message}</p>
-            )}
           </div>
           <DialogFooter>
             <DialogClose

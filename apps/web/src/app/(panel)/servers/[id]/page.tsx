@@ -371,10 +371,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
     return () => clearInterval(intervalId);
   }, []);
 
-  const powerMutation = useMutation({
-    ...orpc.servers.power.mutationOptions(),
-    onError: (error) => toast.error(error.message),
-  });
+  const powerMutation = useMutation(orpc.servers.power.mutationOptions());
 
   const [eulaAccepting, setEulaAccepting] = useState(false);
   async function acceptEula() {
@@ -402,7 +399,6 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
       void queryClient.invalidateQueries(orpc.servers.get.queryOptions({ input: { id } }));
       toast.success(t("javaImageUpdatedToast"));
     },
-    onError: (error) => toast.error(error.message),
   });
 
   function sendCommand() {

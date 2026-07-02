@@ -5,6 +5,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Download, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import Editor from "@monaco-editor/react";
 import type { Monaco } from "@monaco-editor/react";
 import { orpc, queryClient } from "@/utils/orpc";
@@ -103,10 +104,14 @@ function VariableRow({
   const [userEditable, setUserEditable] = useState(variable.userEditable);
 
   const updateMutation = useMutation(
-    orpc.eggs.updateVariable.mutationOptions({ onSuccess: onSaved }),
+    orpc.eggs.updateVariable.mutationOptions({
+      onSuccess: () => { onSaved(); toast.success(tc("saved")); },
+    }),
   );
   const deleteMutation = useMutation(
-    orpc.eggs.deleteVariable.mutationOptions({ onSuccess: onDeleted }),
+    orpc.eggs.deleteVariable.mutationOptions({
+      onSuccess: () => { onDeleted(); toast.success(tc("deleted")); },
+    }),
   );
 
   const actions: ActionItem[] = [
@@ -157,7 +162,6 @@ function VariableRow({
             ))}
             <div className="ml-auto flex items-center gap-2">
               {updateMutation.isSuccess && <span className="text-xs font-medium text-green-500">{tc("saved")}</span>}
-              {updateMutation.isError && <span className="text-xs text-destructive">{updateMutation.error.message}</span>}
               <button
                 type="button"
                 onClick={() =>
@@ -218,11 +222,14 @@ export default function EggDetailPage({
           orpc.eggs.get.queryOptions({ input: { id: eggId } }).queryKey,
           updatedEgg,
         );
+        toast.success(tc("saved"));
       },
     }),
   );
   const addVariableMutation = useMutation(
-    orpc.eggs.addVariable.mutationOptions({ onSuccess: () => invalidateEgg(eggId) }),
+    orpc.eggs.addVariable.mutationOptions({
+      onSuccess: () => { invalidateEgg(eggId); toast.success(tc("created")); },
+    }),
   );
 
   const [tab, setTab] = useState<Tab>("general");
@@ -386,7 +393,6 @@ export default function EggDetailPage({
         {updateMutation.isPending ? tc("saving") : tc("save")}
       </button>
       {updateMutation.isSuccess && <span className="text-xs font-medium text-green-500">{tc("saved")}</span>}
-      {updateMutation.isError && <span className="text-xs text-destructive">{updateMutation.error.message}</span>}
     </div>
   );
 
@@ -739,9 +745,6 @@ export default function EggDetailPage({
                     <Plus className="h-3.5 w-3.5" />
                     {tc("add")}
                   </button>
-                  {addVariableMutation.isError && (
-                    <span className="text-xs text-destructive">{addVariableMutation.error.message}</span>
-                  )}
                 </div>
               </div>
             </div>

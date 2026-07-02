@@ -194,16 +194,6 @@ function DebouncedInput({
   );
 }
 
-type SaveStatus = "saving" | "saved" | "error";
-
-function SaveIndicator({ status }: { status: SaveStatus | undefined }) {
-  const tCommon = useTranslations("common");
-  if (!status) return null;
-  if (status === "saving") return <span className="text-xs text-muted-foreground">{tCommon("saving")}</span>;
-  if (status === "saved") return <span className="text-xs text-green-500">{tCommon("saved")}</span>;
-  return <span className="text-xs text-destructive">{tCommon("error")}</span>;
-}
-
 function isBoolVariable(rules: string | null | undefined): boolean {
   return !!(rules && (rules.includes("in:0,1") || rules.includes("in:1,0")));
 }
@@ -233,9 +223,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
   const [extendOpen, setExtendOpen] = useState(false);
   const [extendPriceId, setExtendPriceId] = useState<string | null>(null);
   const isMobile = useMediaQuery("max-sm");
-  const [nameStatus, setNameStatus] = useState<SaveStatus | undefined>(undefined);
-  const [imageStatus, setImageStatus] = useState<SaveStatus | undefined>(undefined);
-  const [varStatuses, setVarStatuses] = useState<Record<string, SaveStatus>>({});
+  const tCommon = useTranslations("common");
 
   useEffect(() => {
     if (!isPending && !session) router.replace("/login");
@@ -262,6 +250,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
 
   const extendMutation = useMutation({
     ...orpc.billing.extendSubscription.mutationOptions(),
+    meta: { customError: true },
     onSuccess: () => {
       setExtendOpen(false);
       setExtendPriceId(null);
@@ -284,56 +273,39 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
       setReinstallStep(1);
       setSelectedEggId(null);
       void queryClient.invalidateQueries(orpc.servers.get.queryOptions({ input: { id } }));
+      toast.success(t("reinstallTriggeredToast"));
     },
-    onError: (error) => toast.error(error.message),
   });
 
-  const renameMutation = useMutation(orpc.servers.rename.mutationOptions());
-  const updateVariableMutation = useMutation(orpc.servers.updateStartupVariable.mutationOptions());
-  const updateImageMutation = useMutation(orpc.servers.updateDockerImage.mutationOptions());
-
-  async function saveImage(image: string) {
-    setImageStatus("saving");
-    try {
-      await updateImageMutation.mutateAsync({ serverId: id, image });
+  const renameMutation = useMutation(orpc.servers.rename.mutationOptions({
+    onSuccess: () => {
       void queryClient.invalidateQueries(orpc.servers.get.queryOptions({ input: { id } }));
-      setImageStatus("saved");
-      setTimeout(() => setImageStatus(undefined), 2000);
-    } catch {
-      setImageStatus("error");
-    }
+      toast.success(tCommon("saved"));
+    },
+  }));
+  const updateVariableMutation = useMutation(orpc.servers.updateStartupVariable.mutationOptions({
+    onSuccess: () => {
+      void queryClient.invalidateQueries(orpc.servers.get.queryOptions({ input: { id } }));
+      toast.success(tCommon("saved"));
+    },
+  }));
+  const updateImageMutation = useMutation(orpc.servers.updateDockerImage.mutationOptions({
+    onSuccess: () => {
+      void queryClient.invalidateQueries(orpc.servers.get.queryOptions({ input: { id } }));
+      toast.success(tCommon("saved"));
+    },
+  }));
+
+  function saveImage(image: string) {
+    updateImageMutation.mutate({ serverId: id, image });
   }
 
-  async function saveServerName(name: string) {
-    setNameStatus("saving");
-    try {
-      await renameMutation.mutateAsync({ serverId: id, name });
-      void queryClient.invalidateQueries(orpc.servers.get.queryOptions({ input: { id } }));
-      setNameStatus("saved");
-      setTimeout(() => setNameStatus(undefined), 2000);
-    } catch {
-      setNameStatus("error");
-    }
+  function saveServerName(name: string) {
+    renameMutation.mutate({ serverId: id, name });
   }
 
-  async function saveVariable(envVariable: string, value: string) {
-    setVarStatuses((prev) => ({ ...prev, [envVariable]: "saving" }));
-    try {
-      await updateVariableMutation.mutateAsync({ serverId: id, envVariable, value });
-      void queryClient.invalidateQueries(orpc.servers.get.queryOptions({ input: { id } }));
-      setVarStatuses((prev) => ({ ...prev, [envVariable]: "saved" }));
-      setTimeout(
-        () =>
-          setVarStatuses((prev) => {
-            const next = { ...prev };
-            delete next[envVariable];
-            return next;
-          }),
-        2000,
-      );
-    } catch {
-      setVarStatuses((prev) => ({ ...prev, [envVariable]: "error" }));
-    }
+  function saveVariable(envVariable: string, value: string) {
+    updateVariableMutation.mutate({ serverId: id, envVariable, value });
   }
 
   if (isPending || !session) return <Loader />;
@@ -486,7 +458,6 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
                   onSave={saveServerName}
                   className="w-48 rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-foreground outline-none focus:border-ring transition-colors"
                 />
-                <SaveIndicator status={nameStatus} />
               </div>
             </SettingRow>
             <SettingRow label={t("dockerImageLabel")} description={t("dockerImageDescription")}>
@@ -495,10 +466,9 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
                   <CustomSelect
                     value={currentImage}
                     options={dockerImageOptions.map(({ tag, alias }) => ({ value: tag, label: alias || tag }))}
-                    onChange={(image) => void saveImage(image)}
-                    disabled={imageStatus === "saving"}
+                    onChange={saveImage}
+                    disabled={updateImageMutation.isPending}
                   />
-                  <SaveIndicator status={imageStatus} />
                 </div>
               ) : (
                 <span className="font-mono text-sm text-muted-foreground max-w-xs truncate">
@@ -566,11 +536,10 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
                     <div className="flex items-center gap-2">
                       <Toggle
                         checked={currentValue === "1"}
-                        onChange={(v) => void saveVariable(sv.variable.envVariable, v ? "1" : "0")}
-                        disabled={!sv.variable.userEditable || varStatuses[sv.variable.envVariable] === "saving"}
+                        onChange={(v) => saveVariable(sv.variable.envVariable, v ? "1" : "0")}
+                        disabled={!sv.variable.userEditable || updateVariableMutation.isPending}
                       />
-                      <SaveIndicator status={varStatuses[sv.variable.envVariable]} />
-                      {!sv.variable.userEditable && !varStatuses[sv.variable.envVariable] && (
+                      {!sv.variable.userEditable && (
                         <span className="text-xs text-muted-foreground">{t("readOnly")}</span>
                       )}
                     </div>
@@ -588,7 +557,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
                     {sv.variable.userEditable ? (
                       <DebouncedInput
                         defaultValue={currentValue}
-                        onSave={(v) => void saveVariable(sv.variable.envVariable, v)}
+                        onSave={(v) => saveVariable(sv.variable.envVariable, v)}
                         placeholder={sv.variable.defaultValue ?? undefined}
                         className="w-36 rounded-lg border border-border bg-background px-3 py-1.5 font-mono text-sm text-foreground outline-none focus:border-ring transition-colors"
                       />
@@ -599,7 +568,6 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
                         className="w-36 rounded-lg border border-border bg-muted px-3 py-1.5 font-mono text-sm text-foreground outline-none opacity-60 cursor-default"
                       />
                     )}
-                    <SaveIndicator status={varStatuses[sv.variable.envVariable]} />
                     {!sv.variable.userEditable && (
                       <span className="text-xs text-muted-foreground">{t("readOnly")}</span>
                     )}

@@ -6,6 +6,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Check, Upload, X, Github, ChevronDown, RotateCcw, Copy, Mail, Loader2, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { orpc, queryClient } from "@/utils/orpc";
 import { DiscordPreview, GooglePreview, TwitterPreview, type SeoPreviewData } from "./_components/seo-previews";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@struxa/ui/components/select";
@@ -13,8 +14,6 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 function invalidateSettings() {
   void queryClient.invalidateQueries({ queryKey: orpc.settings.key() });
 }
-
-type SavedKey = string;
 
 function SectionCard({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
   return (
@@ -46,7 +45,7 @@ function Toggle({ enabled, onChange }: { enabled: boolean; onChange: (v: boolean
   );
 }
 
-function SaveButton({ saving, saved, disabled }: { saving: boolean; saved: boolean; disabled?: boolean }) {
+function SaveButton({ saving, disabled }: { saving: boolean; disabled?: boolean }) {
   const tc = useTranslations("common");
   return (
     <button
@@ -54,7 +53,7 @@ function SaveButton({ saving, saved, disabled }: { saving: boolean; saved: boole
       disabled={saving || disabled}
       className="flex items-center gap-1.5 rounded-lg bg-foreground px-4 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
     >
-      {saved ? <><Check className="h-3.5 w-3.5" /> {tc("saved")}</> : saving ? tc("saving") : tc("save")}
+      {saving ? tc("saving") : tc("save")}
     </button>
   );
 }
@@ -192,6 +191,7 @@ type Tab = (typeof TABS)[number];
 
 export default function AdminSettingsPage() {
   const t = useTranslations("admin.settings");
+  const tc = useTranslations("common");
   const [tab, setTab] = useState<Tab>("branding");
   const [needsRestart, setNeedsRestart] = useState(false);
   const [githubExpanded, setGithubExpanded] = useState(false);
@@ -199,10 +199,13 @@ export default function AdminSettingsPage() {
 
   const { data, isLoading } = useQuery(orpc.settings.getConfig.queryOptions());
   const setMutation = useMutation(orpc.settings.set.mutationOptions({ onSuccess: invalidateSettings }));
-  const removeLogoMutation = useMutation(orpc.settings.removeLogo.mutationOptions({ onSuccess: invalidateSettings }));
-  const removeOgBannerMutation = useMutation(orpc.settings.removeOgBanner.mutationOptions({ onSuccess: invalidateSettings }));
+  const removeLogoMutation = useMutation(orpc.settings.removeLogo.mutationOptions({
+    onSuccess: () => { invalidateSettings(); toast.success(tc("saved")); },
+  }));
+  const removeOgBannerMutation = useMutation(orpc.settings.removeOgBanner.mutationOptions({
+    onSuccess: () => { invalidateSettings(); toast.success(tc("saved")); },
+  }));
 
-  const [saved, setSaved] = useState<SavedKey[]>([]);
   const [logoUploading, setLogoUploading] = useState(false);
   const [logoError, setLogoError] = useState<string | null>(null);
 
@@ -251,11 +254,6 @@ export default function AdminSettingsPage() {
     });
   }, [smtpData, smtp]);
 
-  function markSaved(key: string) {
-    setSaved((s) => [...s, key]);
-    setTimeout(() => setSaved((s) => s.filter((k) => k !== key)), 2000);
-  }
-
   function generalForm() {
     return general ?? { appName: data?.appName ?? "Struxa", appUrl: data?.appUrl ?? "" };
   }
@@ -284,7 +282,7 @@ export default function AdminSettingsPage() {
     if (!data?.appUrlFromEnv) saves.push(setMutation.mutateAsync({ key: "app_url", value: f.appUrl }));
     await Promise.all(saves);
     if (!data?.appNameFromEnv) setNeedsRestart(true);
-    markSaved("general");
+    toast.success(tc("saved"));
   }
 
   async function saveSeo() {
@@ -301,12 +299,12 @@ export default function AdminSettingsPage() {
       setMutation.mutateAsync({ key: "twitter_site", value: f.twitterSite }),
       setMutation.mutateAsync({ key: "twitter_creator", value: f.twitterCreator }),
     ]);
-    markSaved("seo");
+    toast.success(tc("saved"));
   }
 
   async function saveRegistration() {
     await setMutation.mutateAsync({ key: "registration_enabled", value: String(registrationForm().enabled) });
-    markSaved("registration");
+    toast.success(tc("saved"));
   }
 
   async function saveGithub() {
@@ -318,7 +316,7 @@ export default function AdminSettingsPage() {
     await Promise.all(saves);
     setGithub((prev) => ({ ...prev, clientSecret: "" }));
     setNeedsRestart(true);
-    markSaved("github");
+    toast.success(tc("saved"));
   }
 
   async function saveDiscord() {
@@ -330,7 +328,7 @@ export default function AdminSettingsPage() {
     await Promise.all(saves);
     setDiscord((prev) => ({ ...prev, clientSecret: "" }));
     setNeedsRestart(true);
-    markSaved("discord");
+    toast.success(tc("saved"));
   }
 
   async function saveSmtp() {
@@ -346,7 +344,7 @@ export default function AdminSettingsPage() {
       secure: smtp.secure,
     });
     setSmtp((prev) => prev ? { ...prev, password: "" } : null);
-    markSaved("smtp");
+    toast.success(tc("saved"));
   }
 
   async function testSmtp(email: string) {
@@ -472,7 +470,7 @@ export default function AdminSettingsPage() {
               </div>
               {!bothFromEnv && (
                 <div className="mt-4" onClick={saveGeneral}>
-                  <SaveButton saving={setMutation.isPending} saved={saved.includes("general")} />
+                  <SaveButton saving={setMutation.isPending} />
                 </div>
               )}
             </SectionCard>
@@ -656,7 +654,7 @@ export default function AdminSettingsPage() {
                 </SectionCard>
 
                 <div onClick={saveSeo}>
-                  <SaveButton saving={setMutation.isPending} saved={saved.includes("seo")} />
+                  <SaveButton saving={setMutation.isPending} />
                 </div>
               </div>
 
@@ -706,7 +704,7 @@ export default function AdminSettingsPage() {
                 <Toggle enabled={rf.enabled} onChange={(v) => setRegistration({ enabled: v })} />
               </div>
               <div className="mt-4" onClick={saveRegistration}>
-                <SaveButton saving={setMutation.isPending} saved={saved.includes("registration")} />
+                <SaveButton saving={setMutation.isPending} />
               </div>
             </SectionCard>
 
@@ -757,7 +755,7 @@ export default function AdminSettingsPage() {
                         </div>
                       </div>
                       <div onClick={saveGithub}>
-                        <SaveButton saving={setMutation.isPending} saved={saved.includes("github")} />
+                        <SaveButton saving={setMutation.isPending} />
                       </div>
                     </div>
                   )}
@@ -808,7 +806,7 @@ export default function AdminSettingsPage() {
                         </div>
                       </div>
                       <div onClick={saveDiscord}>
-                        <SaveButton saving={setMutation.isPending} saved={saved.includes("discord")} />
+                        <SaveButton saving={setMutation.isPending} />
                       </div>
                     </div>
                   )}
@@ -918,7 +916,7 @@ export default function AdminSettingsPage() {
                   {/* Actions row */}
                   <div className="flex items-center gap-3 flex-wrap">
                     <div onClick={saveSmtp}>
-                      <SaveButton saving={saveSmtpMutation.isPending} saved={saved.includes("smtp")} />
+                      <SaveButton saving={saveSmtpMutation.isPending} />
                     </div>
                     {smtp.enabled && (
                       <button

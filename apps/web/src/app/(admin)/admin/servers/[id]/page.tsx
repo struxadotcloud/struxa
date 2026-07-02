@@ -14,6 +14,7 @@ import {
 } from "@struxa/ui/components/dropdown-menu";
 import { ChevronDown } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { orpc, queryClient } from "@/utils/orpc";
 import { UserCombobox } from "@/components/user-combobox";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -77,13 +78,17 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
       onSuccess: () => {
         invalidateServer(serverId);
         invalidateList();
+        toast.success(tc("saved"));
       },
     }),
   );
 
   const updateVarsMutation = useMutation(
     orpc.servers.updateVariables.mutationOptions({
-      onSuccess: () => invalidateServer(serverId),
+      onSuccess: () => {
+        invalidateServer(serverId);
+        toast.success(t("savedRecomputed"));
+      },
     }),
   );
 
@@ -92,13 +97,17 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
       onSuccess: () => {
         invalidateServer(serverId);
         invalidateList();
+        toast.success(tc("updated"));
       },
     }),
   );
 
   const reinstallMutation = useMutation(
     orpc.servers.reinstall.mutationOptions({
-      onSuccess: () => invalidateServer(serverId),
+      onSuccess: () => {
+        invalidateServer(serverId);
+        toast.success(t("reinstallTriggered"));
+      },
     }),
   );
 
@@ -106,6 +115,7 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
     orpc.servers.delete.mutationOptions({
       onSuccess: () => {
         invalidateList();
+        toast.success(tc("deleted"));
         router.push("/admin/servers" as never);
       },
     }),
@@ -241,7 +251,6 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
                   {updateMutation.isPending ? tc("saving") : tc("save")}
                 </button>
                 {updateMutation.isSuccess && <span className="text-xs font-medium text-green-500">{tc("saved")}</span>}
-                {updateMutation.isError && <span className="text-xs text-destructive">{updateMutation.error.message}</span>}
               </div>
             </SectionCard>
 
@@ -380,7 +389,6 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
                   {updateMutation.isPending ? tc("saving") : t("saveResources")}
                 </button>
                 {updateMutation.isSuccess && <span className="text-xs font-medium text-green-500">{tc("saved")}</span>}
-                {updateMutation.isError && <span className="text-xs text-destructive">{updateMutation.error.message}</span>}
               </div>
             </SectionCard>
           </div>
@@ -432,8 +440,6 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
               >
                 {updateVarsMutation.isPending ? tc("saving") : t("saveStartup")}
               </button>
-              {updateVarsMutation.isSuccess && <span className="text-xs font-medium text-green-500">{t("savedRecomputed")}</span>}
-              {updateVarsMutation.isError && <span className="text-xs text-destructive">{updateVarsMutation.error.message}</span>}
             </div>
           </div>
         )}
@@ -482,13 +488,6 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
                     {reinstallMutation.isPending ? t("reinstalling") : t("reinstall")}
                   </button>
                 </div>
-                {reinstallMutation.isSuccess && (
-                  <p className="text-xs font-medium text-green-500">{t("reinstallTriggered")}</p>
-                )}
-                {reinstallMutation.isError && (
-                  <p className="text-xs text-destructive">{reinstallMutation.error.message}</p>
-                )}
-
                 <div className="flex items-center justify-between rounded-lg border border-destructive/30 bg-card p-4">
                   <div>
                     <p className="text-sm font-medium text-foreground">{t("deleteServerTitle")}</p>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { Plus, ExternalLink, Trash2, Search } from "lucide-react";
 import { orpc, queryClient } from "@/utils/orpc";
 import { ContextMenu, RowMenu, type ActionItem } from "@/components/context-menu";
@@ -25,7 +26,9 @@ export default function AdminServersPage() {
   };
 
   const { data: servers, isLoading } = useQuery(orpc.servers.list.queryOptions());
-  const deleteMutation = useMutation(orpc.servers.delete.mutationOptions({ onSuccess: invalidate }));
+  const deleteMutation = useMutation(orpc.servers.delete.mutationOptions({
+    onSuccess: () => { invalidate(); toast.success(tc("deleted")); },
+  }));
 
   const [search, setSearch] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { skipToken } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -99,7 +100,7 @@ export default function NewServerPage() {
 
   const createMutation = useMutation(
     orpc.servers.create.mutationOptions({
-      onSuccess: () => { router.push("/admin/servers" as never); },
+      onSuccess: () => { toast.success(tc("created")); router.push("/admin/servers" as never); },
     }),
   );
 
@@ -463,9 +464,6 @@ export default function NewServerPage() {
               >
                 {createMutation.isPending ? tc("creating") : t("newServer")}
               </button>
-            )}
-            {createMutation.isError && (
-              <span className="text-xs text-destructive">{createMutation.error.message}</span>
             )}
           </div>
         </div>

@@ -492,7 +492,6 @@ function SettingsTab() {
         invalidateBillingConfig();
       },
       onError: () => {
-        toast.error(tc("error"));
         if (data) {
           setGeneral({ enabled: data.enabled, currency: data.defaultCurrency });
           setReferral({ enabled: data.referralEnabled, refereeDiscount: data.refereeDiscountPercent, referrerReward: data.referrerRewardPercent });
@@ -1187,27 +1186,21 @@ function CatalogTab() {
 
   const createCategoryMutation = useMutation(orpc.billing.adminCreateCategory.mutationOptions({
     onSuccess: () => { invalidateCatalog(); setDialog(null); toast.success(tc("saved")); },
-    onError: () => toast.error(tc("error")),
   }));
   const updateCategoryMutation = useMutation(orpc.billing.adminUpdateCategory.mutationOptions({
     onSuccess: () => { invalidateCatalog(); setDialog(null); toast.success(tc("saved")); },
-    onError: () => toast.error(tc("error")),
   }));
   const deleteCategoryMutation = useMutation(orpc.billing.adminDeleteCategory.mutationOptions({
-    onSuccess: () => { invalidateCatalog(); setDialog(null); },
-    onError: () => toast.error(tc("error")),
+    onSuccess: () => { invalidateCatalog(); setDialog(null); toast.success(tc("deleted")); },
   }));
   const createProductMutation = useMutation(orpc.billing.adminCreateProduct.mutationOptions({
     onSuccess: () => { invalidateCatalog(); setDialog(null); toast.success(tc("saved")); },
-    onError: () => toast.error(tc("error")),
   }));
   const updateProductMutation = useMutation(orpc.billing.adminUpdateProduct.mutationOptions({
     onSuccess: () => { invalidateCatalog(); setDialog(null); toast.success(tc("saved")); },
-    onError: () => toast.error(tc("error")),
   }));
   const deleteProductMutation = useMutation(orpc.billing.adminDeleteProduct.mutationOptions({
-    onSuccess: () => { invalidateCatalog(); setDialog(null); },
-    onError: () => toast.error(tc("error")),
+    onSuccess: () => { invalidateCatalog(); setDialog(null); toast.success(tc("deleted")); },
   }));
 
   const [catForm, setCatForm] = useState<Omit<Category, "id">>({

@@ -304,7 +304,6 @@ function ProfileTab() {
   const { data: self, isLoading } = useQuery(orpc.users.getSelf.queryOptions());
   const { data: session } = authClient.useSession();
   const [name, setName] = useState("");
-  const [saved, setSaved] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const [linkedAccounts, setLinkedAccounts] = useState<LinkedAccount[]>([]);
@@ -324,11 +323,7 @@ function ProfileTab() {
     }
   }, [self]);
 
-  const updateLocale = useMutation(
-    orpc.users.updateLocale.mutationOptions({
-      onError: () => toast.error(tl("saveFailed")),
-    }),
-  );
+  const updateLocale = useMutation(orpc.users.updateLocale.mutationOptions());
 
   function handleLocaleChange(newLocale: string | null) {
     if (!newLocale) return;
@@ -344,8 +339,7 @@ function ProfileTab() {
     orpc.users.updateProfile.mutationOptions({
       onSuccess: () => {
         void queryClient.invalidateQueries({ queryKey: orpc.users.key() });
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
+        toast.success(t("saved"));
       },
     }),
   );
@@ -475,10 +469,6 @@ function ProfileTab() {
               >
                 {updateProfile.isPending ? t("saving") : t("save")}
               </button>
-              {saved && <span className="text-xs font-medium text-green-500">{t("saved")}</span>}
-              {updateProfile.isError && (
-                <span className="text-xs text-destructive">{updateProfile.error.message}</span>
-              )}
             </div>
           </div>
         </div>
@@ -1146,7 +1136,6 @@ function ApiKeysTab() {
 function BillingTab() {
   const t = useTranslations("account.billing");
   const { data: self, isLoading } = useQuery(orpc.users.getSelf.queryOptions());
-  const [saved, setSaved] = useState(false);
 
   const [billing, setBilling] = useState({
     billingName: "",
@@ -1179,8 +1168,7 @@ function BillingTab() {
     orpc.users.updateBilling.mutationOptions({
       onSuccess: () => {
         void queryClient.invalidateQueries({ queryKey: orpc.users.key() });
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
+        toast.success(t("saved"));
       },
     }),
   );
@@ -1278,8 +1266,6 @@ function BillingTab() {
         >
           {updateBilling.isPending ? t("saving") : t("saveBilling")}
         </button>
-        {saved && <span className="text-xs font-medium text-green-500">{t("saved")}</span>}
-        {updateBilling.isError && <span className="text-xs text-destructive">{updateBilling.error.message}</span>}
       </div>
     </div>
   );

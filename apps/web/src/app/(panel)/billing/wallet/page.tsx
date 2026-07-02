@@ -190,9 +190,11 @@ export default function WalletPage() {
 
   const generateCodeMutation = useMutation({
     ...orpc.billing.generateReferralCode.mutationOptions(),
+    meta: { customError: true },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: orpc.billing.getReferralCode.key() });
       setNewCode("");
+      toast.success(tr("generateSuccess"));
     },
     onError: (err: Error) => {
       const code = (err as { data?: { code?: string } })?.data?.code;
@@ -203,10 +205,12 @@ export default function WalletPage() {
 
   const updateCodeMutation = useMutation({
     ...orpc.billing.updateReferralCode.mutationOptions(),
+    meta: { customError: true },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: orpc.billing.getReferralCode.key() });
       setEditingCode(false);
       setEditCode("");
+      toast.success(tr("updateSuccess"));
     },
     onError: (err: Error) => {
       const code = (err as { data?: { code?: string } })?.data?.code;
@@ -217,6 +221,7 @@ export default function WalletPage() {
 
   const applyCodeMutation = useMutation({
     ...orpc.billing.applyReferralCode.mutationOptions(),
+    meta: { customError: true },
     onSuccess: () => {
       toast.success(tr("applySuccess"));
       setInputCode("");
@@ -232,6 +237,7 @@ export default function WalletPage() {
 
   const topupMutation = useMutation({
     ...orpc.billing.createTopupSession.mutationOptions(),
+    meta: { customError: true },
     onSuccess: ({ url }) => {
       router.push(url as never);
     },
