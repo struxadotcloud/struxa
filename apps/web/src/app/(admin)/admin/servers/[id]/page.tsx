@@ -250,7 +250,6 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
                 >
                   {updateMutation.isPending ? tc("saving") : tc("save")}
                 </button>
-                {updateMutation.isSuccess && <span className="text-xs font-medium text-green-500">{tc("saved")}</span>}
               </div>
             </SectionCard>
 
@@ -388,7 +387,6 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
                 >
                   {updateMutation.isPending ? tc("saving") : t("saveResources")}
                 </button>
-                {updateMutation.isSuccess && <span className="text-xs font-medium text-green-500">{tc("saved")}</span>}
               </div>
             </SectionCard>
           </div>

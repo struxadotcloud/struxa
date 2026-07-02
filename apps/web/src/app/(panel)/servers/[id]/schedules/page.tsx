@@ -625,15 +625,7 @@ export default function SchedulesPage({ params }: { params: Promise<{ id: string
                         onClick={(e) => {
                           e.stopPropagation();
                           serverId &&
-                            toggleMutation.mutate(
-                              { serverId, scheduleId: sch.id, isActive: !sch.isActive },
-                              {
-                                onSuccess: () =>
-                                  void queryClient.invalidateQueries(
-                                    orpc.schedules.list.queryOptions({ input: { serverId } }),
-                                  ),
-                              },
-                            );
+                            toggleMutation.mutate({ serverId, scheduleId: sch.id, isActive: !sch.isActive });
                         }}
                         className="flex items-center"
                       >

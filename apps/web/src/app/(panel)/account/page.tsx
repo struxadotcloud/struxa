@@ -199,7 +199,6 @@ function PasswordSection({ hasPassword }: { hasPassword: boolean }) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
 
   async function handleSubmit() {
     if (newPassword !== confirmPassword) { setError(t("passwordsDoNotMatch")); return; }
@@ -214,13 +213,12 @@ function PasswordSection({ hasPassword }: { hasPassword: boolean }) {
         const res = await authClient.$fetch("/api/auth/set-password", { method: "POST", body: { newPassword } });
         if ((res as { error?: { message?: string } }).error) throw new Error((res as { error?: { message?: string } }).error?.message ?? "Failed");
       }
-      setSuccess(true);
+      toast.success(t("saved"));
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      setTimeout(() => setSuccess(false), 2000);
     } catch (e) {
-      setError(e instanceof Error ? e.message : t("updateFailed"));
+      toast.error(e instanceof Error ? e.message : t("updateFailed"));
     } finally {
       setPending(false);
     }
@@ -275,7 +273,6 @@ function PasswordSection({ hasPassword }: { hasPassword: boolean }) {
           >
             {pending ? t("saving") : hasPassword ? t("changePassword") : t("setPassword")}
           </button>
-          {success && <span className="text-xs font-medium text-green-500">{t("saved")}</span>}
         </div>
       </div>
     </SectionCard>

@@ -161,7 +161,6 @@ function VariableRow({
               </label>
             ))}
             <div className="ml-auto flex items-center gap-2">
-              {updateMutation.isSuccess && <span className="text-xs font-medium text-green-500">{tc("saved")}</span>}
               <button
                 type="button"
                 onClick={() =>
@@ -392,7 +391,6 @@ export default function EggDetailPage({
       >
         {updateMutation.isPending ? tc("saving") : tc("save")}
       </button>
-      {updateMutation.isSuccess && <span className="text-xs font-medium text-green-500">{tc("saved")}</span>}
     </div>
   );
 

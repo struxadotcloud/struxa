@@ -159,7 +159,7 @@ function Step1({ onDone }: { onDone: () => void }) {
   const [form, setForm] = useState({ name: "", email: "", password: "", confirm: "" });
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const promote = useMutation(orpc.onboarding.promoteFirstAdmin.mutationOptions());
+  const promote = useMutation(orpc.onboarding.promoteFirstAdmin.mutationOptions({ meta: { customError: true } }));
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -378,7 +378,7 @@ function Step3({ onDone }: { onDone: (id: string) => void }) {
   const t = useTranslations("setup.step3");
   const [form, setForm] = useState({ name: "", short: "", long: "" });
   const [err, setErr] = useState<string | null>(null);
-  const create = useMutation(orpc.locations.create.mutationOptions());
+  const create = useMutation(orpc.locations.create.mutationOptions({ meta: { customError: true } }));
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -426,7 +426,7 @@ function Step4({ locationId, onDone }: { locationId: string; onDone: () => void 
     memory: "4096", disk: "50000", daemonListen: "8080", daemonSFTP: "2022",
   });
   const [err, setErr] = useState<string | null>(null);
-  const create = useMutation(orpc.nodes.create.mutationOptions());
+  const create = useMutation(orpc.nodes.create.mutationOptions({ meta: { customError: true } }));
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -541,7 +541,7 @@ export default function SetupPage() {
   const [completed, setCompleted] = useState<Set<number>>(new Set());
   const [locationId, setLocationId] = useState("");
   const [finishing, setFinishing] = useState(false);
-  const complete = useMutation(orpc.onboarding.completeSetup.mutationOptions());
+  const complete = useMutation(orpc.onboarding.completeSetup.mutationOptions({ meta: { customError: true } }));
 
   function advance(s: number) {
     setCompleted(prev => new Set([...prev, s]));

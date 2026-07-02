@@ -5,6 +5,16 @@ import type { AppRouterClient } from "@struxa/api/routers/index";
 import { MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+declare module "@tanstack/react-query" {
+  interface Register {
+    // Set `meta: { customError: true }` on a mutation to opt out of the
+    // generic error toast below when it already shows its own message.
+    mutationMeta: {
+      customError?: boolean;
+    };
+  }
+}
+
 export const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error, query) => {

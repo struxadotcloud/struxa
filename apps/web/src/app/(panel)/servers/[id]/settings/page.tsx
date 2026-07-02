@@ -537,7 +537,11 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
                       <Toggle
                         checked={currentValue === "1"}
                         onChange={(v) => saveVariable(sv.variable.envVariable, v ? "1" : "0")}
-                        disabled={!sv.variable.userEditable || updateVariableMutation.isPending}
+                        disabled={
+                          !sv.variable.userEditable ||
+                          (updateVariableMutation.isPending &&
+                            updateVariableMutation.variables?.envVariable === sv.variable.envVariable)
+                        }
                       />
                       {!sv.variable.userEditable && (
                         <span className="text-xs text-muted-foreground">{t("readOnly")}</span>

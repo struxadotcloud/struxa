@@ -29,7 +29,7 @@ export default function NestsPage() {
 
   const { data: nests, isLoading } = useQuery(orpc.nests.list.queryOptions());
   const createMutation = useMutation(orpc.nests.create.mutationOptions({
-    onSuccess: () => { invalidate(); toast.success(tc("saved")); },
+    onSuccess: () => { invalidate(); toast.success(tc("created")); },
   }));
   const deleteMutation = useMutation(orpc.nests.delete.mutationOptions({
     onSuccess: () => { invalidate(); toast.success(tc("deleted")); },

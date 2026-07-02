@@ -357,7 +357,6 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
                 >
                   {updateNestMutation.isPending ? tc("saving") : tc("save")}
                 </button>
-                {updateNestMutation.isSuccess && <span className="text-xs font-medium text-green-500">{tc("saved")}</span>}
               </div>
             </div>
           </div>
