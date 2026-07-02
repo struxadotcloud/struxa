@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
+import { toast } from "sonner";
 import {
   Check,
   ChevronDown,
@@ -84,14 +85,6 @@ function ErrorBanner({ msg }: { msg: string }) {
   );
 }
 
-function SuccessBanner({ msg }: { msg: string }) {
-  return (
-    <div className="rounded-lg border border-green-500/30 bg-green-500/5 px-3 py-2 text-xs text-green-600 dark:text-green-400">
-      {msg}
-    </div>
-  );
-}
-
 function PrimaryButton({ children, disabled, type = "button", onClick }: {
   children: React.ReactNode;
   disabled?: boolean;
@@ -166,7 +159,7 @@ function Step1({ onDone }: { onDone: () => void }) {
   const [form, setForm] = useState({ name: "", email: "", password: "", confirm: "" });
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const promote = useMutation(orpc.onboarding.promoteFirstAdmin.mutationOptions());
+  const promote = useMutation(orpc.onboarding.promoteFirstAdmin.mutationOptions({ meta: { customError: true } }));
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -191,7 +184,7 @@ function Step1({ onDone }: { onDone: () => void }) {
       await syncLocaleFromDB();
       onDone();
     } catch (e) {
-      setErr(e instanceof Error ? e.message : t("genericError"));
+      toast.error(e instanceof Error ? e.message : t("genericError"));
     } finally {
       setBusy(false);
     }
@@ -265,6 +258,7 @@ function Step2({ onDone }: { onDone: () => void }) {
     const eggs = Array.from(selected.entries()).map(([rawUrl, nestName]) => ({ rawUrl, nestName }));
     const r = await importMut.mutateAsync({ eggs });
     setResult(r);
+    toast.success(ts("importSuccess", { count: r.imported }));
   }
 
   if (isLoading) {
@@ -292,7 +286,7 @@ function Step2({ onDone }: { onDone: () => void }) {
   if (result) {
     return (
       <div className="flex flex-col gap-4">
-        <SuccessBanner msg={ts("importSuccess", { count: result.imported })} />
+        <p className="text-sm text-muted-foreground">{ts("importSuccess", { count: result.imported })}</p>
         <PrimaryButton onClick={onDone}>
           <Check className="h-3.5 w-3.5" /> Continue
         </PrimaryButton>
@@ -384,7 +378,7 @@ function Step3({ onDone }: { onDone: (id: string) => void }) {
   const t = useTranslations("setup.step3");
   const [form, setForm] = useState({ name: "", short: "", long: "" });
   const [err, setErr] = useState<string | null>(null);
-  const create = useMutation(orpc.locations.create.mutationOptions());
+  const create = useMutation(orpc.locations.create.mutationOptions({ meta: { customError: true } }));
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -394,7 +388,7 @@ function Step3({ onDone }: { onDone: (id: string) => void }) {
       const r = await create.mutateAsync(form);
       if (r?.id) onDone(r.id);
     } catch {
-      setErr(t("createFailed"));
+      toast.error(t("createFailed"));
     }
   }
 
@@ -432,7 +426,7 @@ function Step4({ locationId, onDone }: { locationId: string; onDone: () => void 
     memory: "4096", disk: "50000", daemonListen: "8080", daemonSFTP: "2022",
   });
   const [err, setErr] = useState<string | null>(null);
-  const create = useMutation(orpc.nodes.create.mutationOptions());
+  const create = useMutation(orpc.nodes.create.mutationOptions({ meta: { customError: true } }));
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -451,7 +445,7 @@ function Step4({ locationId, onDone }: { locationId: string; onDone: () => void 
       });
       onDone();
     } catch {
-      setErr(t("createFailed"));
+      toast.error(t("createFailed"));
     }
   }
 
@@ -502,7 +496,7 @@ function Step4({ locationId, onDone }: { locationId: string; onDone: () => void 
 
 // ─── Step 5: Complete ─────────────────────────────────────────────────────────
 
-function Step5({ onDone, busy, error }: { onDone: () => void; busy: boolean; error: string | null }) {
+function Step5({ onDone, busy }: { onDone: () => void; busy: boolean }) {
   const t = useTranslations("setup.step5");
 
   const NEXT_ITEMS = [
@@ -515,7 +509,6 @@ function Step5({ onDone, busy, error }: { onDone: () => void; busy: boolean; err
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-muted-foreground">{t("description")}</p>
-      {error && <ErrorBanner msg={error} />}
 
       <div className="rounded-xl border border-border bg-muted/20 overflow-hidden">
         <div className="border-b border-border px-4 py-2.5">
@@ -548,8 +541,7 @@ export default function SetupPage() {
   const [completed, setCompleted] = useState<Set<number>>(new Set());
   const [locationId, setLocationId] = useState("");
   const [finishing, setFinishing] = useState(false);
-  const [finishError, setFinishError] = useState<string | null>(null);
-  const complete = useMutation(orpc.onboarding.completeSetup.mutationOptions());
+  const complete = useMutation(orpc.onboarding.completeSetup.mutationOptions({ meta: { customError: true } }));
 
   function advance(s: number) {
     setCompleted(prev => new Set([...prev, s]));
@@ -558,12 +550,11 @@ export default function SetupPage() {
 
   async function finish() {
     setFinishing(true);
-    setFinishError(null);
     try {
       await complete.mutateAsync(undefined);
       window.location.href = "/admin";
     } catch (e) {
-      setFinishError(e instanceof Error ? e.message : t("step5.finishFailed"));
+      toast.error(e instanceof Error ? e.message : t("step5.finishFailed"));
       setFinishing(false);
     }
   }
@@ -609,7 +600,7 @@ export default function SetupPage() {
           {step === 2 && <Step2 onDone={() => advance(2)} />}
           {step === 3 && <Step3 onDone={id => { setLocationId(id); advance(3); }} />}
           {step === 4 && <Step4 locationId={locationId} onDone={() => advance(4)} />}
-          {step === 5 && <Step5 onDone={finish} busy={finishing} error={finishError} />}
+          {step === 5 && <Step5 onDone={finish} busy={finishing} />}
         </div>
       </div>
     </main>

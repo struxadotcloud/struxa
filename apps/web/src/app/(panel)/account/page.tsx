@@ -199,7 +199,6 @@ function PasswordSection({ hasPassword }: { hasPassword: boolean }) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
 
   async function handleSubmit() {
     if (newPassword !== confirmPassword) { setError(t("passwordsDoNotMatch")); return; }
@@ -214,13 +213,12 @@ function PasswordSection({ hasPassword }: { hasPassword: boolean }) {
         const res = await authClient.$fetch("/api/auth/set-password", { method: "POST", body: { newPassword } });
         if ((res as { error?: { message?: string } }).error) throw new Error((res as { error?: { message?: string } }).error?.message ?? "Failed");
       }
-      setSuccess(true);
+      toast.success(t("saved"));
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      setTimeout(() => setSuccess(false), 2000);
     } catch (e) {
-      setError(e instanceof Error ? e.message : t("updateFailed"));
+      toast.error(e instanceof Error ? e.message : t("updateFailed"));
     } finally {
       setPending(false);
     }
@@ -275,7 +273,6 @@ function PasswordSection({ hasPassword }: { hasPassword: boolean }) {
           >
             {pending ? t("saving") : hasPassword ? t("changePassword") : t("setPassword")}
           </button>
-          {success && <span className="text-xs font-medium text-green-500">{t("saved")}</span>}
         </div>
       </div>
     </SectionCard>
@@ -304,7 +301,6 @@ function ProfileTab() {
   const { data: self, isLoading } = useQuery(orpc.users.getSelf.queryOptions());
   const { data: session } = authClient.useSession();
   const [name, setName] = useState("");
-  const [saved, setSaved] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const [linkedAccounts, setLinkedAccounts] = useState<LinkedAccount[]>([]);
@@ -324,11 +320,7 @@ function ProfileTab() {
     }
   }, [self]);
 
-  const updateLocale = useMutation(
-    orpc.users.updateLocale.mutationOptions({
-      onError: () => toast.error(tl("saveFailed")),
-    }),
-  );
+  const updateLocale = useMutation(orpc.users.updateLocale.mutationOptions());
 
   function handleLocaleChange(newLocale: string | null) {
     if (!newLocale) return;
@@ -344,8 +336,7 @@ function ProfileTab() {
     orpc.users.updateProfile.mutationOptions({
       onSuccess: () => {
         void queryClient.invalidateQueries({ queryKey: orpc.users.key() });
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
+        toast.success(t("saved"));
       },
     }),
   );
@@ -475,10 +466,6 @@ function ProfileTab() {
               >
                 {updateProfile.isPending ? t("saving") : t("save")}
               </button>
-              {saved && <span className="text-xs font-medium text-green-500">{t("saved")}</span>}
-              {updateProfile.isError && (
-                <span className="text-xs text-destructive">{updateProfile.error.message}</span>
-              )}
             </div>
           </div>
         </div>
@@ -1146,7 +1133,6 @@ function ApiKeysTab() {
 function BillingTab() {
   const t = useTranslations("account.billing");
   const { data: self, isLoading } = useQuery(orpc.users.getSelf.queryOptions());
-  const [saved, setSaved] = useState(false);
 
   const [billing, setBilling] = useState({
     billingName: "",
@@ -1179,8 +1165,7 @@ function BillingTab() {
     orpc.users.updateBilling.mutationOptions({
       onSuccess: () => {
         void queryClient.invalidateQueries({ queryKey: orpc.users.key() });
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
+        toast.success(t("saved"));
       },
     }),
   );
@@ -1278,8 +1263,6 @@ function BillingTab() {
         >
           {updateBilling.isPending ? t("saving") : t("saveBilling")}
         </button>
-        {saved && <span className="text-xs font-medium text-green-500">{t("saved")}</span>}
-        {updateBilling.isError && <span className="text-xs text-destructive">{updateBilling.error.message}</span>}
       </div>
     </div>
   );

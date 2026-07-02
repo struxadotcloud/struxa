@@ -4,6 +4,7 @@ import { use, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { orpc, queryClient } from "@/utils/orpc";
 
 function invalidateNode(id: string) {
@@ -21,10 +22,14 @@ export default function NodeAllocationsPage({ params }: { params: Promise<{ id: 
   const { data: node, isLoading } = useQuery(orpc.nodes.get.queryOptions({ input: { id } }));
 
   const addAllocMutation = useMutation(
-    orpc.allocations.create.mutationOptions({ onSuccess: () => invalidateNode(id) }),
+    orpc.allocations.create.mutationOptions({
+      onSuccess: () => { invalidateNode(id); toast.success(tc("created")); },
+    }),
   );
   const deleteAllocMutation = useMutation(
-    orpc.allocations.delete.mutationOptions({ onSuccess: () => invalidateNode(id) }),
+    orpc.allocations.delete.mutationOptions({
+      onSuccess: () => { invalidateNode(id); toast.success(tc("deleted")); },
+    }),
   );
 
   const [allocForm, setAllocForm] = useState({ ip: "", ports: "", ipAlias: "" });

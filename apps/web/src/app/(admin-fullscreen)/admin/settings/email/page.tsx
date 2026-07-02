@@ -13,12 +13,12 @@ import {
   KeyRound,
   PartyPopper,
   Server,
-  Check,
   RotateCcw,
   Save,
   Eye,
   Code2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { orpc } from "@/utils/orpc";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@struxa/ui/components/select";
 
@@ -164,7 +164,6 @@ export default function EmailEditorPage() {
   const [drafts, setDrafts] = useState<Partial<Record<TemplateName, string>>>({});
   // savedHtml: what's persisted in DB for each template (used to detect unsaved changes)
   const [savedHtml, setSavedHtml] = useState<Partial<Record<TemplateName, string>>>({});
-  const [justSaved, setJustSaved] = useState<TemplateName | null>(null);
 
   // preview panel resize
   const [previewWidth, setPreviewWidth] = useState(420);
@@ -197,8 +196,7 @@ export default function EmailEditorPage() {
   async function handleSave() {
     await saveMutation.mutateAsync({ name: active, html: currentDraft });
     setSavedHtml((s) => ({ ...s, [active]: currentDraft }));
-    setJustSaved(active);
-    setTimeout(() => setJustSaved(null), 2000);
+    toast.success(t("saved"));
   }
 
   useEffect(() => {
@@ -378,18 +376,12 @@ export default function EmailEditorPage() {
             onClick={() => void handleSave()}
             disabled={saveMutation.isPending}
             className={`flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-medium transition-all ${
-              justSaved === active
-                ? "bg-green-500/20 text-green-600 dark:text-green-400"
-                : isUnsaved
+              isUnsaved
                 ? "bg-green-500 text-white hover:bg-green-600"
                 : "bg-muted text-muted-foreground cursor-default"
             }`}
           >
-            {justSaved === active ? (
-              <><Check className="h-3 w-3" /> <span className="hidden sm:inline">{t("saved")}</span></>
-            ) : (
-              <><Save className="h-3 w-3" /> <span className="hidden sm:inline">{saveMutation.isPending ? t("saving") : t("save")}</span></>
-            )}
+            <Save className="h-3 w-3" /> <span className="hidden sm:inline">{saveMutation.isPending ? t("saving") : t("save")}</span>
           </button>
         </div>
       </div>

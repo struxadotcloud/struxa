@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { FileJson, Trash2, Search, ChevronRight, ChevronLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { orpc, queryClient } from "@/utils/orpc";
 import { ContextMenu, RowMenu, type ActionItem } from "@/components/context-menu";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -51,13 +52,19 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
   const nest = nests?.find((n) => n.id === nestId);
 
   const updateNestMutation = useMutation(
-    orpc.nests.update.mutationOptions({ onSuccess: invalidateNests }),
+    orpc.nests.update.mutationOptions({
+      onSuccess: () => { invalidateNests(); toast.success(tc("saved")); },
+    }),
   );
   const importMutation = useMutation(
-    orpc.eggs.importJson.mutationOptions({ onSuccess: () => invalidateEggs(nestId) }),
+    orpc.eggs.importJson.mutationOptions({
+      onSuccess: () => { invalidateEggs(nestId); toast.success(tc("created")); },
+    }),
   );
   const deleteMutation = useMutation(
-    orpc.eggs.delete.mutationOptions({ onSuccess: () => invalidateEggs(nestId) }),
+    orpc.eggs.delete.mutationOptions({
+      onSuccess: () => { invalidateEggs(nestId); toast.success(tc("deleted")); },
+    }),
   );
 
   const [search, setSearch] = useState("");
@@ -160,7 +167,7 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
       setImportUrl("");
       setShowImport(false);
     } catch {
-      // error shown via importMutation.isError
+      // error toasted globally via MutationCache.onError
     }
   }
 
@@ -284,9 +291,6 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
             {importMode === "url" && urlFetchError && (
               <span className="text-xs text-destructive">{urlFetchError}</span>
             )}
-            {importMutation.isError && (
-              <span className="text-xs text-destructive">{importMutation.error.message}</span>
-            )}
           </div>
 
           <DialogFooter>
@@ -353,8 +357,6 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
                 >
                   {updateNestMutation.isPending ? tc("saving") : tc("save")}
                 </button>
-                {updateNestMutation.isSuccess && <span className="text-xs font-medium text-green-500">{tc("saved")}</span>}
-                {updateNestMutation.isError && <span className="text-xs text-destructive">{updateNestMutation.error.message}</span>}
               </div>
             </div>
           </div>

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Search, ShieldCheck, ShieldOff, Ban, UserX, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogPopup,
@@ -51,10 +52,18 @@ export default function AdminUsersPage() {
     orpc.users.list.queryOptions({ input: { page, search: debouncedSearch || undefined } }),
   );
 
-  const setRoleMutation = useMutation(orpc.users.setRole.mutationOptions({ onSuccess: invalidateUsers }));
-  const banMutation = useMutation(orpc.users.ban.mutationOptions({ onSuccess: invalidateUsers }));
-  const unbanMutation = useMutation(orpc.users.unban.mutationOptions({ onSuccess: invalidateUsers }));
-  const deleteMutation = useMutation(orpc.users.delete.mutationOptions({ onSuccess: invalidateUsers }));
+  const setRoleMutation = useMutation(orpc.users.setRole.mutationOptions({
+    onSuccess: () => { invalidateUsers(); toast.success(tc("updated")); },
+  }));
+  const banMutation = useMutation(orpc.users.ban.mutationOptions({
+    onSuccess: () => { invalidateUsers(); toast.success(tc("updated")); },
+  }));
+  const unbanMutation = useMutation(orpc.users.unban.mutationOptions({
+    onSuccess: () => { invalidateUsers(); toast.success(tc("updated")); },
+  }));
+  const deleteMutation = useMutation(orpc.users.delete.mutationOptions({
+    onSuccess: () => { invalidateUsers(); toast.success(tc("deleted")); },
+  }));
 
   const totalPages = data ? Math.ceil(data.total / data.pageSize) : 1;
 
@@ -90,9 +99,6 @@ export default function AdminUsersPage() {
               onChange={(e) => setBanReason(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Escape") { setDialog(null); setBanReason(""); } }}
             />
-            {banMutation.isError && (
-              <p className="mt-2 text-xs text-destructive">{banMutation.error.message}</p>
-            )}
           </div>
           <DialogFooter>
             <DialogClose

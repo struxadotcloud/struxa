@@ -22,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@struxa/ui/components/dropdown-menu";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
 import Loader from "@/components/loader";
@@ -166,6 +167,7 @@ function TasksPanel({
   queryClient: ReturnType<typeof useQueryClient>;
 }) {
   const t = useTranslations("panel.schedules");
+  const tc = useTranslations("common");
   const [showModal, setShowModal] = useState(false);
   const [taskForm, setTaskForm] = useState(EMPTY_TASK_FORM);
 
@@ -175,12 +177,16 @@ function TasksPanel({
       void qc.invalidateQueries(orpc.schedules.list.queryOptions({ input: { serverId } }));
       setShowModal(false);
       setTaskForm(EMPTY_TASK_FORM);
+      toast.success(tc("created"));
     },
   });
 
   const deleteTaskMutation = useMutation({
     ...orpc.schedules.deleteTask.mutationOptions(),
-    onSuccess: () => void qc.invalidateQueries(orpc.schedules.list.queryOptions({ input: { serverId } })),
+    onSuccess: () => {
+      void qc.invalidateQueries(orpc.schedules.list.queryOptions({ input: { serverId } }));
+      toast.success(tc("deleted"));
+    },
   });
 
   const nextSeq = tasks.length > 0 ? Math.max(...tasks.map((t) => t.sequenceId)) + 1 : 1;
@@ -311,9 +317,6 @@ function TasksPanel({
               </div>
             </div>
 
-            {createTaskMutation.isError && (
-              <p className="text-xs text-destructive">{createTaskMutation.error.message}</p>
-            )}
           </div>
           <DialogFooter>
             <DialogClose
@@ -402,6 +405,7 @@ function TasksPanel({
 
 export default function SchedulesPage({ params }: { params: Promise<{ id: string }> }) {
   const t = useTranslations("panel.schedules");
+  const tc = useTranslations("common");
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
   const { id } = use(params);
@@ -429,13 +433,20 @@ export default function SchedulesPage({ params }: { params: Promise<{ id: string
   });
 
   const createMutation = useMutation(orpc.schedules.create.mutationOptions());
-  const toggleMutation = useMutation(orpc.schedules.update.mutationOptions());
+  const toggleMutation = useMutation(orpc.schedules.update.mutationOptions({
+    onSuccess: () => {
+      void queryClient.invalidateQueries(orpc.schedules.list.queryOptions({ input: { serverId: serverId ?? "" } }));
+      toast.success(tc("saved"));
+    },
+  }));
   const deleteMutation = useMutation({
     ...orpc.schedules.delete.mutationOptions(),
-    onSuccess: () =>
+    onSuccess: () => {
       void queryClient.invalidateQueries(
         orpc.schedules.list.queryOptions({ input: { serverId: serverId ?? "" } }),
-      ),
+      );
+      toast.success(tc("deleted"));
+    },
   });
 
   function closeCreate() {
@@ -456,6 +467,7 @@ export default function SchedulesPage({ params }: { params: Promise<{ id: string
       cronDayOfWeek: form.cronDayOfWeek || "*",
     });
     void queryClient.invalidateQueries(orpc.schedules.list.queryOptions({ input: { serverId } }));
+    toast.success(tc("created"));
     closeCreate();
     if (result?.id) setExpandedId(result.id);
   }
@@ -539,9 +551,6 @@ export default function SchedulesPage({ params }: { params: Promise<{ id: string
                 </code>
               </div>
             </div>
-            {createMutation.isError && (
-              <p className="text-xs text-destructive">{createMutation.error.message}</p>
-            )}
           </div>
           <DialogFooter>
             <DialogClose
@@ -616,15 +625,7 @@ export default function SchedulesPage({ params }: { params: Promise<{ id: string
                         onClick={(e) => {
                           e.stopPropagation();
                           serverId &&
-                            toggleMutation.mutate(
-                              { serverId, scheduleId: sch.id, isActive: !sch.isActive },
-                              {
-                                onSuccess: () =>
-                                  void queryClient.invalidateQueries(
-                                    orpc.schedules.list.queryOptions({ input: { serverId } }),
-                                  ),
-                              },
-                            );
+                            toggleMutation.mutate({ serverId, scheduleId: sch.id, isActive: !sch.isActive });
                         }}
                         className="flex items-center"
                       >

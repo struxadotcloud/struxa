@@ -2,8 +2,18 @@ import { createORPCClient } from "@orpc/client";
 import { RPCLink } from "@orpc/client/fetch";
 import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import type { AppRouterClient } from "@struxa/api/routers/index";
-import { QueryCache, QueryClient } from "@tanstack/react-query";
+import { MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+
+declare module "@tanstack/react-query" {
+  interface Register {
+    // Set `meta: { customError: true }` on a mutation to opt out of the
+    // generic error toast below when it already shows its own message.
+    mutationMeta: {
+      customError?: boolean;
+    };
+  }
+}
 
 export const queryClient = new QueryClient({
   queryCache: new QueryCache({
@@ -14,6 +24,12 @@ export const queryClient = new QueryClient({
           onClick: query.invalidate,
         },
       });
+    },
+  }),
+  mutationCache: new MutationCache({
+    onError: (error, _vars, _ctx, mutation) => {
+      if (mutation.meta?.customError) return;
+      toast.error(error.message);
     },
   }),
 });

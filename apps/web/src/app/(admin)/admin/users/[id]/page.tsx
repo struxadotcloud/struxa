@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { ChevronRight, Server, Shield, ShieldOff, Ban, UserCheck, Monitor, Wallet } from "lucide-react";
 import {
   Dialog,
@@ -105,6 +106,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
         setAdjustDialog(false);
         setAdjustAmount("");
         setAdjustNote("");
+        toast.success(tc("saved"));
       },
     }),
   );
@@ -114,12 +116,18 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
     void queryClient.invalidateQueries({ queryKey: orpc.users.key() });
   }
 
-  const setRoleMutation = useMutation(orpc.users.setRole.mutationOptions({ onSuccess: invalidateUser }));
-  const banMutation = useMutation(orpc.users.ban.mutationOptions({ onSuccess: invalidateUser }));
-  const unbanMutation = useMutation(orpc.users.unban.mutationOptions({ onSuccess: invalidateUser }));
+  const setRoleMutation = useMutation(orpc.users.setRole.mutationOptions({
+    onSuccess: () => { invalidateUser(); toast.success(tc("updated")); },
+  }));
+  const banMutation = useMutation(orpc.users.ban.mutationOptions({
+    onSuccess: () => { invalidateUser(); toast.success(tc("updated")); },
+  }));
+  const unbanMutation = useMutation(orpc.users.unban.mutationOptions({
+    onSuccess: () => { invalidateUser(); toast.success(tc("updated")); },
+  }));
   const deleteMutation = useMutation(
     orpc.users.delete.mutationOptions({
-      onSuccess: () => router.push("/admin/users" as never),
+      onSuccess: () => { toast.success(tc("deleted")); router.push("/admin/users" as never); },
     }),
   );
 
@@ -166,9 +174,6 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
               value={banReason}
               onChange={(e) => setBanReason(e.target.value)}
             />
-            {banMutation.isError && (
-              <p className="mt-2 text-xs text-destructive">{banMutation.error.message}</p>
-            )}
           </div>
           <DialogFooter>
             <DialogClose
@@ -235,9 +240,6 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
                 onChange={(e) => setAdjustNote(e.target.value)}
               />
             </div>
-            {adjustBalanceMutation.isError && (
-              <p className="text-xs text-destructive">{adjustBalanceMutation.error.message}</p>
-            )}
           </div>
           <DialogFooter>
             <DialogClose

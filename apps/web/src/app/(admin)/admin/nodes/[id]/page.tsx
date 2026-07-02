@@ -4,6 +4,7 @@ import { use, useEffect, useRef, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import {
   Tooltip,
   TooltipTrigger,
@@ -130,7 +131,7 @@ export default function NodeSettingsPage({ params }: { params: Promise<{ id: str
 
   const updateMutation = useMutation(
     orpc.nodes.update.mutationOptions({
-      onSuccess: () => invalidateNode(id),
+      onSuccess: () => { invalidateNode(id); toast.success(tc("saved")); },
     }),
   );
 
@@ -337,9 +338,6 @@ export default function NodeSettingsPage({ params }: { params: Promise<{ id: str
 
       <div className="flex items-center justify-between">
         <div>
-          {updateMutation.isError && (
-            <span className="text-xs text-destructive">{updateMutation.error.message}</span>
-          )}
           {updateMutation.isSuccess && (
             <span className="text-xs text-green-500">{tc("saved")}</span>
           )}

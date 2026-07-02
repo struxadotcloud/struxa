@@ -16,6 +16,7 @@ import {
   DialogClose,
 } from "@struxa/ui/components/dialog";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
 import Loader from "@/components/loader";
@@ -54,6 +55,7 @@ function StatusDot({ backup }: { backup: { isSuccessful: boolean; completedAt: D
 
 export default function BackupsPage({ params }: { params: Promise<{ id: string }> }) {
   const t = useTranslations("panel.backups");
+  const tc = useTranslations("common");
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
   const { id } = use(params);
@@ -78,7 +80,10 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
   const createMutation = useMutation(orpc.backups.create.mutationOptions());
   const deleteMutation = useMutation({
     ...orpc.backups.delete.mutationOptions(),
-    onSuccess: () => void queryClient.invalidateQueries(orpc.backups.list.queryOptions({ input: { serverId: serverId ?? "" } })),
+    onSuccess: () => {
+      void queryClient.invalidateQueries(orpc.backups.list.queryOptions({ input: { serverId: serverId ?? "" } }));
+      toast.success(tc("deleted"));
+    },
   });
   const downloadMutation = useMutation({
     ...orpc.backups.getDownloadUrl.mutationOptions(),
@@ -86,7 +91,10 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
   });
   const restoreMutation = useMutation({
     ...orpc.backups.restore.mutationOptions(),
-    onSuccess: () => setRestoreTarget(null),
+    onSuccess: () => {
+      setRestoreTarget(null);
+      toast.success(t("restoreSuccess"));
+    },
   });
 
   function closeCreate() {
@@ -98,6 +106,7 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
     if (!serverId || !createName.trim()) return;
     await createMutation.mutateAsync({ serverId, name: createName.trim() });
     void queryClient.invalidateQueries(orpc.backups.list.queryOptions({ input: { serverId } }));
+    toast.success(tc("created"));
     closeCreate();
   }
 
@@ -190,9 +199,6 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
                 if (e.key === "Escape") closeCreate();
               }}
             />
-            {createMutation.isError && (
-              <p className="mt-2 text-xs text-destructive">{createMutation.error.message}</p>
-            )}
           </div>
           <DialogFooter>
             <DialogClose

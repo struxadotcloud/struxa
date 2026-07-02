@@ -960,9 +960,10 @@ export default function BillingCategoryPage({
   const walletBalanceCents = wallet?.balanceCents ?? 0;
   const displayCurrency = billingConfig?.defaultCurrency ?? "USD";
 
-  const purchaseMutation = useMutation(
-    orpc.billing.purchasePlan.mutationOptions(),
-  );
+  const purchaseMutation = useMutation({
+    ...orpc.billing.purchasePlan.mutationOptions(),
+    meta: { customError: true },
+  });
 
   function handlePurchase(
     priceId: string,

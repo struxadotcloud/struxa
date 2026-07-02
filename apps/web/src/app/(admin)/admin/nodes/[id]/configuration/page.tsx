@@ -4,6 +4,7 @@ import { use, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Copy, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import Editor from "@monaco-editor/react";
 import type { Monaco } from "@monaco-editor/react";
 import { orpc, queryClient } from "@/utils/orpc";
@@ -62,6 +63,7 @@ export default function NodeConfigurationPage({ params }: { params: Promise<{ id
         void queryClient.invalidateQueries(
           orpc.nodes.getDeploymentConfig.queryOptions({ input: { id } }),
         );
+        toast.success(tc("saved"));
       },
     }),
   );
