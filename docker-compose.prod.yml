@@ -34,10 +34,10 @@ services:
       - mysql_data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
-      retries: 10
-      start_period: 30s
+      retries: 30
+      start_period: 60s
     networks:
       - struxa
 
@@ -65,7 +65,7 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-    restart: "no"
+    restart: on-failure:5
     networks:
       - struxa
 
