@@ -259,7 +259,6 @@ CREATE TABLE `billing_wallet_transactions` (
 	CONSTRAINT `billing_wallet_transactions_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
-ALTER TABLE `user` ADD `locale` varchar(10) DEFAULT 'en' NOT NULL;--> statement-breakpoint
 ALTER TABLE `servers` ADD `subscription_id` varchar(36);--> statement-breakpoint
 ALTER TABLE `billing_coupon_redemptions` ADD CONSTRAINT `billing_coupon_redemptions_coupon_id_billing_coupons_id_fk` FOREIGN KEY (`coupon_id`) REFERENCES `billing_coupons`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `billing_coupon_redemptions` ADD CONSTRAINT `billing_coupon_redemptions_user_id_user_id_fk` FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint

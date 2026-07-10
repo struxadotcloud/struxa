@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/url"
@@ -13,8 +14,21 @@ import (
 	"strings"
 	"time"
 
-	_ "github.com/go-sql-driver/mysql"
+	"github.com/go-sql-driver/mysql"
 )
+
+// MySQL auto-commits DDL statement-by-statement (there's no transactional DDL
+// like Postgres), so a migration killed mid-file can leave some of its
+// statements already applied even though the file was never recorded as
+// migrated. Re-running that file from the top then fails with "duplicate
+// column" / "table already exists" instead of finishing the job. Treat those
+// specific errors as already-applied and keep going.
+var alreadyAppliedErrnos = map[uint16]bool{
+	1050: true, // ER_TABLE_EXISTS_ERROR
+	1060: true, // ER_DUP_FIELDNAME
+	1061: true, // ER_DUP_KEYNAME
+	1826: true, // ER_FK_DUP_NAME
+}
 
 type journalEntry struct {
 	Idx int    `json:"idx"`
@@ -119,6 +133,11 @@ func applyMigration(db *sql.DB, dir string, entry journalEntry) error {
 
 	for _, stmt := range splitStatements(string(content)) {
 		if _, err := db.Exec(stmt); err != nil {
+			var mysqlErr *mysql.MySQLError
+			if errors.As(err, &mysqlErr) && alreadyAppliedErrnos[mysqlErr.Number] {
+				log.Printf("[migrate] skipping already-applied statement in %q (errno %d)", entry.Tag, mysqlErr.Number)
+				continue
+			}
 			return fmt.Errorf("exec statement in %q: %w", entry.Tag, err)
 		}
 	}
