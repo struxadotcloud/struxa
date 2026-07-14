@@ -1,26 +1,11 @@
 <div align="center">
-
-# struxa
-
-**An open-source game server management panel.**
-Built to replace Pterodactyl — modern stack, dark UI, fully self-hosted.
-
-<br />
+  
+<img src="https://struxa.cloud/images/banner.png" alt="Struxa panel preview" width="860" />
 
 ![GitHub Stars](https://www.shieldcn.dev/github/stars/struxadotcloud/struxa.svg?variant=secondary&size=sm)
 ![GitHub Forks](https://www.shieldcn.dev/github/forks/struxadotcloud/struxa.svg?variant=secondary&size=sm)
 ![Last commit](https://www.shieldcn.dev/github/last-commit/struxadotcloud/struxa.svg?variant=secondary&size=sm)
-![Open issues](https://www.shieldcn.dev/github/open-issues/struxadotcloud/struxa.svg?variant=secondary&size=sm)
-![Release](https://www.shieldcn.dev/github/release/struxadotcloud/struxa.svg?size=sm)
-![License](https://www.shieldcn.dev/github/license/struxadotcloud/struxa.svg?variant=ghost&size=sm)
-
-![Package mgr · Bun](https://www.shieldcn.dev/badge/Package_mgr-Bun-000000.svg?logo=bun&variant=branded&size=sm)
-![Language · TypeScript](https://www.shieldcn.dev/badge/Language-TypeScript-3178C6.svg?logo=typescript&variant=branded&size=sm)
-![Monorepo · Turborepo](https://www.shieldcn.dev/badge/Monorepo-Turborepo-EF4444.svg?logo=turborepo&variant=branded&size=sm)
-![Agent-friendly AGENTS.md](https://www.shieldcn.dev/badge/Agent--friendly-AGENTS.md-D97757.svg?variant=secondary&size=sm)
 [![Discord](https://www.shieldcn.dev/badge/Join_Discord-5865F2.svg?logo=discord&variant=branded&size=sm)](https://discord.gg/struxa)
-
-<img src="https://struxa.cloud/images/banner.png" alt="Struxa panel preview" width="860" />
 
 </div>
 
@@ -62,6 +47,7 @@ Contributions are welcome — code, bug reports, and design feedback. See [CONTR
 | Sponsor | Contribution |
 |:---:|:---|
 | <a href="https://pshost.pl" target="_blank"><img src="https://cdn.pejpal.cloud/psHost-banner.png" alt="psHost" height="48" /></a> | Development partner & infrastructure |
+| <a href="https://elean.app" target="_blank"><img src="https://struxa.cloud/assets/elean.png" alt="elean" height="48" /></a> | Providing hosted [roadmap](https://elean.app/share/struxa/roadmap)
 
 <sub>Copyright (c) Disaster Limited</sub>
 
