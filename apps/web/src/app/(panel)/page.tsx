@@ -51,7 +51,7 @@ function ServerCard({ server, powerState, statusLoading }: {
 
   return (
     <Link href={`/servers/${server.uuid}`} className="group block">
-      <div className="flex flex-col gap-3 p-4 transition-colors duration-150 hover:bg-muted/40">
+      <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 transition-colors duration-150 hover:border-foreground/30">
         <div className="flex items-start justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2.5">
             <span
@@ -63,7 +63,7 @@ function ServerCard({ server, powerState, statusLoading }: {
             </span>
           </div>
           {server.egg && (
-            <span className="shrink-0 rounded-sm border border-border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+            <span className="shrink-0 rounded-md border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
               {server.egg.name}
             </span>
           )}
@@ -74,7 +74,7 @@ function ServerCard({ server, powerState, statusLoading }: {
             {server.allocation ? `${server.allocation.ip}:${server.allocation.port}` : tp("noAllocation")}
           </span>
           <span
-            className="rounded-sm px-2 py-0.5 text-[11px] font-medium"
+            className="rounded-full px-2 py-0.5 text-[11px] font-medium"
             style={{ color: status.color, backgroundColor: status.bg }}
           >
             {label}
@@ -124,7 +124,7 @@ export default function ServersPage() {
             </div>
           </div>
         ) : (
-          <div className="m-4 grid grid-cols-1 divide-y divide-border border border-border sm:grid-cols-2 sm:divide-x lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
             {list.map((server) => (
               <ServerCard
                 key={server.uuid}
