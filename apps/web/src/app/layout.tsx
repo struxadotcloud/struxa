@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
-import { Cal_Sans, Geist, Geist_Mono } from "next/font/google";
+import { Funnel_Display, Geist, Geist_Mono } from "next/font/google";
 import { getLocale, getMessages } from "next-intl/server";
 
 import "../index.css";
 import Providers from "@/components/providers";
 import { getInstanceSettings } from "@/lib/instance-settings";
 
-const calSans = Cal_Sans({
-  variable: "--font-cal-sans",
+const funnelDisplay = Funnel_Display({
+  variable: "--font-funnel-display",
   fallback: [],
   subsets: ["latin"],
-  weight: "400",
+  weight: ["400", "600", "700"],
 });
 
 const geistSans = Geist({
@@ -69,7 +69,7 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      <body className={`${calSans.variable} ${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${funnelDisplay.variable} ${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Providers locale={locale} messages={messages}>
           {children}
         </Providers>
