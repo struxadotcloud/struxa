@@ -57,11 +57,11 @@
 }
 
 .dark {
-  --background: #0f0f0f;
+  --background: #0a0a0a;
   --foreground: #fafafa;
-  --card: #161616;
+  --card: #171717;
   --card-foreground: #fafafa;
-  --popover: #1c1c1c;
+  --popover: #171717;
   --popover-foreground: #fafafa;
   --primary: #ffffff;
   --primary-foreground: #000000;
