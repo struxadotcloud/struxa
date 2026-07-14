@@ -18,6 +18,7 @@ import {
 } from "@struxa/ui/components/dialog";
 import { orpc, queryClient } from "@/utils/orpc";
 import { ContextMenu, RowMenu, type ActionItem } from "@/components/context-menu";
+import { DitherAvatar } from "@struxa/ui/components/dither-kit/avatar";
 
 function invalidateUsers() {
   void queryClient.invalidateQueries({ queryKey: orpc.users.key() });
@@ -204,7 +205,9 @@ export default function AdminUsersPage() {
                       <div className="h-7 w-7 shrink-0 overflow-hidden rounded-full bg-muted flex items-center justify-center text-xs font-semibold text-foreground">
                         {u.image ? (
                           <img src={u.image} alt="" className="h-full w-full object-cover" />
-                        ) : (u.name ?? u.email).charAt(0).toUpperCase()}
+                        ) : (
+                          <DitherAvatar name={u.name ?? u.email} className="h-full w-full" />
+                        )}
                       </div>
                       <span className="text-sm font-medium text-foreground">{u.name ?? "—"}</span>
                     </div>

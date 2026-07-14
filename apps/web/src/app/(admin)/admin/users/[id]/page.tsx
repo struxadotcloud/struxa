@@ -19,6 +19,7 @@ import {
 } from "@struxa/ui/components/dialog";
 import { orpc, queryClient } from "@/utils/orpc";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { DitherAvatar } from "@struxa/ui/components/dither-kit/avatar";
 
 type Tab = "overview" | "servers" | "security" | "billing" | "actions";
 
@@ -152,7 +153,6 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
   }
 
   const displayName = user.name ?? user.email;
-  const initials = displayName.charAt(0).toUpperCase();
 
   return (
     <>
@@ -314,9 +314,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={user.image} alt="Avatar" className="h-full w-full object-cover" />
                     ) : (
-                      <span className="flex h-full w-full items-center justify-center text-lg font-semibold text-foreground">
-                        {initials}
-                      </span>
+                      <DitherAvatar name={displayName} className="h-full w-full" />
                     )}
                   </div>
                   <div>

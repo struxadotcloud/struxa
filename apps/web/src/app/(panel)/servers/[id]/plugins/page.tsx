@@ -19,6 +19,7 @@ import { parseEggFeatures } from "@/lib/egg-features";
 import { orpc } from "@/utils/orpc";
 import Loader from "@/components/loader";
 import { useIsMobile } from "@struxa/ui/hooks/use-media-query";
+import { DitherAvatar } from "@struxa/ui/components/dither-kit/avatar";
 import {
   Dialog,
   DialogPopup,
@@ -477,9 +478,7 @@ function ProjectMetadata({
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={m.user.avatar_url} alt={m.user.username} className="h-7 w-7 object-cover" />
                   ) : (
-                    <div className="h-7 w-7 flex items-center justify-center text-[10px] font-semibold text-muted-foreground">
-                      {m.user.username[0]?.toUpperCase()}
-                    </div>
+                    <DitherAvatar name={m.user.username} className="h-7 w-7" />
                   )}
                 </div>
                 <div className="flex min-w-0 flex-col">

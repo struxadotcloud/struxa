@@ -9,6 +9,7 @@ import type { LucideIcon } from "lucide-react";
 import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
 import Loader from "@/components/loader";
+import { DitherAvatar } from "@struxa/ui/components/dither-kit/avatar";
 
 function StatRow({
   icon: Icon,
@@ -113,14 +114,15 @@ function ActorCell({ user }: { user: { name: string | null; email: string; image
   const t = useTranslations("admin.activity");
   if (!user) return <span className="text-sm text-muted-foreground">{t("system")}</span>;
   const displayName = user.name ?? user.email;
-  const initials = displayName[0]!.toUpperCase();
   return (
     <div className="flex items-center gap-2 min-w-0">
       <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-muted text-xs font-semibold text-foreground overflow-hidden">
         {user.image ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={user.image} alt={displayName} className="h-6 w-6 object-cover" />
-        ) : initials}
+        ) : (
+          <DitherAvatar name={displayName} className="h-6 w-6" />
+        )}
       </div>
       <span className="truncate text-sm text-foreground">{displayName}</span>
     </div>

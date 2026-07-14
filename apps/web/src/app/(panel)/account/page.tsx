@@ -21,6 +21,7 @@ import ReactCountryFlag from "react-country-flag";
 import { authClient } from "@/lib/auth-client";
 import { orpc, queryClient } from "@/utils/orpc";
 import { toast } from "sonner";
+import { DitherAvatar } from "@struxa/ui/components/dither-kit/avatar";
 
 type Tab = "profile" | "api-keys" | "billing";
 
@@ -388,9 +389,7 @@ function ProfileTab() {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={self.image} alt="Avatar" className="h-full w-full object-cover" />
               ) : (
-                <span className="flex h-full w-full items-center justify-center text-lg font-semibold text-muted-foreground">
-                  {self?.name?.[0]?.toUpperCase() ?? "?"}
-                </span>
+                <DitherAvatar name={self?.name ?? "?"} className="h-full w-full" />
               )}
               <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
                 {avatarUploading
