@@ -67,7 +67,7 @@ export default function AdminDashboard() {
               label={t("nodesLabel")}
               value={nodes?.length ?? "—"}
               sub={t("nodesOnline", { count: onlineNodes })}
-              color="#3b82f6"
+              color="#22c55e"
             />
             <StatCard
               icon={Monitor}

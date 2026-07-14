@@ -49,7 +49,7 @@ function StatRow({ icon: Icon, label, children }: { icon: LucideIcon; label: str
 
 function StatusDot({ backup }: { backup: { isSuccessful: boolean; completedAt: Date | string | null } }) {
   if (backup.completedAt === null) return <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500 animate-pulse" />;
-  if (backup.isSuccessful) return <span className="h-2 w-2 shrink-0 rounded-full bg-blue-500" />;
+  if (backup.isSuccessful) return <span className="h-2 w-2 shrink-0 rounded-full bg-green-500" />;
   return <span className="h-2 w-2 shrink-0 rounded-full bg-destructive" />;
 }
 

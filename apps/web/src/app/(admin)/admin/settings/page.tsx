@@ -721,7 +721,7 @@ export default function AdminSettingsPage() {
                       <Github className="h-4 w-4 text-foreground" />
                       <span className="text-sm font-medium text-foreground">GitHub</span>
                       {(data?.githubEnabled || github.enabled) && (
-                        <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-[11px] font-medium text-blue-600 dark:text-blue-400">{t("enabled")}</span>
+                        <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-[11px] font-medium text-green-600 dark:text-green-400">{t("enabled")}</span>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
@@ -772,7 +772,7 @@ export default function AdminSettingsPage() {
                       <DiscordIcon className="h-4 w-4 text-[#5865F2]" />
                       <span className="text-sm font-medium text-foreground">Discord</span>
                       {(data?.discordEnabled || discord.enabled) && (
-                        <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-[11px] font-medium text-blue-600 dark:text-blue-400">{t("enabled")}</span>
+                        <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-[11px] font-medium text-green-600 dark:text-green-400">{t("enabled")}</span>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
@@ -930,7 +930,7 @@ export default function AdminSettingsPage() {
                   </div>
 
                   {testResult && (
-                    <div className={`flex items-start gap-2 rounded-lg px-3 py-2 text-sm ${testResult.ok ? "bg-blue-500/10 border border-blue-500/30 text-blue-700 dark:text-blue-400" : "bg-destructive/10 border border-destructive/30 text-destructive"}`}>
+                    <div className={`flex items-start gap-2 rounded-lg px-3 py-2 text-sm ${testResult.ok ? "bg-green-500/10 border border-green-500/30 text-green-700 dark:text-green-400" : "bg-destructive/10 border border-destructive/30 text-destructive"}`}>
                       {testResult.ok ? <Check className="mt-0.5 h-4 w-4 shrink-0" /> : <X className="mt-0.5 h-4 w-4 shrink-0" />}
                       {testResult.message}
                     </div>

@@ -109,7 +109,7 @@ function Toggle({
       onClick={() => !disabled && onChange(!checked)}
       disabled={disabled}
       className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
-        checked ? "bg-blue-500" : "bg-muted"
+        checked ? "bg-green-500" : "bg-muted"
       }`}
     >
       <span

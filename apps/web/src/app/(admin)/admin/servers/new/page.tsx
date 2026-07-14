@@ -25,7 +25,7 @@ function StepIndicator({ current, steps }: { current: number; steps: string[] })
             <div
               className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold ${
                 i < current
-                  ? "bg-blue-500 text-white"
+                  ? "bg-green-500 text-white"
                   : i === current
                   ? "bg-foreground text-background"
                   : "bg-muted text-muted-foreground"
@@ -35,7 +35,7 @@ function StepIndicator({ current, steps }: { current: number; steps: string[] })
             </div>
             <span
               className={`text-sm font-medium ${
-                i === current ? "text-foreground" : i < current ? "text-blue-500" : "text-muted-foreground"
+                i === current ? "text-foreground" : i < current ? "text-green-500" : "text-muted-foreground"
               }`}
             >
               {label}

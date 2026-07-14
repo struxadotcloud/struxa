@@ -155,7 +155,7 @@ export default function NodeAllocationsPage({ params }: { params: Promise<{ id: 
                 style={{
                   backgroundColor: alloc.serverId
                     ? "rgb(var(--muted-foreground) / 0.4)"
-                    : "#3b82f6",
+                    : "#22c55e",
                 }}
               />
               <span className="text-sm text-foreground">

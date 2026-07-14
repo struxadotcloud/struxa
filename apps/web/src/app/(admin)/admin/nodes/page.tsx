@@ -94,7 +94,7 @@ function NodeStatusDot({
     : isPending
       ? "bg-muted-foreground/30 animate-pulse"
       : data?.online
-        ? "bg-blue-500"
+        ? "bg-green-500"
         : "bg-red-500";
 
   return (

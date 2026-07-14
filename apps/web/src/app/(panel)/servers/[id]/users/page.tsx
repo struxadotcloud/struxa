@@ -45,7 +45,7 @@ type Permission = typeof ALL_PERMISSIONS[number];
 function PermissionPill({ perm, active }: { perm: Permission; active: boolean }) {
   return (
     <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
-      active ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" : "bg-muted text-muted-foreground"
+      active ? "bg-green-500/10 text-green-600 dark:text-green-400" : "bg-muted text-muted-foreground"
     }`}>
       {perm}
     </span>
@@ -148,12 +148,12 @@ export default function UsersPage({ params }: { params: Promise<{ id: string }> 
                       onClick={() => togglePerm(perm)}
                       className={`flex items-center justify-between rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
                         active
-                          ? "border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                          ? "border-green-500/30 bg-green-500/10 text-green-600 dark:text-green-400"
                           : "border-border bg-muted/30 text-muted-foreground hover:bg-muted hover:text-foreground"
                       }`}
                     >
                       <span className="capitalize">{perm}</span>
-                      <span className={`h-2 w-2 shrink-0 rounded-full ${active ? "bg-blue-500" : "bg-muted-foreground/30"}`} />
+                      <span className={`h-2 w-2 shrink-0 rounded-full ${active ? "bg-green-500" : "bg-muted-foreground/30"}`} />
                     </button>
                   );
                 })}
