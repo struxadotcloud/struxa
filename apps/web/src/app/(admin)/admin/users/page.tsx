@@ -227,7 +227,7 @@ export default function AdminUsersPage() {
                           {t("banned")}
                         </span>
                       ) : (
-                        <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-600 dark:text-green-400">
+                        <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-medium text-blue-600 dark:text-blue-400">
                           {t("active")}
                         </span>
                       )}

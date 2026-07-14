@@ -62,7 +62,7 @@ function fmtBytes(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB/s`;
 }
 
-function Sparkline({ data, color = "#22c55e" }: { data: number[]; color?: string }) {
+function Sparkline({ data, color = "#3b82f6" }: { data: number[]; color?: string }) {
   const h = 48;
   const W = 248;
   const max = Math.max(...data, 1);
@@ -108,13 +108,13 @@ function StatRow({
 type WsStatus = "offline" | "running" | "starting" | "stopping";
 
 const ANSI_FG: Record<number, string> = {
-  30: "#4a4a4a", 31: "#f43f5e", 32: "#22c55e", 33: "#f59e0b",
+  30: "#4a4a4a", 31: "#f43f5e", 32: "#3b82f6", 33: "#f59e0b",
   34: "#3b82f6", 35: "#a855f7", 36: "#06b6d4", 37: "#cccccc",
   90: "#777777", 91: "#fb7185", 92: "#4ade80", 93: "#fbbf24",
   94: "#60a5fa", 95: "#c084fc", 96: "#22d3ee", 97: "#ffffff",
 };
 const ANSI_BG: Record<number, string> = {
-  40: "#4a4a4a", 41: "#f43f5e", 42: "#22c55e", 43: "#f59e0b",
+  40: "#4a4a4a", 41: "#f43f5e", 42: "#3b82f6", 43: "#f59e0b",
   44: "#3b82f6", 45: "#a855f7", 46: "#06b6d4", 47: "#cccccc",
   100: "#777777", 101: "#fb7185", 102: "#4ade80", 103: "#fbbf24",
   104: "#60a5fa", 105: "#c084fc", 106: "#22d3ee", 107: "#ffffff",
@@ -422,7 +422,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
 
   const wsStatusColor =
     wsStatus === "running"
-      ? "#22c55e"
+      ? "#3b82f6"
       : wsStatus === "starting" || wsStatus === "stopping"
         ? "#f59e0b"
         : "#71717a";
@@ -446,7 +446,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                   !connected
                     ? "animate-pulse bg-zinc-600"
                     : wsStatus === "running"
-                      ? "bg-green-500"
+                      ? "bg-blue-500"
                       : wsStatus === "starting" || wsStatus === "stopping"
                         ? "animate-pulse bg-amber-500"
                         : "bg-zinc-600"
@@ -461,7 +461,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                 type="button"
                 disabled={!canStart || powerMutation.isPending}
                 onClick={() => powerMutation.mutate({ serverId: id, action: "start" })}
-                className="rounded-md bg-green-500/20 px-2.5 py-1 text-xs font-medium text-green-400 transition-colors hover:bg-green-500/30 disabled:cursor-not-allowed disabled:opacity-30"
+                className="rounded-md bg-blue-500/20 px-2.5 py-1 text-xs font-medium text-blue-400 transition-colors hover:bg-blue-500/30 disabled:cursor-not-allowed disabled:opacity-30"
               >
                 {t("start")}
               </button>
@@ -522,7 +522,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
             <button
               type="button"
               onClick={sendCommand}
-              className="px-3 text-zinc-600 transition-colors hover:text-green-400"
+              className="px-3 text-zinc-600 transition-colors hover:text-blue-400"
             >
               <SendHorizontal className="h-4 w-4" />
             </button>
@@ -599,7 +599,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
               type="button"
               disabled={eulaAccepting}
               onClick={() => void acceptEula()}
-              className="rounded-lg bg-green-500/20 px-3 py-1.5 text-sm font-medium text-green-400 transition-colors hover:bg-green-500/30 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-lg bg-blue-500/20 px-3 py-1.5 text-sm font-medium text-blue-400 transition-colors hover:bg-blue-500/30 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {t("eulaAccept")}
             </button>
@@ -627,7 +627,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                       onClick={() => setJavaSelectedImage(tag)}
                       className="flex cursor-pointer items-center gap-2.5 text-sm"
                     >
-                      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${tag === javaSelectedImage ? "bg-green-500" : "bg-transparent"}`} />
+                      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${tag === javaSelectedImage ? "bg-blue-500" : "bg-transparent"}`} />
                       {label}
                     </DropdownMenuItem>
                   ))}

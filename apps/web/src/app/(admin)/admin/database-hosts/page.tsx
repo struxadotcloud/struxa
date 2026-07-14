@@ -196,7 +196,7 @@ export default function DatabaseHostsPage() {
               <span>
                 {testResults[host.id] !== undefined && (
                   <span
-                    className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${testResults[host.id] ? "bg-green-500/10 text-green-600 dark:text-green-400" : "bg-destructive/10 text-destructive"}`}
+                    className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${testResults[host.id] ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" : "bg-destructive/10 text-destructive"}`}
                   >
                     {testResults[host.id] ? t("ok") : t("failed")}
                   </span>

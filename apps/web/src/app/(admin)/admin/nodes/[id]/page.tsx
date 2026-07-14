@@ -90,7 +90,7 @@ function Toggle({
       onClick={() => !disabled && onChange(!checked)}
       disabled={disabled}
       className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
-        checked ? "bg-green-500" : "bg-muted"
+        checked ? "bg-blue-500" : "bg-muted"
       }`}
     >
       <span
@@ -339,7 +339,7 @@ export default function NodeSettingsPage({ params }: { params: Promise<{ id: str
       <div className="flex items-center justify-between">
         <div>
           {updateMutation.isSuccess && (
-            <span className="text-xs text-green-500">{tc("saved")}</span>
+            <span className="text-xs text-blue-500">{tc("saved")}</span>
           )}
         </div>
         <button

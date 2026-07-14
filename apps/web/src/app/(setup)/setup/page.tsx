@@ -44,7 +44,7 @@ function StepBar({ current, completed, labels }: { current: Step; completed: Set
           <div key={num} className="flex items-center gap-1">
             <div className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
               isDone
-                ? "bg-green-500/10 text-green-600 dark:text-green-400"
+                ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
                 : isActive
                   ? "bg-foreground text-background"
                   : "text-muted-foreground"
@@ -142,7 +142,7 @@ function FlatSelect<T extends string>({
             className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm"
           >
             <span
-              className={`h-1.5 w-1.5 shrink-0 rounded-full ${opt.value === value ? "bg-green-500" : "bg-transparent"}`}
+              className={`h-1.5 w-1.5 shrink-0 rounded-full ${opt.value === value ? "bg-blue-500" : "bg-transparent"}`}
             />
             {opt.label}
           </DropdownMenuItem>
@@ -343,7 +343,7 @@ function Step2({ onDone }: { onDone: () => void }) {
                       <label key={egg.rawUrl} className="flex cursor-pointer items-center gap-3 py-1.5 pl-10 pr-4 hover:bg-muted/40 transition-colors">
                         <input
                           type="checkbox"
-                          className="accent-green-500"
+                          className="accent-blue-500"
                           checked={selected.has(egg.rawUrl)}
                           onChange={() => toggleEgg(egg, repo.label)}
                         />

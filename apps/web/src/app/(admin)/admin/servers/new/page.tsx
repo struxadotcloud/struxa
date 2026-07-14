@@ -25,7 +25,7 @@ function StepIndicator({ current, steps }: { current: number; steps: string[] })
             <div
               className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold ${
                 i < current
-                  ? "bg-green-500 text-white"
+                  ? "bg-blue-500 text-white"
                   : i === current
                   ? "bg-foreground text-background"
                   : "bg-muted text-muted-foreground"
@@ -35,7 +35,7 @@ function StepIndicator({ current, steps }: { current: number; steps: string[] })
             </div>
             <span
               className={`text-sm font-medium ${
-                i === current ? "text-foreground" : i < current ? "text-green-500" : "text-muted-foreground"
+                i === current ? "text-foreground" : i < current ? "text-blue-500" : "text-muted-foreground"
               }`}
             >
               {label}
@@ -221,7 +221,7 @@ export default function NewServerPage() {
                         onClick={() => setNodeAlloc({ nodeId: n.id, allocationId: "" })}
                         className={dropdownItemClass()}
                       >
-                        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${nodeAlloc.nodeId === n.id ? "bg-green-500" : "bg-transparent"}`} />
+                        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${nodeAlloc.nodeId === n.id ? "bg-blue-500" : "bg-transparent"}`} />
                         {n.name} <span className="text-muted-foreground/50">({n.fqdn})</span>
                       </DropdownMenuItem>
                     ))}
@@ -250,7 +250,7 @@ export default function NewServerPage() {
                           onClick={() => setNodeAlloc((f) => ({ ...f, allocationId: a.id }))}
                           className={`${dropdownItemClass()} font-mono`}
                         >
-                          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${nodeAlloc.allocationId === a.id ? "bg-green-500" : "bg-transparent"}`} />
+                          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${nodeAlloc.allocationId === a.id ? "bg-blue-500" : "bg-transparent"}`} />
                           {a.ip}:{a.port}
                         </DropdownMenuItem>
                       ))}
@@ -280,7 +280,7 @@ export default function NewServerPage() {
                   <DropdownMenuContent align="start" sideOffset={4} className={dropdownContentClass()}>
                     {nests?.map((n) => (
                       <DropdownMenuItem key={n.id} onClick={() => setNestEgg({ nestId: n.id, eggId: "", image: "" })} className={dropdownItemClass()}>
-                        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${nestEgg.nestId === n.id ? "bg-green-500" : "bg-transparent"}`} />
+                        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${nestEgg.nestId === n.id ? "bg-blue-500" : "bg-transparent"}`} />
                         {n.name}
                       </DropdownMenuItem>
                     ))}
@@ -308,7 +308,7 @@ export default function NewServerPage() {
                           }}
                           className={dropdownItemClass()}
                         >
-                          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${nestEgg.eggId === egg.id ? "bg-green-500" : "bg-transparent"}`} />
+                          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${nestEgg.eggId === egg.id ? "bg-blue-500" : "bg-transparent"}`} />
                           {egg.name}
                         </DropdownMenuItem>
                       ))}
@@ -331,7 +331,7 @@ export default function NewServerPage() {
                     <DropdownMenuContent align="start" sideOffset={4} className={dropdownContentClass()}>
                       {Object.entries(JSON.parse(selectedEgg.dockerImages ?? "{}") as Record<string, string>).map(([alias, img]) => (
                         <DropdownMenuItem key={img} onClick={() => setNestEgg((f) => ({ ...f, image: img }))} className={`${dropdownItemClass()} font-mono`}>
-                          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${nestEgg.image === img ? "bg-green-500" : "bg-transparent"}`} />
+                          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${nestEgg.image === img ? "bg-blue-500" : "bg-transparent"}`} />
                           {alias || img}
                         </DropdownMenuItem>
                       ))}
@@ -460,7 +460,7 @@ export default function NewServerPage() {
                 type="button"
                 onClick={handleSubmit}
                 disabled={createMutation.isPending}
-                className="rounded-lg bg-green-500 px-4 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-80 disabled:opacity-40"
+                className="rounded-lg bg-blue-500 px-4 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-80 disabled:opacity-40"
               >
                 {createMutation.isPending ? tc("creating") : t("newServer")}
               </button>

@@ -19,7 +19,7 @@ const STATUS_CONFIG: Record<string, StatusConfig> = {
   install_failed:   { color: "#f43f5e", bg: "rgba(244,63,94,0.12)",   labelKey: "install_failed",    pulse: false },
   suspended:        { color: "#f43f5e", bg: "rgba(244,63,94,0.12)",   labelKey: "suspended",         pulse: false },
   restoring_backup: { color: "#71717a", bg: "rgba(113,113,122,0.12)", labelKey: "restoring_backup",  pulse: true  },
-  running:          { color: "#22c55e", bg: "rgba(34,197,94,0.12)",   labelKey: "running",           pulse: false },
+  running:          { color: "#3b82f6", bg: "rgba(59,130,246,0.12)",   labelKey: "running",           pulse: false },
   starting:         { color: "#f59e0b", bg: "rgba(245,158,11,0.12)",  labelKey: "starting",          pulse: true  },
   stopping:         { color: "#f59e0b", bg: "rgba(245,158,11,0.12)",  labelKey: "stopping",          pulse: true  },
   offline:          { color: "#71717a", bg: "rgba(113,113,122,0.12)", labelKey: "offline",           pulse: false },

@@ -197,7 +197,7 @@ export default function NestsPage() {
                     <div className="flex items-center gap-2">
                       <Link
                         href={`/admin/nests/${nest.id}` as never}
-                        className="flex items-center gap-1 text-sm font-medium text-foreground transition-colors hover:text-green-500"
+                        className="flex items-center gap-1 text-sm font-medium text-foreground transition-colors hover:text-blue-500"
                         onClick={(e) => e.stopPropagation()}
                       >
                         {nest.name}

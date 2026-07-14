@@ -29,9 +29,9 @@ function defineTheme(monaco: Monaco) {
       "editor.foreground": "#aaaaaa",
       "editorLineNumber.foreground": "#333333",
       "editorLineNumber.activeForeground": "#555555",
-      "editor.selectionBackground": "#22c55e22",
+      "editor.selectionBackground": "#3b82f622",
       "editor.lineHighlightBackground": "#111111",
-      "editorCursor.foreground": "#22c55e",
+      "editorCursor.foreground": "#3b82f6",
       "editorGutter.background": "#0a0a0a",
       "editor.inactiveSelectionBackground": "#1a1a1a",
       "editorWidget.background": "#141414",
@@ -40,8 +40,8 @@ function defineTheme(monaco: Monaco) {
       "input.border": "#222222",
       "scrollbarSlider.background": "#222222",
       "scrollbarSlider.hoverBackground": "#333333",
-      "editorBracketMatch.background": "#22c55e22",
-      "editorBracketMatch.border": "#22c55e44",
+      "editorBracketMatch.background": "#3b82f622",
+      "editorBracketMatch.border": "#3b82f644",
     },
   });
 }

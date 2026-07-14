@@ -403,7 +403,7 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
                         <div className="flex min-w-0 flex-col gap-0.5">
                           <Link
                             href={`/admin/nests/${nestId}/eggs/${egg.id}` as never}
-                            className="w-fit text-sm font-medium text-foreground transition-colors hover:text-green-500"
+                            className="w-fit text-sm font-medium text-foreground transition-colors hover:text-blue-500"
                             onClick={(e) => e.stopPropagation()}
                           >
                             {egg.name}

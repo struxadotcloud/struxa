@@ -334,11 +334,11 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
                     {user.banned ? (
                       <span className="rounded-full bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-600 dark:text-red-400">{t("banned")}</span>
                     ) : (
-                      <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-600 dark:text-green-400">{t("active")}</span>
+                      <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-medium text-blue-600 dark:text-blue-400">{t("active")}</span>
                     )}
                   </InfoRow>
                   <InfoRow label={t("twoFactorLabel")}>
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${user.twoFactorEnabled ? "bg-green-500/10 text-green-600 dark:text-green-400" : "bg-muted text-muted-foreground"}`}>
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${user.twoFactorEnabled ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" : "bg-muted text-muted-foreground"}`}>
                       {user.twoFactorEnabled ? t("tfaEnabled") : t("tfaNotEnabled")}
                     </span>
                   </InfoRow>
@@ -416,7 +416,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
                       {s.suspended ? (
                         <span className="w-fit rounded-full bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-600 dark:text-red-400">{t("suspendedStatus")}</span>
                       ) : (
-                        <span className="w-fit rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-600 dark:text-green-400">{t("activeStatus")}</span>
+                        <span className="w-fit rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-medium text-blue-600 dark:text-blue-400">{t("activeStatus")}</span>
                       )}
                     </Link>
                   ))}
@@ -431,7 +431,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
               <SectionCard title={t("tfaTitle")}>
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-foreground">{t("tfaTotp")}</p>
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${user.twoFactorEnabled ? "bg-green-500/10 text-green-600 dark:text-green-400" : "bg-muted text-muted-foreground"}`}>
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${user.twoFactorEnabled ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" : "bg-muted text-muted-foreground"}`}>
                     {user.twoFactorEnabled ? t("tfaEnabled") : t("tfaNotEnabled")}
                   </span>
                 </div>
@@ -451,7 +451,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
                             {s.ipAddress ?? "Unknown IP"} · Signed in {new Date(s.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                           </p>
                         </div>
-                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${new Date(s.expiresAt) > new Date() ? "bg-green-500/10 text-green-600 dark:text-green-400" : "bg-muted text-muted-foreground"}`}>
+                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${new Date(s.expiresAt) > new Date() ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" : "bg-muted text-muted-foreground"}`}>
                           {new Date(s.expiresAt) > new Date() ? t("sessionActive") : t("sessionExpired")}
                         </span>
                       </div>
@@ -507,7 +507,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
                           </p>
                         </div>
                         <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                          s.status === "active" ? "bg-green-500/10 text-green-600 dark:text-green-400"
+                          s.status === "active" ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
                           : s.status === "trialing" ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
                           : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
                         }`}>
@@ -554,14 +554,14 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
                         className={`grid grid-cols-[80px_90px_90px_1fr_100px] items-center px-4 py-3 text-xs ${i < walletTxns.length - 1 ? "border-b border-border" : ""}`}
                       >
                         <span className={`w-fit rounded-full px-2 py-0.5 font-medium ${
-                          txn.type === "topup" ? "bg-green-500/10 text-green-600 dark:text-green-400"
+                          txn.type === "topup" ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
                           : txn.type === "charge" ? "bg-red-500/10 text-red-600 dark:text-red-400"
                           : txn.type === "refund" ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
                           : "bg-muted text-muted-foreground"
                         }`}>
                           {tBilling(`wallet.types.${txn.type}` as Parameters<typeof tBilling>[0])}
                         </span>
-                        <span className={txn.amountCents >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}>
+                        <span className={txn.amountCents >= 0 ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}>
                           {txn.amountCents >= 0 ? "+" : ""}
                           {(txn.amountCents / 100).toLocaleString("en-US", { style: "currency", currency: txn.currency })}
                         </span>

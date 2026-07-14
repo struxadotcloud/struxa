@@ -72,9 +72,9 @@ function defineEditorTheme(monaco: Monaco) {
       "editor.foreground": "#aaaaaa",
       "editorLineNumber.foreground": "#333333",
       "editorLineNumber.activeForeground": "#555555",
-      "editor.selectionBackground": "#22c55e22",
+      "editor.selectionBackground": "#3b82f622",
       "editor.lineHighlightBackground": "#111111",
-      "editorCursor.foreground": "#22c55e",
+      "editorCursor.foreground": "#3b82f6",
       "editorGutter.background": "#0a0a0a",
       "editor.inactiveSelectionBackground": "#1a1a1a",
       "editorWidget.background": "#141414",
@@ -377,7 +377,7 @@ export default function EmailEditorPage() {
             disabled={saveMutation.isPending}
             className={`flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-medium transition-all ${
               isUnsaved
-                ? "bg-green-500 text-white hover:bg-green-600"
+                ? "bg-blue-500 text-white hover:bg-blue-600"
                 : "bg-muted text-muted-foreground cursor-default"
             }`}
           >

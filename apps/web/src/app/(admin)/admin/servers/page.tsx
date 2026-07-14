@@ -19,7 +19,7 @@ export default function AdminServersPage() {
   const tc = useTranslations("common");
 
   const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-    "":               { label: t("installed"),    color: "#22c55e", bg: "rgba(34,197,94,0.12)" },
+    "":               { label: t("installed"),    color: "#3b82f6", bg: "rgba(59,130,246,0.12)" },
     installing:       { label: t("installing"),   color: "#f59e0b", bg: "rgba(245,158,11,0.12)" },
     install_failed:   { label: t("installFailed"), color: "#ef4444", bg: "rgba(239,68,68,0.12)" },
     restoring_backup: { label: t("restoring"),    color: "#6366f1", bg: "rgba(99,102,241,0.12)" },
@@ -151,7 +151,7 @@ export default function AdminServersPage() {
                     <div className="flex items-center gap-2">
                       <Link
                         href={`/admin/servers/${server.uuid}` as never}
-                        className="text-sm font-medium text-foreground transition-colors hover:text-green-500"
+                        className="text-sm font-medium text-foreground transition-colors hover:text-blue-500"
                         onClick={(e) => e.stopPropagation()}
                       >
                         {server.name}

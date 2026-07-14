@@ -243,7 +243,7 @@ function TasksPanel({
                       onClick={() => setTaskForm((f) => ({ ...f, action: a, payload: "" }))}
                       className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground"
                     >
-                      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${taskForm.action === a ? "bg-green-500" : "bg-transparent"}`} />
+                      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${taskForm.action === a ? "bg-blue-500" : "bg-transparent"}`} />
                       {a === "command" && t("actionCommandDesc")}
                       {a === "power" && t("actionPowerDesc")}
                       {a === "backup" && t("actionBackupDesc")}
@@ -282,7 +282,7 @@ function TasksPanel({
                         onClick={() => setTaskForm((f) => ({ ...f, payload: p }))}
                         className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm capitalize text-muted-foreground hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground"
                       >
-                        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${(taskForm.payload || "restart") === p ? "bg-green-500" : "bg-transparent"}`} />
+                        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${(taskForm.payload || "restart") === p ? "bg-blue-500" : "bg-transparent"}`} />
                         {p}
                       </DropdownMenuItem>
                     ))}
@@ -630,7 +630,7 @@ export default function SchedulesPage({ params }: { params: Promise<{ id: string
                         className="flex items-center"
                       >
                         <span
-                          className={`h-2 w-2 shrink-0 rounded-full ${sch.isActive ? "bg-green-500" : "bg-muted-foreground/30"}`}
+                          className={`h-2 w-2 shrink-0 rounded-full ${sch.isActive ? "bg-blue-500" : "bg-muted-foreground/30"}`}
                         />
                       </button>
                       <div className="flex items-center gap-2">
@@ -684,7 +684,7 @@ export default function SchedulesPage({ params }: { params: Promise<{ id: string
               <span className="text-xl font-bold text-foreground">{schedules.length}</span>
             </StatRow>
             <StatRow icon={Clock} label={t("statEnabled")}>
-              <span className="text-xl font-bold text-green-500">{enabled.length}</span>
+              <span className="text-xl font-bold text-blue-500">{enabled.length}</span>
             </StatRow>
             <StatRow icon={Clock} label={t("statDisabled")}>
               <span className="text-xl font-bold text-muted-foreground">{disabled.length}</span>

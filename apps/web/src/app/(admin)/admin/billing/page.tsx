@@ -216,7 +216,7 @@ function WebhookEndpointInfo({ provider }: { provider: string }) {
           onClick={copy}
           className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
         >
-          {copied ? <Check className="size-3.5 text-green-500" /> : <Copy className="size-3.5" />}
+          {copied ? <Check className="size-3.5 text-blue-500" /> : <Copy className="size-3.5" />}
         </button>
       </div>
     </div>

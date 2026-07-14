@@ -52,9 +52,9 @@ function defineTheme(monaco: Monaco) {
       "editor.foreground": "#aaaaaa",
       "editorLineNumber.foreground": "#333333",
       "editorLineNumber.activeForeground": "#555555",
-      "editor.selectionBackground": "#22c55e22",
+      "editor.selectionBackground": "#3b82f622",
       "editor.lineHighlightBackground": "#111111",
-      "editorCursor.foreground": "#22c55e",
+      "editorCursor.foreground": "#3b82f6",
       "editorGutter.background": "#0a0a0a",
       "editor.inactiveSelectionBackground": "#1a1a1a",
       "editorWidget.background": "#141414",
@@ -63,8 +63,8 @@ function defineTheme(monaco: Monaco) {
       "input.border": "#222222",
       "scrollbarSlider.background": "#222222",
       "scrollbarSlider.hoverBackground": "#333333",
-      "editorBracketMatch.background": "#22c55e22",
-      "editorBracketMatch.border": "#22c55e44",
+      "editorBracketMatch.background": "#3b82f622",
+      "editorBracketMatch.border": "#3b82f644",
     },
   });
 }
@@ -275,7 +275,7 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
   return (
     <>
       <div
-        className={`relative flex flex-1 flex-col gap-3 overflow-auto px-4 py-4 md:flex-row md:overflow-hidden${isDragging ? " outline outline-2 outline-dashed outline-green-500/40 rounded-xl" : ""}`}
+        className={`relative flex flex-1 flex-col gap-3 overflow-auto px-4 py-4 md:flex-row md:overflow-hidden${isDragging ? " outline outline-2 outline-dashed outline-blue-500/40 rounded-xl" : ""}`}
         onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
         onDragEnter={(e) => { e.preventDefault(); setIsDragging(true); }}
         onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsDragging(false); }}
@@ -283,7 +283,7 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
       >
         {isDragging && (
           <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/80 backdrop-blur-sm">
-            <div className="flex flex-col items-center gap-2 text-green-500">
+            <div className="flex flex-col items-center gap-2 text-blue-500">
               <Upload className="h-10 w-10" />
               <span className="text-sm font-medium">{t("dropToUpload")}</span>
             </div>
@@ -408,7 +408,7 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
                     disabled={saving}
                     className={`flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-medium transition-all ${
                       unsaved && !saving
-                        ? "bg-green-500 text-white hover:bg-green-600"
+                        ? "bg-blue-500 text-white hover:bg-blue-600"
                         : "bg-muted text-muted-foreground cursor-default"
                     }`}
                   >

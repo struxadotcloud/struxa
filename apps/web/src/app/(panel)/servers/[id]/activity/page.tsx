@@ -34,8 +34,8 @@ function StatRow({
 }
 
 const EVENT_STYLES: Record<string, { color: string; bg: string }> = {
-  "server:power.start":   { color: "#22c55e", bg: "rgba(34,197,94,0.12)"  },
-  "server:power.restart": { color: "#22c55e", bg: "rgba(34,197,94,0.12)"  },
+  "server:power.start":   { color: "#3b82f6", bg: "rgba(59,130,246,0.12)"  },
+  "server:power.restart": { color: "#3b82f6", bg: "rgba(59,130,246,0.12)"  },
   "server:power.stop":    { color: "#f43f5e", bg: "rgba(244,63,94,0.12)"  },
   backup:                 { color: "#a855f7", bg: "rgba(168,85,247,0.12)" },
   files:                  { color: "#3b82f6", bg: "rgba(59,130,246,0.12)" },

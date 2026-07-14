@@ -49,7 +49,7 @@ function StatRow({ icon: Icon, label, children }: { icon: LucideIcon; label: str
 
 function StatusDot({ backup }: { backup: { isSuccessful: boolean; completedAt: Date | string | null } }) {
   if (backup.completedAt === null) return <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500 animate-pulse" />;
-  if (backup.isSuccessful) return <span className="h-2 w-2 shrink-0 rounded-full bg-green-500" />;
+  if (backup.isSuccessful) return <span className="h-2 w-2 shrink-0 rounded-full bg-blue-500" />;
   return <span className="h-2 w-2 shrink-0 rounded-full bg-destructive" />;
 }
 
@@ -281,7 +281,7 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
                           <button
                             type="button"
                             onClick={() => setRestoreTarget({ id: backup.id, name: backup.name })}
-                            className="rounded p-0.5 text-muted-foreground/50 hover:bg-muted hover:text-green-500 transition-colors"
+                            className="rounded p-0.5 text-muted-foreground/50 hover:bg-muted hover:text-blue-500 transition-colors"
                             title={t("restore")}
                           >
                             <RotateCcw className="h-3.5 w-3.5" />
