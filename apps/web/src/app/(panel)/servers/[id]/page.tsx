@@ -438,8 +438,8 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
     <>
       <div className="flex flex-1 flex-col gap-3 overflow-auto px-4 py-4 md:flex-row md:overflow-hidden">
         {/* Console panel */}
-        <div className="flex min-h-[50vh] flex-1 flex-col overflow-hidden rounded-xl border border-border bg-[#0f0f0f] md:min-h-0">
-          <div className="flex h-10 shrink-0 items-center justify-between rounded-t-xl border-b border-border/50 bg-[#161616] px-3">
+        <div className="flex min-h-[50vh] flex-1 flex-col overflow-hidden rounded-xl border border-border bg-background md:min-h-0">
+          <div className="flex h-10 shrink-0 items-center justify-between rounded-t-xl border-b border-border/50 bg-card px-3">
             <div className="flex items-center gap-2">
               <span
                 className={`h-2 w-2 rounded-full ${
@@ -508,7 +508,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
             <div ref={consoleEndRef} />
           </div>
 
-          <div className="flex h-11 shrink-0 items-center rounded-b-xl border-t border-border/50 bg-[#161616]">
+          <div className="flex h-11 shrink-0 items-center rounded-b-xl border-t border-border/50 bg-card">
             <span className="px-3 font-mono text-sm text-zinc-600">{">"}</span>
             <input
               className="flex-1 bg-transparent font-mono text-sm text-zinc-200 outline-none placeholder:text-zinc-700"
