@@ -20,7 +20,7 @@ Built to replace Pterodactyl — modern stack, dark UI, fully self-hosted.
 ![Agent-friendly AGENTS.md](https://www.shieldcn.dev/badge/Agent--friendly-AGENTS.md-D97757.svg?variant=secondary&size=sm)
 [![Discord](https://www.shieldcn.dev/badge/Join_Discord-5865F2.svg?logo=discord&variant=branded&size=sm)](https://discord.gg/struxa)
 
-<img src=".github/uploads/preview-small.jpeg" alt="Struxa panel preview" width="860" />
+<img src="https://struxa.cloud/images/banner.png" alt="Struxa panel preview" width="860" />
 
 </div>
 

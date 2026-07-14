@@ -1,11 +1,6 @@
 # Contributing to Struxa
 
-Thank you for your interest in contributing. Struxa is an early-stage open-source project and every bit of help — code, bug reports, design critique, or documentation — moves it forward.
-
----
-
-> [!CAUTION]
-> **Struxa is in bare development.** Internal APIs, database schemas, and component interfaces change frequently and without deprecation notices. If you are building on top of Struxa, expect breakage. If you are contributing, expect that the ground may shift under you.
+Thank you for your interest in contributing. Struxa is an open-source project and every bit of help — code, bug reports, design critique, or documentation — moves it forward.
 
 ---
 
