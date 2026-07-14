@@ -36,6 +36,7 @@ import {
   DropdownMenuTrigger,
 } from "@struxa/ui/components/dropdown-menu";
 import { ChevronDown } from "lucide-react";
+import { Sparkline } from "@struxa/ui/components/dither-kit/sparkline";
 
 function fmtUptime(ms: number): string {
   if (ms <= 0) return "—";
@@ -60,24 +61,6 @@ function fmtBytes(bytes: number) {
   if (bytes < 1024) return `${bytes} B/s`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB/s`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB/s`;
-}
-
-function Sparkline({ data, color = "#3b82f6" }: { data: number[]; color?: string }) {
-  const h = 48;
-  const W = 248;
-  const max = Math.max(...data, 1);
-  const coords = data.map((v, i) => ({
-    x: (i / (data.length - 1)) * W,
-    y: h - (v / max) * h,
-  }));
-  const line = coords.map((p) => `${p.x},${p.y}`).join(" ");
-  const area = `0,${h} ${line} ${W},${h}`;
-  return (
-    <svg viewBox={`0 0 ${W} ${h}`} className="block h-12 w-full" preserveAspectRatio="none">
-      <polygon points={area} fill={color} fillOpacity={0.12} />
-      <polyline points={line} fill="none" stroke={color} strokeWidth={1.5} />
-    </svg>
-  );
 }
 
 function StatRow({
@@ -551,13 +534,13 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
             <StatRow icon={Timer} label={t("statsUptime")}>
               <span className="text-sm font-semibold text-foreground">{fmtUptime(stats.uptimeMs)}</span>
             </StatRow>
-            <StatRow icon={Cpu} label={t("statsCpu")} chart={<Sparkline data={cpuHistory} color="#3b82f6" />}>
+            <StatRow icon={Cpu} label={t("statsCpu")} chart={<Sparkline data={cpuHistory} color="blue" />}>
               <div className="flex items-baseline gap-1">
                 <span className="text-xl font-bold text-foreground">{stats.cpu.toFixed(1)}%</span>
                 <span className="text-xs text-muted-foreground">/ {server?.cpu ?? 0}%</span>
               </div>
             </StatRow>
-            <StatRow icon={MemoryStick} label={t("statsMemory")} chart={<Sparkline data={ramHistory} color="#a855f7" />}>
+            <StatRow icon={MemoryStick} label={t("statsMemory")} chart={<Sparkline data={ramHistory} color="purple" />}>
               <div className="flex items-baseline gap-1">
                 <span className="text-xl font-bold text-foreground">
                   {fmtMb(stats.memBytes / (1024 * 1024))}
@@ -565,16 +548,16 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                 <span className="text-xs text-muted-foreground">/ {fmtMb(stats.memLimitBytes / (1024 * 1024))}</span>
               </div>
             </StatRow>
-            <StatRow icon={HardDrive} label={t("statsDisk")} chart={<Sparkline data={diskHistory} color="#f43f5e" />}>
+            <StatRow icon={HardDrive} label={t("statsDisk")} chart={<Sparkline data={diskHistory} color="red" />}>
               <div className="flex items-baseline gap-1">
                 <span className="text-xl font-bold text-foreground">{fmtMb(stats.diskMb)}</span>
                 <span className="text-xs text-muted-foreground">/ {fmtMb(server?.disk ?? 0)}</span>
               </div>
             </StatRow>
-            <StatRow icon={ArrowDown} label={t("statsInbound")} chart={<Sparkline data={rxHistory} />}>
+            <StatRow icon={ArrowDown} label={t("statsInbound")} chart={<Sparkline data={rxHistory} color="blue" />}>
               <span className="text-xl font-bold text-foreground">{fmtBytes(rxHistory[rxHistory.length - 1] ?? 0)}</span>
             </StatRow>
-            <StatRow icon={ArrowUp} label={t("statsOutbound")} chart={<Sparkline data={txHistory} />}>
+            <StatRow icon={ArrowUp} label={t("statsOutbound")} chart={<Sparkline data={txHistory} color="blue" />}>
               <span className="text-xl font-bold text-foreground">{fmtBytes(txHistory[txHistory.length - 1] ?? 0)}</span>
             </StatRow>
           </div>
