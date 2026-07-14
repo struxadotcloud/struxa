@@ -534,13 +534,13 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
             <StatRow icon={Timer} label={t("statsUptime")}>
               <span className="text-sm font-semibold text-foreground">{fmtUptime(stats.uptimeMs)}</span>
             </StatRow>
-            <StatRow icon={Cpu} label={t("statsCpu")} chart={<Sparkline data={cpuHistory} color="blue" />}>
+            <StatRow icon={Cpu} label={t("statsCpu")} chart={<Sparkline data={cpuHistory} color="blue" className="h-12 w-full" />}>
               <div className="flex items-baseline gap-1">
                 <span className="text-xl font-bold text-foreground">{stats.cpu.toFixed(1)}%</span>
                 <span className="text-xs text-muted-foreground">/ {server?.cpu ?? 0}%</span>
               </div>
             </StatRow>
-            <StatRow icon={MemoryStick} label={t("statsMemory")} chart={<Sparkline data={ramHistory} color="purple" />}>
+            <StatRow icon={MemoryStick} label={t("statsMemory")} chart={<Sparkline data={ramHistory} color="purple" className="h-12 w-full" />}>
               <div className="flex items-baseline gap-1">
                 <span className="text-xl font-bold text-foreground">
                   {fmtMb(stats.memBytes / (1024 * 1024))}
@@ -548,16 +548,16 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                 <span className="text-xs text-muted-foreground">/ {fmtMb(stats.memLimitBytes / (1024 * 1024))}</span>
               </div>
             </StatRow>
-            <StatRow icon={HardDrive} label={t("statsDisk")} chart={<Sparkline data={diskHistory} color="red" />}>
+            <StatRow icon={HardDrive} label={t("statsDisk")} chart={<Sparkline data={diskHistory} color="red" className="h-12 w-full" />}>
               <div className="flex items-baseline gap-1">
                 <span className="text-xl font-bold text-foreground">{fmtMb(stats.diskMb)}</span>
                 <span className="text-xs text-muted-foreground">/ {fmtMb(server?.disk ?? 0)}</span>
               </div>
             </StatRow>
-            <StatRow icon={ArrowDown} label={t("statsInbound")} chart={<Sparkline data={rxHistory} color="blue" />}>
+            <StatRow icon={ArrowDown} label={t("statsInbound")} chart={<Sparkline data={rxHistory} color="blue" className="h-12 w-full" />}>
               <span className="text-xl font-bold text-foreground">{fmtBytes(rxHistory[rxHistory.length - 1] ?? 0)}</span>
             </StatRow>
-            <StatRow icon={ArrowUp} label={t("statsOutbound")} chart={<Sparkline data={txHistory} color="blue" />}>
+            <StatRow icon={ArrowUp} label={t("statsOutbound")} chart={<Sparkline data={txHistory} color="blue" className="h-12 w-full" />}>
               <span className="text-xl font-bold text-foreground">{fmtBytes(txHistory[txHistory.length - 1] ?? 0)}</span>
             </StatRow>
           </div>
