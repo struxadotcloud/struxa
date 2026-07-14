@@ -62,7 +62,7 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-card shadow-sm">
+    <div className="rounded-xl border border-border bg-card">
       <div className="border-b border-border px-4 py-3">
         <p className="text-sm font-semibold text-foreground">{title}</p>
         {description && <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>}
@@ -350,7 +350,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
             onClick={() => setSelectedEggId(egg.id)}
             className={cn(
               "flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all",
-              selected ? "border-foreground bg-foreground/5 shadow-sm" : "border-border hover:border-foreground/30",
+              selected ? "border-foreground bg-foreground/5" : "border-border hover:border-foreground/30",
             )}
           >
             <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted">
@@ -607,7 +607,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
                           onClick={() => setExtendPriceId(price.id)}
                           className={cn(
                             "flex items-center justify-between rounded-xl border px-4 py-3 text-left transition-all",
-                            selected ? "border-foreground bg-foreground/5 shadow-sm" : "border-border hover:border-foreground/30",
+                            selected ? "border-foreground bg-foreground/5" : "border-border hover:border-foreground/30",
                           )}
                         >
                           <span className="text-sm font-medium">{tBilling(`durations.${price.duration}`)}</span>
@@ -718,7 +718,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
           )}
         </div>
 
-        <aside className="flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm md:w-[240px]">
+        <aside className="flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card md:w-[240px]">
           <div className="overflow-y-auto">
             <StatRow icon={Server} label={t("statServerId")}>
               <span className="font-mono text-xs text-muted-foreground break-all">{server?.uuid ?? "—"}</span>

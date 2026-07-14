@@ -169,7 +169,7 @@ export default function NestsPage() {
           }}
         />
 
-        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+        <div className="rounded-xl border border-border bg-card overflow-hidden">
           <div className="grid grid-cols-[1fr_160px_48px] border-b border-border bg-muted/40 px-4 py-2.5">
             <span className="text-xs font-medium text-muted-foreground">{t("nameColumn")}</span>
             <span className="text-xs font-medium text-muted-foreground">{t("authorColumn")}</span>

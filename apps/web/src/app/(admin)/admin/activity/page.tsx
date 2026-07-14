@@ -194,7 +194,7 @@ export default function AdminActivityPage() {
   return (
     <>
       <div className="flex flex-1 flex-col gap-3 overflow-auto px-4 py-4 md:flex-row md:overflow-hidden">
-        <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card">
           <div className="grid grid-cols-[160px_180px_200px_150px_1fr_130px] border-b border-border bg-muted/40 px-4 py-2.5">
             <span className="text-xs font-medium text-muted-foreground">{t("timestampColumn")}</span>
             <span className="text-xs font-medium text-muted-foreground">{t("eventColumn")}</span>
@@ -248,7 +248,7 @@ export default function AdminActivityPage() {
           </div>
         </div>
 
-        <aside className="flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm md:w-[220px]">
+        <aside className="flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card md:w-[220px]">
           <StatRow icon={Activity} label={t("totalEvents")}>
             <span className="text-xl font-bold text-foreground">{entries.length}</span>
           </StatRow>

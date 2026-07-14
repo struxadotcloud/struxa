@@ -589,7 +589,7 @@ export default function SetupPage() {
           <StepBar current={step} completed={completed} labels={STEP_LABELS} />
         </div>
 
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+        <div className="rounded-2xl border border-border bg-card p-6">
           <div className="mb-5 border-b border-border pb-5">
             <p className="text-xs font-medium text-muted-foreground">{t("stepOf", { step, total: STEP_LABELS.length })}</p>
             <h2 className="mt-1 text-xl font-semibold text-foreground">{title}</h2>

@@ -83,7 +83,7 @@ export default function NodeConfigurationPage({ params }: { params: Promise<{ id
         <span className="font-semibold">{t("configNotice")}</span> {t("configNoticeBody")} <span className="font-mono">uuid</span>, <span className="font-mono">token_id</span>, and <span className="font-mono">token</span> {t("configNoticeBody2")}
       </div>
 
-      <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <p className="text-xs font-medium text-muted-foreground">{t("configFileLabel")}</p>
           <div className="flex items-center gap-3">

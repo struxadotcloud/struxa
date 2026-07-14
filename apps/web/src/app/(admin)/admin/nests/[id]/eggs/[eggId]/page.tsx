@@ -432,7 +432,7 @@ export default function EggDetailPage({
         <motion.div key={tab} initial={shouldReduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.15, ease: "easeOut" }}>
         {tab === "general" && (
           <div className="mx-auto max-w-2xl flex flex-col gap-4">
-            <div className="rounded-xl border border-border bg-card shadow-sm">
+            <div className="rounded-xl border border-border bg-card">
               <div className="border-b border-border px-4 py-3">
                 <h2 className="text-sm font-semibold text-foreground">{t("eggDetailsTitle")}</h2>
               </div>
@@ -514,7 +514,7 @@ export default function EggDetailPage({
 
         {tab === "environment" && (
           <div className="mx-auto max-w-2xl flex flex-col gap-4">
-            <div className="rounded-xl border border-border bg-card shadow-sm">
+            <div className="rounded-xl border border-border bg-card">
               <div className="border-b border-border px-4 py-3">
                 <h2 className="text-sm font-semibold text-foreground">{t("dockerImagesTitle")}</h2>
               </div>
@@ -566,7 +566,7 @@ export default function EggDetailPage({
               </div>
             </div>
 
-            <div className="rounded-xl border border-border bg-card shadow-sm">
+            <div className="rounded-xl border border-border bg-card">
               <div className="border-b border-border px-4 py-3">
                 <h2 className="text-sm font-semibold text-foreground">
                   {t("featuresTitle")}
@@ -624,7 +624,7 @@ export default function EggDetailPage({
 
         {tab === "installer" && (
           <div className="mx-auto max-w-3xl">
-            <div className="rounded-xl border border-border bg-card shadow-sm">
+            <div className="rounded-xl border border-border bg-card">
               <div className="border-b border-border px-4 py-3">
                 <h2 className="text-sm font-semibold text-foreground">{t("installScriptTitle")}</h2>
               </div>
@@ -681,7 +681,7 @@ export default function EggDetailPage({
 
         {tab === "variables" && (
           <div className="mx-auto max-w-4xl">
-            <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+            <div className="rounded-xl border border-border bg-card overflow-hidden">
               <div className="flex items-center justify-between border-b border-border bg-muted/40 px-4 py-2.5">
                 <span className="text-xs font-medium text-muted-foreground">{t("variablesTitle")}</span>
               </div>

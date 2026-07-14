@@ -17,7 +17,7 @@ function invalidateSettings() {
 
 function SectionCard({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-border bg-card shadow-sm">
+    <div className="rounded-xl border border-border bg-card">
       <div className="border-b border-border px-4 py-3">
         <h2 className="text-sm font-semibold text-foreground">{title}</h2>
         {description && <p className="text-xs text-muted-foreground mt-0.5">{description}</p>}
@@ -40,7 +40,7 @@ function Toggle({ enabled, onChange }: { enabled: boolean; onChange: (v: boolean
       onClick={(e) => { e.stopPropagation(); onChange(!enabled); }}
       className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${enabled ? "bg-foreground" : "bg-input"}`}
     >
-      <span className={`pointer-events-none block h-4 w-4 rounded-full bg-background shadow-sm ring-0 transition-transform ${enabled ? "translate-x-4" : "translate-x-0"}`} />
+      <span className={`pointer-events-none block h-4 w-4 rounded-full bg-background ring-0 transition-transform ${enabled ? "translate-x-4" : "translate-x-0"}`} />
     </button>
   );
 }
@@ -660,7 +660,7 @@ export default function AdminSettingsPage() {
 
               {/* Right: live preview */}
               <div className="lg:sticky lg:top-4 flex flex-col gap-3">
-                <div className="rounded-xl border border-border bg-card shadow-sm">
+                <div className="rounded-xl border border-border bg-card">
                   <div className="border-b border-border px-4 py-3">
                     <h2 className="text-sm font-semibold text-foreground">{t("seoPreviewTitle")}</h2>
                   </div>

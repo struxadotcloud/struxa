@@ -324,7 +324,7 @@ function CategoryPreviewCard({
 
         <div className="relative -mt-7 flex items-end gap-3 px-4 pb-4">
           <div
-            className="group relative h-14 w-14 shrink-0 cursor-pointer overflow-hidden rounded-xl border-2 border-card bg-muted shadow-sm"
+            className="group relative h-14 w-14 shrink-0 cursor-pointer overflow-hidden rounded-xl border-2 border-card bg-muted"
             onClick={() => iconRef.current?.click()}
           >
             {iconUrl

@@ -329,7 +329,7 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
             </button>
           </div>
 
-          <div className="rounded-xl border border-border bg-card shadow-sm">
+          <div className="rounded-xl border border-border bg-card">
             <div className="border-b border-border px-4 py-3">
               <h2 className="text-sm font-semibold text-foreground">{t("nestSettingsTitle")}</h2>
             </div>
@@ -375,7 +375,7 @@ export default function NestDetailPage({ params }: { params: Promise<{ id: strin
           </div>
 
           <div className="overflow-x-auto">
-            <div className="min-w-[500px] overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+            <div className="min-w-[500px] overflow-hidden rounded-xl border border-border bg-card">
               <div className="grid grid-cols-[1fr_220px_36px] border-b border-border bg-muted/40 px-4 py-2.5">
                 <span className="text-xs font-medium text-muted-foreground">{t("nameColumn")}</span>
                 <span className="text-xs font-medium text-muted-foreground">{t("startupColumn")}</span>

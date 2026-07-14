@@ -114,7 +114,7 @@ export default function AdminServersPage() {
           </div>
         </div>
         <div className="overflow-x-auto">
-        <div className="min-w-[600px] rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+        <div className="min-w-[600px] rounded-xl border border-border bg-card overflow-hidden">
           <div className="grid grid-cols-[24px_1fr_180px_120px_120px_48px] border-b border-border bg-muted/40 px-4 py-2.5">
             <span />
             <span className="text-xs font-medium text-muted-foreground">{t("nameColumn")}</span>

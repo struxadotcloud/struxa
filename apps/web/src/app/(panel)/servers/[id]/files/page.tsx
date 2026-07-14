@@ -289,7 +289,7 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
             </div>
           </div>
         )}
-        <div className="flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm max-h-64 md:max-h-none md:w-60">
+        <div className="flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card max-h-64 md:max-h-none md:w-60">
           <div className="flex h-10 shrink-0 items-center justify-between border-b border-border px-3">
             <span className="truncate font-mono text-[11px] text-muted-foreground">{dirPath}</span>
             <div className="flex shrink-0 items-center gap-1">
@@ -392,7 +392,7 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
           </div>
         </div>
 
-        <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card">
           {selectedFile ? (
             <>
               <div className="flex h-10 shrink-0 items-center justify-between border-b border-border px-4">
@@ -421,7 +421,7 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
               <div className="flex-1 overflow-hidden">
                 {isImage(selectedFile) ? (
                   <div className="flex h-full items-center justify-center bg-muted/30">
-                    <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-card px-8 py-6 shadow-sm">
+                    <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-card px-8 py-6">
                       <FileImage className="h-12 w-12 text-muted-foreground/30" />
                       <span className="font-mono text-sm text-foreground">{selectedFile.name}</span>
                       <span className="text-xs text-muted-foreground">{fmtBytes(selectedFile.size)}</span>

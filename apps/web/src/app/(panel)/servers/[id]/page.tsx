@@ -438,7 +438,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
     <>
       <div className="flex flex-1 flex-col gap-3 overflow-auto px-4 py-4 md:flex-row md:overflow-hidden">
         {/* Console panel */}
-        <div className="flex min-h-[50vh] flex-1 flex-col overflow-hidden rounded-xl border border-border bg-[#0f0f0f] shadow-sm md:min-h-0">
+        <div className="flex min-h-[50vh] flex-1 flex-col overflow-hidden rounded-xl border border-border bg-[#0f0f0f] md:min-h-0">
           <div className="flex h-10 shrink-0 items-center justify-between rounded-t-xl border-b border-border/50 bg-[#161616] px-3">
             <div className="flex items-center gap-2">
               <span
@@ -530,7 +530,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
         </div>
 
         {/* Stats panel */}
-        <aside className="flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm md:w-[260px]">
+        <aside className="flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card md:w-[260px]">
           <div className="overflow-y-auto">
             <StatRow icon={Globe} label={t("statsAddress")}>
               <div className="flex items-center justify-between">

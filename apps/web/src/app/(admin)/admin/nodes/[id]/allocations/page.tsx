@@ -67,7 +67,7 @@ export default function NodeAllocationsPage({ params }: { params: Promise<{ id: 
   const allocations = node.allocations ?? [];
 
   return (
-    <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+    <div className="rounded-xl border border-border bg-card overflow-hidden">
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <span className="text-sm font-medium text-foreground">{t("allocationsTitle")}</span>
         <button
