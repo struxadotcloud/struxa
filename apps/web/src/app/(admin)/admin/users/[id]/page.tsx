@@ -17,8 +17,10 @@ import {
   DialogDescription,
   DialogClose,
 } from "@struxa/ui/components/dialog";
+import { Button } from "@struxa/ui/components/button";
 import { orpc, queryClient } from "@/utils/orpc";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { DangerZone, DangerZoneRow } from "@/components/danger-zone";
 import { DitherAvatar } from "@struxa/ui/components/dither-kit/avatar";
 
 type Tab = "overview" | "servers" | "security" | "billing" | "actions";
@@ -580,88 +582,55 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
 
           {/* ── Admin Actions ── */}
           {tab === "actions" && (
-            <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4">
-              <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-destructive/60">{t("actionsTitle")}</p>
-              <div className="flex flex-col gap-3">
+            <DangerZone title={t("actionsTitle")}>
+              <DangerZoneRow
+                title={user.role === "admin" ? t("demoteTitle") : t("promoteTitle")}
+                description={user.role === "admin" ? t("demoteDesc") : t("promoteDesc")}
+              >
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={setRoleMutation.isPending}
+                  onClick={() => setRoleMutation.mutate({ userId, role: user.role === "admin" ? "user" : "admin" })}
+                >
+                  {user.role === "admin" ? <ShieldOff /> : <Shield />}
+                  {setRoleMutation.isPending ? "…" : user.role === "admin" ? t("demote") : t("promote")}
+                </Button>
+              </DangerZoneRow>
 
-                {/* Role */}
-                <div className="flex items-center justify-between rounded-lg border border-border bg-card p-4">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">
-                      {user.role === "admin" ? t("demoteTitle") : t("promoteTitle")}
-                    </p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {user.role === "admin" ? t("demoteDesc") : t("promoteDesc")}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    disabled={setRoleMutation.isPending}
-                    onClick={() => setRoleMutation.mutate({ userId, role: user.role === "admin" ? "user" : "admin" })}
-                    className={`flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-sm font-medium transition-opacity disabled:opacity-40 ${
-                      user.role === "admin"
-                        ? "border border-border text-muted-foreground hover:bg-muted"
-                        : "bg-foreground text-background hover:opacity-80"
-                    }`}
+              <DangerZoneRow
+                title={user.banned ? t("unbanTitle") : t("banActionTitle")}
+                description={user.banned ? t("unbanDesc") : t("banActionDesc")}
+                extra={
+                  user.banned && user.banReason ? (
+                    <p className="mt-1 text-xs text-destructive/80">{t("banReasonPrefix")} {user.banReason}</p>
+                  ) : undefined
+                }
+              >
+                {user.banned ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={unbanMutation.isPending}
+                    onClick={() => unbanMutation.mutate({ userId })}
                   >
-                    {user.role === "admin" ? <ShieldOff className="h-3.5 w-3.5" /> : <Shield className="h-3.5 w-3.5" />}
-                    {setRoleMutation.isPending ? "…" : user.role === "admin" ? t("demote") : t("promote")}
-                  </button>
-                </div>
+                    <UserCheck />
+                    {unbanMutation.isPending ? "…" : t("unban")}
+                  </Button>
+                ) : (
+                  <Button variant="destructive" size="sm" onClick={() => setBanDialog(true)}>
+                    <Ban />
+                    {t("ban")}
+                  </Button>
+                )}
+              </DangerZoneRow>
 
-                {/* Ban / Unban */}
-                <div className="flex items-center justify-between rounded-lg border border-border bg-card p-4">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">
-                      {user.banned ? t("unbanTitle") : t("banActionTitle")}
-                    </p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {user.banned ? t("unbanDesc") : t("banActionDesc")}
-                    </p>
-                    {user.banned && user.banReason && (
-                      <p className="mt-1 text-xs text-destructive/80">{t("banReasonPrefix")} {user.banReason}</p>
-                    )}
-                  </div>
-                  {user.banned ? (
-                    <button
-                      type="button"
-                      disabled={unbanMutation.isPending}
-                      onClick={() => unbanMutation.mutate({ userId })}
-                      className="flex items-center gap-1.5 rounded-lg bg-foreground px-4 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
-                    >
-                      <UserCheck className="h-3.5 w-3.5" />
-                      {unbanMutation.isPending ? "…" : t("unban")}
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setBanDialog(true)}
-                      className="flex items-center gap-1.5 rounded-lg border border-destructive/40 px-4 py-1.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
-                    >
-                      <Ban className="h-3.5 w-3.5" />
-                      {t("ban")}
-                    </button>
-                  )}
-                </div>
-
-                {/* Delete */}
-                <div className="flex items-center justify-between rounded-lg border border-destructive/30 bg-card p-4">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{t("deleteUserTitle")}</p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {t("deleteUserDesc")}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setDeleteDialog(true)}
-                    className="rounded-lg border border-destructive/40 px-4 py-1.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
-                  >
-                    {tc("delete")}
-                  </button>
-                </div>
-              </div>
-            </div>
+              <DangerZoneRow title={t("deleteUserTitle")} description={t("deleteUserDesc")}>
+                <Button variant="destructive" size="sm" onClick={() => setDeleteDialog(true)}>
+                  {tc("delete")}
+                </Button>
+              </DangerZoneRow>
+            </DangerZone>
           )}
           </motion.div>
         </div>

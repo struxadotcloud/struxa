@@ -5,19 +5,22 @@ import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { skipToken } from "@tanstack/react-query";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@struxa/ui/components/dropdown-menu";
+import { Button } from "@struxa/ui/components/button";
+import { DitherAvatar } from "@struxa/ui/components/dither-kit/avatar";
 import { ChevronDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { orpc, queryClient } from "@/utils/orpc";
 import { UserCombobox } from "@/components/user-combobox";
+import { AllocationCombobox } from "@/components/allocation-combobox";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { DangerZone, DangerZoneRow } from "@/components/danger-zone";
 
 type Tab = "general" | "resources" | "startup" | "danger";
 
@@ -67,11 +70,6 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
   const { data: nodesList } = useQuery(orpc.nodes.list.queryOptions());
 
   const [selectedNodeId, setSelectedNodeId] = useState("");
-  const { data: allocations } = useQuery(
-    orpc.allocations.listByNode.queryOptions({
-      input: selectedNodeId ? { nodeId: selectedNodeId } : skipToken,
-    }),
-  );
 
   const updateMutation = useMutation(
     orpc.servers.update.mutationOptions({
@@ -181,10 +179,6 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
   const isSuspended = server.suspended;
   const nodeChanged = selectedNodeId !== server.nodeId;
 
-  const filteredAllocations = allocations?.filter(
-    (a) => !a.serverId || a.id === server.allocationId,
-  ) ?? [];
-
   return (
     <>
       <div className="flex shrink-0 items-center gap-1 border-b border-border bg-card px-4">
@@ -229,7 +223,29 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
               </div>
               <div className="mt-3">
                 <label className="mb-1.5 block text-xs font-medium text-foreground">{t("ownerDetailLabel")}</label>
-                <UserCombobox value={ownerId} onChange={setOwnerId} initialLabel={server.userId} />
+                {server.user && ownerId === server.userId ? (
+                  <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2">
+                    <div className="h-6 w-6 shrink-0 overflow-hidden rounded-full bg-muted">
+                      {server.user.image ? (
+                        <img src={server.user.image} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <DitherAvatar name={server.user.name ?? server.user.email} className="h-full w-full" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="truncate text-sm text-foreground">{server.user.name}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setOwnerId("")}
+                      className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {t("changeOwner")}
+                    </button>
+                  </div>
+                ) : (
+                  <UserCombobox value={ownerId} onChange={setOwnerId} />
+                )}
               </div>
               <div className="mt-3 grid grid-cols-2 gap-3">
                 <div>
@@ -282,38 +298,19 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-medium text-foreground">{t("allocationLabel")}</label>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger className="flex w-full items-center justify-between rounded-lg border border-border bg-background px-3 py-1.5 font-mono text-sm text-foreground outline-none transition-colors hover:border-ring data-[popup-open]:border-ring">
-                      <span>
-                        {filteredAllocations.find((a) => a.id === allocationId)
-                          ? `${filteredAllocations.find((a) => a.id === allocationId)!.ip}:${filteredAllocations.find((a) => a.id === allocationId)!.port}`
-                          : allocationId
-                          ? `${server.allocation?.ip}:${server.allocation?.port}`
-                          : "Select allocation"}
-                      </span>
-                      <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="rounded-xl border border-border bg-card p-1 shadow-lg">
-                      {filteredAllocations.length === 0 ? (
-                        <div className="px-3 py-2 text-xs text-muted-foreground">
-                          {selectedNodeId ? t("noFreeAllocationsShort") : t("selectNodeFirst")}
-                        </div>
-                      ) : (
-                        filteredAllocations.map((a) => (
-                          <DropdownMenuItem
-                            key={a.id}
-                            onClick={() => setAllocationId(a.id)}
-                            className="cursor-pointer rounded-lg px-3 py-2 font-mono text-sm text-muted-foreground hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground"
-                          >
-                            {a.ip}:{a.port}
-                            {a.id === server.allocationId && (
-                              <span className="ml-2 rounded-full bg-muted px-1.5 py-0.5 font-sans text-[10px] normal-case text-muted-foreground">{t("currentBadge")}</span>
-                            )}
-                          </DropdownMenuItem>
-                        ))
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <AllocationCombobox
+                    nodeId={selectedNodeId}
+                    value={allocationId}
+                    onChange={setAllocationId}
+                    initialAllocation={
+                      !nodeChanged && server.allocation
+                        ? { id: server.allocationId, ip: server.allocation.ip, port: server.allocation.port, ipAlias: server.allocation.ipAlias }
+                        : null
+                    }
+                    placeholder={t("allocationPlaceholder")}
+                    disabledPlaceholder={t("selectNodeFirst")}
+                    emptyText={t("noFreeAllocationsShort")}
+                  />
                 </div>
               </div>
               <div className="mt-4 flex items-center gap-2">
@@ -444,65 +441,38 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
 
         {tab === "danger" && (
           <div className="mx-auto max-w-2xl flex flex-col gap-3">
-            <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4">
-              <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-destructive/60">{t("dangerZone")}</p>
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center justify-between rounded-lg border border-border bg-card p-4">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">
-                      {isSuspended ? t("unsuspendTitle") : t("suspendTitle")}
-                    </p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {isSuspended ? t("unsuspendDesc") : t("suspendDesc")}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => suspendMutation.mutate({ id: serverId, suspended: !isSuspended })}
-                    disabled={suspendMutation.isPending}
-                    className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-opacity disabled:opacity-40 ${
-                      isSuspended
-                        ? "bg-foreground text-background hover:opacity-80"
-                        : "border border-destructive/40 text-destructive hover:bg-destructive/10"
-                    }`}
-                  >
-                    {suspendMutation.isPending ? "..." : isSuspended ? t("unsuspend") : t("suspend")}
-                  </button>
-                </div>
+            <DangerZone title={t("dangerZone")}>
+              <DangerZoneRow
+                title={isSuspended ? t("unsuspendTitle") : t("suspendTitle")}
+                description={isSuspended ? t("unsuspendDesc") : t("suspendDesc")}
+              >
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => suspendMutation.mutate({ id: serverId, suspended: !isSuspended })}
+                  disabled={suspendMutation.isPending}
+                >
+                  {suspendMutation.isPending ? "..." : isSuspended ? t("unsuspend") : t("suspend")}
+                </Button>
+              </DangerZoneRow>
 
-                <div className="flex items-center justify-between rounded-lg border border-border bg-card p-4">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{t("reinstallTitle")}</p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {t("reinstallDesc")}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => reinstallMutation.mutate({ serverId })}
-                    disabled={reinstallMutation.isPending}
-                    className="rounded-lg border border-border px-4 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-40"
-                  >
-                    {reinstallMutation.isPending ? t("reinstalling") : t("reinstall")}
-                  </button>
-                </div>
-                <div className="flex items-center justify-between rounded-lg border border-destructive/30 bg-card p-4">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{t("deleteServerTitle")}</p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {t("deleteServerDesc")}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setConfirmDelete(true)}
-                    className="rounded-lg border border-destructive/40 px-4 py-1.5 text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
-                  >
-                    {tc("delete")}
-                  </button>
-                </div>
-              </div>
-            </div>
+              <DangerZoneRow title={t("reinstallTitle")} description={t("reinstallDesc")}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => reinstallMutation.mutate({ serverId })}
+                  disabled={reinstallMutation.isPending}
+                >
+                  {reinstallMutation.isPending ? t("reinstalling") : t("reinstall")}
+                </Button>
+              </DangerZoneRow>
+
+              <DangerZoneRow title={t("deleteServerTitle")} description={t("deleteServerDesc")}>
+                <Button variant="destructive" size="sm" onClick={() => setConfirmDelete(true)}>
+                  {tc("delete")}
+                </Button>
+              </DangerZoneRow>
+            </DangerZone>
 
             <ConfirmDialog
               open={confirmDelete}

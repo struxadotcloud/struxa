@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { eq } from "drizzle-orm";
+import { and, count, eq, isNull, like, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { ORPCError } from "@orpc/server";
 import { db } from "@struxa/db";
@@ -9,10 +9,37 @@ import { adminProcedure } from "../index";
 
 export const allocationsRouter = {
   listByNode: adminProcedure
-    .input(z.object({ nodeId: z.string().uuid() }))
+    .input(z.object({ nodeId: z.string().uuid(), page: z.number().int().min(1).default(1) }))
     .handler(async ({ input }) => {
+      const pageSize = 50;
+      const offset = (input.page - 1) * pageSize;
+      const where = eq(nodeAllocations.nodeId, input.nodeId);
+
+      const [allocations, totalResult] = await Promise.all([
+        db.query.nodeAllocations.findMany({
+          where,
+          limit: pageSize,
+          offset,
+          orderBy: (a, { asc }) => [asc(a.port)],
+        }),
+        db.select({ total: count() }).from(nodeAllocations).where(where),
+      ]);
+
+      return { allocations, total: totalResult[0]?.total ?? 0, page: input.page, pageSize };
+    }),
+
+  search: adminProcedure
+    .input(z.object({ nodeId: z.string().uuid(), query: z.string().max(100).optional(), limit: z.number().int().min(1).max(50).default(20) }))
+    .handler(async ({ input }) => {
+      const q = input.query?.trim();
       return db.query.nodeAllocations.findMany({
-        where: eq(nodeAllocations.nodeId, input.nodeId),
+        where: and(
+          eq(nodeAllocations.nodeId, input.nodeId),
+          isNull(nodeAllocations.serverId),
+          q ? or(like(nodeAllocations.ip, `%${q}%`), like(sql`CAST(${nodeAllocations.port} AS CHAR)`, `%${q}%`)) : undefined,
+        ),
+        limit: input.limit,
+        orderBy: (a, { asc }) => [asc(a.port)],
       });
     }),
 

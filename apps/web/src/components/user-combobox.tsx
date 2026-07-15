@@ -3,6 +3,19 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { orpc } from "@/utils/orpc";
+import { DitherAvatar } from "@struxa/ui/components/dither-kit/avatar";
+
+function UserAvatar({ name, email, image, className }: { name: string; email: string; image?: string | null; className?: string }) {
+  return (
+    <div className={`shrink-0 overflow-hidden rounded-full bg-muted ${className ?? ""}`}>
+      {image ? (
+        <img src={image} alt="" className="h-full w-full object-cover" />
+      ) : (
+        <DitherAvatar name={name || email} className="h-full w-full" />
+      )}
+    </div>
+  );
+}
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState(value);
@@ -13,18 +26,18 @@ function useDebounce<T>(value: T, delay: number): T {
   return debounced;
 }
 
+type UserResult = { id: string; name: string; email: string; image?: string | null };
+
 export function UserCombobox({
   value,
   onChange,
-  initialLabel,
 }: {
   value: string;
   onChange: (id: string) => void;
-  initialLabel?: string;
 }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
-  const [selectedLabel, setSelectedLabel] = useState("");
+  const [selectedUser, setSelectedUser] = useState<UserResult | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
   const debouncedQuery = useDebounce(query.trim(), 300);
@@ -36,11 +49,6 @@ export function UserCombobox({
   });
 
   useEffect(() => {
-    if (initialLabel && value && !selectedLabel) setSelectedLabel(initialLabel);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialLabel, value]);
-
-  useEffect(() => {
     function onClickOutside(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     }
@@ -50,28 +58,31 @@ export function UserCombobox({
 
   useEffect(() => {
     if (!value) {
-      setSelectedLabel("");
+      setSelectedUser(null);
       setQuery("");
     }
   }, [value]);
 
-  function select(u: { id: string; name: string; email: string }) {
+  function select(u: UserResult) {
     onChange(u.id);
-    setSelectedLabel(`${u.name} (${u.email})`);
+    setSelectedUser(u);
     setQuery("");
     setOpen(false);
   }
 
   return (
     <div ref={ref} className="relative">
-      {selectedLabel && !open ? (
+      {selectedUser && !open ? (
         <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2">
-          <span className="flex-1 text-sm text-foreground">{selectedLabel}</span>
+          <UserAvatar name={selectedUser.name} email={selectedUser.email} image={selectedUser.image} className="h-6 w-6" />
+          <span className="flex-1 truncate text-sm text-foreground">
+            {selectedUser.name} <span className="text-muted-foreground">({selectedUser.email})</span>
+          </span>
           <button
             type="button"
             onClick={() => {
               onChange("");
-              setSelectedLabel("");
+              setSelectedUser(null);
               setOpen(true);
             }}
             className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
@@ -109,10 +120,13 @@ export function UserCombobox({
                   e.preventDefault();
                   select(u);
                 }}
-                className="flex w-full flex-col px-3 py-2.5 text-left hover:bg-muted transition-colors"
+                className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left hover:bg-muted transition-colors"
               >
-                <span className="text-sm font-medium text-foreground">{u.name}</span>
-                <span className="text-xs text-muted-foreground">{u.email}</span>
+                <UserAvatar name={u.name} email={u.email} image={u.image} className="h-7 w-7" />
+                <div className="flex flex-col min-w-0">
+                  <span className="truncate text-sm font-medium text-foreground">{u.name}</span>
+                  <span className="truncate text-xs text-muted-foreground">{u.email}</span>
+                </div>
               </button>
             ))
           )}

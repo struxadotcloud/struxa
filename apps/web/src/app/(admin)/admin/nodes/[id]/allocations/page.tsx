@@ -2,13 +2,13 @@
 
 import { use, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Plus, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { orpc, queryClient } from "@/utils/orpc";
 
-function invalidateNode(id: string) {
-  void queryClient.invalidateQueries(orpc.nodes.get.queryOptions({ input: { id } }));
+function invalidateAllocations() {
+  void queryClient.invalidateQueries({ queryKey: orpc.allocations.key() });
 }
 
 function inputClass() {
@@ -21,14 +21,19 @@ export default function NodeAllocationsPage({ params }: { params: Promise<{ id: 
   const tc = useTranslations("common");
   const { data: node, isLoading } = useQuery(orpc.nodes.get.queryOptions({ input: { id } }));
 
+  const [page, setPage] = useState(1);
+  const { data, isLoading: allocationsLoading } = useQuery(
+    orpc.allocations.listByNode.queryOptions({ input: { nodeId: id, page } }),
+  );
+
   const addAllocMutation = useMutation(
     orpc.allocations.create.mutationOptions({
-      onSuccess: () => { invalidateNode(id); toast.success(tc("created")); },
+      onSuccess: () => { invalidateAllocations(); toast.success(tc("created")); },
     }),
   );
   const deleteAllocMutation = useMutation(
     orpc.allocations.delete.mutationOptions({
-      onSuccess: () => { invalidateNode(id); toast.success(tc("deleted")); },
+      onSuccess: () => { invalidateAllocations(); toast.success(tc("deleted")); },
     }),
   );
 
@@ -64,7 +69,8 @@ export default function NodeAllocationsPage({ params }: { params: Promise<{ id: 
     );
   }
 
-  const allocations = node.allocations ?? [];
+  const allocations = data?.allocations ?? [];
+  const totalPages = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1;
 
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden">
@@ -139,7 +145,12 @@ export default function NodeAllocationsPage({ params }: { params: Promise<{ id: 
       )}
 
       <div className="divide-y divide-border">
-        {allocations.length === 0 && (
+        {allocationsLoading && (
+          <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+            {tc("loading")}
+          </div>
+        )}
+        {!allocationsLoading && allocations.length === 0 && (
           <div className="px-4 py-8 text-center text-sm text-muted-foreground">
             {t("noAllocations")}
           </div>
@@ -203,6 +214,34 @@ export default function NodeAllocationsPage({ params }: { params: Promise<{ id: 
           </div>
         ))}
       </div>
+
+      {data && totalPages > 1 && (
+        <div className="flex items-center justify-between border-t border-border px-4 py-3">
+          <span className="text-xs text-muted-foreground">
+            {t("pageInfo", { page, total: totalPages, count: data.total })}
+          </span>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => p - 1)}
+              className="flex items-center gap-1 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-30"
+            >
+              <ChevronLeft className="h-3 w-3" />
+              {tc("prev")}
+            </button>
+            <button
+              type="button"
+              disabled={page >= totalPages}
+              onClick={() => setPage((p) => p + 1)}
+              className="flex items-center gap-1 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-30"
+            >
+              {tc("next")}
+              <ChevronRight className="h-3 w-3" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
