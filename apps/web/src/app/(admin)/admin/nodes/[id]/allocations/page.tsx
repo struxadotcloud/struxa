@@ -11,6 +11,13 @@ function invalidateAllocations() {
   void queryClient.invalidateQueries({ queryKey: orpc.allocations.key() });
 }
 
+function getPageNumbers(current: number, total: number): (number | "…")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  if (current <= 4) return [1, 2, 3, 4, 5, "…", total];
+  if (current >= total - 3) return [1, "…", total - 4, total - 3, total - 2, total - 1, total];
+  return [1, "…", current - 1, current, current + 1, "…", total];
+}
+
 function inputClass() {
   return "w-full rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors";
 }
@@ -71,6 +78,7 @@ export default function NodeAllocationsPage({ params }: { params: Promise<{ id: 
 
   const allocations = data?.allocations ?? [];
   const totalPages = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1;
+  const pageNumbers = getPageNumbers(page, totalPages);
 
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden">
@@ -216,30 +224,46 @@ export default function NodeAllocationsPage({ params }: { params: Promise<{ id: 
       </div>
 
       {data && totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-border px-4 py-3">
-          <span className="text-xs text-muted-foreground">
-            {t("pageInfo", { page, total: totalPages, count: data.total })}
-          </span>
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              disabled={page <= 1}
-              onClick={() => setPage((p) => p - 1)}
-              className="flex items-center gap-1 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-30"
-            >
-              <ChevronLeft className="h-3 w-3" />
-              {tc("prev")}
-            </button>
-            <button
-              type="button"
-              disabled={page >= totalPages}
-              onClick={() => setPage((p) => p + 1)}
-              className="flex items-center gap-1 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-30"
-            >
-              {tc("next")}
-              <ChevronRight className="h-3 w-3" />
-            </button>
-          </div>
+        <div className="flex items-center justify-center gap-1 border-t border-border px-4 py-3">
+          <button
+            type="button"
+            aria-label={t("prevPage")}
+            disabled={page <= 1}
+            onClick={() => setPage((p) => p - 1)}
+            className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-card text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-30"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+          </button>
+          {pageNumbers.map((n, i) =>
+            n === "…" ? (
+              <span key={`ellipsis-${i}`} className="flex h-7 w-7 items-center justify-center text-xs text-muted-foreground">
+                …
+              </span>
+            ) : (
+              <button
+                key={n}
+                type="button"
+                aria-current={n === page ? "page" : undefined}
+                onClick={() => setPage(n)}
+                className={`flex h-7 w-7 items-center justify-center rounded-md text-xs font-medium transition-colors ${
+                  n === page
+                    ? "bg-foreground text-background"
+                    : "border border-border bg-card text-foreground hover:bg-muted"
+                }`}
+              >
+                {n}
+              </button>
+            )
+          )}
+          <button
+            type="button"
+            aria-label={t("nextPage")}
+            disabled={page >= totalPages}
+            onClick={() => setPage((p) => p + 1)}
+            className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-card text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-30"
+          >
+            <ChevronRight className="h-3.5 w-3.5" />
+          </button>
         </div>
       )}
     </div>
