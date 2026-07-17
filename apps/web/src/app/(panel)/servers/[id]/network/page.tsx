@@ -59,7 +59,7 @@ export default function NetworkPage({ params }: { params: Promise<{ id: string }
   return (
     <>
       <div className="flex flex-1 flex-col gap-3 overflow-auto px-4 py-4 md:flex-row md:overflow-hidden">
-        <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card">
           <div className="grid grid-cols-[32px_1fr_100px_120px] border-b border-border bg-muted/40 px-4 py-2.5">
             <span />
             <span className="text-xs font-medium text-muted-foreground">{t("colIp")}</span>
@@ -91,7 +91,7 @@ export default function NetworkPage({ params }: { params: Promise<{ id: string }
                 </div>
                 <span className="text-sm text-foreground">{alloc.port}</span>
                 <span>
-                  <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-[11px] font-medium text-green-600 dark:text-green-400">
+                  <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-[11px] font-medium text-blue-600 dark:text-blue-400">
                     {t("typePrimary")}
                   </span>
                 </span>
@@ -100,7 +100,7 @@ export default function NetworkPage({ params }: { params: Promise<{ id: string }
           </div>
         </div>
 
-        <aside className="flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm md:w-[220px]">
+        <aside className="flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card md:w-[220px]">
           <div className="overflow-y-auto">
             <StatRow icon={Globe} label={t("statPrimary")}>
               <span className="text-sm font-semibold text-foreground leading-snug">

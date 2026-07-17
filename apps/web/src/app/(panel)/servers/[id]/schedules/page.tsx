@@ -243,7 +243,7 @@ function TasksPanel({
                       onClick={() => setTaskForm((f) => ({ ...f, action: a, payload: "" }))}
                       className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground"
                     >
-                      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${taskForm.action === a ? "bg-green-500" : "bg-transparent"}`} />
+                      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${taskForm.action === a ? "bg-blue-500" : "bg-transparent"}`} />
                       {a === "command" && t("actionCommandDesc")}
                       {a === "power" && t("actionPowerDesc")}
                       {a === "backup" && t("actionBackupDesc")}
@@ -282,7 +282,7 @@ function TasksPanel({
                         onClick={() => setTaskForm((f) => ({ ...f, payload: p }))}
                         className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm capitalize text-muted-foreground hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground"
                       >
-                        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${(taskForm.payload || "restart") === p ? "bg-green-500" : "bg-transparent"}`} />
+                        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${(taskForm.payload || "restart") === p ? "bg-blue-500" : "bg-transparent"}`} />
                         {p}
                       </DropdownMenuItem>
                     ))}
@@ -572,7 +572,7 @@ export default function SchedulesPage({ params }: { params: Promise<{ id: string
       </Dialog>
 
       <div className="flex flex-1 flex-col gap-3 overflow-auto px-4 py-4 md:flex-row md:overflow-hidden">
-        <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card">
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <p className="text-sm font-medium text-foreground">{t("sectionTitle")}</p>
             <button
@@ -678,7 +678,7 @@ export default function SchedulesPage({ params }: { params: Promise<{ id: string
           </div>
         </div>
 
-        <aside className="flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm md:w-[220px]">
+        <aside className="flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card md:w-[220px]">
           <div className="overflow-y-auto">
             <StatRow icon={ListChecks} label={t("statSchedules")}>
               <span className="text-xl font-bold text-foreground">{schedules.length}</span>

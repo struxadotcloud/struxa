@@ -272,7 +272,7 @@ export default function DatabasesPage({ params }: { params: Promise<{ id: string
       </Dialog>
 
       <div className="flex flex-1 flex-col gap-3 overflow-auto px-4 py-4 md:flex-row md:overflow-hidden">
-        <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card">
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <p className="text-sm font-medium text-foreground">{t("sectionTitle")}</p>
             <button
@@ -313,7 +313,7 @@ export default function DatabasesPage({ params }: { params: Promise<{ id: string
           </div>
         </div>
 
-        <aside className="flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm md:w-[240px]">
+        <aside className="flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card md:w-[240px]">
           <div className="overflow-y-auto">
             <StatRow icon={Database} label={t("statDatabases")}>
               <span className="text-xl font-bold text-foreground">{databases.length}</span>

@@ -10,6 +10,7 @@ import { useTranslations } from "next-intl";
 import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
 import Loader from "@/components/loader";
+import { DitherAvatar } from "@struxa/ui/components/dither-kit/avatar";
 
 function StatRow({
   icon: Icon,
@@ -81,14 +82,15 @@ const EVENT_LABEL_KEYS: Record<string, string> = {
 function ActorCell({ user, systemLabel }: { user: { name: string | null; email: string; image: string | null } | null | undefined; systemLabel: string }) {
   if (!user) return <span className="text-sm text-muted-foreground">{systemLabel}</span>;
   const displayName = user.name ?? user.email;
-  const initials = displayName[0]!.toUpperCase();
   return (
     <div className="flex items-center gap-2 min-w-0">
       <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-muted text-xs font-semibold text-foreground overflow-hidden">
         {user.image ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={user.image} alt={displayName} className="h-6 w-6 object-cover" />
-        ) : initials}
+        ) : (
+          <DitherAvatar name={displayName} className="h-6 w-6" />
+        )}
       </div>
       <span className="truncate text-sm text-foreground">{displayName}</span>
     </div>
@@ -146,7 +148,7 @@ export default function ActivityPage({ params }: { params: Promise<{ id: string 
   return (
     <>
       <div className="flex flex-1 flex-col gap-3 overflow-auto px-4 py-4 md:flex-row md:overflow-hidden">
-        <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card">
           {/* Table header */}
           <div className="grid grid-cols-[160px_180px_200px_1fr_130px] border-b border-border bg-muted/40 px-4 py-2.5">
             <span className="text-xs font-medium text-muted-foreground">{t("colTimestamp")}</span>
@@ -196,7 +198,7 @@ export default function ActivityPage({ params }: { params: Promise<{ id: string 
           </div>
         </div>
 
-        <aside className="flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm md:w-[220px]">
+        <aside className="flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card md:w-[220px]">
           <StatRow icon={Activity} label={t("statEvents")}>
             <span className="text-xl font-bold text-foreground">{entries.length}</span>
           </StatRow>

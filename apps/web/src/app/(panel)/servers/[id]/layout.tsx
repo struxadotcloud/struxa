@@ -28,7 +28,7 @@ function BlockedPage({
       </div>
 
       <div className="flex flex-1 items-center justify-center p-6">
-        <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-xl border border-border bg-card p-8 text-center shadow-sm">
+        <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-xl border border-border bg-card p-8 text-center">
           {suspended ? (
             <>
               <div className="flex h-11 w-11 items-center justify-center rounded-full bg-muted">

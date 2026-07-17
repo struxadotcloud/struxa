@@ -2,13 +2,20 @@
 
 import { use, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Plus, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { orpc, queryClient } from "@/utils/orpc";
 
-function invalidateNode(id: string) {
-  void queryClient.invalidateQueries(orpc.nodes.get.queryOptions({ input: { id } }));
+function invalidateAllocations() {
+  void queryClient.invalidateQueries({ queryKey: orpc.allocations.key() });
+}
+
+function getPageNumbers(current: number, total: number): (number | "…")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  if (current <= 4) return [1, 2, 3, 4, 5, "…", total];
+  if (current >= total - 3) return [1, "…", total - 4, total - 3, total - 2, total - 1, total];
+  return [1, "…", current - 1, current, current + 1, "…", total];
 }
 
 function inputClass() {
@@ -21,14 +28,19 @@ export default function NodeAllocationsPage({ params }: { params: Promise<{ id: 
   const tc = useTranslations("common");
   const { data: node, isLoading } = useQuery(orpc.nodes.get.queryOptions({ input: { id } }));
 
+  const [page, setPage] = useState(1);
+  const { data, isLoading: allocationsLoading } = useQuery(
+    orpc.allocations.listByNode.queryOptions({ input: { nodeId: id, page } }),
+  );
+
   const addAllocMutation = useMutation(
     orpc.allocations.create.mutationOptions({
-      onSuccess: () => { invalidateNode(id); toast.success(tc("created")); },
+      onSuccess: () => { invalidateAllocations(); toast.success(tc("created")); },
     }),
   );
   const deleteAllocMutation = useMutation(
     orpc.allocations.delete.mutationOptions({
-      onSuccess: () => { invalidateNode(id); toast.success(tc("deleted")); },
+      onSuccess: () => { invalidateAllocations(); toast.success(tc("deleted")); },
     }),
   );
 
@@ -64,10 +76,12 @@ export default function NodeAllocationsPage({ params }: { params: Promise<{ id: 
     );
   }
 
-  const allocations = node.allocations ?? [];
+  const allocations = data?.allocations ?? [];
+  const totalPages = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1;
+  const pageNumbers = getPageNumbers(page, totalPages);
 
   return (
-    <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+    <div className="rounded-xl border border-border bg-card overflow-hidden">
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <span className="text-sm font-medium text-foreground">{t("allocationsTitle")}</span>
         <button
@@ -139,7 +153,12 @@ export default function NodeAllocationsPage({ params }: { params: Promise<{ id: 
       )}
 
       <div className="divide-y divide-border">
-        {allocations.length === 0 && (
+        {allocationsLoading && (
+          <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+            {tc("loading")}
+          </div>
+        )}
+        {!allocationsLoading && allocations.length === 0 && (
           <div className="px-4 py-8 text-center text-sm text-muted-foreground">
             {t("noAllocations")}
           </div>
@@ -203,6 +222,50 @@ export default function NodeAllocationsPage({ params }: { params: Promise<{ id: 
           </div>
         ))}
       </div>
+
+      {data && totalPages > 1 && (
+        <div className="flex items-center justify-center gap-1 border-t border-border px-4 py-3">
+          <button
+            type="button"
+            aria-label={t("prevPage")}
+            disabled={page <= 1}
+            onClick={() => setPage((p) => p - 1)}
+            className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-card text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-30"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+          </button>
+          {pageNumbers.map((n, i) =>
+            n === "…" ? (
+              <span key={`ellipsis-${i}`} className="flex h-7 w-7 items-center justify-center text-xs text-muted-foreground">
+                …
+              </span>
+            ) : (
+              <button
+                key={n}
+                type="button"
+                aria-current={n === page ? "page" : undefined}
+                onClick={() => setPage(n)}
+                className={`flex h-7 w-7 items-center justify-center rounded-md text-xs font-medium transition-colors ${
+                  n === page
+                    ? "bg-foreground text-background"
+                    : "border border-border bg-card text-foreground hover:bg-muted"
+                }`}
+              >
+                {n}
+              </button>
+            )
+          )}
+          <button
+            type="button"
+            aria-label={t("nextPage")}
+            disabled={page >= totalPages}
+            onClick={() => setPage((p) => p + 1)}
+            className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-card text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-30"
+          >
+            <ChevronRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

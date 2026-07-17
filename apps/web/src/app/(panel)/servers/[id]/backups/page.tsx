@@ -220,7 +220,7 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
       </Dialog>
 
       <div className="flex flex-1 flex-col gap-3 overflow-auto px-4 py-4 md:flex-row md:overflow-hidden">
-        <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card">
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <p className="text-sm font-medium text-foreground">{t("sectionTitle")}</p>
             <button
@@ -281,7 +281,7 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
                           <button
                             type="button"
                             onClick={() => setRestoreTarget({ id: backup.id, name: backup.name })}
-                            className="rounded p-0.5 text-muted-foreground/50 hover:bg-muted hover:text-green-500 transition-colors"
+                            className="rounded p-0.5 text-muted-foreground/50 hover:bg-muted hover:text-blue-500 transition-colors"
                             title={t("restore")}
                           >
                             <RotateCcw className="h-3.5 w-3.5" />
@@ -307,7 +307,7 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
           </div>
         </div>
 
-        <aside className="flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm md:w-[220px]">
+        <aside className="flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card md:w-[220px]">
           <div className="overflow-y-auto">
             <StatRow icon={Archive} label={t("statBackups")}>
               <span className="text-xl font-bold text-foreground">{backups.length}</span>

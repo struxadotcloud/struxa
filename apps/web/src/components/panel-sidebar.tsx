@@ -22,6 +22,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@struxa/ui/components/dropdown-menu";
+import { DitherAvatar } from "@struxa/ui/components/dither-kit/avatar";
 import {
   Server,
   User,
@@ -56,7 +57,6 @@ export function PanelSidebar() {
   const router = useRouter();
   const { data: session } = authClient.useSession();
   const user = session?.user;
-  const initials = user?.name ? user.name[0]!.toUpperCase() : "?";
   const avatarImage = user?.image ?? null;
 
   async function handleLogout() {
@@ -124,7 +124,7 @@ export function PanelSidebar() {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={avatarImage} alt={user?.name ?? "avatar"} className="h-8 w-8 rounded-lg object-cover" />
               ) : (
-                initials
+                <DitherAvatar name={user?.name ?? "?"} className="h-8 w-8 rounded-lg overflow-hidden" />
               )}
             </DropdownMenuTrigger>
             <DropdownMenuContent side="right" align="start" className="w-48 rounded-xl border border-border bg-card p-1 shadow-lg">
@@ -157,7 +157,7 @@ export function PanelSidebar() {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={avatarImage} alt={user?.name ?? "avatar"} className="h-6 w-6 rounded-md object-cover" />
                 ) : (
-                  initials
+                  <DitherAvatar name={user?.name ?? "?"} className="h-6 w-6 rounded-md overflow-hidden" />
                 )}
               </div>
               <div className="min-w-0 flex-1 text-left">

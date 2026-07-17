@@ -164,7 +164,7 @@ function NodeRow({
           <div className="flex items-center gap-2">
             <Link
               href={`/admin/nodes/${node.id}` as never}
-              className="text-sm font-medium text-foreground transition-colors hover:text-green-500"
+              className="text-sm font-medium text-foreground transition-colors hover:text-blue-500"
               onClick={(e) => e.stopPropagation()}
             >
               {node.name}
@@ -633,7 +633,7 @@ export default function NodesPage() {
                         className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground"
                       >
                         <span
-                          className={`h-1.5 w-1.5 shrink-0 rounded-full ${nodeForm.locationId === l.id ? "bg-green-500" : "bg-transparent"}`}
+                          className={`h-1.5 w-1.5 shrink-0 rounded-full ${nodeForm.locationId === l.id ? "bg-blue-500" : "bg-transparent"}`}
                         />
                         {l.name}{" "}
                         <span className="text-muted-foreground/50">({l.short})</span>
@@ -674,7 +674,7 @@ export default function NodesPage() {
                         className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground"
                       >
                         <span
-                          className={`h-1.5 w-1.5 shrink-0 rounded-full ${nodeForm.scheme === s ? "bg-green-500" : "bg-transparent"}`}
+                          className={`h-1.5 w-1.5 shrink-0 rounded-full ${nodeForm.scheme === s ? "bg-blue-500" : "bg-transparent"}`}
                         />
                         {s.toUpperCase()}
                       </DropdownMenuItem>
@@ -844,7 +844,7 @@ export default function NodesPage() {
 
           <TooltipProvider>
             <div className="overflow-x-auto">
-              <div className="min-w-[520px] overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+              <div className="min-w-[520px] overflow-hidden rounded-xl border border-border bg-card">
                 {/* Column header — aligns with node rows (pl-10) */}
                 <div className="grid grid-cols-[24px_1fr_200px_160px_48px] border-b border-border bg-muted/40 pl-10 pr-4 py-2.5">
                   <span />

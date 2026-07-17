@@ -240,7 +240,7 @@ function PurchaseDialog({
                     className={cn(
                       "flex items-center justify-between rounded-xl border px-4 py-3 text-left transition-all",
                       selected
-                        ? "border-foreground bg-foreground/5 shadow-sm"
+                        ? "border-foreground bg-foreground/5"
                         : "border-border hover:border-foreground/30",
                       !affordable && "cursor-not-allowed opacity-40",
                     )}
@@ -334,7 +334,7 @@ function PurchaseDialog({
                       className={cn(
                         "flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all",
                         selected
-                          ? "border-foreground bg-foreground/5 shadow-sm"
+                          ? "border-foreground bg-foreground/5"
                           : "border-border hover:border-foreground/30",
                       )}
                     >
@@ -398,7 +398,7 @@ function PurchaseDialog({
                       className={cn(
                         "flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all",
                         selected
-                          ? "border-foreground bg-foreground/5 shadow-sm"
+                          ? "border-foreground bg-foreground/5"
                           : "border-border hover:border-foreground/30",
                       )}
                     >
@@ -821,7 +821,7 @@ function PlanCard({
     <>
       <div
         className={cn(
-          "relative flex flex-col overflow-hidden rounded-2xl border bg-card transition-shadow hover:shadow-md",
+          "relative flex flex-col overflow-hidden rounded-2xl border bg-card transition-colors hover:border-foreground/30",
           isFeatured
             ? "border-primary/40 ring-1 ring-primary/20"
             : "border-border",

@@ -23,7 +23,7 @@ function CategoryCard({
 }) {
   const t = useTranslations("panel.billing");
   return (
-    <Link href={href as never} className="group block overflow-hidden rounded-2xl border border-border bg-card transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+    <Link href={href as never} className="group block overflow-hidden rounded-2xl border border-border bg-card transition-colors hover:border-foreground/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
       <div className="relative h-32 overflow-hidden">
         {bannerUrl
           ? <img src={bannerUrl} alt="" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
@@ -33,7 +33,7 @@ function CategoryCard({
       </div>
 
       <div className="relative -mt-8 flex items-end gap-3 px-4 pb-4">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted shadow-sm">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted">
           {iconUrl
             ? <img src={iconUrl} alt="" className="h-full w-full object-cover" />
             : <Layers className="size-5 text-muted-foreground/60" />

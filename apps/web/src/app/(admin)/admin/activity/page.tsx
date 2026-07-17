@@ -9,6 +9,7 @@ import type { LucideIcon } from "lucide-react";
 import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
 import Loader from "@/components/loader";
+import { DitherAvatar } from "@struxa/ui/components/dither-kit/avatar";
 
 function StatRow({
   icon: Icon,
@@ -39,7 +40,7 @@ const EVENT_STYLES: Record<string, { color: string; bg: string }> = {
   alloc:    { color: "#f59e0b", bg: "rgba(245,158,11,0.12)" },
   nest:     { color: "#a855f7", bg: "rgba(168,85,247,0.12)" },
   egg:      { color: "#a855f7", bg: "rgba(168,85,247,0.12)" },
-  dbhost:   { color: "#22c55e", bg: "rgba(34,197,94,0.12)" },
+  dbhost:   { color: "#3b82f6", bg: "rgba(59,130,246,0.12)" },
   location: { color: "#f59e0b", bg: "rgba(245,158,11,0.12)" },
   settings: { color: "#71717a", bg: "rgba(113,113,122,0.10)" },
   billing: { color: "#10b981", bg: "rgba(16,185,129,0.12)" },
@@ -113,14 +114,15 @@ function ActorCell({ user }: { user: { name: string | null; email: string; image
   const t = useTranslations("admin.activity");
   if (!user) return <span className="text-sm text-muted-foreground">{t("system")}</span>;
   const displayName = user.name ?? user.email;
-  const initials = displayName[0]!.toUpperCase();
   return (
     <div className="flex items-center gap-2 min-w-0">
       <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-muted text-xs font-semibold text-foreground overflow-hidden">
         {user.image ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={user.image} alt={displayName} className="h-6 w-6 object-cover" />
-        ) : initials}
+        ) : (
+          <DitherAvatar name={displayName} className="h-6 w-6" />
+        )}
       </div>
       <span className="truncate text-sm text-foreground">{displayName}</span>
     </div>
@@ -194,7 +196,7 @@ export default function AdminActivityPage() {
   return (
     <>
       <div className="flex flex-1 flex-col gap-3 overflow-auto px-4 py-4 md:flex-row md:overflow-hidden">
-        <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card">
           <div className="grid grid-cols-[160px_180px_200px_150px_1fr_130px] border-b border-border bg-muted/40 px-4 py-2.5">
             <span className="text-xs font-medium text-muted-foreground">{t("timestampColumn")}</span>
             <span className="text-xs font-medium text-muted-foreground">{t("eventColumn")}</span>
@@ -248,7 +250,7 @@ export default function AdminActivityPage() {
           </div>
         </div>
 
-        <aside className="flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm md:w-[220px]">
+        <aside className="flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card md:w-[220px]">
           <StatRow icon={Activity} label={t("totalEvents")}>
             <span className="text-xl font-bold text-foreground">{entries.length}</span>
           </StatRow>

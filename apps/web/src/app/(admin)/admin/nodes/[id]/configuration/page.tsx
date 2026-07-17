@@ -27,19 +27,19 @@ function defineTheme(monaco: Monaco) {
       "editor.foreground": "#aaaaaa",
       "editorLineNumber.foreground": "#333333",
       "editorLineNumber.activeForeground": "#555555",
-      "editor.selectionBackground": "#22c55e22",
-      "editor.lineHighlightBackground": "#111111",
-      "editorCursor.foreground": "#22c55e",
+      "editor.selectionBackground": "#3b82f622",
+      "editor.lineHighlightBackground": "#171717",
+      "editorCursor.foreground": "#3b82f6",
       "editorGutter.background": "#0a0a0a",
-      "editor.inactiveSelectionBackground": "#1a1a1a",
-      "editorWidget.background": "#141414",
-      "editorWidget.border": "#222222",
-      "input.background": "#141414",
-      "input.border": "#222222",
-      "scrollbarSlider.background": "#222222",
+      "editor.inactiveSelectionBackground": "#171717",
+      "editorWidget.background": "#171717",
+      "editorWidget.border": "#262626",
+      "input.background": "#171717",
+      "input.border": "#262626",
+      "scrollbarSlider.background": "#262626",
       "scrollbarSlider.hoverBackground": "#333333",
-      "editorBracketMatch.background": "#22c55e22",
-      "editorBracketMatch.border": "#22c55e44",
+      "editorBracketMatch.background": "#3b82f622",
+      "editorBracketMatch.border": "#3b82f644",
     },
   });
 }
@@ -83,7 +83,7 @@ export default function NodeConfigurationPage({ params }: { params: Promise<{ id
         <span className="font-semibold">{t("configNotice")}</span> {t("configNoticeBody")} <span className="font-mono">uuid</span>, <span className="font-mono">token_id</span>, and <span className="font-mono">token</span> {t("configNoticeBody2")}
       </div>
 
-      <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <p className="text-xs font-medium text-muted-foreground">{t("configFileLabel")}</p>
           <div className="flex items-center gap-3">

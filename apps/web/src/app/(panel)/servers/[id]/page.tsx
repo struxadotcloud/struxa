@@ -36,6 +36,7 @@ import {
   DropdownMenuTrigger,
 } from "@struxa/ui/components/dropdown-menu";
 import { ChevronDown } from "lucide-react";
+import { Sparkline } from "@struxa/ui/components/dither-kit/sparkline";
 
 function fmtUptime(ms: number): string {
   if (ms <= 0) return "—";
@@ -60,24 +61,6 @@ function fmtBytes(bytes: number) {
   if (bytes < 1024) return `${bytes} B/s`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB/s`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB/s`;
-}
-
-function Sparkline({ data, color = "#22c55e" }: { data: number[]; color?: string }) {
-  const h = 48;
-  const W = 248;
-  const max = Math.max(...data, 1);
-  const coords = data.map((v, i) => ({
-    x: (i / (data.length - 1)) * W,
-    y: h - (v / max) * h,
-  }));
-  const line = coords.map((p) => `${p.x},${p.y}`).join(" ");
-  const area = `0,${h} ${line} ${W},${h}`;
-  return (
-    <svg viewBox={`0 0 ${W} ${h}`} className="block h-12 w-full" preserveAspectRatio="none">
-      <polygon points={area} fill={color} fillOpacity={0.12} />
-      <polyline points={line} fill="none" stroke={color} strokeWidth={1.5} />
-    </svg>
-  );
 }
 
 function StatRow({
@@ -438,8 +421,8 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
     <>
       <div className="flex flex-1 flex-col gap-3 overflow-auto px-4 py-4 md:flex-row md:overflow-hidden">
         {/* Console panel */}
-        <div className="flex min-h-[50vh] flex-1 flex-col overflow-hidden rounded-xl border border-border bg-[#0f0f0f] shadow-sm md:min-h-0">
-          <div className="flex h-10 shrink-0 items-center justify-between rounded-t-xl border-b border-border/50 bg-[#161616] px-3">
+        <div className="flex min-h-[50vh] flex-1 flex-col overflow-hidden rounded-xl border border-border bg-background md:min-h-0">
+          <div className="flex h-10 shrink-0 items-center justify-between rounded-t-xl border-b border-border/50 bg-card px-3">
             <div className="flex items-center gap-2">
               <span
                 className={`h-2 w-2 rounded-full ${
@@ -508,7 +491,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
             <div ref={consoleEndRef} />
           </div>
 
-          <div className="flex h-11 shrink-0 items-center rounded-b-xl border-t border-border/50 bg-[#161616]">
+          <div className="flex h-11 shrink-0 items-center rounded-b-xl border-t border-border/50 bg-card">
             <span className="px-3 font-mono text-sm text-zinc-600">{">"}</span>
             <input
               className="flex-1 bg-transparent font-mono text-sm text-zinc-200 outline-none placeholder:text-zinc-700"
@@ -522,7 +505,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
             <button
               type="button"
               onClick={sendCommand}
-              className="px-3 text-zinc-600 transition-colors hover:text-green-400"
+              className="px-3 text-zinc-600 transition-colors hover:text-blue-400"
             >
               <SendHorizontal className="h-4 w-4" />
             </button>
@@ -530,7 +513,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
         </div>
 
         {/* Stats panel */}
-        <aside className="flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm md:w-[260px]">
+        <aside className="flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card md:w-[260px]">
           <div className="overflow-y-auto">
             <StatRow icon={Globe} label={t("statsAddress")}>
               <div className="flex items-center justify-between">
@@ -551,13 +534,13 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
             <StatRow icon={Timer} label={t("statsUptime")}>
               <span className="text-sm font-semibold text-foreground">{fmtUptime(stats.uptimeMs)}</span>
             </StatRow>
-            <StatRow icon={Cpu} label={t("statsCpu")} chart={<Sparkline data={cpuHistory} color="#3b82f6" />}>
+            <StatRow icon={Cpu} label={t("statsCpu")} chart={<Sparkline data={cpuHistory} color="blue" className="h-12 w-full" />}>
               <div className="flex items-baseline gap-1">
                 <span className="text-xl font-bold text-foreground">{stats.cpu.toFixed(1)}%</span>
                 <span className="text-xs text-muted-foreground">/ {server?.cpu ?? 0}%</span>
               </div>
             </StatRow>
-            <StatRow icon={MemoryStick} label={t("statsMemory")} chart={<Sparkline data={ramHistory} color="#a855f7" />}>
+            <StatRow icon={MemoryStick} label={t("statsMemory")} chart={<Sparkline data={ramHistory} color="purple" className="h-12 w-full" />}>
               <div className="flex items-baseline gap-1">
                 <span className="text-xl font-bold text-foreground">
                   {fmtMb(stats.memBytes / (1024 * 1024))}
@@ -565,16 +548,16 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                 <span className="text-xs text-muted-foreground">/ {fmtMb(stats.memLimitBytes / (1024 * 1024))}</span>
               </div>
             </StatRow>
-            <StatRow icon={HardDrive} label={t("statsDisk")} chart={<Sparkline data={diskHistory} color="#f43f5e" />}>
+            <StatRow icon={HardDrive} label={t("statsDisk")} chart={<Sparkline data={diskHistory} color="red" className="h-12 w-full" />}>
               <div className="flex items-baseline gap-1">
                 <span className="text-xl font-bold text-foreground">{fmtMb(stats.diskMb)}</span>
                 <span className="text-xs text-muted-foreground">/ {fmtMb(server?.disk ?? 0)}</span>
               </div>
             </StatRow>
-            <StatRow icon={ArrowDown} label={t("statsInbound")} chart={<Sparkline data={rxHistory} />}>
+            <StatRow icon={ArrowDown} label={t("statsInbound")} chart={<Sparkline data={rxHistory} color="blue" className="h-12 w-full" />}>
               <span className="text-xl font-bold text-foreground">{fmtBytes(rxHistory[rxHistory.length - 1] ?? 0)}</span>
             </StatRow>
-            <StatRow icon={ArrowUp} label={t("statsOutbound")} chart={<Sparkline data={txHistory} />}>
+            <StatRow icon={ArrowUp} label={t("statsOutbound")} chart={<Sparkline data={txHistory} color="blue" className="h-12 w-full" />}>
               <span className="text-xl font-bold text-foreground">{fmtBytes(txHistory[txHistory.length - 1] ?? 0)}</span>
             </StatRow>
           </div>
@@ -599,7 +582,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
               type="button"
               disabled={eulaAccepting}
               onClick={() => void acceptEula()}
-              className="rounded-lg bg-green-500/20 px-3 py-1.5 text-sm font-medium text-green-400 transition-colors hover:bg-green-500/30 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-lg bg-blue-500/20 px-3 py-1.5 text-sm font-medium text-blue-400 transition-colors hover:bg-blue-500/30 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {t("eulaAccept")}
             </button>
@@ -627,7 +610,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                       onClick={() => setJavaSelectedImage(tag)}
                       className="flex cursor-pointer items-center gap-2.5 text-sm"
                     >
-                      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${tag === javaSelectedImage ? "bg-green-500" : "bg-transparent"}`} />
+                      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${tag === javaSelectedImage ? "bg-blue-500" : "bg-transparent"}`} />
                       {label}
                     </DropdownMenuItem>
                   ))}

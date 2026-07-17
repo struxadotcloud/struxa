@@ -169,7 +169,7 @@ export default function NestsPage() {
           }}
         />
 
-        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+        <div className="rounded-xl border border-border bg-card overflow-hidden">
           <div className="grid grid-cols-[1fr_160px_48px] border-b border-border bg-muted/40 px-4 py-2.5">
             <span className="text-xs font-medium text-muted-foreground">{t("nameColumn")}</span>
             <span className="text-xs font-medium text-muted-foreground">{t("authorColumn")}</span>
@@ -197,7 +197,7 @@ export default function NestsPage() {
                     <div className="flex items-center gap-2">
                       <Link
                         href={`/admin/nests/${nest.id}` as never}
-                        className="flex items-center gap-1 text-sm font-medium text-foreground transition-colors hover:text-green-500"
+                        className="flex items-center gap-1 text-sm font-medium text-foreground transition-colors hover:text-blue-500"
                         onClick={(e) => e.stopPropagation()}
                       >
                         {nest.name}

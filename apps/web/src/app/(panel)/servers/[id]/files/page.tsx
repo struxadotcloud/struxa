@@ -52,19 +52,19 @@ function defineTheme(monaco: Monaco) {
       "editor.foreground": "#aaaaaa",
       "editorLineNumber.foreground": "#333333",
       "editorLineNumber.activeForeground": "#555555",
-      "editor.selectionBackground": "#22c55e22",
-      "editor.lineHighlightBackground": "#111111",
-      "editorCursor.foreground": "#22c55e",
+      "editor.selectionBackground": "#3b82f622",
+      "editor.lineHighlightBackground": "#171717",
+      "editorCursor.foreground": "#3b82f6",
       "editorGutter.background": "#0a0a0a",
-      "editor.inactiveSelectionBackground": "#1a1a1a",
-      "editorWidget.background": "#141414",
-      "editorWidget.border": "#222222",
-      "input.background": "#141414",
-      "input.border": "#222222",
-      "scrollbarSlider.background": "#222222",
+      "editor.inactiveSelectionBackground": "#171717",
+      "editorWidget.background": "#171717",
+      "editorWidget.border": "#262626",
+      "input.background": "#171717",
+      "input.border": "#262626",
+      "scrollbarSlider.background": "#262626",
       "scrollbarSlider.hoverBackground": "#333333",
-      "editorBracketMatch.background": "#22c55e22",
-      "editorBracketMatch.border": "#22c55e44",
+      "editorBracketMatch.background": "#3b82f622",
+      "editorBracketMatch.border": "#3b82f644",
     },
   });
 }
@@ -275,7 +275,7 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
   return (
     <>
       <div
-        className={`relative flex flex-1 flex-col gap-3 overflow-auto px-4 py-4 md:flex-row md:overflow-hidden${isDragging ? " outline outline-2 outline-dashed outline-green-500/40 rounded-xl" : ""}`}
+        className={`relative flex flex-1 flex-col gap-3 overflow-auto px-4 py-4 md:flex-row md:overflow-hidden${isDragging ? " outline outline-2 outline-dashed outline-blue-500/40 rounded-xl" : ""}`}
         onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
         onDragEnter={(e) => { e.preventDefault(); setIsDragging(true); }}
         onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsDragging(false); }}
@@ -283,13 +283,13 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
       >
         {isDragging && (
           <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/80 backdrop-blur-sm">
-            <div className="flex flex-col items-center gap-2 text-green-500">
+            <div className="flex flex-col items-center gap-2 text-blue-500">
               <Upload className="h-10 w-10" />
               <span className="text-sm font-medium">{t("dropToUpload")}</span>
             </div>
           </div>
         )}
-        <div className="flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm max-h-64 md:max-h-none md:w-60">
+        <div className="flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card max-h-64 md:max-h-none md:w-60">
           <div className="flex h-10 shrink-0 items-center justify-between border-b border-border px-3">
             <span className="truncate font-mono text-[11px] text-muted-foreground">{dirPath}</span>
             <div className="flex shrink-0 items-center gap-1">
@@ -392,7 +392,7 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
           </div>
         </div>
 
-        <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card">
           {selectedFile ? (
             <>
               <div className="flex h-10 shrink-0 items-center justify-between border-b border-border px-4">
@@ -408,7 +408,7 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
                     disabled={saving}
                     className={`flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-medium transition-all ${
                       unsaved && !saving
-                        ? "bg-green-500 text-white hover:bg-green-600"
+                        ? "bg-blue-500 text-white hover:bg-blue-600"
                         : "bg-muted text-muted-foreground cursor-default"
                     }`}
                   >
@@ -421,7 +421,7 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
               <div className="flex-1 overflow-hidden">
                 {isImage(selectedFile) ? (
                   <div className="flex h-full items-center justify-center bg-muted/30">
-                    <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-card px-8 py-6 shadow-sm">
+                    <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-card px-8 py-6">
                       <FileImage className="h-12 w-12 text-muted-foreground/30" />
                       <span className="font-mono text-sm text-foreground">{selectedFile.name}</span>
                       <span className="text-xs text-muted-foreground">{fmtBytes(selectedFile.size)}</span>

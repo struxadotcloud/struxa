@@ -108,7 +108,7 @@ export const usersRouter = {
       const q = `%${input.query}%`;
       return db.query.user.findMany({
         where: or(like(user.name, q), like(user.email, q)),
-        columns: { id: true, name: true, email: true },
+        columns: { id: true, name: true, email: true, image: true },
         limit: 10,
       });
     }),

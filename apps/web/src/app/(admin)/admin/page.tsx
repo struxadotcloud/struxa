@@ -20,7 +20,7 @@ function StatCard({
   color?: string;
 }) {
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-5 shadow-sm">
+    <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-5">
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-muted-foreground">{label}</span>
         <div
@@ -91,7 +91,7 @@ export default function AdminDashboard() {
               <Link
                 key={link.href}
                 href={link.href as never}
-                className="group flex flex-col gap-1 rounded-xl border border-border bg-card p-4 shadow-sm transition-all hover:shadow-md hover:border-border/80"
+                className="group flex flex-col gap-1 rounded-xl border border-border bg-card p-4 transition-colors hover:bg-muted/40"
               >
                 <span className="text-sm font-medium text-foreground group-hover:text-foreground">{link.label}</span>
                 <span className="text-xs text-muted-foreground">{link.description}</span>

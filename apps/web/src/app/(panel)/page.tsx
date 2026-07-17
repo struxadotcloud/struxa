@@ -51,7 +51,7 @@ function ServerCard({ server, powerState, statusLoading }: {
 
   return (
     <Link href={`/servers/${server.uuid}`} className="group block">
-      <div className="flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-sm transition-all duration-150 hover:shadow-md hover:border-border/80">
+      <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 transition-colors duration-150 hover:border-foreground/30">
         <div className="flex items-start justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2.5">
             <span

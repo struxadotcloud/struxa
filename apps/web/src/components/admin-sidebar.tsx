@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
+import { DitherAvatar } from "@struxa/ui/components/dither-kit/avatar";
 
 export function AdminSidebar() {
   const t = useTranslations("nav.admin");
@@ -43,7 +44,6 @@ export function AdminSidebar() {
   const router = useRouter();
   const { data: session } = authClient.useSession();
   const user = session?.user;
-  const initials = user?.name ? user.name[0]!.toUpperCase() : "?";
   const avatarImage = user?.image ?? null;
 
   async function handleLogout() {
@@ -77,7 +77,9 @@ export function AdminSidebar() {
               {avatarImage ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={avatarImage} alt={user?.name ?? "avatar"} className="h-8 w-8 object-cover" />
-              ) : initials}
+              ) : (
+                <DitherAvatar name={user?.name ?? "?"} className="h-8 w-8" />
+              )}
             </DropdownMenuTrigger>
             <DropdownMenuContent side="right" align="start" className="w-48 rounded-xl border border-border bg-card p-1 shadow-lg">
               <DropdownMenuItem
@@ -106,7 +108,9 @@ export function AdminSidebar() {
                 {avatarImage ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={avatarImage} alt={user?.name ?? "avatar"} className="h-6 w-6 object-cover" />
-                ) : initials}
+                ) : (
+                  <DitherAvatar name={user?.name ?? "?"} className="h-6 w-6" />
+                )}
               </div>
               <div className="min-w-0 flex-1 text-left">
                 <p className="truncate text-sm font-medium text-foreground">{user?.name ?? "—"}</p>

@@ -15,6 +15,7 @@ import {
 import { ChevronRight, ChevronDown, Check } from "lucide-react";
 import { orpc } from "@/utils/orpc";
 import { UserCombobox } from "@/components/user-combobox";
+import { AllocationCombobox } from "@/components/allocation-combobox";
 
 function StepIndicator({ current, steps }: { current: number; steps: string[] }) {
   return (
@@ -105,11 +106,6 @@ export default function NewServerPage() {
   );
 
   const { data: nodes } = useQuery(orpc.nodes.list.queryOptions());
-  const { data: allocations } = useQuery(
-    orpc.allocations.listByNode.queryOptions({
-      input: nodeAlloc.nodeId ? { nodeId: nodeAlloc.nodeId } : skipToken,
-    }),
-  );
   const { data: nests } = useQuery(orpc.nests.list.queryOptions());
   const { data: eggs } = useQuery(
     orpc.eggs.listByNest.queryOptions({
@@ -134,8 +130,6 @@ export default function NewServerPage() {
       return next;
     });
   }, [selectedEgg]);
-
-  const freeAllocations = allocations?.filter((a) => !a.serverId) ?? [];
 
   function canProceed() {
     if (step === 0) return basicInfo.name.trim().length > 0 && basicInfo.userId.trim().length > 0;
@@ -221,7 +215,7 @@ export default function NewServerPage() {
                         onClick={() => setNodeAlloc({ nodeId: n.id, allocationId: "" })}
                         className={dropdownItemClass()}
                       >
-                        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${nodeAlloc.nodeId === n.id ? "bg-green-500" : "bg-transparent"}`} />
+                        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${nodeAlloc.nodeId === n.id ? "bg-blue-500" : "bg-transparent"}`} />
                         {n.name} <span className="text-muted-foreground/50">({n.fqdn})</span>
                       </DropdownMenuItem>
                     ))}
@@ -232,35 +226,14 @@ export default function NewServerPage() {
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-medium text-foreground">
                     {t("allocationLabel")} <span className="text-destructive">*</span>
-                    <span className="ml-1.5 font-normal text-muted-foreground">{t("allocationAvailable", { count: freeAllocations.length })}</span>
                   </label>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger className={`${dropdownTriggerClass()} font-mono`}>
-                      <span className={nodeAlloc.allocationId ? "text-foreground" : "text-muted-foreground/50"}>
-                        {nodeAlloc.allocationId
-                          ? (() => { const a = freeAllocations.find((a) => a.id === nodeAlloc.allocationId); return a ? `${a.ip}:${a.port}` : "Select..."; })()
-                          : t("allocationPlaceholder")}
-                      </span>
-                      <ChevronDown className="ml-2 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" sideOffset={4} className={dropdownContentClass()}>
-                      {freeAllocations.map((a) => (
-                        <DropdownMenuItem
-                          key={a.id}
-                          onClick={() => setNodeAlloc((f) => ({ ...f, allocationId: a.id }))}
-                          className={`${dropdownItemClass()} font-mono`}
-                        >
-                          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${nodeAlloc.allocationId === a.id ? "bg-green-500" : "bg-transparent"}`} />
-                          {a.ip}:{a.port}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  {freeAllocations.length === 0 && (
-                    <p className="text-xs text-destructive">
-                      {t("noFreeAllocations")}
-                    </p>
-                  )}
+                  <AllocationCombobox
+                    nodeId={nodeAlloc.nodeId}
+                    value={nodeAlloc.allocationId}
+                    onChange={(id) => setNodeAlloc((f) => ({ ...f, allocationId: id }))}
+                    placeholder={t("allocationPlaceholder")}
+                    emptyText={t("noFreeAllocations")}
+                  />
                 </div>
               )}
             </div>
@@ -280,7 +253,7 @@ export default function NewServerPage() {
                   <DropdownMenuContent align="start" sideOffset={4} className={dropdownContentClass()}>
                     {nests?.map((n) => (
                       <DropdownMenuItem key={n.id} onClick={() => setNestEgg({ nestId: n.id, eggId: "", image: "" })} className={dropdownItemClass()}>
-                        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${nestEgg.nestId === n.id ? "bg-green-500" : "bg-transparent"}`} />
+                        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${nestEgg.nestId === n.id ? "bg-blue-500" : "bg-transparent"}`} />
                         {n.name}
                       </DropdownMenuItem>
                     ))}
@@ -308,7 +281,7 @@ export default function NewServerPage() {
                           }}
                           className={dropdownItemClass()}
                         >
-                          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${nestEgg.eggId === egg.id ? "bg-green-500" : "bg-transparent"}`} />
+                          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${nestEgg.eggId === egg.id ? "bg-blue-500" : "bg-transparent"}`} />
                           {egg.name}
                         </DropdownMenuItem>
                       ))}
@@ -331,7 +304,7 @@ export default function NewServerPage() {
                     <DropdownMenuContent align="start" sideOffset={4} className={dropdownContentClass()}>
                       {Object.entries(JSON.parse(selectedEgg.dockerImages ?? "{}") as Record<string, string>).map(([alias, img]) => (
                         <DropdownMenuItem key={img} onClick={() => setNestEgg((f) => ({ ...f, image: img }))} className={`${dropdownItemClass()} font-mono`}>
-                          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${nestEgg.image === img ? "bg-green-500" : "bg-transparent"}`} />
+                          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${nestEgg.image === img ? "bg-blue-500" : "bg-transparent"}`} />
                           {alias || img}
                         </DropdownMenuItem>
                       ))}
@@ -460,7 +433,7 @@ export default function NewServerPage() {
                 type="button"
                 onClick={handleSubmit}
                 disabled={createMutation.isPending}
-                className="rounded-lg bg-green-500 px-4 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-80 disabled:opacity-40"
+                className="rounded-lg bg-blue-500 px-4 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-80 disabled:opacity-40"
               >
                 {createMutation.isPending ? tc("creating") : t("newServer")}
               </button>

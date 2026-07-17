@@ -18,7 +18,6 @@ export const nodesRouter = {
     .handler(async ({ input }) => {
       return db.query.nodes.findFirst({
         where: eq(nodes.id, input.id),
-        with: { allocations: true },
       });
     }),
 

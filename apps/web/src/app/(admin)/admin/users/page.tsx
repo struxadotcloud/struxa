@@ -18,6 +18,7 @@ import {
 } from "@struxa/ui/components/dialog";
 import { orpc, queryClient } from "@/utils/orpc";
 import { ContextMenu, RowMenu, type ActionItem } from "@/components/context-menu";
+import { DitherAvatar } from "@struxa/ui/components/dither-kit/avatar";
 
 function invalidateUsers() {
   void queryClient.invalidateQueries({ queryKey: orpc.users.key() });
@@ -172,7 +173,7 @@ export default function AdminUsersPage() {
 
         {/* Table */}
         <div className="overflow-x-auto">
-        <div className="min-w-[560px] overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        <div className="min-w-[560px] overflow-hidden rounded-xl border border-border bg-card">
           {/* Header */}
           <div className="grid grid-cols-[1fr_1fr_100px_80px_120px_36px] border-b border-border bg-muted/40 px-4 py-2.5">
             <span className="text-xs font-medium text-muted-foreground">{t("userColumn")}</span>
@@ -204,7 +205,9 @@ export default function AdminUsersPage() {
                       <div className="h-7 w-7 shrink-0 overflow-hidden rounded-full bg-muted flex items-center justify-center text-xs font-semibold text-foreground">
                         {u.image ? (
                           <img src={u.image} alt="" className="h-full w-full object-cover" />
-                        ) : (u.name ?? u.email).charAt(0).toUpperCase()}
+                        ) : (
+                          <DitherAvatar name={u.name ?? u.email} className="h-full w-full" />
+                        )}
                       </div>
                       <span className="text-sm font-medium text-foreground">{u.name ?? "—"}</span>
                     </div>
