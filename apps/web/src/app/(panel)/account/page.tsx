@@ -993,8 +993,12 @@ function ApiKeysTab() {
 
   return (
     <div className="flex flex-col gap-4">
-      <SectionCard title={t("title")} description={t("description")}>
-        <div className="mb-4 flex items-center justify-end">
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
+        <div className="flex items-center justify-between border-b border-border px-4 py-3">
+          <div>
+            <h3 className="text-sm font-semibold text-foreground">{t("title")}</h3>
+            <p className="mt-0.5 text-xs text-muted-foreground">{t("description")}</p>
+          </div>
           <button
             type="button"
             onClick={() => setCreateDialog(true)}
@@ -1006,14 +1010,21 @@ function ApiKeysTab() {
         </div>
 
         {loadingKeys ? (
-          <p className="text-sm text-muted-foreground">{tc("loading")}</p>
+          <p className="p-4 text-sm text-muted-foreground">{tc("loading")}</p>
         ) : keys.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-border px-4 py-8 text-center">
-            <Key className="mx-auto mb-2 h-6 w-6 text-muted-foreground/50" />
+          <div className="flex flex-col items-center justify-center gap-2 py-12">
+            <Key className="h-8 w-8 text-muted-foreground/30" />
             <p className="text-sm text-muted-foreground">{t("noKeysTitle")}</p>
+            <button
+              type="button"
+              onClick={() => setCreateDialog(true)}
+              className="mt-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              {t("createKey")}
+            </button>
           </div>
         ) : (
-          <div className="flex flex-col divide-y divide-border overflow-hidden rounded-lg border border-border">
+          <div className="flex flex-col divide-y divide-border">
             {keys.map((key) => (
               <div key={key.id} className="flex items-center justify-between px-4 py-3">
                 <div>
@@ -1037,7 +1048,7 @@ function ApiKeysTab() {
             ))}
           </div>
         )}
-      </SectionCard>
+      </div>
 
       {/* Create Key Dialog */}
       <Dialog open={createDialog} onOpenChange={(open) => { if (!open) { setCreateDialog(false); setNewKeyName(""); setNewKeyValue(null); } }}>
