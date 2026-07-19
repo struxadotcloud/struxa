@@ -11,6 +11,9 @@ import type { Monaco } from "@monaco-editor/react";
 import { orpc, queryClient } from "@/utils/orpc";
 import { ContextMenu, RowMenu, type ActionItem } from "@/components/context-menu";
 
+const databaseEngineTypes = ["mysql", "mariadb", "postgresql", "mongodb", "redis"] as const;
+type DatabaseEngineType = (typeof databaseEngineTypes)[number];
+
 function defineTheme(monaco: Monaco) {
   monaco.editor.defineTheme("struxa-dark", {
     base: "vs-dark",
@@ -197,6 +200,7 @@ export default function EggDetailPage({
 }) {
   const t = useTranslations("admin.nests");
   const tc = useTranslations("common");
+  const tt = useTranslations("common.databaseTypes");
   const shouldReduceMotion = useReducedMotion();
 
   const TABS: { id: Tab; label: string }[] = [
@@ -243,6 +247,7 @@ export default function EggDetailPage({
   const [newDetection, setNewDetection] = useState("");
   const [features, setFeatures] = useState<string[]>([]);
   const [newFeature, setNewFeature] = useState("");
+  const [allowedDatabaseTypes, setAllowedDatabaseTypes] = useState<DatabaseEngineType[]>([]);
   const [dockerImages, setDockerImages] = useState<DockerImage[]>([]);
   const [scriptInstall, setScriptInstall] = useState("");
   const [scriptEntry, setScriptEntry] = useState("bash");
@@ -276,6 +281,11 @@ export default function EggDetailPage({
         const fs = JSON.parse(egg.features ?? "[]") as string[];
         setFeatures(Array.isArray(fs) ? fs : []);
       } catch { /* leave empty */ }
+
+      try {
+        const dt = JSON.parse(egg.allowedDatabaseTypes ?? "[]") as DatabaseEngineType[];
+        setAllowedDatabaseTypes(Array.isArray(dt) ? dt : []);
+      } catch { /* leave empty */ }
     }
   }, [egg]);
 
@@ -293,6 +303,7 @@ export default function EggDetailPage({
       dockerImages: serializeDockerImages(dockerImages),
       configStartup,
       features,
+      allowedDatabaseTypes,
       scriptInstall,
       scriptEntry,
       scriptContainer,
@@ -614,6 +625,34 @@ export default function EggDetailPage({
                       {tc("add")}
                     </button>
                   </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-border bg-card">
+              <div className="border-b border-border px-4 py-3">
+                <h2 className="text-sm font-semibold text-foreground">
+                  {t("allowedDatabaseTypesTitle")}
+                  <span className="ml-1.5 font-normal text-xs text-muted-foreground">{t("allowedDatabaseTypesHint")}</span>
+                </h2>
+              </div>
+              <div className="p-4">
+                <div className="flex flex-wrap items-center gap-4">
+                  {databaseEngineTypes.map((type) => (
+                    <label key={type} className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
+                      <input
+                        type="checkbox"
+                        checked={allowedDatabaseTypes.includes(type)}
+                        onChange={(e) =>
+                          setAllowedDatabaseTypes((prev) =>
+                            e.target.checked ? [...prev, type] : prev.filter((t) => t !== type),
+                          )
+                        }
+                        className="h-3.5 w-3.5 rounded"
+                      />
+                      {tt(type)}
+                    </label>
+                  ))}
                 </div>
               </div>
             </div>

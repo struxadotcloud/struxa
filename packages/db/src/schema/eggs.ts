@@ -19,6 +19,7 @@ export const eggs = mysqlTable(
     name: varchar("name", { length: 255 }).notNull(),
     description: text("description"),
     features: text("features"),
+    allowedDatabaseTypes: text("allowed_database_types"),
     dockerImages: text("docker_images").notNull(),
     stopCommand: varchar("stop_command", { length: 255 }),
     startup: text("startup").notNull(),

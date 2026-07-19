@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@struxa/db";
-import { eggVariables, eggs } from "@struxa/db";
+import { databaseEngineTypes, eggVariables, eggs } from "@struxa/db";
 import { recordActivity } from "../services/activity";
 import { adminProcedure, protectedProcedure } from "../index";
 
@@ -58,6 +58,7 @@ export const eggsRouter = {
         startup: z.string().min(1),
         stopCommand: z.string().optional(),
         features: z.array(z.string()).optional(),
+        allowedDatabaseTypes: z.array(z.enum(databaseEngineTypes)).optional(),
         configFiles: z.string().optional(),
         configStartup: z.string().optional(),
         configStop: z.string().optional(),
@@ -70,7 +71,7 @@ export const eggsRouter = {
       }),
     )
     .handler(async ({ context, input }) => {
-      const { variables, dockerImages, features, ...eggData } = input;
+      const { variables, dockerImages, features, allowedDatabaseTypes, ...eggData } = input;
       const id = randomUUID();
       const uuid = randomUUID();
 
@@ -79,6 +80,7 @@ export const eggsRouter = {
         uuid,
         dockerImages: JSON.stringify(dockerImages),
         features: features ? JSON.stringify(features) : null,
+        allowedDatabaseTypes: allowedDatabaseTypes?.length ? JSON.stringify(allowedDatabaseTypes) : null,
         ...eggData,
       });
 
@@ -107,6 +109,7 @@ export const eggsRouter = {
         stopCommand: z.string().optional(),
         configStartup: z.string().optional(),
         features: z.array(z.string()).optional(),
+        allowedDatabaseTypes: z.array(z.enum(databaseEngineTypes)).optional(),
         scriptInstall: z.string().optional(),
         scriptEntry: z.string().optional(),
         scriptContainer: z.string().optional(),
@@ -114,13 +117,16 @@ export const eggsRouter = {
       }),
     )
     .handler(async ({ context, input }) => {
-      const { id, dockerImages, features, ...data } = input;
+      const { id, dockerImages, features, allowedDatabaseTypes, ...data } = input;
       await db
         .update(eggs)
         .set({
           ...data,
           ...(dockerImages ? { dockerImages: JSON.stringify(dockerImages) } : {}),
           ...(features !== undefined ? { features: JSON.stringify(features) } : {}),
+          ...(allowedDatabaseTypes !== undefined
+            ? { allowedDatabaseTypes: allowedDatabaseTypes.length ? JSON.stringify(allowedDatabaseTypes) : null }
+            : {}),
         })
         .where(eq(eggs.id, id));
       const egg = await db.query.eggs.findFirst({

@@ -1,0 +1,1 @@
+ALTER TABLE `database_hosts` ADD `ssl` boolean DEFAULT false NOT NULL;

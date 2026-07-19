@@ -25,15 +25,19 @@
     "croner": "catalog:",
     "dotenv": "catalog:",
     "drizzle-orm": "^0.45.1",
+    "ioredis": "^5.4.1",
     "jose": "catalog:",
+    "mongodb": "^6.11.0",
     "mysql2": "^3.14.0",
     "next": "catalog:",
     "nodemailer": "^8.0.8",
+    "pg": "^8.13.1",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@struxa/config": "workspace:*",
     "typescript": "catalog:",
-    "@types/bcryptjs": "^2.4.6"
+    "@types/bcryptjs": "^2.4.6",
+    "@types/pg": "^8.11.10"
   }
 }
