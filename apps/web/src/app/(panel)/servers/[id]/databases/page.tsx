@@ -20,6 +20,10 @@ import { toast } from "sonner";
 import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
 import Loader from "@/components/loader";
+import { formatConnectionString } from "@/lib/db-connection-string";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+
+type DatabaseEngineType = "mysql" | "mariadb" | "postgresql" | "mongodb" | "redis";
 
 function StatRow({ icon: Icon, label, children }: { icon: LucideIcon; label: string; children: React.ReactNode }) {
   return (
@@ -40,22 +44,27 @@ type DbRow = {
   database: string;
   username: string;
   password: string;
-  remote: string;
-  host: { host: string; port: number };
+  remote: string | null;
+  host: { host: string; port: number; type: DatabaseEngineType };
 };
 
-function DatabaseRow({ db, serverId, onRotate, onDelete }: {
+function DatabaseRow({ db, onRotate, onDelete, rotating }: {
   db: DbRow;
-  serverId: string;
   onRotate: (id: string) => void;
   onDelete: (id: string) => void;
+  rotating: boolean;
 }) {
   const t = useTranslations("panel.databases");
+  const tt = useTranslations("common.databaseTypes");
   const [open, setOpen] = useState(false);
   const [visible, setVisible] = useState(false);
   const [pw, setPw] = useState(db.password);
 
+  useEffect(() => setPw(db.password), [db.password]);
+
   function copy(text: string) { void navigator.clipboard.writeText(text); }
+
+  const isRedis = db.host.type === "redis";
 
   return (
     <div className="border-b border-border last:border-b-0">
@@ -67,14 +76,18 @@ function DatabaseRow({ db, serverId, onRotate, onDelete }: {
         <ChevronRight className={`h-3.5 w-3.5 shrink-0 text-muted-foreground/50 transition-transform ${open ? "rotate-90" : ""}`} />
         <Database className="h-4 w-4 shrink-0 text-muted-foreground" />
         <span className="font-mono text-sm font-medium text-foreground flex-1">{db.database}</span>
+        <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+          {tt(db.host.type)}
+        </span>
         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
-            onClick={() => { onRotate(db.id); setPw(t("rotating")); }}
-            className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            onClick={() => onRotate(db.id)}
+            disabled={rotating}
+            className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-40"
           >
-            <RefreshCw className="h-3 w-3" />
-            {t("rotatePassword")}
+            <RefreshCw className={`h-3 w-3 ${rotating ? "animate-spin" : ""}`} />
+            {rotating ? t("rotating") : t("rotatePassword")}
           </button>
           <button
             type="button"
@@ -124,14 +137,18 @@ function DatabaseRow({ db, serverId, onRotate, onDelete }: {
             <span className="font-mono text-sm text-foreground">{db.host.port}</span>
           </div>
           <div className="col-span-1 border-t border-border px-4 py-3 sm:col-span-2">
-            <p className="mb-1.5 text-xs font-medium text-muted-foreground">{t("fieldConnectionString")}</p>
+            <p className="mb-1.5 text-xs font-medium text-muted-foreground">
+              {isRedis ? t("fieldConnectionStringNoKeyspace") : t("fieldConnectionString")}
+            </p>
             <div className="flex items-center gap-2">
               <span className="font-mono text-xs text-muted-foreground">
-                mysql://{db.username}:***@{db.host.host}:{db.host.port}/{db.database}
+                {formatConnectionString(db.host.type, { username: db.username, password: "***", host: db.host.host, port: db.host.port, database: db.database })}
               </span>
               <button
                 type="button"
-                onClick={() => copy(`mysql://${db.username}:${pw}@${db.host.host}:${db.host.port}/${db.database}`)}
+                onClick={() =>
+                  copy(formatConnectionString(db.host.type, { username: db.username, password: pw, host: db.host.host, port: db.host.port, database: db.database }))
+                }
                 className="rounded p-0.5 text-muted-foreground/50 hover:bg-muted hover:text-foreground transition-colors shrink-0"
               >
                 <Copy className="h-3.5 w-3.5" />
@@ -147,13 +164,15 @@ function DatabaseRow({ db, serverId, onRotate, onDelete }: {
 export default function DatabasesPage({ params }: { params: Promise<{ id: string }> }) {
   const t = useTranslations("panel.databases");
   const tc = useTranslations("common");
+  const tt = useTranslations("common.databaseTypes");
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
   const { id } = use(params);
   const queryClient = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
   const [dbName, setDbName] = useState("");
-  const [hostId, setHostId] = useState("");
+  const [dbType, setDbType] = useState<DatabaseEngineType | "">("");
+  const [confirmRotateId, setConfirmRotateId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isPending && !session) router.replace("/login");
@@ -167,9 +186,9 @@ export default function DatabasesPage({ params }: { params: Promise<{ id: string
     enabled: !!serverId,
   });
 
-  const { data: hosts = [] } = useQuery({
-    ...orpc.databaseHosts.listAvailable.queryOptions(),
-    enabled: showCreate,
+  const { data: availableTypes = [] } = useQuery({
+    ...orpc.databaseHosts.listAvailableTypes.queryOptions({ input: { serverId: serverId ?? "" } }),
+    enabled: showCreate && !!serverId,
   });
 
   const createMutation = useMutation(orpc.databases.create.mutationOptions());
@@ -191,12 +210,12 @@ export default function DatabasesPage({ params }: { params: Promise<{ id: string
   function closeCreate() {
     setShowCreate(false);
     setDbName("");
-    setHostId("");
+    setDbType("");
   }
 
   async function handleCreate() {
-    if (!serverId || !dbName.trim() || !hostId) return;
-    await createMutation.mutateAsync({ serverId, hostId, database: dbName.trim(), remote: "%" });
+    if (!serverId || !dbName.trim() || !dbType) return;
+    await createMutation.mutateAsync({ serverId, type: dbType, database: dbName.trim() });
     void queryClient.invalidateQueries(orpc.databases.list.queryOptions({ input: { serverId } }));
     toast.success(tc("created"));
     closeCreate();
@@ -221,31 +240,30 @@ export default function DatabasesPage({ params }: { params: Promise<{ id: string
                 onChange={(e) => setDbName(e.target.value.replace(/[^a-zA-Z0-9_]/g, ""))}
                 placeholder="my_database"
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 font-mono text-sm text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
-                onKeyDown={(e) => { if (e.key === "Enter" && hostId) void handleCreate(); if (e.key === "Escape") closeCreate(); }}
+                onKeyDown={(e) => { if (e.key === "Enter" && dbType) void handleCreate(); if (e.key === "Escape") closeCreate(); }}
               />
               <p className="mt-1 text-xs text-muted-foreground">{t("databaseNameHint")}</p>
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-foreground">{t("databaseHostLabel")}</label>
-              {(hosts as Array<{ id: string; host: string; port: number }>).length === 0 ? (
+              <label className="mb-1.5 block text-xs font-medium text-foreground">{t("databaseTypeLabel")}</label>
+              {availableTypes.length === 0 ? (
                 <p className="rounded-lg border border-border bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
-                  {t("noHostsConfigured")}
+                  {t("noTypesAvailable")}
                 </p>
               ) : (
-                <div className="flex flex-col gap-1.5">
-                  {(hosts as Array<{ id: string; host: string; port: number }>).map((h) => (
+                <div className="flex flex-wrap gap-1.5">
+                  {availableTypes.map((type) => (
                     <button
-                      key={h.id}
+                      key={type}
                       type="button"
-                      onClick={() => setHostId(h.id)}
-                      className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm transition-colors ${
-                        hostId === h.id
+                      onClick={() => setDbType(type)}
+                      className={`rounded-lg border px-3 py-2 text-sm transition-colors ${
+                        dbType === type
                           ? "border-ring bg-muted/40 text-foreground"
                           : "border-border text-muted-foreground hover:bg-muted/40 hover:text-foreground"
                       }`}
                     >
-                      <span className="font-mono">{h.host}</span>
-                      <span className="text-xs text-muted-foreground">:{h.port}</span>
+                      {tt(type)}
                     </button>
                   ))}
                 </div>
@@ -262,7 +280,7 @@ export default function DatabasesPage({ params }: { params: Promise<{ id: string
             <button
               type="button"
               onClick={() => void handleCreate()}
-              disabled={!dbName.trim() || !hostId || createMutation.isPending}
+              disabled={!dbName.trim() || !dbType || createMutation.isPending}
               className="rounded-lg bg-foreground px-4 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
             >
               {createMutation.isPending ? t("creating") : t("createDatabase")}
@@ -270,6 +288,19 @@ export default function DatabasesPage({ params }: { params: Promise<{ id: string
           </DialogFooter>
         </DialogPopup>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!confirmRotateId}
+        onOpenChange={(open) => { if (!open) setConfirmRotateId(null); }}
+        title={t("rotateConfirmTitle")}
+        description={t("rotateConfirmDesc")}
+        loading={rotateMutation.isPending}
+        onConfirm={async () => {
+          if (!confirmRotateId || !serverId) return;
+          await rotateMutation.mutateAsync({ serverId, databaseId: confirmRotateId });
+          setConfirmRotateId(null);
+        }}
+      />
 
       <div className="flex flex-1 flex-col gap-3 overflow-auto px-4 py-4 md:flex-row md:overflow-hidden">
         <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card">
@@ -304,9 +335,9 @@ export default function DatabasesPage({ params }: { params: Promise<{ id: string
                 <DatabaseRow
                   key={db.id}
                   db={db as DbRow}
-                  serverId={serverId ?? ""}
-                  onRotate={(dbId) => serverId && rotateMutation.mutate({ serverId, databaseId: dbId })}
+                  onRotate={(dbId) => setConfirmRotateId(dbId)}
                   onDelete={(dbId) => serverId && deleteMutation.mutate({ serverId, databaseId: dbId })}
+                  rotating={rotateMutation.isPending && rotateMutation.variables?.databaseId === db.id}
                 />
               ))
             )}

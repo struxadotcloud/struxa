@@ -36,6 +36,27 @@
       "when": 1781635601735,
       "tag": "0004_noisy_black_bolt",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1784390146662,
+      "tag": "0005_clammy_solo",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1784391420510,
+      "tag": "0006_small_pet_avengers",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1784394078950,
+      "tag": "0007_same_random",
+      "breakpoints": true
     }
   ]
 }

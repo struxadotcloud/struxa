@@ -1,0 +1,1 @@
+ALTER TABLE `database_hosts` ADD `allowed_node_ids` text;

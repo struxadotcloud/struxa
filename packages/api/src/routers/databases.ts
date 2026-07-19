@@ -3,10 +3,19 @@ import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { ORPCError } from "@orpc/server";
 import { db } from "@struxa/db";
-import { databaseHosts, serverDatabases, servers } from "@struxa/db";
+import { databaseEngineTypes, databaseHosts, serverDatabases, servers, type DatabaseEngineType } from "@struxa/db";
 import { encrypt, decrypt } from "../lib/crypto";
+import { dbEngines } from "../lib/db-engines";
 import { recordActivity } from "../services/activity";
 import { protectedProcedure } from "../index";
+
+const usernameMaxLength: Record<DatabaseEngineType, number> = {
+  mysql: 32,
+  mariadb: 32,
+  postgresql: 63,
+  mongodb: 63,
+  redis: 63,
+};
 
 function generatePassword(length = 24): string {
   const chars =
@@ -46,50 +55,48 @@ export const databasesRouter = {
     .input(
       z.object({
         serverId: z.string().uuid(),
-        hostId: z.string().uuid(),
+        type: z.enum(databaseEngineTypes),
         database: z.string().min(1).max(100).regex(/^[a-zA-Z0-9_]+$/),
-        remote: z.string().default("%"),
+        remote: z.string().max(60).regex(/^[a-zA-Z0-9%_.:-]+$/).optional(),
       }),
     )
     .handler(async ({ context, input }) => {
       const server = await db.query.servers.findFirst({
         where: eq(servers.id, input.serverId),
+        with: { egg: true },
       });
       if (!server) throw new ORPCError("NOT_FOUND");
       if (server.userId !== context.session.user.id && context.session.user.role !== "admin") {
         throw new ORPCError("FORBIDDEN");
       }
 
-      const host = await db.query.databaseHosts.findFirst({
-        where: eq(databaseHosts.id, input.hostId),
-      });
-      if (!host) throw new ORPCError("NOT_FOUND", { message: "Database host not found" });
+      const rawAllowed = server.egg?.allowedDatabaseTypes;
+      const allowed = rawAllowed ? (JSON.parse(rawAllowed) as DatabaseEngineType[]) : null;
+      if (allowed && allowed.length > 0 && !allowed.includes(input.type)) {
+        throw new ORPCError("FORBIDDEN", { message: "Database engine not allowed for this egg" });
+      }
 
+      const candidates = await db.query.databaseHosts.findMany({
+        where: eq(databaseHosts.type, input.type),
+      });
+      const eligible = candidates.filter((h) => {
+        const nodeIds = h.allowedNodeIds ? (JSON.parse(h.allowedNodeIds) as string[]) : null;
+        return !nodeIds || nodeIds.length === 0 || nodeIds.includes(server.nodeId);
+      });
+      if (eligible.length === 0) {
+        throw new ORPCError("NOT_FOUND", { message: "No available database host for this engine" });
+      }
+      const host = eligible[Math.floor(Math.random() * eligible.length)]!;
+
+      const remote = host.type === "mysql" || host.type === "mariadb" ? (input.remote ?? "%") : undefined;
       const dbName = `s${server.uuidShort}_${input.database}`;
-      const username = `u${server.uuidShort}_${input.database}`.slice(0, 32);
+      const username = `u${server.uuidShort}_${input.database}`.slice(0, usernameMaxLength[host.type]);
       const password = generatePassword();
 
-      const mysql = await import("mysql2/promise");
-      const conn = await mysql.createConnection({
-        host: host.host,
-        port: host.port,
-        user: host.username,
-        password: decrypt(host.password),
-      });
-
-      try {
-        await conn.execute(`CREATE DATABASE IF NOT EXISTS \`${dbName}\``);
-        await conn.execute(
-          `CREATE USER IF NOT EXISTS '${username}'@'${input.remote}' IDENTIFIED BY ?`,
-          [password],
-        );
-        await conn.execute(
-          `GRANT ALL PRIVILEGES ON \`${dbName}\`.* TO '${username}'@'${input.remote}'`,
-        );
-        await conn.execute("FLUSH PRIVILEGES");
-      } finally {
-        await conn.end();
-      }
+      await dbEngines[host.type].createDatabase(
+        { host: host.host, port: host.port, username: host.username, password: decrypt(host.password), ssl: host.ssl },
+        { database: dbName, username, password, remote },
+      );
 
       const id = randomUUID();
       const uuid = randomUUID();
@@ -97,10 +104,10 @@ export const databasesRouter = {
         id,
         uuid,
         serverId: input.serverId,
-        hostId: input.hostId,
+        hostId: host.id,
         database: dbName,
         username,
-        remote: input.remote,
+        remote,
         password: encrypt(password),
       });
 
@@ -139,23 +146,16 @@ export const databasesRouter = {
       if (!dbRecord) throw new ORPCError("NOT_FOUND");
 
       const newPassword = generatePassword();
-      const mysql = await import("mysql2/promise");
-      const conn = await mysql.createConnection({
-        host: dbRecord.host.host,
-        port: dbRecord.host.port,
-        user: dbRecord.host.username,
-        password: decrypt(dbRecord.host.password),
-      });
-
-      try {
-        await conn.execute(
-          `ALTER USER '${dbRecord.username}'@'${dbRecord.remote}' IDENTIFIED BY ?`,
-          [newPassword],
-        );
-        await conn.execute("FLUSH PRIVILEGES");
-      } finally {
-        await conn.end();
-      }
+      await dbEngines[dbRecord.host.type].rotatePassword(
+        {
+          host: dbRecord.host.host,
+          port: dbRecord.host.port,
+          username: dbRecord.host.username,
+          password: decrypt(dbRecord.host.password),
+          ssl: dbRecord.host.ssl,
+        },
+        { username: dbRecord.username, newPassword, remote: dbRecord.remote ?? undefined, database: dbRecord.database },
+      );
 
       await db
         .update(serverDatabases)
@@ -193,23 +193,16 @@ export const databasesRouter = {
       });
       if (!dbRecord) throw new ORPCError("NOT_FOUND");
 
-      const mysql = await import("mysql2/promise");
-      const conn = await mysql.createConnection({
-        host: dbRecord.host.host,
-        port: dbRecord.host.port,
-        user: dbRecord.host.username,
-        password: decrypt(dbRecord.host.password),
-      });
-
-      try {
-        await conn.execute(
-          `DROP USER IF EXISTS '${dbRecord.username}'@'${dbRecord.remote}'`,
-        );
-        await conn.execute(`DROP DATABASE IF EXISTS \`${dbRecord.database}\``);
-        await conn.execute("FLUSH PRIVILEGES");
-      } finally {
-        await conn.end();
-      }
+      await dbEngines[dbRecord.host.type].dropDatabase(
+        {
+          host: dbRecord.host.host,
+          port: dbRecord.host.port,
+          username: dbRecord.host.username,
+          password: decrypt(dbRecord.host.password),
+          ssl: dbRecord.host.ssl,
+        },
+        { database: dbRecord.database, username: dbRecord.username, remote: dbRecord.remote ?? undefined },
+      );
 
       await db
         .delete(serverDatabases)
