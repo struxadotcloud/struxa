@@ -387,7 +387,7 @@
       "statDatabases": "Bases de données",
       "statHost": "Hôte",
       "statNote": "Note",
-      "statNoteText": "Les bases de données sont provisionnées sur un hôte MySQL partagé. Les identifiants sont uniques par base de données et ne peuvent pas être partagés entre les serveurs."
+      "statNoteText": "Les bases de données sont provisionnées sur un hôte de base de données configuré par votre administrateur. Les identifiants sont uniques par base de données et ne peuvent pas être partagés entre les serveurs."
     },
     "schedules": {
       "createTitle": "Créer un planning",

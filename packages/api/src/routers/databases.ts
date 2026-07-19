@@ -17,6 +17,14 @@ const usernameMaxLength: Record<DatabaseEngineType, number> = {
   redis: 63,
 };
 
+const databaseNameMaxLength: Record<DatabaseEngineType, number> = {
+  mysql: 64,
+  mariadb: 64,
+  postgresql: 63,
+  mongodb: 64,
+  redis: 64,
+};
+
 function generatePassword(length = 24): string {
   const chars =
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
@@ -57,7 +65,7 @@ export const databasesRouter = {
         serverId: z.string().uuid(),
         type: z.enum(databaseEngineTypes),
         database: z.string().min(1).max(100).regex(/^[a-zA-Z0-9_]+$/),
-        remote: z.string().max(60).regex(/^[a-zA-Z0-9%_.:-]+$/).optional(),
+        remote: z.string().max(15).regex(/^[a-zA-Z0-9%_.:-]+$/).optional(),
       }),
     )
     .handler(async ({ context, input }) => {
@@ -89,7 +97,7 @@ export const databasesRouter = {
       const host = eligible[Math.floor(Math.random() * eligible.length)]!;
 
       const remote = host.type === "mysql" || host.type === "mariadb" ? (input.remote ?? "%") : undefined;
-      const dbName = `s${server.uuidShort}_${input.database}`;
+      const dbName = `s${server.uuidShort}_${input.database}`.slice(0, databaseNameMaxLength[host.type]);
       const username = `u${server.uuidShort}_${input.database}`.slice(0, usernameMaxLength[host.type]);
       const password = generatePassword();
 

@@ -1,7 +1,17 @@
-import type { DbEngineAdapter } from "./index";
+import type { DbEngineAdapter, DbHostConn } from "./index";
 
 function quoteIdent(name: string): string {
   return `\`${name.replace(/`/g, "``")}\``;
+}
+
+function connectionConfig(conn: DbHostConn) {
+  return {
+    host: conn.host,
+    port: conn.port,
+    user: conn.username,
+    password: conn.password,
+    ssl: conn.ssl ? { rejectUnauthorized: false } : undefined,
+  };
 }
 
 export const mysqlAdapter: DbEngineAdapter = {
@@ -10,12 +20,7 @@ export const mysqlAdapter: DbEngineAdapter = {
   async testConnection(conn) {
     try {
       const mysql = await import("mysql2/promise");
-      const connection = await mysql.createConnection({
-        host: conn.host,
-        port: conn.port,
-        user: conn.username,
-        password: conn.password,
-      });
+      const connection = await mysql.createConnection(connectionConfig(conn));
       await connection.ping();
       await connection.end();
       return { ok: true };
@@ -26,12 +31,7 @@ export const mysqlAdapter: DbEngineAdapter = {
 
   async createDatabase(conn, opts) {
     const mysql = await import("mysql2/promise");
-    const connection = await mysql.createConnection({
-      host: conn.host,
-      port: conn.port,
-      user: conn.username,
-      password: conn.password,
-    });
+    const connection = await mysql.createConnection(connectionConfig(conn));
     const remote = opts.remote ?? "%";
     // CREATE/ALTER/DROP USER don't accept bind parameters ($1-style `?`) for the
     // user/host/password literals, so they're inlined via the driver's own
@@ -53,12 +53,7 @@ export const mysqlAdapter: DbEngineAdapter = {
 
   async rotatePassword(conn, opts) {
     const mysql = await import("mysql2/promise");
-    const connection = await mysql.createConnection({
-      host: conn.host,
-      port: conn.port,
-      user: conn.username,
-      password: conn.password,
-    });
+    const connection = await mysql.createConnection(connectionConfig(conn));
     const remote = opts.remote ?? "%";
     try {
       await connection.execute(
@@ -72,12 +67,7 @@ export const mysqlAdapter: DbEngineAdapter = {
 
   async dropDatabase(conn, opts) {
     const mysql = await import("mysql2/promise");
-    const connection = await mysql.createConnection({
-      host: conn.host,
-      port: conn.port,
-      user: conn.username,
-      password: conn.password,
-    });
+    const connection = await mysql.createConnection(connectionConfig(conn));
     const remote = opts.remote ?? "%";
     try {
       await connection.execute(`DROP USER IF EXISTS ${connection.escape(opts.username)}@${connection.escape(remote)}`);
@@ -89,6 +79,6 @@ export const mysqlAdapter: DbEngineAdapter = {
   },
 
   formatConnectionString(opts) {
-    return `mysql://${opts.username}:${opts.password}@${opts.host}:${opts.port}/${opts.database}`;
+    return `mysql://${encodeURIComponent(opts.username)}:${encodeURIComponent(opts.password)}@${opts.host}:${opts.port}/${opts.database}`;
   },
 };

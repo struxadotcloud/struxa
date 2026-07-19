@@ -387,7 +387,7 @@
       "statDatabases": "Datenbanken",
       "statHost": "Host",
       "statNote": "Hinweis",
-      "statNoteText": "Datenbanken werden auf einem gemeinsamen MySQL-Host bereitgestellt. Die Anmeldedaten sind pro Datenbank eindeutig und können nicht zwischen Servern geteilt werden."
+      "statNoteText": "Datenbanken werden auf einem vom Administrator konfigurierten Datenbankhost bereitgestellt. Die Anmeldedaten sind pro Datenbank eindeutig und können nicht zwischen Servern geteilt werden."
     },
     "schedules": {
       "createTitle": "Zeitplan erstellen",

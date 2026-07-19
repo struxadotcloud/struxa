@@ -65,6 +65,6 @@ export const mongodbAdapter: DbEngineAdapter = {
   },
 
   formatConnectionString(opts) {
-    return `mongodb://${opts.username}:${opts.password}@${opts.host}:${opts.port}/${opts.database}`;
+    return `mongodb://${encodeURIComponent(opts.username)}:${encodeURIComponent(opts.password)}@${opts.host}:${opts.port}/${opts.database}`;
   },
 };

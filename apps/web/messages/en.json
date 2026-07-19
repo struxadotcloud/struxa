@@ -496,7 +496,7 @@
     },
     "databases": {
       "createTitle": "New Database",
-      "createDescription": "Create a MySQL database for this server.",
+      "createDescription": "Create a database for this server.",
       "databaseNameLabel": "Database Name",
       "databaseNameHint": "Only letters, numbers, and underscores.",
       "databaseTypeLabel": "Database Type",
@@ -523,7 +523,7 @@
       "statDatabases": "Databases",
       "statHost": "Host",
       "statNote": "Note",
-      "statNoteText": "Databases are provisioned on a shared MySQL host. Credentials are unique per database and cannot be shared across servers."
+      "statNoteText": "Databases are provisioned on a database host configured by your administrator. Credentials are unique per database and cannot be shared across servers."
     },
     "schedules": {
       "createTitle": "Create Schedule",

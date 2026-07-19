@@ -387,7 +387,7 @@
       "statDatabases": "Bases de datos",
       "statHost": "Host",
       "statNote": "Nota",
-      "statNoteText": "Las bases de datos se aprovisionan en un host MySQL compartido. Las credenciales son únicas por base de datos y no se pueden compartir entre servidores."
+      "statNoteText": "Las bases de datos se aprovisionan en un host de base de datos configurado por tu administrador. Las credenciales son únicas por base de datos y no se pueden compartir entre servidores."
     },
     "schedules": {
       "createTitle": "Crear horario",

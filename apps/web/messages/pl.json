@@ -387,7 +387,7 @@
       "statDatabases": "Bazy danych",
       "statHost": "Host",
       "statNote": "Uwaga",
-      "statNoteText": "Bazy danych są tworzone na wspólnym hoście MySQL. Dane uwierzytelniające są unikalne dla każdej bazy i nie można ich udostępniać między serwerami."
+      "statNoteText": "Bazy danych są tworzone na hoście bazy danych skonfigurowanym przez administratora. Dane uwierzytelniające są unikalne dla każdej bazy i nie można ich udostępniać między serwerami."
     },
     "schedules": {
       "createTitle": "Utwórz harmonogram",

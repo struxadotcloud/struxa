@@ -84,6 +84,6 @@ export const postgresqlAdapter: DbEngineAdapter = {
   },
 
   formatConnectionString(opts) {
-    return `postgresql://${opts.username}:${opts.password}@${opts.host}:${opts.port}/${opts.database}`;
+    return `postgresql://${encodeURIComponent(opts.username)}:${encodeURIComponent(opts.password)}@${opts.host}:${opts.port}/${opts.database}`;
   },
 };

@@ -1,40 +1,40 @@
-import type { DbEngineAdapter } from "./index";
+import type { DbEngineAdapter, DbHostConn } from "./index";
+
+async function createClient(conn: DbHostConn) {
+  const { Redis } = await import("ioredis");
+  return new Redis({
+    host: conn.host,
+    port: conn.port,
+    username: conn.username,
+    password: conn.password,
+    tls: conn.ssl ? {} : undefined,
+    lazyConnect: true,
+    maxRetriesPerRequest: 1,
+  });
+}
 
 export const redisAdapter: DbEngineAdapter = {
   defaultPort: 6379,
 
   async testConnection(conn) {
+    const client = await createClient(conn);
     try {
-      const { Redis } = await import("ioredis");
-      const client = new Redis({
-        host: conn.host,
-        port: conn.port,
-        username: conn.username,
-        password: conn.password,
-        lazyConnect: true,
-        maxRetriesPerRequest: 1,
-      });
       await client.connect();
       await client.ping();
-      client.disconnect();
       return { ok: true };
     } catch (err) {
       return { ok: false, error: String(err) };
+    } finally {
+      client.disconnect();
     }
   },
 
   async createDatabase(conn, opts) {
-    const { Redis } = await import("ioredis");
-    const client = new Redis({
-      host: conn.host,
-      port: conn.port,
-      username: conn.username,
-      password: conn.password,
-      lazyConnect: true,
-      maxRetriesPerRequest: 1,
-    });
-    await client.connect();
+    const client = await createClient(conn);
     try {
+      await client.connect();
+      // ponytail: no per-key isolation (~*), matches MySQL's GRANT ALL trust
+      // model for this host type — a deliberate, confirmed simplification.
       await client.call(
         "ACL",
         "SETUSER",
@@ -50,17 +50,9 @@ export const redisAdapter: DbEngineAdapter = {
   },
 
   async rotatePassword(conn, opts) {
-    const { Redis } = await import("ioredis");
-    const client = new Redis({
-      host: conn.host,
-      port: conn.port,
-      username: conn.username,
-      password: conn.password,
-      lazyConnect: true,
-      maxRetriesPerRequest: 1,
-    });
-    await client.connect();
+    const client = await createClient(conn);
     try {
+      await client.connect();
       await client.call(
         "ACL",
         "SETUSER",
@@ -77,17 +69,9 @@ export const redisAdapter: DbEngineAdapter = {
   },
 
   async dropDatabase(conn, opts) {
-    const { Redis } = await import("ioredis");
-    const client = new Redis({
-      host: conn.host,
-      port: conn.port,
-      username: conn.username,
-      password: conn.password,
-      lazyConnect: true,
-      maxRetriesPerRequest: 1,
-    });
-    await client.connect();
+    const client = await createClient(conn);
     try {
+      await client.connect();
       await client.call("ACL", "DELUSER", opts.username);
     } finally {
       client.disconnect();
@@ -95,6 +79,6 @@ export const redisAdapter: DbEngineAdapter = {
   },
 
   formatConnectionString(opts) {
-    return `redis://${opts.username}:${opts.password}@${opts.host}:${opts.port}`;
+    return `redis://${encodeURIComponent(opts.username)}:${encodeURIComponent(opts.password)}@${opts.host}:${opts.port}`;
   },
 };
