@@ -25,6 +25,12 @@ const databaseNameMaxLength: Record<DatabaseEngineType, number> = {
   redis: 64,
 };
 
+function randomIndex(length: number): number {
+  const arr = new Uint32Array(1);
+  crypto.getRandomValues(arr);
+  return arr[0]! % length;
+}
+
 function generatePassword(length = 24): string {
   const chars =
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
@@ -94,7 +100,7 @@ export const databasesRouter = {
       if (eligible.length === 0) {
         throw new ORPCError("NOT_FOUND", { message: "No available database host for this engine" });
       }
-      const host = eligible[Math.floor(Math.random() * eligible.length)]!;
+      const host = eligible[randomIndex(eligible.length)]!;
 
       const remote = host.type === "mysql" || host.type === "mariadb" ? (input.remote ?? "%") : undefined;
       const dbName = `s${server.uuidShort}_${input.database}`.slice(0, databaseNameMaxLength[host.type]);
