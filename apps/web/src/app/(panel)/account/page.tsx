@@ -433,23 +433,27 @@ function ProfileTab() {
                 <Select value={locale} onValueChange={handleLocaleChange}>
                   <SelectTrigger>
                     <SelectValue>
-                      <ReactCountryFlag
-                        countryCode={selectedLocale!.countryCode}
-                        svg
-                        style={{ width: "1.1em", height: "1.1em", borderRadius: "2px" }}
-                      />
-                      {tl(selectedLocale!.labelKey)}
+                      <span className="flex items-center gap-2">
+                        <ReactCountryFlag
+                          countryCode={selectedLocale!.countryCode}
+                          svg
+                          style={{ width: "1.1em", height: "1.1em", borderRadius: "2px" }}
+                        />
+                        {tl(selectedLocale!.labelKey)}
+                      </span>
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {LOCALES.map((l) => (
                       <SelectItem key={l.value} value={l.value}>
-                        <ReactCountryFlag
-                          countryCode={l.countryCode}
-                          svg
-                          style={{ width: "1.1em", height: "1.1em", borderRadius: "2px" }}
-                        />
-                        {tl(l.labelKey)}
+                        <span className="flex items-center gap-2">
+                          <ReactCountryFlag
+                            countryCode={l.countryCode}
+                            svg
+                            style={{ width: "1.1em", height: "1.1em", borderRadius: "2px" }}
+                          />
+                          {tl(l.labelKey)}
+                        </span>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -1218,16 +1222,21 @@ function BillingTab() {
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-medium text-foreground">{t("countryLabel")}</label>
-            <select
-              className={`${inputClass()} bg-background`}
-              value={billing.billingCountry}
-              onChange={(e) => set("billingCountry", e.target.value)}
+            <Select
+              value={billing.billingCountry || null}
+              onValueChange={(v) => set("billingCountry", v ?? "")}
             >
-              <option value="">{t("selectCountry")}</option>
-              {COUNTRIES.map((c) => (
-                <option key={c.code} value={c.code}>{c.name}</option>
-              ))}
-            </select>
+              <SelectTrigger>
+                <SelectValue placeholder={t("selectCountry")}>
+                  {COUNTRIES.find((c) => c.code === billing.billingCountry)?.name}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {COUNTRIES.map((c) => (
+                  <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </SectionCard>
@@ -1240,16 +1249,21 @@ function BillingTab() {
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-medium text-foreground">{t("vatCountryLabel")}</label>
-            <select
-              className={`${inputClass()} bg-background`}
-              value={billing.vatCountry}
-              onChange={(e) => set("vatCountry", e.target.value)}
+            <Select
+              value={billing.vatCountry || null}
+              onValueChange={(v) => set("vatCountry", v ?? "")}
             >
-              <option value="">{t("selectCountry")}</option>
-              {COUNTRIES.map((c) => (
-                <option key={c.code} value={c.code}>{c.name}</option>
-              ))}
-            </select>
+              <SelectTrigger>
+                <SelectValue placeholder={t("selectCountry")}>
+                  {COUNTRIES.find((c) => c.code === billing.vatCountry)?.name}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {COUNTRIES.map((c) => (
+                  <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </SectionCard>
