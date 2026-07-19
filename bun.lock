@@ -102,7 +102,7 @@
         "mongodb": "^6.11.0",
         "mysql2": "^3.14.0",
         "next": "catalog:",
-        "nodemailer": "^8.0.8",
+        "nodemailer": "^9.0.3",
         "pg": "^8.13.1",
         "zod": "catalog:",
       },
@@ -123,7 +123,7 @@
         "@types/nodemailer": "^8.0.0",
         "better-auth": "catalog:",
         "dotenv": "catalog:",
-        "nodemailer": "^8.0.8",
+        "nodemailer": "^9.0.3",
         "zod": "catalog:",
       },
       "devDependencies": {
@@ -1571,7 +1571,7 @@
 
     "node-releases": ["node-releases@2.0.50", "", {}, "sha512-J6l92tKHX6w8Jy5nO1Vuc01NoIiRGi/d6qBKVxh+IQ8Cr3b6HbVNfKiF8ZpFKufTwpwxMmce2W3iQZ861ZRyTg=="],
 
-    "nodemailer": ["nodemailer@8.0.11", "", {}, "sha512-nrO/pDAUKl+wXX+lx16tDLbnm0fW6sK/x8mgohaCpg+CdCEl482bD4tCuAZk2DyliruiNTIZxRCoWkDqJEnAiA=="],
+    "nodemailer": ["nodemailer@9.0.3", "", {}, "sha512-n+YP+NKwR5zRWa60k3GiQ6Q3B4KXCoAw40dAKeCtYn020iNN74aWK2liXIC3ZEATeGql7we3tE3t8QwhY0eskw=="],
 
     "npm-run-path": ["npm-run-path@6.0.0", "", { "dependencies": { "path-key": "^4.0.0", "unicorn-magic": "^0.3.0" } }, "sha512-9qny7Z9DsQU8Ou39ERsPU4OZQlSTP47ShQzuKZ6PRXpYLtIFgl/DEBYEXKlvcEa+9tHVcK8CF81Y2V72qaZhWA=="],
 

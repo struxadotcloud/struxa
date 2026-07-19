@@ -18,7 +18,7 @@
     "@types/nodemailer": "^8.0.0",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
-    "nodemailer": "^8.0.8",
+    "nodemailer": "^9.0.3",
     "zod": "catalog:"
   },
   "devDependencies": {
