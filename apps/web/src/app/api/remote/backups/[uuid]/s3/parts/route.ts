@@ -13,7 +13,7 @@ export async function GET(
 
   const { uuid } = await params;
 
-  const backup = await getBackupWithServer(uuid);
+  const backup = await getBackupWithServer(uuid, auth.node.id);
   if (!backup || !backup.server) return new Response("Not Found", { status: 404 });
 
   const destination = await resolveDestinationForNode(backup.server.nodeId);

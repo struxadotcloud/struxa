@@ -5,6 +5,7 @@ import { backups } from "@struxa/db";
 import { resolveDestinationForNode } from "@struxa/api/lib/backup-destinations";
 import { abortMultipart, completeMultipart } from "@struxa/api/services/backup-s3";
 import { authenticateWings } from "@/lib/wings-auth";
+import { getBackupWithServer } from "@/lib/remote-backups";
 
 interface BackupCompleteBody {
   successful: boolean;
@@ -23,9 +24,7 @@ export async function POST(
 
   const { uuid } = await params;
 
-  const backup = await db.query.backups.findFirst({
-    where: eq(backups.uuid, uuid),
-  });
+  const backup = await getBackupWithServer(uuid, auth.node.id);
   if (!backup) return new Response("Not Found", { status: 404 });
 
   const body = (await req.json()) as BackupCompleteBody;
@@ -44,7 +43,7 @@ export async function POST(
       checksum: checksum ?? undefined,
       completedAt: new Date(),
     })
-    .where(eq(backups.uuid, uuid));
+    .where(eq(backups.id, backup.id));
 
   if (backup.disk === "s3") {
     const destination = await resolveDestinationForNode(auth.node.id);
