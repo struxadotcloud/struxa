@@ -10,9 +10,16 @@ import { toast } from "sonner";
 import { orpc, queryClient } from "@/utils/orpc";
 import { DiscordPreview, GooglePreview, TwitterPreview, type SeoPreviewData } from "./_components/seo-previews";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@struxa/ui/components/select";
+import { BackupDestinationForm, defaultBackupDestination } from "@/components/backup-destination-form";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import type { BackupDestinationInput } from "@struxa/api/lib/backup-destinations";
 
 function invalidateSettings() {
   void queryClient.invalidateQueries({ queryKey: orpc.settings.key() });
+}
+
+function invalidateBackupDestinations() {
+  void queryClient.invalidateQueries({ queryKey: orpc.backupDestinations.key() });
 }
 
 function SectionCard({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
@@ -186,7 +193,7 @@ function DiscordIcon({ className }: { className?: string }) {
   );
 }
 
-const TABS = ["branding", "seo", "auth", "email"] as const;
+const TABS = ["branding", "seo", "auth", "email", "backups"] as const;
 type Tab = (typeof TABS)[number];
 
 export default function AdminSettingsPage() {
@@ -253,6 +260,33 @@ export default function AdminSettingsPage() {
       secure: smtpData.secure,
     });
   }, [smtpData, smtp]);
+
+  // Backup destination state
+  const { data: globalDestination, isLoading: globalDestinationLoading } = useQuery(orpc.backupDestinations.getGlobal.queryOptions());
+  const upsertGlobalDestinationMutation = useMutation(orpc.backupDestinations.upsertGlobal.mutationOptions({
+    onSuccess: () => { invalidateBackupDestinations(); toast.success(tc("saved")); },
+  }));
+  const clearGlobalDestinationMutation = useMutation(orpc.backupDestinations.clearGlobal.mutationOptions({
+    onSuccess: () => { invalidateBackupDestinations(); toast.success(tc("saved")); },
+  }));
+  const [backupDestination, setBackupDestination] = useState<BackupDestinationInput | null>(null);
+  const [backupResetOpen, setBackupResetOpen] = useState(false);
+
+  useEffect(() => {
+    if (!globalDestination || backupDestination !== null) return;
+    setBackupDestination(globalDestination);
+  }, [globalDestination, backupDestination]);
+
+  async function saveBackupDestination() {
+    if (!backupDestination) return;
+    await upsertGlobalDestinationMutation.mutateAsync(backupDestination);
+  }
+
+  async function resetBackupDestination() {
+    await clearGlobalDestinationMutation.mutateAsync(undefined);
+    setBackupDestination(null);
+    setBackupResetOpen(false);
+  }
 
   function generalForm() {
     return general ?? { appName: data?.appName ?? "Struxa", appUrl: data?.appUrl ?? "" };
@@ -416,7 +450,8 @@ export default function AdminSettingsPage() {
               {tab_item === "branding" ? t("tabBranding")
                 : tab_item === "seo" ? t("tabSeo")
                 : tab_item === "auth" ? t("tabAuth")
-                : t("tabEmail")}
+                : tab_item === "email" ? t("tabEmail")
+                : t("tabBackups")}
             </button>
           ))}
         </div>
@@ -954,6 +989,51 @@ export default function AdminSettingsPage() {
                 <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
               </Link>
             </SectionCard>
+          </>
+        )}
+
+        {tab === "backups" && (
+          <>
+            <SectionCard title={t("backupsGlobalTitle")} description={t("backupsGlobalDesc")}>
+              {globalDestinationLoading ? (
+                <div className="py-4 text-center text-xs text-muted-foreground">Loading…</div>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  {!globalDestination && (
+                    <p className="text-xs text-muted-foreground">{t("backupsGlobalNone")}</p>
+                  )}
+                  <BackupDestinationForm
+                    value={backupDestination ?? defaultBackupDestination("s3")}
+                    onChange={setBackupDestination}
+                  />
+                  <div className="flex items-center gap-3">
+                    <div onClick={saveBackupDestination}>
+                      <SaveButton saving={upsertGlobalDestinationMutation.isPending} />
+                    </div>
+                    {globalDestination && (
+                      <button
+                        type="button"
+                        onClick={() => setBackupResetOpen(true)}
+                        className="flex items-center gap-1.5 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-1.5 text-sm font-medium text-destructive transition-opacity hover:opacity-80"
+                      >
+                        {t("backupsGlobalReset")}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </SectionCard>
+
+            <ConfirmDialog
+              open={backupResetOpen}
+              onOpenChange={setBackupResetOpen}
+              title={t("backupsGlobalReset")}
+              description={t("backupsGlobalResetDesc")}
+              confirmLabel={t("backupsGlobalReset")}
+              destructive
+              loading={clearGlobalDestinationMutation.isPending}
+              onConfirm={resetBackupDestination}
+            />
           </>
         )}
         </motion.div>
