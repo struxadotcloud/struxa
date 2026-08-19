@@ -636,6 +636,7 @@
       "download": "Download",
       "restore": "Restore",
       "delete": "Delete",
+      "destinationBadge": "Backup destination adapter",
       "statBackups": "Backups",
       "statTotalSize": "Total Size",
       "statLastBackup": "Last Backup"
