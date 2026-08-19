@@ -33,6 +33,10 @@
     }
   },
   "type": "module",
+  "overrides": {
+    "@smithy/types": "4.17.2",
+    "@smithy/core": "3.33.2"
+  },
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",

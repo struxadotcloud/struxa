@@ -99,12 +99,20 @@ export class WingsClient {
   async restoreBackup(
     uuid: string,
     backupUuid: string,
-    options?: { truncate_directory?: boolean },
+    options?: {
+      adapter?: string;
+      download_url?: string;
+      truncate_directory?: boolean;
+    },
   ): Promise<void> {
     await this.request(
       "POST",
       `/api/servers/${uuid}/backup/${backupUuid}/restore`,
-      { adapter: "wings", truncate_directory: options?.truncate_directory ?? false },
+      {
+        adapter: options?.adapter ?? "wings",
+        ...(options?.download_url ? { download_url: options.download_url } : {}),
+        truncate_directory: options?.truncate_directory ?? false,
+      },
     );
   }
 

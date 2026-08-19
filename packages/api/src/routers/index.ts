@@ -8,6 +8,7 @@ import { nestsRouter } from "./nests";
 import { eggsRouter } from "./eggs";
 import { serversRouter } from "./servers";
 import { backupsRouter } from "./backups";
+import { backupDestinationsRouter } from "./backup-destinations";
 import { schedulesRouter } from "./schedules";
 import { databaseHostsRouter } from "./database-hosts";
 import { databasesRouter } from "./databases";
@@ -31,6 +32,7 @@ export const appRouter = {
   eggs: eggsRouter,
   servers: serversRouter,
   backups: backupsRouter,
+  backupDestinations: backupDestinationsRouter,
   schedules: schedulesRouter,
   databaseHosts: databaseHostsRouter,
   databases: databasesRouter,

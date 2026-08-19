@@ -7,6 +7,8 @@ import { backups, nodes, servers, subusers } from "@struxa/db";
 import { createWingsClient } from "../lib/wings-client";
 import { safeDecrypt } from "../lib/crypto";
 import { signBackupDownloadToken } from "../lib/jwt";
+import { adapterStringForType, resolveDestinationForNode } from "../lib/backup-destinations";
+import { deleteBackupObject, presignDownloadUrl } from "../services/backup-s3";
 import { recordActivity } from "../services/activity";
 import { protectedProcedure } from "../index";
 
@@ -53,19 +55,24 @@ export const backupsRouter = {
       const id = randomUUID();
       const uuid = randomUUID();
 
+      const node = server.node as typeof nodes.$inferSelect;
+      const destination = await resolveDestinationForNode(node.id);
+      const adapter = destination ? adapterStringForType(destination.type) : "wings";
+
       await db.insert(backups).values({
         id,
         uuid,
         serverId: input.serverId,
         name: input.name,
         ignoredFiles: input.ignoredFiles ?? null,
+        disk: adapter,
       });
 
-      const client = createWingsClient(server.node as typeof nodes.$inferSelect);
+      const client = createWingsClient(node);
       await client.createBackup(server.uuid, {
         uuid,
         ignore: input.ignoredFiles ?? "",
-        adapter: "wings",
+        adapter,
       });
 
       recordActivity({
@@ -94,8 +101,16 @@ export const backupsRouter = {
       if (!backup) throw new ORPCError("NOT_FOUND");
       if (backup.isLocked) throw new ORPCError("BAD_REQUEST", { message: "Backup is locked" });
 
-      const client = createWingsClient(server.node as typeof nodes.$inferSelect);
+      const node = server.node as typeof nodes.$inferSelect;
+      const client = createWingsClient(node);
       await client.deleteBackup(server.uuid, backup.uuid);
+
+      if (backup.disk === "s3") {
+        const destination = await resolveDestinationForNode(node.id);
+        if (destination?.type === "s3") {
+          await deleteBackupObject(destination, backup.uuid);
+        }
+      }
 
       await db.delete(backups).where(eq(backups.id, input.backupId));
 
@@ -147,8 +162,26 @@ export const backupsRouter = {
       });
       if (!backup || !backup.isSuccessful) throw new ORPCError("NOT_FOUND");
 
-      const client = createWingsClient(server.node as typeof nodes.$inferSelect);
-      await client.restoreBackup(server.uuid, backup.uuid);
+      const node = server.node as typeof nodes.$inferSelect;
+      const adapter =
+        backup.disk && backup.disk !== "local" ? backup.disk : "wings";
+
+      let downloadUrl: string | undefined;
+      if (adapter === "s3") {
+        const destination = await resolveDestinationForNode(node.id);
+        if (!destination || destination.type !== "s3") {
+          throw new ORPCError("BAD_REQUEST", {
+            message: "The S3 backup destination for this node is no longer configured",
+          });
+        }
+        downloadUrl = await presignDownloadUrl(destination, backup.uuid);
+      }
+
+      const client = createWingsClient(node);
+      await client.restoreBackup(server.uuid, backup.uuid, {
+        adapter,
+        download_url: downloadUrl,
+      });
 
       recordActivity({
         eventType: "server:backup.restore",
