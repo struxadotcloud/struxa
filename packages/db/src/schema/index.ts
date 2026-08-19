@@ -12,6 +12,7 @@ export * from "./server-variables";
 export * from "./server-mounts";
 export * from "./server-databases";
 export * from "./backups";
+export * from "./backup-destinations";
 export * from "./schedules";
 export * from "./activity-logs";
 export * from "./subusers";
