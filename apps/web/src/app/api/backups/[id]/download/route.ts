@@ -58,7 +58,7 @@ export async function GET(
       status: 200,
       headers: {
         "Content-Type": "application/gzip",
-        "Content-Disposition": `attachment; filename="${backup.name}.tar.gz"`,
+        "Content-Disposition": `attachment; filename="${backup.name.replace(/["\\\r\n]/g, "_")}.tar.gz"`,
       },
     });
   } catch {

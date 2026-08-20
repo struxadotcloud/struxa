@@ -897,7 +897,8 @@
       "disconnected": "Dysk Google odłączony",
       "connectSuccess": "Dysk Google połączony",
       "connectDenied": "Połączenie z Dyskiem Google zostało odrzucone",
-      "connectError": "Nie udało się połączyć z Dyskiem Google"
+      "connectError": "Nie udało się połączyć z Dyskiem Google",
+      "connectMismatch": "Połączone konto Google różni się od wcześniej połączonego. Istniejące kopie stałyby się niedostępne, dlatego połączenie nie zostało zastąpione."
     }
   },
   "admin": {

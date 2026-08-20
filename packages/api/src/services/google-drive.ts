@@ -96,7 +96,21 @@ export async function fetchUserInfo(accessToken: string): Promise<{ email: strin
   return (await res.json()) as { email: string };
 }
 
-export async function getGDriveConnection(
+const connectionLoads = new Map<string, Promise<GDriveConnection | null>>();
+
+export function getGDriveConnection(
+  userId: string,
+): Promise<GDriveConnection | null> {
+  const existing = connectionLoads.get(userId);
+  if (existing) return existing;
+  const promise = loadGDriveConnection(userId).finally(() => {
+    connectionLoads.delete(userId);
+  });
+  connectionLoads.set(userId, promise);
+  return promise;
+}
+
+async function loadGDriveConnection(
   userId: string,
 ): Promise<GDriveConnection | null> {
   const row = await db.query.userGoogleDrives.findFirst({
@@ -188,7 +202,26 @@ async function findOrCreateFolder(
   return created.id;
 }
 
-export async function ensureGDriveFolders(
+const folderResolves = new Map<string, Promise<string>>();
+
+export function ensureGDriveFolders(
+  connection: GDriveConnection,
+  serverName: string,
+  serverUuid: string,
+): Promise<string> {
+  const key = `${serverUuid}:${serverName}`;
+  const existing = folderResolves.get(key);
+  if (existing) return existing;
+  const promise = resolveGDriveFolders(connection, serverName, serverUuid).finally(
+    () => {
+      folderResolves.delete(key);
+    },
+  );
+  folderResolves.set(key, promise);
+  return promise;
+}
+
+async function resolveGDriveFolders(
   connection: GDriveConnection,
   serverName: string,
   serverUuid: string,
@@ -211,4 +244,11 @@ export async function downloadDriveFile(
   const config = await getOperatorGDriveConfig();
   if (!config) throw new Error("Google Drive is not configured");
   return driveRequest(config, connection, `/${fileId}?alt=media`);
+}
+
+export async function revokeGoogleToken(refreshToken: string): Promise<void> {
+  await fetch(
+    `https://oauth2.googleapis.com/revoke?token=${encodeURIComponent(refreshToken)}`,
+    { method: "POST" },
+  ).catch(() => {});
 }

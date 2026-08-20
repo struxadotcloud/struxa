@@ -3,7 +3,7 @@ import { and, eq, ne, or } from "drizzle-orm";
 import { z } from "zod";
 import { ORPCError } from "@orpc/server";
 import { db } from "@struxa/db";
-import { backups, billingSubscriptions, nodes } from "@struxa/db";
+import { backups, billingSubscriptions, nodes, servers } from "@struxa/db";
 import { createWingsClient } from "../lib/wings-client";
 import { safeDecrypt } from "../lib/crypto";
 import { signBackupDownloadToken } from "../lib/jwt";
@@ -60,18 +60,6 @@ export const backupsRouter = {
         backupLimit =
           (subscription?.plan?.resourceLimits as { backups?: number } | null)?.backups ?? 0;
       }
-      if (backupLimit > 0 && input.destination !== "gdrive") {
-        const used = await db.$count(
-          backups,
-          and(eq(backups.serverId, server.id), ne(backups.disk, "google-drive")),
-        );
-        if (used >= backupLimit) {
-          throw new ORPCError("BAD_REQUEST", {
-            message: "Backup limit reached for this server",
-          });
-        }
-      }
-
       const id = randomUUID();
       const uuid = randomUUID();
       const node = server.node as typeof nodes.$inferSelect;
@@ -99,14 +87,36 @@ export const backupsRouter = {
         adapter = destination ? adapterStringForType(destination.type) : "wings";
       }
 
-      await db.insert(backups).values({
-        id,
-        uuid,
-        serverId: input.serverId,
-        name: input.name,
-        ignoredFiles: input.ignoredFiles ?? null,
-        disk: adapter,
-        driveUserId,
+      await db.transaction(async (tx) => {
+        if (backupLimit > 0 && input.destination !== "gdrive") {
+          await tx
+            .select({ id: servers.id })
+            .from(servers)
+            .where(eq(servers.id, server.id))
+            .for("update");
+          const used = await tx.$count(
+            backups,
+            and(
+              eq(backups.serverId, server.id),
+              eq(backups.isSuccessful, true),
+              ne(backups.disk, "google-drive"),
+            ),
+          );
+          if (used >= backupLimit) {
+            throw new ORPCError("BAD_REQUEST", {
+              message: "Backup limit reached for this server",
+            });
+          }
+        }
+        await tx.insert(backups).values({
+          id,
+          uuid,
+          serverId: input.serverId,
+          name: input.name,
+          ignoredFiles: input.ignoredFiles ?? null,
+          disk: adapter,
+          driveUserId,
+        });
       });
 
       const client = createWingsClient(node);

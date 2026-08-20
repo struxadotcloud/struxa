@@ -211,6 +211,7 @@ function GoogleDriveSection() {
     if (!result) return;
     if (result === "connected") toast.success(t("connectSuccess"));
     else if (result === "denied") toast.error(t("connectDenied"));
+    else if (result === "mismatch") toast.error(t("connectMismatch"));
     else toast.error(t("connectError"));
     window.history.replaceState({}, "", "/account");
   }, [t]);

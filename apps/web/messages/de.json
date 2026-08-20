@@ -897,7 +897,8 @@
       "disconnected": "Google Drive getrennt",
       "connectSuccess": "Google Drive verbunden",
       "connectDenied": "Die Google-Drive-Verbindung wurde abgelehnt",
-      "connectError": "Verbindung zu Google Drive fehlgeschlagen"
+      "connectError": "Verbindung zu Google Drive fehlgeschlagen",
+      "connectMismatch": "Das verbundene Google-Konto unterscheidet sich vom zuvor verbundenen Konto. Bestehende Backups wären nicht mehr erreichbar, daher wurde die Verbindung nicht ersetzt."
     }
   },
   "admin": {

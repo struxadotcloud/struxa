@@ -36,6 +36,13 @@ export async function POST(
       : body.checksum
     : null;
 
+  const remoteId =
+    backup.disk === "google-drive" &&
+    body.remote_id &&
+    /^[A-Za-z0-9_-]{20,60}$/.test(body.remote_id)
+      ? body.remote_id
+      : null;
+
   await db
     .update(backups)
     .set({
@@ -43,7 +50,7 @@ export async function POST(
       bytes: body.size ?? 0,
       checksum: checksum ?? undefined,
       completedAt: new Date(),
-      remoteFileId: body.remote_id ?? null,
+      remoteFileId: remoteId,
     })
     .where(eq(backups.id, backup.id));
 

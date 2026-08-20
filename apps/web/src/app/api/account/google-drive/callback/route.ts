@@ -1,4 +1,5 @@
 import { timingSafeEqual } from "crypto";
+import { eq } from "drizzle-orm";
 import { NextResponse, type NextRequest } from "next/server";
 import { getAuth } from "@struxa/auth";
 import { db } from "@struxa/db";
@@ -61,6 +62,12 @@ export async function GET(req: NextRequest) {
       `${appUrl}/api/account/google-drive/callback`,
     );
     const userInfo = await fetchUserInfo(tokens.accessToken);
+    const existing = await db.query.userGoogleDrives.findFirst({
+      where: eq(userGoogleDrives.userId, session.user.id),
+    });
+    if (existing && existing.email !== userInfo.email) {
+      return fail("mismatch");
+    }
     await db
       .insert(userGoogleDrives)
       .values({

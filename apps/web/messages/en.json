@@ -817,7 +817,8 @@
       "disconnected": "Google Drive disconnected",
       "connectSuccess": "Google Drive connected",
       "connectDenied": "Google Drive connection was denied",
-      "connectError": "Failed to connect Google Drive"
+      "connectError": "Failed to connect Google Drive",
+      "connectMismatch": "The Google account you connected differs from the previously connected one. Existing backups would become inaccessible, so the connection was not replaced."
     },
     "password": {
       "changeTitle": "Change Password",

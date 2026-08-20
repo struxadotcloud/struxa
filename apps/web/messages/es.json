@@ -897,7 +897,8 @@
       "disconnected": "Google Drive desconectado",
       "connectSuccess": "Google Drive conectado",
       "connectDenied": "La conexión con Google Drive fue denegada",
-      "connectError": "Error al conectar Google Drive"
+      "connectError": "Error al conectar Google Drive",
+      "connectMismatch": "La cuenta de Google que has conectado es diferente de la conectada anteriormente. Las copias existentes dejarían de ser accesibles, por lo que la conexión no se ha sustituido."
     }
   },
   "admin": {
