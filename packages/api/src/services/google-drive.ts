@@ -247,8 +247,9 @@ export async function downloadDriveFile(
 }
 
 export async function revokeGoogleToken(refreshToken: string): Promise<void> {
-  await fetch(
-    `https://oauth2.googleapis.com/revoke?token=${encodeURIComponent(refreshToken)}`,
-    { method: "POST" },
-  ).catch(() => {});
+  await fetch("https://oauth2.googleapis.com/revoke", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ token: refreshToken }),
+  }).catch(() => {});
 }
