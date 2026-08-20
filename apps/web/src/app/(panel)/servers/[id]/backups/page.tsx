@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { use } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Archive, HardDrive, Clock, RotateCcw, Trash2, Download } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -19,11 +18,12 @@ import {
 import {
   Select,
   SelectTrigger,
-  SelectValue,
   SelectContent,
   SelectItem,
 } from "@struxa/ui/components/select";
+import { Tooltip, TooltipTrigger, TooltipPopup } from "@struxa/ui/components/tooltip";
 import { useTranslations } from "next-intl";
+import { GoogleIcon } from "@/components/google-icon";
 import { toast } from "sonner";
 import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
@@ -217,40 +217,6 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
                 if (e.key === "Escape") closeCreate();
               }}
             />
-            {googleDriveConfigured && (
-              <div className="mt-3 flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-foreground">{t("destinationLabel")}</label>
-                <Select
-                  value={destination}
-                  onValueChange={(v) => {
-                    if (v === "node" || v === "gdrive") setDestination(v);
-                  }}
-                >
-                  <SelectTrigger className="h-[30px] text-sm">
-                    <SelectValue>
-                      {destination === "gdrive" ? t("destinationGDrive") : t("destinationNodeDefault")}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="node">{t("destinationNodeDefault")}</SelectItem>
-                    {googleDriveConnected && (
-                      <SelectItem value="gdrive">{t("destinationGDrive")}</SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
-                {!googleDriveConnected && (
-                  <p className="text-xs text-muted-foreground">
-                    {t("gdriveNotConnectedHint")}{" "}
-                    <Link
-                      href="/account"
-                      className="font-medium text-foreground underline underline-offset-2"
-                    >
-                      {t("gdriveConnectLink")}
-                    </Link>
-                  </p>
-                )}
-              </div>
-            )}
           </div>
           <DialogFooter>
             <DialogClose
@@ -275,13 +241,39 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
         <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card">
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <p className="text-sm font-medium text-foreground">{t("sectionTitle")}</p>
-            <button
-              type="button"
-              onClick={() => setShowCreate(true)}
-              className="rounded-lg bg-foreground px-3 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80"
-            >
-              {t("createBackup")}
-            </button>
+            {googleDriveConfigured ? (
+              <Select
+                value={destination}
+                onValueChange={(v) => {
+                  if (v !== "node" && v !== "gdrive") return;
+                  if (v === "gdrive" && !googleDriveConnected) {
+                    router.push("/account");
+                    return;
+                  }
+                  setDestination(v);
+                  setShowCreate(true);
+                }}
+              >
+                <SelectTrigger className="h-auto w-auto gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80 data-[popup-open]:opacity-80 [&_svg]:text-background">
+                  {t("createBackup")}
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="node">{t("createBackup")}</SelectItem>
+                  <SelectItem value="gdrive">
+                    <GoogleIcon className="h-3.5 w-3.5" />
+                    {t("backupToGDrive")}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowCreate(true)}
+                className="rounded-lg bg-foreground px-3 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80"
+              >
+                {t("createBackup")}
+              </button>
+            )}
           </div>
           {backups.some((b) => b.disk === "s3") && !s3PublicDownloads && (
             <div className="border-b border-border bg-muted/30 px-4 py-2">
@@ -321,7 +313,17 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
                     className={`grid grid-cols-[28px_1fr_100px_200px_100px] items-center px-4 py-3 transition-colors hover:bg-muted/40 ${!isLast ? "border-b border-border" : ""}`}
                   >
                     <StatusDot backup={backup} />
-                    <span className="font-mono text-sm text-foreground truncate pr-4">{backup.name}</span>
+                    <span className="flex min-w-0 items-center gap-1.5 pr-4">
+                      <span className="font-mono text-sm text-foreground truncate">{backup.name}</span>
+                      {backup.disk === "google-drive" && (
+                        <Tooltip>
+                          <TooltipTrigger className="flex shrink-0 items-center">
+                            <GoogleIcon className="h-3.5 w-3.5" />
+                          </TooltipTrigger>
+                          <TooltipPopup>{t("gdriveBadgeHint")}</TooltipPopup>
+                        </Tooltip>
+                      )}
+                    </span>
                     <span className="text-sm text-muted-foreground">{fmtBytes(Number(backup.bytes ?? 0))}</span>
                     <span className="text-xs text-muted-foreground">{fmtDate(backup.createdAt)}</span>
                     <div className="flex items-center gap-2 justify-end pr-1">

@@ -193,7 +193,7 @@ function DiscordIcon({ className }: { className?: string }) {
   );
 }
 
-const TABS = ["branding", "seo", "auth", "email", "backups", "google-drive"] as const;
+const TABS = ["branding", "seo", "auth", "email", "backups"] as const;
 type Tab = (typeof TABS)[number];
 
 export default function AdminSettingsPage() {
@@ -463,7 +463,6 @@ export default function AdminSettingsPage() {
                 : tab_item === "seo" ? t("tabSeo")
                 : tab_item === "auth" ? t("tabAuth")
                 : tab_item === "email" ? t("tabEmail")
-                : tab_item === "google-drive" ? t("tabGoogleDrive")
                 : t("tabBackups")}
             </button>
           ))}
@@ -1037,6 +1036,37 @@ export default function AdminSettingsPage() {
               )}
             </SectionCard>
 
+            <SectionCard title={t("gdriveTitle")} description={t("gdriveDesc")}>
+              <div className="flex flex-col gap-4">
+                <CallbackUrl appUrl={data?.appUrl ?? ""} provider="gdrive" path="/api/account/google-drive/callback" />
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-medium text-foreground">{t("gdriveClientIdLabel")}</label>
+                    <input
+                      className={inputClass()}
+                      placeholder={t("gdriveClientIdPlaceholder")}
+                      value={gdrive.clientId}
+                      onChange={(e) => setGdrive({ ...gdrive, clientId: e.target.value })}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-medium text-foreground">{t("gdriveClientSecretLabel")}</label>
+                    <input
+                      className={inputClass()}
+                      type="password"
+                      placeholder={data?.googleDriveClientSecretSet ? t("clientSecretSet") : t("enterSecret")}
+                      value={gdrive.clientSecret}
+                      onChange={(e) => setGdrive({ ...gdrive, clientSecret: e.target.value })}
+                      autoComplete="new-password"
+                    />
+                  </div>
+                </div>
+                <div onClick={saveGdrive}>
+                  <SaveButton saving={setMutation.isPending} />
+                </div>
+              </div>
+            </SectionCard>
+
             <ConfirmDialog
               open={backupResetOpen}
               onOpenChange={setBackupResetOpen}
@@ -1048,39 +1078,6 @@ export default function AdminSettingsPage() {
               onConfirm={resetBackupDestination}
             />
           </>
-        )}
-
-        {tab === "google-drive" && (
-          <SectionCard title={t("gdriveTitle")} description={t("gdriveDesc")}>
-            <div className="flex flex-col gap-4">
-              <CallbackUrl appUrl={data?.appUrl ?? ""} provider="gdrive" path="/api/account/google-drive/callback" />
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-foreground">{t("gdriveClientIdLabel")}</label>
-                  <input
-                    className={inputClass()}
-                    placeholder={t("gdriveClientIdPlaceholder")}
-                    value={gdrive.clientId}
-                    onChange={(e) => setGdrive({ ...gdrive, clientId: e.target.value })}
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-foreground">{t("gdriveClientSecretLabel")}</label>
-                  <input
-                    className={inputClass()}
-                    type="password"
-                    placeholder={data?.googleDriveClientSecretSet ? t("clientSecretSet") : t("enterSecret")}
-                    value={gdrive.clientSecret}
-                    onChange={(e) => setGdrive({ ...gdrive, clientSecret: e.target.value })}
-                    autoComplete="new-password"
-                  />
-                </div>
-              </div>
-              <div onClick={saveGdrive}>
-                <SaveButton saving={setMutation.isPending} />
-              </div>
-            </div>
-          </SectionCard>
         )}
         </motion.div>
       </div>
