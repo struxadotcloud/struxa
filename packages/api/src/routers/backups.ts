@@ -47,6 +47,7 @@ export const backupsRouter = {
 
       const id = randomUUID();
       const uuid = randomUUID();
+      const node = server.node as typeof nodes.$inferSelect;
 
       let adapter: string;
       let driveUserId: string | null = null;
@@ -67,7 +68,6 @@ export const backupsRouter = {
         adapter = "google-drive";
         driveUserId = context.session.user.id;
       } else {
-        const node = server.node as typeof nodes.$inferSelect;
         const destination = await resolveDestinationForNode(node.id);
         adapter = destination ? adapterStringForType(destination.type) : "wings";
       }

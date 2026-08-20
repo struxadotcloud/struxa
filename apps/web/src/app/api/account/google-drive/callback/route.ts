@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
     state.length === cookie.length &&
     timingSafeEqual(Buffer.from(state), Buffer.from(cookie));
   if (!stateOk) {
-    const res = new Response("Invalid OAuth state", { status: 400 });
+    const res = new NextResponse("Invalid OAuth state", { status: 400 });
     clearStateCookie(res);
     return res;
   }

@@ -114,7 +114,7 @@ export async function getGDriveConnection(
   }
 
   try {
-    const refreshed = await refreshAccessToken(config.clientId, config.clientSecret, refreshToken);
+    const refreshed = await refreshAccessToken(config, refreshToken);
     await db
       .update(userGoogleDrives)
       .set({
@@ -145,11 +145,7 @@ async function driveRequest(
 
   const res = await send(connection.accessToken);
   if (res.status !== 401) return res;
-  const refreshed = await refreshAccessToken(
-    config.clientId,
-    config.clientSecret,
-    connection.refreshToken,
-  );
+  const refreshed = await refreshAccessToken(config, connection.refreshToken);
   return send(refreshed.accessToken);
 }
 
