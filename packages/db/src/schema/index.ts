@@ -16,6 +16,7 @@ export * from "./backup-destinations";
 export * from "./schedules";
 export * from "./activity-logs";
 export * from "./subusers";
+export * from "./user-google-drives";
 export * from "./relations";
 export * from "./settings";
 export * from "./billing";
