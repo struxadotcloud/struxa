@@ -66,6 +66,7 @@ export async function signBackupDownloadToken(
     server_uuid: serverUuid,
     backup_uuid: backupUuid,
     unique_id: randomUUID(),
+    scope: "backup-download",
   })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
