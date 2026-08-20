@@ -49,7 +49,10 @@
       "postgresql": "PostgreSQL",
       "mongodb": "MongoDB",
       "redis": "Redis"
-    }
+    },
+    "deleted": "Gelöscht",
+    "updated": "Aktualisiert",
+    "created": "Erstellt"
   },
   "auth": {
     "login": {
@@ -471,7 +474,8 @@
       "inviteFirst": "Ersten Benutzer einladen",
       "statSubusers": "Unterbenutzer",
       "statNote": "Hinweis",
-      "statNoteText": "Unterbenutzer haben nur Panel-Zugriff. Berechtigungen sind auf diesen Server beschränkt und gewähren keinen Zugriff auf Abrechnung oder Kontoeinstellungen."
+      "statNoteText": "Unterbenutzer haben nur Panel-Zugriff. Berechtigungen sind auf diesen Server beschränkt und gewähren keinen Zugriff auf Abrechnung oder Kontoeinstellungen.",
+      "inviteSuccess": "Benutzer eingeladen"
     },
     "backups": {
       "restoreTitle": "Backup wiederherstellen",
@@ -500,7 +504,11 @@
       "delete": "Löschen",
       "statBackups": "Backups",
       "statTotalSize": "Gesamtgröße",
-      "statLastBackup": "Letztes Backup"
+      "statLastBackup": "Letztes Backup",
+      "restoreSuccess": "Backup wiederhergestellt",
+      "downloadsDisabledHint": "Backup-Downloads sind nicht verfügbar, da das Speicherziel keine öffentlichen Downloads erlaubt.",
+      "backupToGDrive": "Auf Google Drive sichern",
+      "gdriveBadgeHint": "Diese Sicherung wird im Google Drive des Benutzers gespeichert"
     },
     "network": {
       "colIp": "IP-Adresse",
@@ -562,7 +570,8 @@
       "selectEggTitle": "Spieltyp auswählen",
       "selectEggDescription": "Wählen Sie den Spieltyp für diese Neuinstallation.",
       "selectEggLabel": "Spieltyp",
-      "reinstallContinue": "Weiter"
+      "reinstallContinue": "Weiter",
+      "reinstallTriggeredToast": "Neuinstallation gestartet"
     },
     "activity": {
       "colTimestamp": "Zeitstempel",
@@ -725,7 +734,9 @@
           "errorCodeNotFound": "Empfehlungscode nicht gefunden oder nicht mehr aktiv.",
           "errorCodeTaken": "Dieser Code ist bereits vergeben. Versuchen Sie einen anderen.",
           "errorGeneric": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
-          "editCode": "Empfehlungscode bearbeiten"
+          "editCode": "Empfehlungscode bearbeiten",
+          "generateSuccess": "Referral-Code erstellt",
+          "updateSuccess": "Referral-Code aktualisiert"
         }
       }
     }
@@ -875,6 +886,19 @@
       "save": "Speichern",
       "saveSuccess": "Spracheinstellung gespeichert",
       "saveFailed": "Die Spracheinstellung konnte nicht gespeichert werden"
+    },
+    "googleDrive": {
+      "title": "Google Drive",
+      "description": "Verbinden Sie Ihr persönliches Google Drive, um Server-Backups dort zu speichern.",
+      "connected": "verbunden",
+      "notConnected": "Kein Google-Konto verbunden.",
+      "connect": "Google Drive verbinden",
+      "disconnect": "Trennen",
+      "disconnected": "Google Drive getrennt",
+      "connectSuccess": "Google Drive verbunden",
+      "connectDenied": "Die Google-Drive-Verbindung wurde abgelehnt",
+      "connectError": "Verbindung zu Google Drive fehlgeschlagen",
+      "connectMismatch": "Das verbundene Google-Konto unterscheidet sich vom zuvor verbundenen Konto. Bestehende Backups wären nicht mehr erreichbar, daher wurde die Verbindung nicht ersetzt."
     }
   },
   "admin": {
@@ -996,7 +1020,13 @@
       "configFileLabel": "Wings config.yml",
       "regenToken": "Regen-Token",
       "descriptionLabel": "Beschreibung",
-      "descriptionPlaceholder": "Optionale Beschreibung"
+      "descriptionPlaceholder": "Optionale Beschreibung",
+      "backupDestinationSection": "Backup-Ziel",
+      "backupDestinationSectionDesc": "Wo Backups der Server dieses Nodes gespeichert werden. Überschreibt die globale Standardeinstellung.",
+      "backupUseGlobal": "Globalen Standard verwenden",
+      "backupUseGlobalDesc": "Wenn aktiviert, verwendet dieser Node das in den Instanzeinstellungen konfigurierte Standardziel.",
+      "prevPage": "Vorherige Seite",
+      "nextPage": "Nächste Seite"
     },
     "nests": {
       "title": "Nester und Eier",
@@ -1216,7 +1246,8 @@
       "deleteServerDesc": "Entfernen Sie diesen Server dauerhaft. Dies kann nicht rückgängig gemacht werden.",
       "deleteConfirmTitle": "Server löschen?",
       "deleteConfirmDesc": "Dadurch wird „{name}“ dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
-      "purgeData": "Daten vom Knoten löschen"
+      "purgeData": "Daten vom Knoten löschen",
+      "changeOwner": "Ändern"
     },
     "users": {
       "title": "Benutzer",
@@ -1460,7 +1491,18 @@
       "previewSubjectWelcome": "Willkommen!",
       "previewSubjectServerInstall": "Ihr Server ist bereit",
       "editTemplates": "Vorlagen bearbeiten",
-      "editTemplatesDesc": "Passen Sie das HTML für jede ausgehende E-Mail an."
+      "editTemplatesDesc": "Passen Sie das HTML für jede ausgehende E-Mail an.",
+      "tabBackups": "Backups",
+      "backupsGlobalTitle": "Standard-Backup-Ziel",
+      "backupsGlobalDesc": "Neue Nodes ohne eigenes Ziel verwenden diesen globalen Standard. Nodes können ihn individuell überschreiben.",
+      "backupsGlobalNone": "Kein globaler Standard konfiguriert — Backups fallen auf den lokalen Daemon-Adapter zurück.",
+      "backupsGlobalReset": "Auf Lokal zurücksetzen",
+      "backupsGlobalResetDesc": "Entfernt das globale Standardziel. Nodes mit eigenem Ziel sind nicht betroffen.",
+      "gdriveTitle": "Google Drive Backups",
+      "gdriveDesc": "Ermöglicht Benutzern, Backups in ihrem persönlichen Google Drive zu speichern. Erstellen Sie ein Google-Cloud-Projekt, aktivieren Sie die Drive-API und fügen Sie unten die OAuth-Client-Anmeldedaten ein. Solange die App im Testmodus ist, fügen Sie die E-Mail jedes Benutzers als Testbenutzer hinzu.",
+      "gdriveClientIdLabel": "Client-ID",
+      "gdriveClientIdPlaceholder": "1234567890-abc.apps.googleusercontent.com",
+      "gdriveClientSecretLabel": "Client-Secret"
     },
     "emailEditor": {
       "backToSettings": "Einstellungen",
@@ -1644,6 +1686,45 @@
           }
         }
       }
+    },
+    "backupDestinations": {
+      "typeLabel": "Zieltyp",
+      "typeWings": "Lokal (wings)",
+      "typeDdupBak": "ddup-bak",
+      "typeS3": "S3 / Objektspeicher",
+      "typeRestic": "Restic",
+      "typePbs": "Proxmox Backup Server",
+      "typeKopia": "Kopia",
+      "localHint": "Backups werden im lokalen Backup-Verzeichnis des Daemons gespeichert.",
+      "s3EndpointLabel": "Endpoint-URL",
+      "s3EndpointPlaceholder": "https://s3.example.com",
+      "s3RegionLabel": "Region",
+      "s3BucketLabel": "Bucket",
+      "s3BucketPlaceholder": "backups",
+      "s3AccessKeyLabel": "Zugriffsschlüssel",
+      "s3SecretKeyLabel": "Geheimer Schlüssel",
+      "s3UsePathStyle": "Pfadartige Adressierung verwenden",
+      "s3AllowPublicDownloads": "Downloads über das Panel erlauben",
+      "s3AllowPublicDownloadsDesc": "Ermöglicht Benutzern das Herunterladen von Backup-Dateien im Browser. Erfordert, dass der S3-Endpoint aus den Browsern der Benutzer öffentlich erreichbar ist.",
+      "resticRepositoryLabel": "Repository",
+      "resticRepositoryPlaceholder": "s3:https://s3.example.com/bucket",
+      "resticPasswordLabel": "Passwort",
+      "resticRetryLockLabel": "Retry-Lock (Sekunden)",
+      "resticEnvLabel": "Umgebungsvariablen",
+      "resticEnvPlaceholder": "AWS_ACCESS_KEY_ID=…\nAWS_SECRET_ACCESS_KEY=…",
+      "pbsUrlLabel": "Server-URL",
+      "pbsDatastoreLabel": "Datastore",
+      "pbsNamespaceLabel": "Namespace",
+      "pbsTokenIdLabel": "Token-ID",
+      "pbsTokenSecretLabel": "Token-Secret",
+      "pbsFingerprintLabel": "Fingerprint",
+      "pbsBackupIdPrefixLabel": "Backup-ID-Präfix",
+      "kopiaUrlLabel": "Repository-URL",
+      "kopiaUsernameLabel": "Benutzername",
+      "kopiaPasswordLabel": "Passwort",
+      "kopiaFingerprintLabel": "Fingerprint",
+      "kopiaTagsLabel": "Tags",
+      "kopiaTagsPlaceholder": "backup=true"
     }
   },
   "setup": {

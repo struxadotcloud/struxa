@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { use } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Archive, HardDrive, Clock, RotateCcw, Trash2, Download } from "lucide-react";
+import { Archive, HardDrive, Clock, RotateCcw, Trash2, Download, ChevronDown } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
   Dialog,
@@ -15,7 +15,15 @@ import {
   DialogDescription,
   DialogClose,
 } from "@struxa/ui/components/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@struxa/ui/components/dropdown-menu";
+import { Tooltip, TooltipTrigger, TooltipPopup } from "@struxa/ui/components/tooltip";
 import { useTranslations } from "next-intl";
+import { GoogleIcon } from "@/components/google-icon";
 import { toast } from "sonner";
 import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
@@ -62,6 +70,7 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
   const queryClient = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
   const [createName, setCreateName] = useState("");
+  const [destination, setDestination] = useState<"node" | "gdrive">("node");
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [restoreTarget, setRestoreTarget] = useState<{ id: string; name: string } | null>(null);
 
@@ -82,6 +91,8 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
     enabled: !!serverId,
   });
   const s3PublicDownloads = downloadAvailability?.s3PublicDownloads ?? false;
+  const googleDriveConfigured = downloadAvailability?.googleDriveConfigured ?? false;
+  const googleDriveConnected = downloadAvailability?.googleDriveConnected ?? false;
 
   const createMutation = useMutation(orpc.backups.create.mutationOptions());
   const deleteMutation = useMutation({
@@ -106,11 +117,12 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
   function closeCreate() {
     setShowCreate(false);
     setCreateName("");
+    setDestination("node");
   }
 
   async function handleCreate() {
     if (!serverId || !createName.trim()) return;
-    await createMutation.mutateAsync({ serverId, name: createName.trim() });
+    await createMutation.mutateAsync({ serverId, name: createName.trim(), destination });
     void queryClient.invalidateQueries(orpc.backups.list.queryOptions({ input: { serverId } }));
     toast.success(tc("created"));
     closeCreate();
@@ -229,13 +241,46 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
         <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card">
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <p className="text-sm font-medium text-foreground">{t("sectionTitle")}</p>
-            <button
-              type="button"
-              onClick={() => setShowCreate(true)}
-              className="rounded-lg bg-foreground px-3 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80"
-            >
-              {t("createBackup")}
-            </button>
+            {googleDriveConfigured ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80">
+                  {t("createBackup")}
+                  <ChevronDown className="h-3 w-3" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent style={{ minWidth: "14rem" }}>
+                  <DropdownMenuItem
+                    className="cursor-pointer whitespace-nowrap"
+                    onClick={() => {
+                      setDestination("node");
+                      setShowCreate(true);
+                    }}
+                  >
+                    {t("createBackup")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="cursor-pointer whitespace-nowrap"
+                    onClick={() => {
+                      if (!googleDriveConnected) {
+                        router.push("/account");
+                        return;
+                      }
+                      setDestination("gdrive");
+                      setShowCreate(true);
+                    }}
+                  >
+                    {t("backupToGDrive")}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowCreate(true)}
+                className="rounded-lg bg-foreground px-3 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80"
+              >
+                {t("createBackup")}
+              </button>
+            )}
           </div>
           {backups.some((b) => b.disk === "s3") && !s3PublicDownloads && (
             <div className="border-b border-border bg-muted/30 px-4 py-2">
@@ -275,7 +320,17 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
                     className={`grid grid-cols-[28px_1fr_100px_200px_100px] items-center px-4 py-3 transition-colors hover:bg-muted/40 ${!isLast ? "border-b border-border" : ""}`}
                   >
                     <StatusDot backup={backup} />
-                    <span className="font-mono text-sm text-foreground truncate pr-4">{backup.name}</span>
+                    <span className="flex min-w-0 items-center gap-1.5 pr-4">
+                      <span className="font-mono text-sm text-foreground truncate">{backup.name}</span>
+                      {backup.disk === "google-drive" && (
+                        <Tooltip>
+                          <TooltipTrigger className="flex shrink-0 items-center">
+                            <GoogleIcon className="h-3.5 w-3.5" />
+                          </TooltipTrigger>
+                          <TooltipPopup>{t("gdriveBadgeHint")}</TooltipPopup>
+                        </Tooltip>
+                      )}
+                    </span>
                     <span className="text-sm text-muted-foreground">{fmtBytes(Number(backup.bytes ?? 0))}</span>
                     <span className="text-xs text-muted-foreground">{fmtDate(backup.createdAt)}</span>
                     <div className="flex items-center gap-2 justify-end pr-1">

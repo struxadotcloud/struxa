@@ -20,6 +20,8 @@ export const backups = mysqlTable(
     name: varchar("name", { length: 255 }).notNull(),
     ignoredFiles: text("ignored_files"),
     disk: varchar("disk", { length: 36 }).notNull().default("local"),
+    driveUserId: varchar("drive_user_id", { length: 36 }),
+    remoteFileId: varchar("remote_file_id", { length: 255 }),
     checksum: varchar("checksum", { length: 255 }),
     bytes: bigint("bytes", { mode: "number" }).notNull().default(0),
     completedAt: timestamp("completed_at", { fsp: 3 }),

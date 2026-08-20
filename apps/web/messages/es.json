@@ -49,7 +49,10 @@
       "postgresql": "PostgreSQL",
       "mongodb": "MongoDB",
       "redis": "Redis"
-    }
+    },
+    "deleted": "Eliminado",
+    "updated": "Actualizado",
+    "created": "Creado"
   },
   "auth": {
     "login": {
@@ -471,7 +474,8 @@
       "inviteFirst": "Invitar primer usuario",
       "statSubusers": "Subusuarios",
       "statNote": "Nota",
-      "statNoteText": "Los subusuarios solo tienen acceso al panel. Los permisos están limitados a este servidor y no otorgan acceso a facturación ni a la configuración de la cuenta."
+      "statNoteText": "Los subusuarios solo tienen acceso al panel. Los permisos están limitados a este servidor y no otorgan acceso a facturación ni a la configuración de la cuenta.",
+      "inviteSuccess": "Usuario invitado"
     },
     "backups": {
       "restoreTitle": "Restaurar copia de seguridad",
@@ -500,7 +504,11 @@
       "delete": "Eliminar",
       "statBackups": "Copias de seguridad",
       "statTotalSize": "Tamaño total",
-      "statLastBackup": "Última copia de seguridad"
+      "statLastBackup": "Última copia de seguridad",
+      "restoreSuccess": "Copia restaurada",
+      "downloadsDisabledHint": "Las descargas de copias no están disponibles porque el destino de almacenamiento no permite descargas públicas.",
+      "backupToGDrive": "Copia en Google Drive",
+      "gdriveBadgeHint": "Esta copia se almacena en el Google Drive del usuario"
     },
     "network": {
       "colIp": "Dirección IP",
@@ -562,7 +570,8 @@
       "selectEggTitle": "Elegir tipo de juego",
       "selectEggDescription": "Selecciona el tipo de juego para esta reinstalación.",
       "selectEggLabel": "Tipo de juego",
-      "reinstallContinue": "Continuar"
+      "reinstallContinue": "Continuar",
+      "reinstallTriggeredToast": "Reinstalación iniciada"
     },
     "activity": {
       "colTimestamp": "Marca de tiempo",
@@ -725,7 +734,9 @@
           "errorCodeNotFound": "Código de referido no encontrado o ya no está activo.",
           "errorCodeTaken": "Ese código ya está tomado. Prueba uno diferente.",
           "errorGeneric": "Algo salió mal. Por favor inténtalo de nuevo.",
-          "editCode": "Editar código de referido"
+          "editCode": "Editar código de referido",
+          "generateSuccess": "Código de referido creado",
+          "updateSuccess": "Código de referido actualizado"
         }
       }
     }
@@ -875,6 +886,19 @@
       "save": "Guardar",
       "saveSuccess": "Preferencia de idioma guardada",
       "saveFailed": "No se pudo guardar la preferencia de idioma"
+    },
+    "googleDrive": {
+      "title": "Google Drive",
+      "description": "Conecta tu Google Drive personal para guardar allí las copias de seguridad de tus servidores.",
+      "connected": "conectado",
+      "notConnected": "No hay ninguna cuenta de Google conectada.",
+      "connect": "Conectar Google Drive",
+      "disconnect": "Desconectar",
+      "disconnected": "Google Drive desconectado",
+      "connectSuccess": "Google Drive conectado",
+      "connectDenied": "La conexión con Google Drive fue denegada",
+      "connectError": "Error al conectar Google Drive",
+      "connectMismatch": "La cuenta de Google que has conectado es diferente de la conectada anteriormente. Las copias existentes dejarían de ser accesibles, por lo que la conexión no se ha sustituido."
     }
   },
   "admin": {
@@ -996,7 +1020,13 @@
       "configFileLabel": "Alas config.yml",
       "regenToken": "Ficha de regeneración",
       "descriptionLabel": "Descripción",
-      "descriptionPlaceholder": "Descripción opcional"
+      "descriptionPlaceholder": "Descripción opcional",
+      "backupDestinationSection": "Destino de copias",
+      "backupDestinationSectionDesc": "Dónde se almacenan las copias de los servidores de este nodo. Anula el valor predeterminado global.",
+      "backupUseGlobal": "Usar el valor predeterminado global",
+      "backupUseGlobalDesc": "Si está habilitado, este nodo usa el destino predeterminado configurado en los ajustes de la instancia.",
+      "prevPage": "Página anterior",
+      "nextPage": "Página siguiente"
     },
     "nests": {
       "title": "Nidos y huevos",
@@ -1216,7 +1246,8 @@
       "deleteServerDesc": "Eliminar permanentemente este servidor. Esto no se puede deshacer.",
       "deleteConfirmTitle": "¿Eliminar servidor?",
       "deleteConfirmDesc": "Esto eliminará permanentemente \"{name}\". Esta acción no se puede deshacer.",
-      "purgeData": "Purgar datos del nodo"
+      "purgeData": "Purgar datos del nodo",
+      "changeOwner": "Cambiar"
     },
     "users": {
       "title": "Usuarios",
@@ -1460,7 +1491,18 @@
       "previewSubjectWelcome": "¡Bienvenido!",
       "previewSubjectServerInstall": "Tu servidor está listo",
       "editTemplates": "Editar plantillas",
-      "editTemplatesDesc": "Personaliza el HTML para cada correo saliente."
+      "editTemplatesDesc": "Personaliza el HTML para cada correo saliente.",
+      "tabBackups": "Copias",
+      "backupsGlobalTitle": "Destino de copias predeterminado",
+      "backupsGlobalDesc": "Los nodos nuevos sin destino propio usan este valor predeterminado global. Los nodos pueden anularlo individualmente.",
+      "backupsGlobalNone": "No hay un valor predeterminado global configurado: las copias usan el adaptador local del daemon.",
+      "backupsGlobalReset": "Restablecer a local",
+      "backupsGlobalResetDesc": "Elimina el destino predeterminado global. Los nodos con su propio destino no se ven afectados.",
+      "gdriveTitle": "Copias en Google Drive",
+      "gdriveDesc": "Permite a los usuarios guardar copias en su Google Drive personal. Crea un proyecto de Google Cloud, habilita la API de Drive y pega las credenciales de cliente OAuth a continuación. Mientras tu app esté en modo de prueba, añade el correo de cada usuario como usuario de prueba.",
+      "gdriveClientIdLabel": "ID de cliente",
+      "gdriveClientIdPlaceholder": "1234567890-abc.apps.googleusercontent.com",
+      "gdriveClientSecretLabel": "Secreto de cliente"
     },
     "emailEditor": {
       "backToSettings": "Ajustes",
@@ -1644,6 +1686,45 @@
           }
         }
       }
+    },
+    "backupDestinations": {
+      "typeLabel": "Tipo de destino",
+      "typeWings": "Local (wings)",
+      "typeDdupBak": "ddup-bak",
+      "typeS3": "S3 / Almacenamiento de objetos",
+      "typeRestic": "Restic",
+      "typePbs": "Proxmox Backup Server",
+      "typeKopia": "Kopia",
+      "localHint": "Las copias se guardan en el directorio de copias local del daemon.",
+      "s3EndpointLabel": "URL del endpoint",
+      "s3EndpointPlaceholder": "https://s3.example.com",
+      "s3RegionLabel": "Región",
+      "s3BucketLabel": "Bucket",
+      "s3BucketPlaceholder": "backups",
+      "s3AccessKeyLabel": "Clave de acceso",
+      "s3SecretKeyLabel": "Clave secreta",
+      "s3UsePathStyle": "Usar direccionamiento estilo ruta",
+      "s3AllowPublicDownloads": "Permitir descargas desde el panel",
+      "s3AllowPublicDownloadsDesc": "Permite a los usuarios descargar archivos de copia en el navegador. Requiere que el endpoint S3 sea accesible públicamente desde los navegadores de los usuarios.",
+      "resticRepositoryLabel": "Repositorio",
+      "resticRepositoryPlaceholder": "s3:https://s3.example.com/bucket",
+      "resticPasswordLabel": "Contraseña",
+      "resticRetryLockLabel": "Bloqueo de reintento (segundos)",
+      "resticEnvLabel": "Variables de entorno",
+      "resticEnvPlaceholder": "AWS_ACCESS_KEY_ID=…\nAWS_SECRET_ACCESS_KEY=…",
+      "pbsUrlLabel": "URL del servidor",
+      "pbsDatastoreLabel": "Datastore",
+      "pbsNamespaceLabel": "Espacio de nombres",
+      "pbsTokenIdLabel": "ID de token",
+      "pbsTokenSecretLabel": "Secreto del token",
+      "pbsFingerprintLabel": "Huella digital",
+      "pbsBackupIdPrefixLabel": "Prefijo del ID de copia",
+      "kopiaUrlLabel": "URL del repositorio",
+      "kopiaUsernameLabel": "Usuario",
+      "kopiaPasswordLabel": "Contraseña",
+      "kopiaFingerprintLabel": "Huella digital",
+      "kopiaTagsLabel": "Etiquetas",
+      "kopiaTagsPlaceholder": "backup=true"
     }
   },
   "setup": {

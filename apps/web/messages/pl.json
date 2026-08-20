@@ -49,7 +49,10 @@
       "postgresql": "PostgreSQL",
       "mongodb": "MongoDB",
       "redis": "Redis"
-    }
+    },
+    "deleted": "Usunięto",
+    "updated": "Zaktualizowano",
+    "created": "Utworzono"
   },
   "auth": {
     "login": {
@@ -471,7 +474,8 @@
       "inviteFirst": "Zaproś pierwszego użytkownika",
       "statSubusers": "Podużytkownicy",
       "statNote": "Uwaga",
-      "statNoteText": "Podużytkownicy mają tylko dostęp do panelu. Uprawnienia są ograniczone do tego serwera i nie dają dostępu do rozliczeń ani ustawień konta."
+      "statNoteText": "Podużytkownicy mają tylko dostęp do panelu. Uprawnienia są ograniczone do tego serwera i nie dają dostępu do rozliczeń ani ustawień konta.",
+      "inviteSuccess": "Użytkownik zaproszony"
     },
     "backups": {
       "restoreTitle": "Przywróć kopię zapasową",
@@ -500,7 +504,11 @@
       "delete": "Usuń",
       "statBackups": "Kopie zapasowe",
       "statTotalSize": "Łączny rozmiar",
-      "statLastBackup": "Ostatnia kopia zapasowa"
+      "statLastBackup": "Ostatnia kopia zapasowa",
+      "restoreSuccess": "Kopia przywrócona",
+      "downloadsDisabledHint": "Pobieranie kopii jest niedostępne, ponieważ miejsce docelowe nie zezwala na publiczne pobieranie.",
+      "backupToGDrive": "Kopia na Dysk Google",
+      "gdriveBadgeHint": "Ta kopia jest przechowywana na Dysku Google użytkownika"
     },
     "network": {
       "colIp": "Adres IP",
@@ -562,7 +570,8 @@
       "selectEggTitle": "Wybierz typ gry",
       "selectEggDescription": "Wybierz typ gry do tej reinstalacji.",
       "selectEggLabel": "Typ gry",
-      "reinstallContinue": "Kontynuuj"
+      "reinstallContinue": "Kontynuuj",
+      "reinstallTriggeredToast": "Rozpoczęto ponowną instalację"
     },
     "activity": {
       "colTimestamp": "Znacznik czasu",
@@ -725,7 +734,9 @@
           "errorCodeNotFound": "Kod polecający nie został znaleziony lub nie jest już aktywny.",
           "errorCodeTaken": "Ten kod jest już zajęty. Spróbuj innego.",
           "errorGeneric": "Coś poszło nie tak. Spróbuj ponownie.",
-          "editCode": "Edytuj kod polecający"
+          "editCode": "Edytuj kod polecający",
+          "generateSuccess": "Kod polecający utworzony",
+          "updateSuccess": "Kod polecający zaktualizowany"
         }
       }
     }
@@ -875,6 +886,19 @@
       "save": "Zapisz",
       "saveSuccess": "Zapisano preferencje językowe",
       "saveFailed": "Nie udało się zapisać preferencji językowych"
+    },
+    "googleDrive": {
+      "title": "Dysk Google",
+      "description": "Połącz swój osobisty Dysk Google, aby zapisywać tam kopie zapasowe serwerów.",
+      "connected": "połączono",
+      "notConnected": "Brak połączonego konta Google.",
+      "connect": "Połącz Dysk Google",
+      "disconnect": "Rozłącz",
+      "disconnected": "Dysk Google odłączony",
+      "connectSuccess": "Dysk Google połączony",
+      "connectDenied": "Połączenie z Dyskiem Google zostało odrzucone",
+      "connectError": "Nie udało się połączyć z Dyskiem Google",
+      "connectMismatch": "Połączone konto Google różni się od wcześniej połączonego. Istniejące kopie stałyby się niedostępne, dlatego połączenie nie zostało zastąpione."
     }
   },
   "admin": {
@@ -996,7 +1020,13 @@
       "configFileLabel": "Konfiguracja skrzydeł.yml",
       "regenToken": "Żeton regeneracji",
       "descriptionLabel": "Opis",
-      "descriptionPlaceholder": "Opcjonalny opis"
+      "descriptionPlaceholder": "Opcjonalny opis",
+      "backupDestinationSection": "Miejsce docelowe kopii",
+      "backupDestinationSectionDesc": "Gdzie przechowywane są kopie serwerów tego węzła. Nadpisuje domyślne ustawienie globalne.",
+      "backupUseGlobal": "Użyj domyślnej wartości globalnej",
+      "backupUseGlobalDesc": "Gdy włączone, węzeł używa domyślnego miejsca docelowego skonfigurowanego w ustawieniach instancji.",
+      "prevPage": "Poprzednia strona",
+      "nextPage": "Następna strona"
     },
     "nests": {
       "title": "Gniazda i jaja",
@@ -1216,7 +1246,8 @@
       "deleteServerDesc": "Usuń trwale ten serwer. Tego nie można cofnąć.",
       "deleteConfirmTitle": "Usunąć serwer?",
       "deleteConfirmDesc": "Spowoduje to trwałe usunięcie „{name}”. Tej akcji nie można cofnąć.",
-      "purgeData": "Usuń dane z węzła"
+      "purgeData": "Usuń dane z węzła",
+      "changeOwner": "Zmień"
     },
     "users": {
       "title": "Użytkownicy",
@@ -1460,7 +1491,18 @@
       "previewSubjectWelcome": "Witaj!",
       "previewSubjectServerInstall": "Twój serwer jest gotowy",
       "editTemplates": "Edytuj szablony",
-      "editTemplatesDesc": "Dostosuj HTML dla każdego wychodzącego e-maila."
+      "editTemplatesDesc": "Dostosuj HTML dla każdego wychodzącego e-maila.",
+      "tabBackups": "Kopie",
+      "backupsGlobalTitle": "Domyślne miejsce docelowe kopii",
+      "backupsGlobalDesc": "Nowe węzły bez własnego miejsca docelowego używają tej domyślnej wartości globalnej. Węzły mogą ją indywidualnie nadpisywać.",
+      "backupsGlobalNone": "Brak skonfigurowanej globalnej wartości domyślnej — kopie używają lokalnego adaptera demona.",
+      "backupsGlobalReset": "Przywróć lokalne",
+      "backupsGlobalResetDesc": "Usuwa globalne domyślne miejsce docelowe. Węzły z własnym miejscem docelowym nie są zmieniane.",
+      "gdriveTitle": "Kopie na Dysku Google",
+      "gdriveDesc": "Pozwala użytkownikom zapisywać kopie na ich osobistym Dysku Google. Utwórz projekt Google Cloud, włącz Drive API i wklej poniżej dane uwierzytelniające klienta OAuth. Gdy aplikacja jest w trybie testowym, dodaj e-mail każdego użytkownika jako użytkownika testowego.",
+      "gdriveClientIdLabel": "ID klienta",
+      "gdriveClientIdPlaceholder": "1234567890-abc.apps.googleusercontent.com",
+      "gdriveClientSecretLabel": "Tajny klucz klienta"
     },
     "emailEditor": {
       "backToSettings": "Ustawienia",
@@ -1644,6 +1686,45 @@
           }
         }
       }
+    },
+    "backupDestinations": {
+      "typeLabel": "Typ miejsca docelowego",
+      "typeWings": "Lokalny (wings)",
+      "typeDdupBak": "ddup-bak",
+      "typeS3": "S3 / Magazyn obiektów",
+      "typeRestic": "Restic",
+      "typePbs": "Proxmox Backup Server",
+      "typeKopia": "Kopia",
+      "localHint": "Kopie są przechowywane w lokalnym katalogu kopii demona.",
+      "s3EndpointLabel": "Adres URL endpointu",
+      "s3EndpointPlaceholder": "https://s3.example.com",
+      "s3RegionLabel": "Region",
+      "s3BucketLabel": "Zasobnik",
+      "s3BucketPlaceholder": "backups",
+      "s3AccessKeyLabel": "Klucz dostępu",
+      "s3SecretKeyLabel": "Tajny klucz",
+      "s3UsePathStyle": "Użyj adresowania w stylu ścieżki",
+      "s3AllowPublicDownloads": "Zezwól na pobieranie z panelu",
+      "s3AllowPublicDownloadsDesc": "Pozwala użytkownikom pobierać pliki kopii w przeglądarce. Wymaga, aby endpoint S3 był publicznie dostępny z przeglądarek użytkowników.",
+      "resticRepositoryLabel": "Repozytorium",
+      "resticRepositoryPlaceholder": "s3:https://s3.example.com/bucket",
+      "resticPasswordLabel": "Hasło",
+      "resticRetryLockLabel": "Blokada ponowień (sekundy)",
+      "resticEnvLabel": "Zmienne środowiskowe",
+      "resticEnvPlaceholder": "AWS_ACCESS_KEY_ID=…\nAWS_SECRET_ACCESS_KEY=…",
+      "pbsUrlLabel": "Adres URL serwera",
+      "pbsDatastoreLabel": "Datastore",
+      "pbsNamespaceLabel": "Przestrzeń nazw",
+      "pbsTokenIdLabel": "ID tokena",
+      "pbsTokenSecretLabel": "Tajny klucz tokena",
+      "pbsFingerprintLabel": "Odcisk palca",
+      "pbsBackupIdPrefixLabel": "Prefiks ID kopii",
+      "kopiaUrlLabel": "Adres URL repozytorium",
+      "kopiaUsernameLabel": "Nazwa użytkownika",
+      "kopiaPasswordLabel": "Hasło",
+      "kopiaFingerprintLabel": "Odcisk palca",
+      "kopiaTagsLabel": "Tagi",
+      "kopiaTagsPlaceholder": "backup=true"
     }
   },
   "setup": {

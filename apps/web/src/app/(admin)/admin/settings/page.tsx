@@ -150,11 +150,11 @@ function ImageUploadField({
   );
 }
 
-function CallbackUrl({ appUrl, provider }: { appUrl: string; provider: string }) {
+function CallbackUrl({ appUrl, provider, path }: { appUrl: string; provider: string; path?: string }) {
   const t = useTranslations("admin.settings");
   const tc = useTranslations("common");
   const [copied, setCopied] = useState(false);
-  const url = appUrl ? `${appUrl}/api/auth/callback/${provider}` : null;
+  const url = appUrl ? `${appUrl}${path ?? `/api/auth/callback/${provider}`}` : null;
 
   function copy() {
     if (!url) return;
@@ -228,6 +228,7 @@ export default function AdminSettingsPage() {
   const [registration, setRegistration] = useState<{ enabled: boolean } | null>(null);
   const [github, setGithub] = useState<{ enabled: boolean; clientId: string; clientSecret: string }>({ enabled: false, clientId: "", clientSecret: "" });
   const [discord, setDiscord] = useState<{ enabled: boolean; clientId: string; clientSecret: string }>({ enabled: false, clientId: "", clientSecret: "" });
+  const [gdrive, setGdrive] = useState<{ clientId: string; clientSecret: string }>({ clientId: "", clientSecret: "" });
 
   // Email / SMTP state
   const { data: smtpData, isLoading: smtpLoading } = useQuery(orpc.email.getSmtpConfig.queryOptions());
@@ -245,6 +246,7 @@ export default function AdminSettingsPage() {
     if (!data) return;
     setGithub((prev) => prev.clientId || prev.enabled ? prev : { enabled: data.githubEnabled, clientId: data.githubClientId, clientSecret: "" });
     setDiscord((prev) => prev.clientId || prev.enabled ? prev : { enabled: data.discordEnabled, clientId: data.discordClientId, clientSecret: "" });
+    setGdrive((prev) => prev.clientId ? prev : { clientId: data.googleDriveClientId, clientSecret: "" });
   }, [data]);
 
   useEffect(() => {
@@ -362,6 +364,16 @@ export default function AdminSettingsPage() {
     await Promise.all(saves);
     setDiscord((prev) => ({ ...prev, clientSecret: "" }));
     setNeedsRestart(true);
+    toast.success(tc("saved"));
+  }
+
+  async function saveGdrive() {
+    const saves: Promise<unknown>[] = [
+      setMutation.mutateAsync({ key: "google_drive_client_id", value: gdrive.clientId }),
+    ];
+    if (gdrive.clientSecret) saves.push(setMutation.mutateAsync({ key: "google_drive_client_secret", value: gdrive.clientSecret }));
+    await Promise.all(saves);
+    setGdrive((prev) => ({ ...prev, clientSecret: "" }));
     toast.success(tc("saved"));
   }
 
@@ -1022,6 +1034,37 @@ export default function AdminSettingsPage() {
                   </div>
                 </div>
               )}
+            </SectionCard>
+
+            <SectionCard title={t("gdriveTitle")} description={t("gdriveDesc")}>
+              <div className="flex flex-col gap-4">
+                <CallbackUrl appUrl={data?.appUrl ?? ""} provider="gdrive" path="/api/account/google-drive/callback" />
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-medium text-foreground">{t("gdriveClientIdLabel")}</label>
+                    <input
+                      className={inputClass()}
+                      placeholder={t("gdriveClientIdPlaceholder")}
+                      value={gdrive.clientId}
+                      onChange={(e) => setGdrive({ ...gdrive, clientId: e.target.value })}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-medium text-foreground">{t("gdriveClientSecretLabel")}</label>
+                    <input
+                      className={inputClass()}
+                      type="password"
+                      placeholder={data?.googleDriveClientSecretSet ? t("clientSecretSet") : t("enterSecret")}
+                      value={gdrive.clientSecret}
+                      onChange={(e) => setGdrive({ ...gdrive, clientSecret: e.target.value })}
+                      autoComplete="new-password"
+                    />
+                  </div>
+                </div>
+                <div onClick={saveGdrive}>
+                  <SaveButton saving={setMutation.isPending} />
+                </div>
+              </div>
             </SectionCard>
 
             <ConfirmDialog

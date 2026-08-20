@@ -1,31 +1,23 @@
 import { randomUUID } from "crypto";
-import { and, eq } from "drizzle-orm";
+import { and, eq, ne, or } from "drizzle-orm";
 import { z } from "zod";
 import { ORPCError } from "@orpc/server";
 import { db } from "@struxa/db";
-import { backups, nodes, servers, subusers } from "@struxa/db";
+import { backups, billingSubscriptions, nodes, servers } from "@struxa/db";
 import { createWingsClient } from "../lib/wings-client";
 import { safeDecrypt } from "../lib/crypto";
 import { signBackupDownloadToken } from "../lib/jwt";
+import { requireServerAccess } from "../lib/server-access";
 import { adapterStringForType, resolveDestinationForNode } from "../lib/backup-destinations";
 import { deleteBackupObject, presignDownloadUrl } from "../services/backup-s3";
+import {
+  ensureGDriveFolders,
+  getAppUrl,
+  getGDriveConnection,
+  getOperatorGDriveConfig,
+} from "../services/google-drive";
 import { recordActivity } from "../services/activity";
 import { protectedProcedure } from "../index";
-
-async function requireServerAccess(userId: string, serverId: string, role: string | null | undefined) {
-  const server = await db.query.servers.findFirst({
-    where: eq(servers.id, serverId),
-    with: { node: true },
-  });
-  if (!server) throw new ORPCError("NOT_FOUND");
-  if (role !== "admin" && server.userId !== userId) {
-    const sub = await db.query.subusers.findFirst({
-      where: and(eq(subusers.userId, userId), eq(subusers.serverId, serverId)),
-    });
-    if (!sub) throw new ORPCError("FORBIDDEN");
-  }
-  return server;
-}
 
 export const backupsRouter = {
   list: protectedProcedure
@@ -43,6 +35,7 @@ export const backupsRouter = {
         serverId: z.string().uuid(),
         name: z.string().min(1).max(255),
         ignoredFiles: z.string().optional(),
+        destination: z.enum(["node", "gdrive"]).optional(),
       }),
     )
     .handler(async ({ context, input }) => {
@@ -52,20 +45,78 @@ export const backupsRouter = {
         context.session.user.role,
       );
 
+      let backupLimit = 0;
+      if (server.subscriptionId) {
+        const subscription = await db.query.billingSubscriptions.findFirst({
+          where: and(
+            eq(billingSubscriptions.id, server.subscriptionId),
+            or(
+              eq(billingSubscriptions.status, "active"),
+              eq(billingSubscriptions.status, "trialing"),
+            ),
+          ),
+          with: { plan: { columns: { resourceLimits: true } } },
+        });
+        backupLimit =
+          (subscription?.plan?.resourceLimits as { backups?: number } | null)?.backups ?? 0;
+      }
       const id = randomUUID();
       const uuid = randomUUID();
-
       const node = server.node as typeof nodes.$inferSelect;
-      const destination = await resolveDestinationForNode(node.id);
-      const adapter = destination ? adapterStringForType(destination.type) : "wings";
 
-      await db.insert(backups).values({
-        id,
-        uuid,
-        serverId: input.serverId,
-        name: input.name,
-        ignoredFiles: input.ignoredFiles ?? null,
-        disk: adapter,
+      let adapter: string;
+      let driveUserId: string | null = null;
+      if (input.destination === "gdrive") {
+        const config = await getOperatorGDriveConfig();
+        if (!config) {
+          throw new ORPCError("BAD_REQUEST", {
+            message: "Google Drive is not configured by the administrator",
+          });
+        }
+        const connection = await getGDriveConnection(context.session.user.id);
+        if (!connection) {
+          throw new ORPCError("BAD_REQUEST", {
+            message: "Connect your Google Drive in account settings",
+          });
+        }
+        await ensureGDriveFolders(connection, server.name, server.uuid);
+        adapter = "google-drive";
+        driveUserId = context.session.user.id;
+      } else {
+        const destination = await resolveDestinationForNode(node.id);
+        adapter = destination ? adapterStringForType(destination.type) : "wings";
+      }
+
+      await db.transaction(async (tx) => {
+        if (backupLimit > 0 && input.destination !== "gdrive") {
+          await tx
+            .select({ id: servers.id })
+            .from(servers)
+            .where(eq(servers.id, server.id))
+            .for("update");
+          const used = await tx.$count(
+            backups,
+            and(
+              eq(backups.serverId, server.id),
+              eq(backups.isSuccessful, true),
+              ne(backups.disk, "google-drive"),
+            ),
+          );
+          if (used >= backupLimit) {
+            throw new ORPCError("BAD_REQUEST", {
+              message: "Backup limit reached for this server",
+            });
+          }
+        }
+        await tx.insert(backups).values({
+          id,
+          uuid,
+          serverId: input.serverId,
+          name: input.name,
+          ignoredFiles: input.ignoredFiles ?? null,
+          disk: adapter,
+          driveUserId,
+        });
       });
 
       const client = createWingsClient(node);
@@ -154,6 +205,18 @@ export const backupsRouter = {
         return { url: await presignDownloadUrl(destination, backup.uuid) };
       }
 
+      if (backup.disk === "google-drive") {
+        const connection = backup.driveUserId
+          ? await getGDriveConnection(backup.driveUserId)
+          : null;
+        if (!connection) {
+          throw new ORPCError("BAD_REQUEST", {
+            message: "Google Drive connection removed",
+          });
+        }
+        return { url: `${await getAppUrl()}/api/backups/${backup.id}/download` };
+      }
+
       const token = await signBackupDownloadToken(
         context.session.user.id,
         server.uuid,
@@ -173,10 +236,18 @@ export const backupsRouter = {
         context.session.user.role,
       );
       const node = server.node as typeof nodes.$inferSelect;
-      const destination = await resolveDestinationForNode(node.id);
+      const [destination, gdriveConfig, gdriveConnection] = await Promise.all([
+        resolveDestinationForNode(node.id),
+        getOperatorGDriveConfig(),
+        getGDriveConnection(context.session.user.id),
+      ]);
       const s3PublicDownloads =
         destination?.type === "s3" && destination.allowPublicDownload;
-      return { s3PublicDownloads };
+      return {
+        s3PublicDownloads,
+        googleDriveConfigured: !!gdriveConfig,
+        googleDriveConnected: !!gdriveConnection,
+      };
     }),
 
   restore: protectedProcedure

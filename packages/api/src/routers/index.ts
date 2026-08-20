@@ -20,6 +20,7 @@ import { settingsRouter } from "./settings";
 import { onboardingRouter } from "./onboarding";
 import { emailRouter } from "./email";
 import { billingRouter } from "./billing";
+import { googleDriveRouter } from "./google-drive";
 
 export const appRouter = {
   healthCheck: publicProcedure.handler(() => {
@@ -44,6 +45,7 @@ export const appRouter = {
   onboarding: onboardingRouter,
   email: emailRouter,
   billing: billingRouter,
+  googleDrive: googleDriveRouter,
 };
 
 export type AppRouter = typeof appRouter;
