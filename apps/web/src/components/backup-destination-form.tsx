@@ -36,6 +36,7 @@ export function defaultBackupDestination(
         accessKey: "",
         secretKey: "",
         usePathStyle: true,
+        allowPublicDownload: false,
       };
     case "restic":
       return {
@@ -210,6 +211,19 @@ export function BackupDestinationForm({
             <Switch
               checked={value.usePathStyle}
               onCheckedChange={(checked) => onChange({ ...value, usePathStyle: checked })}
+              disabled={disabled}
+            />
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium text-foreground">{t("s3AllowPublicDownloads")}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{t("s3AllowPublicDownloadsDesc")}</p>
+            </div>
+            <Switch
+              checked={value.allowPublicDownload}
+              onCheckedChange={(checked) =>
+                onChange({ ...value, allowPublicDownload: checked })
+              }
               disabled={disabled}
             />
           </div>

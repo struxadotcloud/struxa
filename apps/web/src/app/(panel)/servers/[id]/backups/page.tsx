@@ -77,6 +77,12 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
     enabled: !!serverId,
   });
 
+  const { data: downloadAvailability } = useQuery({
+    ...orpc.backups.getDownloadAvailability.queryOptions({ input: { serverId: serverId ?? "" } }),
+    enabled: !!serverId,
+  });
+  const s3PublicDownloads = downloadAvailability?.s3PublicDownloads ?? false;
+
   const createMutation = useMutation(orpc.backups.create.mutationOptions());
   const deleteMutation = useMutation({
     ...orpc.backups.delete.mutationOptions(),
@@ -231,6 +237,11 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
               {t("createBackup")}
             </button>
           </div>
+          {backups.some((b) => b.disk === "s3") && !s3PublicDownloads && (
+            <div className="border-b border-border bg-muted/30 px-4 py-2">
+              <p className="text-xs text-muted-foreground">{t("downloadsDisabledHint")}</p>
+            </div>
+          )}
           <div className="flex flex-1 flex-col overflow-x-auto">
           <div className="min-w-[500px] flex flex-1 flex-col">
           <div className="grid grid-cols-[28px_1fr_100px_200px_100px] border-b border-border bg-muted/40 px-4 py-2.5 shrink-0">
@@ -270,14 +281,16 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
                     <div className="flex items-center gap-2 justify-end pr-1">
                       {backup.isSuccessful && (
                         <>
-                          <button
-                            type="button"
-                            onClick={() => serverId && downloadMutation.mutate({ serverId, backupId: backup.id })}
-                            className="rounded p-0.5 text-muted-foreground/50 hover:bg-muted hover:text-blue-500 transition-colors"
-                            title={t("download")}
-                          >
-                            <Download className="h-3.5 w-3.5" />
-                          </button>
+                          {(backup.disk !== "s3" || s3PublicDownloads) && (
+                            <button
+                              type="button"
+                              onClick={() => serverId && downloadMutation.mutate({ serverId, backupId: backup.id })}
+                              className="rounded p-0.5 text-muted-foreground/50 hover:bg-muted hover:text-blue-500 transition-colors"
+                              title={t("download")}
+                            >
+                              <Download className="h-3.5 w-3.5" />
+                            </button>
+                          )}
                           <button
                             type="button"
                             onClick={() => setRestoreTarget({ id: backup.id, name: backup.name })}

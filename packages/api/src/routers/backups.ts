@@ -138,6 +138,22 @@ export const backupsRouter = {
       if (!backup || !backup.isSuccessful) throw new ORPCError("NOT_FOUND");
 
       const node = server.node as typeof nodes.$inferSelect;
+
+      if (backup.disk === "s3") {
+        const destination = await resolveDestinationForNode(node.id);
+        if (!destination || destination.type !== "s3") {
+          throw new ORPCError("BAD_REQUEST", {
+            message: "The S3 backup destination for this node is no longer configured",
+          });
+        }
+        if (!destination.allowPublicDownload) {
+          throw new ORPCError("BAD_REQUEST", {
+            message: "Backup downloads are disabled for this storage destination",
+          });
+        }
+        return { url: await presignDownloadUrl(destination, backup.uuid) };
+      }
+
       const token = await signBackupDownloadToken(
         context.session.user.id,
         server.uuid,
@@ -146,6 +162,21 @@ export const backupsRouter = {
       );
       const url = `${node.scheme}://${node.fqdn}:${node.daemonListen}/download/backup?token=${token}`;
       return { url };
+    }),
+
+  getDownloadAvailability: protectedProcedure
+    .input(z.object({ serverId: z.string().uuid() }))
+    .handler(async ({ context, input }) => {
+      const server = await requireServerAccess(
+        context.session.user.id,
+        input.serverId,
+        context.session.user.role,
+      );
+      const node = server.node as typeof nodes.$inferSelect;
+      const destination = await resolveDestinationForNode(node.id);
+      const s3PublicDownloads =
+        destination?.type === "s3" && destination.allowPublicDownload;
+      return { s3PublicDownloads };
     }),
 
   restore: protectedProcedure

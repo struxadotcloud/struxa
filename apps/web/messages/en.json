@@ -636,6 +636,7 @@
       "download": "Download",
       "restore": "Restore",
       "delete": "Delete",
+      "downloadsDisabledHint": "Backup downloads are unavailable because the storage destination does not allow public downloads.",
       "statBackups": "Backups",
       "statTotalSize": "Total Size",
       "statLastBackup": "Last Backup"
@@ -1498,6 +1499,8 @@
       "s3AccessKeyLabel": "Access Key",
       "s3SecretKeyLabel": "Secret Key",
       "s3UsePathStyle": "Use path-style addressing",
+      "s3AllowPublicDownloads": "Allow downloads from the panel",
+      "s3AllowPublicDownloadsDesc": "Lets users download backup files in the browser. Requires the S3 endpoint to be publicly reachable from users' browsers.",
       "resticRepositoryLabel": "Repository",
       "resticRepositoryPlaceholder": "s3:https://s3.example.com/bucket",
       "resticPasswordLabel": "Password",

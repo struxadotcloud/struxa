@@ -22,6 +22,7 @@ const s3ConfigSchema = z.object({
   accessKey: z.string().min(1),
   secretKey: z.string().min(1),
   usePathStyle: z.boolean().default(true),
+  allowPublicDownload: z.boolean().default(false),
 });
 
 const resticConfigSchema = z.object({
