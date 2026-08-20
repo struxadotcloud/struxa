@@ -268,7 +268,6 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
                       setShowCreate(true);
                     }}
                   >
-                    <GoogleIcon className="h-3.5 w-3.5 shrink-0" />
                     {t("backupToGDrive")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
