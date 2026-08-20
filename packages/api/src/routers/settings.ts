@@ -8,7 +8,7 @@ import { deleteObject } from "../services/storage";
 import { encrypt } from "../lib/crypto";
 import { adminProcedure, publicProcedure } from "../index";
 
-const ENCRYPTED_SETTINGS_KEYS = new Set(["github_client_secret", "discord_client_secret"]);
+const ENCRYPTED_SETTINGS_KEYS = new Set(["github_client_secret", "discord_client_secret", "google_drive_client_secret"]);
 
 export const settingsRouter = {
   getActiveSocialProviders: publicProcedure.handler(async () => {
@@ -71,6 +71,8 @@ export const settingsRouter = {
       discordEnabled: s.discord_enabled === "true",
       discordClientId: s.discord_client_id ?? "",
       discordClientSecretSet: !!(s.discord_client_secret),
+      googleDriveClientId: s.google_drive_client_id ?? "",
+      googleDriveClientSecretSet: !!(s.google_drive_client_secret),
       ogTitle: s.og_title ?? "",
       ogDescription: s.og_description ?? "",
       ogSiteName: s.og_site_name ?? "",

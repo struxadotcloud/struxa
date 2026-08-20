@@ -3,29 +3,15 @@ import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { ORPCError } from "@orpc/server";
 import { db } from "@struxa/db";
-import { backups, nodes, servers, subusers } from "@struxa/db";
+import { backups, nodes } from "@struxa/db";
 import { createWingsClient } from "../lib/wings-client";
 import { safeDecrypt } from "../lib/crypto";
 import { signBackupDownloadToken } from "../lib/jwt";
+import { requireServerAccess } from "../lib/server-access";
 import { adapterStringForType, resolveDestinationForNode } from "../lib/backup-destinations";
 import { deleteBackupObject, presignDownloadUrl } from "../services/backup-s3";
 import { recordActivity } from "../services/activity";
 import { protectedProcedure } from "../index";
-
-async function requireServerAccess(userId: string, serverId: string, role: string | null | undefined) {
-  const server = await db.query.servers.findFirst({
-    where: eq(servers.id, serverId),
-    with: { node: true },
-  });
-  if (!server) throw new ORPCError("NOT_FOUND");
-  if (role !== "admin" && server.userId !== userId) {
-    const sub = await db.query.subusers.findFirst({
-      where: and(eq(subusers.userId, userId), eq(subusers.serverId, serverId)),
-    });
-    if (!sub) throw new ORPCError("FORBIDDEN");
-  }
-  return server;
-}
 
 export const backupsRouter = {
   list: protectedProcedure
