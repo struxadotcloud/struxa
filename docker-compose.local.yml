@@ -42,6 +42,7 @@ services:
       - minio_data:/data
     ports:
       - "127.0.0.1:9001:9001"
+      - "9000:9000"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 10s
@@ -67,6 +68,8 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
     ports:
       - "${WEB_PORT:-3001}:3001"
