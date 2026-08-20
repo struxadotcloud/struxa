@@ -247,9 +247,9 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
                   {t("createBackup")}
                   <ChevronDown className="h-3 w-3" />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent>
+                <DropdownMenuContent style={{ minWidth: "14rem" }}>
                   <DropdownMenuItem
-                    className="cursor-pointer"
+                    className="cursor-pointer whitespace-nowrap"
                     onClick={() => {
                       setDestination("node");
                       setShowCreate(true);
@@ -258,7 +258,7 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
                     {t("createBackup")}
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    className="cursor-pointer"
+                    className="cursor-pointer whitespace-nowrap"
                     onClick={() => {
                       if (!googleDriveConnected) {
                         router.push("/account");
@@ -268,7 +268,7 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
                       setShowCreate(true);
                     }}
                   >
-                    <GoogleIcon className="h-3.5 w-3.5" />
+                    <GoogleIcon className="h-3.5 w-3.5 shrink-0" />
                     {t("backupToGDrive")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
