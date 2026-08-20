@@ -1,9 +1,9 @@
 import { randomUUID } from "crypto";
-import { and, eq } from "drizzle-orm";
+import { and, eq, ne, or } from "drizzle-orm";
 import { z } from "zod";
 import { ORPCError } from "@orpc/server";
 import { db } from "@struxa/db";
-import { backups, nodes } from "@struxa/db";
+import { backups, billingSubscriptions, nodes } from "@struxa/db";
 import { createWingsClient } from "../lib/wings-client";
 import { safeDecrypt } from "../lib/crypto";
 import { signBackupDownloadToken } from "../lib/jwt";
@@ -44,6 +44,33 @@ export const backupsRouter = {
         input.serverId,
         context.session.user.role,
       );
+
+      let backupLimit = 0;
+      if (server.subscriptionId) {
+        const subscription = await db.query.billingSubscriptions.findFirst({
+          where: and(
+            eq(billingSubscriptions.id, server.subscriptionId),
+            or(
+              eq(billingSubscriptions.status, "active"),
+              eq(billingSubscriptions.status, "trialing"),
+            ),
+          ),
+          with: { plan: { columns: { resourceLimits: true } } },
+        });
+        backupLimit =
+          (subscription?.plan?.resourceLimits as { backups?: number } | null)?.backups ?? 0;
+      }
+      if (backupLimit > 0 && input.destination !== "gdrive") {
+        const used = await db.$count(
+          backups,
+          and(eq(backups.serverId, server.id), ne(backups.disk, "google-drive")),
+        );
+        if (used >= backupLimit) {
+          throw new ORPCError("BAD_REQUEST", {
+            message: "Backup limit reached for this server",
+          });
+        }
+      }
 
       const id = randomUUID();
       const uuid = randomUUID();

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { use } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Archive, HardDrive, Clock, RotateCcw, Trash2, Download } from "lucide-react";
+import { Archive, HardDrive, Clock, RotateCcw, Trash2, Download, ChevronDown } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
   Dialog,
@@ -16,11 +16,11 @@ import {
   DialogClose,
 } from "@struxa/ui/components/dialog";
 import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-} from "@struxa/ui/components/select";
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@struxa/ui/components/dropdown-menu";
 import { Tooltip, TooltipTrigger, TooltipPopup } from "@struxa/ui/components/tooltip";
 import { useTranslations } from "next-intl";
 import { GoogleIcon } from "@/components/google-icon";
@@ -242,29 +242,37 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <p className="text-sm font-medium text-foreground">{t("sectionTitle")}</p>
             {googleDriveConfigured ? (
-              <Select
-                value={destination}
-                onValueChange={(v) => {
-                  if (v !== "node" && v !== "gdrive") return;
-                  if (v === "gdrive" && !googleDriveConnected) {
-                    router.push("/account");
-                    return;
-                  }
-                  setDestination(v);
-                  setShowCreate(true);
-                }}
-              >
-                <SelectTrigger className="h-auto w-auto gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80 data-[popup-open]:opacity-80 [&_svg]:text-background">
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80">
                   {t("createBackup")}
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="node">{t("createBackup")}</SelectItem>
-                  <SelectItem value="gdrive">
+                  <ChevronDown className="h-3 w-3" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    onClick={() => {
+                      setDestination("node");
+                      setShowCreate(true);
+                    }}
+                  >
+                    {t("createBackup")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    onClick={() => {
+                      if (!googleDriveConnected) {
+                        router.push("/account");
+                        return;
+                      }
+                      setDestination("gdrive");
+                      setShowCreate(true);
+                    }}
+                  >
                     <GoogleIcon className="h-3.5 w-3.5" />
                     {t("backupToGDrive")}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
               <button
                 type="button"
