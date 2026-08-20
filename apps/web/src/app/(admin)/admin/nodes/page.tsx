@@ -41,6 +41,9 @@ import {
   SheetPanel,
 } from "@struxa/ui/components/sheet";
 import { useIsMobile } from "@struxa/ui/hooks/use-media-query";
+import { Switch } from "@struxa/ui/components/switch";
+import { BackupDestinationForm, defaultBackupDestination } from "@/components/backup-destination-form";
+import type { BackupDestinationInput } from "@struxa/api/lib/backup-destinations";
 import { orpc, queryClient } from "@/utils/orpc";
 import { ContextMenu, RowMenu, type ActionItem } from "@/components/context-menu";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -342,6 +345,8 @@ const defaultNodeForm = {
   daemonListen: 8080,
   daemonSFTP: 2022,
   uploadSize: 100,
+  backupUseGlobal: true,
+  backupDestination: defaultBackupDestination("s3") as BackupDestinationInput,
 };
 
 export default function NodesPage() {
@@ -355,6 +360,11 @@ export default function NodesPage() {
 
   const createNodeMutation = useMutation(orpc.nodes.create.mutationOptions({
     onSuccess: () => { invalidateNodes(); toast.success(tc("created")); },
+  }));
+  const upsertNodeDestinationMutation = useMutation(orpc.backupDestinations.upsertForNode.mutationOptions({
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: orpc.backupDestinations.key() });
+    },
   }));
   const deleteNodeMutation = useMutation(orpc.nodes.delete.mutationOptions({
     onSuccess: () => { invalidateNodes(); toast.success(tc("deleted")); },
@@ -444,7 +454,25 @@ export default function NodesPage() {
   async function handleCreateNode() {
     if (!nodeForm.name.trim() || !nodeForm.locationId || !nodeForm.fqdn.trim()) return;
     try {
-      await createNodeMutation.mutateAsync(nodeForm);
+      const node = await createNodeMutation.mutateAsync({
+        name: nodeForm.name,
+        locationId: nodeForm.locationId,
+        fqdn: nodeForm.fqdn,
+        scheme: nodeForm.scheme,
+        memory: nodeForm.memory,
+        memoryOverallocate: nodeForm.memoryOverallocate,
+        disk: nodeForm.disk,
+        diskOverallocate: nodeForm.diskOverallocate,
+        daemonListen: nodeForm.daemonListen,
+        daemonSFTP: nodeForm.daemonSFTP,
+        uploadSize: nodeForm.uploadSize,
+      });
+      if (!nodeForm.backupUseGlobal && node) {
+        await upsertNodeDestinationMutation.mutateAsync({
+          nodeId: node.id,
+          ...nodeForm.backupDestination,
+        });
+      }
       closeCreateNode();
     } catch {
       // error toasted globally via MutationCache.onError
@@ -730,6 +758,31 @@ export default function NodesPage() {
                   }
                 />
               </div>
+            </div>
+
+            <div className="rounded-lg border border-border p-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-foreground">{t("backupDestinationSection")}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{t("backupUseGlobalDesc")}</p>
+                </div>
+                <Switch
+                  checked={nodeForm.backupUseGlobal}
+                  onCheckedChange={(checked) =>
+                    setNodeForm((f) => ({ ...f, backupUseGlobal: checked }))
+                  }
+                />
+              </div>
+              {!nodeForm.backupUseGlobal && (
+                <div className="mt-3">
+                  <BackupDestinationForm
+                    value={nodeForm.backupDestination}
+                    onChange={(destination) =>
+                      setNodeForm((f) => ({ ...f, backupDestination: destination }))
+                    }
+                  />
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter>

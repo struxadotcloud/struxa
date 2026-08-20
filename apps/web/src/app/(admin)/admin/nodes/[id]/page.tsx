@@ -11,6 +11,8 @@ import {
   TooltipPopup,
   TooltipProvider,
 } from "@struxa/ui/components/tooltip";
+import { BackupDestinationForm, defaultBackupDestination } from "@/components/backup-destination-form";
+import type { BackupDestinationInput } from "@struxa/api/lib/backup-destinations";
 import { orpc, queryClient } from "@/utils/orpc";
 
 function invalidateNode(id: string) {
@@ -135,6 +137,20 @@ export default function NodeSettingsPage({ params }: { params: Promise<{ id: str
     }),
   );
 
+  const { data: nodeDestination } = useQuery(orpc.backupDestinations.getForNode.queryOptions({ input: { nodeId: id } }));
+  const upsertDestinationMutation = useMutation(orpc.backupDestinations.upsertForNode.mutationOptions({
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: orpc.backupDestinations.key() });
+    },
+  }));
+  const clearDestinationMutation = useMutation(orpc.backupDestinations.clearForNode.mutationOptions({
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: orpc.backupDestinations.key() });
+    },
+  }));
+
+  const [backupUseGlobal, setBackupUseGlobal] = useState(true);
+  const [backupDestination, setBackupDestination] = useState<BackupDestinationInput | null>(null);
 
   const initialized = useRef(false);
   const [form, setForm] = useState<FormState>({
@@ -174,23 +190,36 @@ export default function NodeSettingsPage({ params }: { params: Promise<{ id: str
     }
   }, [node]);
 
+  useEffect(() => {
+    if (!nodeDestination || backupDestination !== null) return;
+    setBackupDestination(nodeDestination);
+    setBackupUseGlobal(false);
+  }, [nodeDestination, backupDestination]);
+
   async function handleSave() {
-    await updateMutation.mutateAsync({
-      id,
-      name: form.name,
-      description: form.description.trim() || undefined,
-      fqdn: form.fqdn,
-      scheme: form.scheme,
-      memory: form.memory,
-      memoryOverallocate: form.memoryOverallocate,
-      disk: form.disk,
-      diskOverallocate: form.diskOverallocate,
-      uploadSize: form.uploadSize,
-      daemonListen: form.daemonListen,
-      daemonSFTP: form.daemonSFTP,
-      daemonBase: form.daemonBase,
-      maintenanceMode: form.maintenanceMode,
-    });
+    await Promise.all([
+      updateMutation.mutateAsync({
+        id,
+        name: form.name,
+        description: form.description.trim() || undefined,
+        fqdn: form.fqdn,
+        scheme: form.scheme,
+        memory: form.memory,
+        memoryOverallocate: form.memoryOverallocate,
+        disk: form.disk,
+        diskOverallocate: form.diskOverallocate,
+        uploadSize: form.uploadSize,
+        daemonListen: form.daemonListen,
+        daemonSFTP: form.daemonSFTP,
+        daemonBase: form.daemonBase,
+        maintenanceMode: form.maintenanceMode,
+      }),
+      backupUseGlobal
+        ? clearDestinationMutation.mutateAsync({ nodeId: id })
+        : backupDestination
+          ? upsertDestinationMutation.mutateAsync({ nodeId: id, ...backupDestination })
+          : Promise.resolve(),
+    ]);
   }
 
   if (isLoading) {
@@ -334,6 +363,24 @@ export default function NodeSettingsPage({ params }: { params: Promise<{ id: str
             onChange={(v) => setForm((f) => ({ ...f, maintenanceMode: v }))}
           />
         </SettingRow>
+      </SectionCard>
+
+      <SectionCard title={t("backupDestinationSection")} description={t("backupDestinationSectionDesc")}>
+        <div className="px-4 py-3 flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-foreground">{t("backupUseGlobal")}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{t("backupUseGlobalDesc")}</p>
+            </div>
+            <Toggle checked={backupUseGlobal} onChange={setBackupUseGlobal} />
+          </div>
+          {!backupUseGlobal && (
+            <BackupDestinationForm
+              value={backupDestination ?? defaultBackupDestination("s3")}
+              onChange={setBackupDestination}
+            />
+          )}
+        </div>
       </SectionCard>
 
       <div className="flex items-center justify-between">
