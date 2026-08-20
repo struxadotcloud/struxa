@@ -13,6 +13,7 @@ interface BackupCompleteBody {
   checksum_type?: string;
   size?: number;
   parts?: { etag?: string; part_number?: number }[];
+  remote_id?: string | null;
 }
 
 export async function POST(
@@ -42,6 +43,7 @@ export async function POST(
       bytes: body.size ?? 0,
       checksum: checksum ?? undefined,
       completedAt: new Date(),
+      remoteFileId: body.remote_id ?? null,
     })
     .where(eq(backups.id, backup.id));
 
