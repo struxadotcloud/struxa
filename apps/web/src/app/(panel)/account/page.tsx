@@ -191,6 +191,67 @@ function ConnectedAccountsSection({ accounts, onRefresh }: { accounts: LinkedAcc
 }
 
 // ─────────────────────────────────────────────
+// Google Drive Section
+// ─────────────────────────────────────────────
+function GoogleDriveSection() {
+  const t = useTranslations("account.googleDrive");
+  const { data, refetch } = useQuery(orpc.googleDrive.get.queryOptions());
+  const disconnect = useMutation(
+    orpc.googleDrive.disconnect.mutationOptions({
+      onSuccess: () => {
+        void refetch();
+        toast.success(t("disconnected"));
+      },
+    }),
+  );
+
+  useEffect(() => {
+    const result = new URLSearchParams(window.location.search).get("gdrive");
+    if (!result) return;
+    if (result === "connected") toast.success(t("connectSuccess"));
+    else if (result === "denied") toast.error(t("connectDenied"));
+    else toast.error(t("connectError"));
+    window.history.replaceState({}, "", "/account");
+  }, [t]);
+
+  if (!data?.operatorConfigured) return null;
+
+  return (
+    <SectionCard title={t("title")} description={t("description")}>
+      {data.connected ? (
+        <div className="flex items-center justify-between rounded-lg border border-border bg-background px-4 py-2.5">
+          <div className="flex items-center gap-2.5">
+            <span className="text-sm font-medium text-foreground">{data.email}</span>
+            <span className="rounded-full bg-green-500/10 px-1.5 py-0.5 text-[10px] font-medium text-green-600 dark:text-green-400">{t("connected")}</span>
+          </div>
+          <button
+            type="button"
+            disabled={disconnect.isPending}
+            onClick={() => disconnect.mutate(undefined)}
+            className="flex items-center gap-1.5 rounded-lg border border-destructive/40 px-3 py-1 text-xs font-medium text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-40"
+          >
+            <Unlink className="h-3 w-3" />
+            {t("disconnect")}
+          </button>
+        </div>
+      ) : (
+        <div className="flex items-center justify-between rounded-lg border border-border bg-background px-4 py-2.5">
+          <p className="text-sm text-muted-foreground">{t("notConnected")}</p>
+          <button
+            type="button"
+            onClick={() => { window.location.href = "/api/account/google-drive/authorize"; }}
+            className="flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-1 text-xs font-medium text-background transition-opacity hover:opacity-80"
+          >
+            <Link2 className="h-3 w-3" />
+            {t("connect")}
+          </button>
+        </div>
+      )}
+    </SectionCard>
+  );
+}
+
+// ─────────────────────────────────────────────
 // Password Section
 // ─────────────────────────────────────────────
 function PasswordSection({ hasPassword }: { hasPassword: boolean }) {
@@ -476,6 +537,7 @@ function ProfileTab() {
 
       <SecurityContent twoFactorEnabled={self?.twoFactorEnabled ?? false} />
       <ConnectedAccountsSection accounts={linkedAccounts} onRefresh={loadLinkedAccounts} />
+      <GoogleDriveSection />
       <PasswordSection hasPassword={linkedAccounts.some((a) => a.providerId === "credential")} />
     </div>
   );

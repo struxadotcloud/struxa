@@ -637,6 +637,11 @@
       "restore": "Restore",
       "delete": "Delete",
       "downloadsDisabledHint": "Backup downloads are unavailable because the storage destination does not allow public downloads.",
+      "destinationLabel": "Backup Destination",
+      "destinationNodeDefault": "Node default",
+      "destinationGDrive": "My Google Drive",
+      "gdriveNotConnectedHint": "Connect your Google Drive to save backups there.",
+      "gdriveConnectLink": "Connect Google Drive",
       "statBackups": "Backups",
       "statTotalSize": "Total Size",
       "statLastBackup": "Last Backup"
@@ -804,6 +809,18 @@
       "linkFailed": "Failed to link account",
       "unlinkFailed": "Failed to unlink account",
       "unlinked": "Account unlinked"
+    },
+    "googleDrive": {
+      "title": "Google Drive",
+      "description": "Connect your personal Google Drive to save server backups there.",
+      "connected": "connected",
+      "notConnected": "No Google account connected.",
+      "connect": "Connect Google Drive",
+      "disconnect": "Disconnect",
+      "disconnected": "Google Drive disconnected",
+      "connectSuccess": "Google Drive connected",
+      "connectDenied": "Google Drive connection was denied",
+      "connectError": "Failed to connect Google Drive"
     },
     "password": {
       "changeTitle": "Change Password",
@@ -1480,7 +1497,13 @@
       "backupsGlobalDesc": "New nodes without their own destination use this global default. Nodes can override it individually.",
       "backupsGlobalNone": "No global default configured — backups fall back to the local daemon adapter.",
       "backupsGlobalReset": "Reset to Local",
-      "backupsGlobalResetDesc": "Remove the global default destination. Nodes with their own destination are unaffected."
+      "backupsGlobalResetDesc": "Remove the global default destination. Nodes with their own destination are unaffected.",
+      "tabGoogleDrive": "Google Drive",
+      "gdriveTitle": "Google Drive Backups",
+      "gdriveDesc": "Allow users to save backups to their personal Google Drive. Create a Google Cloud project, enable the Drive API, and paste the OAuth client credentials below. While your app is in testing mode, add each user's email as a test user.",
+      "gdriveClientIdLabel": "Client ID",
+      "gdriveClientIdPlaceholder": "1234567890-abc.apps.googleusercontent.com",
+      "gdriveClientSecretLabel": "Client Secret"
     },
     "backupDestinations": {
       "typeLabel": "Destination Type",

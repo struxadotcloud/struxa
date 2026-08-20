@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { use } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Archive, HardDrive, Clock, RotateCcw, Trash2, Download } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -15,6 +16,13 @@ import {
   DialogDescription,
   DialogClose,
 } from "@struxa/ui/components/dialog";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@struxa/ui/components/select";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { orpc } from "@/utils/orpc";
@@ -62,6 +70,7 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
   const queryClient = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
   const [createName, setCreateName] = useState("");
+  const [destination, setDestination] = useState<"node" | "gdrive">("node");
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [restoreTarget, setRestoreTarget] = useState<{ id: string; name: string } | null>(null);
 
@@ -82,6 +91,8 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
     enabled: !!serverId,
   });
   const s3PublicDownloads = downloadAvailability?.s3PublicDownloads ?? false;
+  const googleDriveConfigured = downloadAvailability?.googleDriveConfigured ?? false;
+  const googleDriveConnected = downloadAvailability?.googleDriveConnected ?? false;
 
   const createMutation = useMutation(orpc.backups.create.mutationOptions());
   const deleteMutation = useMutation({
@@ -106,11 +117,12 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
   function closeCreate() {
     setShowCreate(false);
     setCreateName("");
+    setDestination("node");
   }
 
   async function handleCreate() {
     if (!serverId || !createName.trim()) return;
-    await createMutation.mutateAsync({ serverId, name: createName.trim() });
+    await createMutation.mutateAsync({ serverId, name: createName.trim(), destination });
     void queryClient.invalidateQueries(orpc.backups.list.queryOptions({ input: { serverId } }));
     toast.success(tc("created"));
     closeCreate();
@@ -205,6 +217,40 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
                 if (e.key === "Escape") closeCreate();
               }}
             />
+            {googleDriveConfigured && (
+              <div className="mt-3 flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-foreground">{t("destinationLabel")}</label>
+                <Select
+                  value={destination}
+                  onValueChange={(v) => {
+                    if (v === "node" || v === "gdrive") setDestination(v);
+                  }}
+                >
+                  <SelectTrigger className="h-[30px] text-sm">
+                    <SelectValue>
+                      {destination === "gdrive" ? t("destinationGDrive") : t("destinationNodeDefault")}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="node">{t("destinationNodeDefault")}</SelectItem>
+                    {googleDriveConnected && (
+                      <SelectItem value="gdrive">{t("destinationGDrive")}</SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+                {!googleDriveConnected && (
+                  <p className="text-xs text-muted-foreground">
+                    {t("gdriveNotConnectedHint")}{" "}
+                    <Link
+                      href="/account"
+                      className="font-medium text-foreground underline underline-offset-2"
+                    >
+                      {t("gdriveConnectLink")}
+                    </Link>
+                  </p>
+                )}
+              </div>
+            )}
           </div>
           <DialogFooter>
             <DialogClose
