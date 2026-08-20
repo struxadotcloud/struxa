@@ -49,7 +49,10 @@
       "postgresql": "PostgreSQL",
       "mongodb": "MongoDB",
       "redis": "Redis"
-    }
+    },
+    "deleted": "Supprimé",
+    "updated": "Mis à jour",
+    "created": "Créé"
   },
   "auth": {
     "login": {
@@ -471,7 +474,8 @@
       "inviteFirst": "Inviter le premier utilisateur",
       "statSubusers": "Sous-utilisateurs",
       "statNote": "Note",
-      "statNoteText": "Les sous-utilisateurs ont uniquement accès au panneau. Les permissions sont limitées à ce serveur et n'accordent pas l'accès à la facturation ou aux paramètres du compte."
+      "statNoteText": "Les sous-utilisateurs ont uniquement accès au panneau. Les permissions sont limitées à ce serveur et n'accordent pas l'accès à la facturation ou aux paramètres du compte.",
+      "inviteSuccess": "Utilisateur invité"
     },
     "backups": {
       "restoreTitle": "Restaurer la sauvegarde",
@@ -500,7 +504,11 @@
       "delete": "Supprimer",
       "statBackups": "Sauvegardes",
       "statTotalSize": "Taille totale",
-      "statLastBackup": "Dernière sauvegarde"
+      "statLastBackup": "Dernière sauvegarde",
+      "restoreSuccess": "Sauvegarde restaurée",
+      "downloadsDisabledHint": "Les téléchargements de sauvegardes sont indisponibles car la destination de stockage n'autorise pas les téléchargements publics.",
+      "backupToGDrive": "Sauvegarde sur Google Drive",
+      "gdriveBadgeHint": "Cette sauvegarde est stockée dans le Google Drive de l'utilisateur"
     },
     "network": {
       "colIp": "Adresse IP",
@@ -562,7 +570,8 @@
       "selectEggTitle": "Choisir le type de jeu",
       "selectEggDescription": "Sélectionnez le type de jeu pour cette réinstallation.",
       "selectEggLabel": "Type de jeu",
-      "reinstallContinue": "Continuer"
+      "reinstallContinue": "Continuer",
+      "reinstallTriggeredToast": "Réinstallation lancée"
     },
     "activity": {
       "colTimestamp": "Horodatage",
@@ -725,7 +734,9 @@
           "errorCodeNotFound": "Code de parrainage introuvable ou plus actif.",
           "errorCodeTaken": "Ce code est déjà pris. Essayez-en un autre.",
           "errorGeneric": "Une erreur s'est produite. Veuillez réessayer.",
-          "editCode": "Modifier le code de parrainage"
+          "editCode": "Modifier le code de parrainage",
+          "generateSuccess": "Code de parrainage créé",
+          "updateSuccess": "Code de parrainage mis à jour"
         }
       }
     }
@@ -875,6 +886,18 @@
       "save": "Enregistrer",
       "saveSuccess": "Préférence de langue enregistrée",
       "saveFailed": "Échec de l'enregistrement des préférences de langue"
+    },
+    "googleDrive": {
+      "title": "Google Drive",
+      "description": "Connectez votre Google Drive personnel pour y enregistrer les sauvegardes de vos serveurs.",
+      "connected": "connecté",
+      "notConnected": "Aucun compte Google connecté.",
+      "connect": "Connecter Google Drive",
+      "disconnect": "Déconnecter",
+      "disconnected": "Google Drive déconnecté",
+      "connectSuccess": "Google Drive connecté",
+      "connectDenied": "La connexion à Google Drive a été refusée",
+      "connectError": "Échec de la connexion à Google Drive"
     }
   },
   "admin": {
@@ -996,7 +1019,13 @@
       "configFileLabel": "Ailes config.yml",
       "regenToken": "Jeton de régénération",
       "descriptionLabel": "Description",
-      "descriptionPlaceholder": "Description facultative"
+      "descriptionPlaceholder": "Description facultative",
+      "backupDestinationSection": "Destination des sauvegardes",
+      "backupDestinationSectionDesc": "Où sont stockées les sauvegardes des serveurs de ce nœud. Remplace la valeur par défaut globale.",
+      "backupUseGlobal": "Utiliser la valeur par défaut globale",
+      "backupUseGlobalDesc": "Lorsqu'il est activé, ce nœud utilise la destination par défaut configurée dans les paramètres de l'instance.",
+      "prevPage": "Page précédente",
+      "nextPage": "Page suivante"
     },
     "nests": {
       "title": "Nids et œufs",
@@ -1216,7 +1245,8 @@
       "deleteServerDesc": "Supprimez définitivement ce serveur. Cela ne peut pas être annulé.",
       "deleteConfirmTitle": "Supprimer le serveur ?",
       "deleteConfirmDesc": "Cela supprimera définitivement \"{name}\". Cette action ne peut pas être annulée.",
-      "purgeData": "Purger les données du nœud"
+      "purgeData": "Purger les données du nœud",
+      "changeOwner": "Modifier"
     },
     "users": {
       "title": "Utilisateurs",
@@ -1460,7 +1490,18 @@
       "previewSubjectWelcome": "Bienvenue !",
       "previewSubjectServerInstall": "Votre serveur est prêt",
       "editTemplates": "Modifier les modèles",
-      "editTemplatesDesc": "Personnalisez le HTML pour chaque e-mail sortant."
+      "editTemplatesDesc": "Personnalisez le HTML pour chaque e-mail sortant.",
+      "tabBackups": "Sauvegardes",
+      "backupsGlobalTitle": "Destination de sauvegarde par défaut",
+      "backupsGlobalDesc": "Les nouveaux nœuds sans destination propre utilisent cette valeur par défaut globale. Les nœuds peuvent la remplacer individuellement.",
+      "backupsGlobalNone": "Aucune valeur par défaut globale configurée — les sauvegardes utilisent l'adaptateur local du démon.",
+      "backupsGlobalReset": "Réinitialiser sur local",
+      "backupsGlobalResetDesc": "Supprime la destination par défaut globale. Les nœuds avec leur propre destination ne sont pas affectés.",
+      "gdriveTitle": "Sauvegardes Google Drive",
+      "gdriveDesc": "Permet aux utilisateurs d'enregistrer des sauvegardes dans leur Google Drive personnel. Créez un projet Google Cloud, activez l'API Drive et collez les identifiants client OAuth ci-dessous. Tant que votre application est en mode test, ajoutez l'e-mail de chaque utilisateur comme utilisateur de test.",
+      "gdriveClientIdLabel": "ID client",
+      "gdriveClientIdPlaceholder": "1234567890-abc.apps.googleusercontent.com",
+      "gdriveClientSecretLabel": "Secret client"
     },
     "emailEditor": {
       "backToSettings": "Paramètres",
@@ -1644,6 +1685,45 @@
           }
         }
       }
+    },
+    "backupDestinations": {
+      "typeLabel": "Type de destination",
+      "typeWings": "Local (wings)",
+      "typeDdupBak": "ddup-bak",
+      "typeS3": "S3 / Stockage d'objets",
+      "typeRestic": "Restic",
+      "typePbs": "Proxmox Backup Server",
+      "typeKopia": "Kopia",
+      "localHint": "Les sauvegardes sont stockées dans le répertoire de sauvegardes local du démon.",
+      "s3EndpointLabel": "URL du point de terminaison",
+      "s3EndpointPlaceholder": "https://s3.example.com",
+      "s3RegionLabel": "Région",
+      "s3BucketLabel": "Bucket",
+      "s3BucketPlaceholder": "backups",
+      "s3AccessKeyLabel": "Clé d'accès",
+      "s3SecretKeyLabel": "Clé secrète",
+      "s3UsePathStyle": "Utiliser l'adressage par chemin",
+      "s3AllowPublicDownloads": "Autoriser les téléchargements depuis le panneau",
+      "s3AllowPublicDownloadsDesc": "Permet aux utilisateurs de télécharger les fichiers de sauvegarde dans le navigateur. Nécessite que le point de terminaison S3 soit accessible publiquement depuis les navigateurs des utilisateurs.",
+      "resticRepositoryLabel": "Dépôt",
+      "resticRepositoryPlaceholder": "s3:https://s3.example.com/bucket",
+      "resticPasswordLabel": "Mot de passe",
+      "resticRetryLockLabel": "Verrou de nouvelle tentative (secondes)",
+      "resticEnvLabel": "Variables d'environnement",
+      "resticEnvPlaceholder": "AWS_ACCESS_KEY_ID=…\nAWS_SECRET_ACCESS_KEY=…",
+      "pbsUrlLabel": "URL du serveur",
+      "pbsDatastoreLabel": "Datastore",
+      "pbsNamespaceLabel": "Espace de noms",
+      "pbsTokenIdLabel": "ID de jeton",
+      "pbsTokenSecretLabel": "Secret du jeton",
+      "pbsFingerprintLabel": "Empreinte",
+      "pbsBackupIdPrefixLabel": "Préfixe de l'ID de sauvegarde",
+      "kopiaUrlLabel": "URL du dépôt",
+      "kopiaUsernameLabel": "Nom d'utilisateur",
+      "kopiaPasswordLabel": "Mot de passe",
+      "kopiaFingerprintLabel": "Empreinte",
+      "kopiaTagsLabel": "Étiquettes",
+      "kopiaTagsPlaceholder": "backup=true"
     }
   },
   "setup": {
