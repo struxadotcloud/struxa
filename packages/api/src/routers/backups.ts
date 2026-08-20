@@ -10,6 +10,12 @@ import { signBackupDownloadToken } from "../lib/jwt";
 import { requireServerAccess } from "../lib/server-access";
 import { adapterStringForType, resolveDestinationForNode } from "../lib/backup-destinations";
 import { deleteBackupObject, presignDownloadUrl } from "../services/backup-s3";
+import {
+  ensureGDriveFolders,
+  getAppUrl,
+  getGDriveConnection,
+  getOperatorGDriveConfig,
+} from "../services/google-drive";
 import { recordActivity } from "../services/activity";
 import { protectedProcedure } from "../index";
 
@@ -29,6 +35,7 @@ export const backupsRouter = {
         serverId: z.string().uuid(),
         name: z.string().min(1).max(255),
         ignoredFiles: z.string().optional(),
+        destination: z.enum(["node", "gdrive"]).optional(),
       }),
     )
     .handler(async ({ context, input }) => {
@@ -41,9 +48,29 @@ export const backupsRouter = {
       const id = randomUUID();
       const uuid = randomUUID();
 
-      const node = server.node as typeof nodes.$inferSelect;
-      const destination = await resolveDestinationForNode(node.id);
-      const adapter = destination ? adapterStringForType(destination.type) : "wings";
+      let adapter: string;
+      let driveUserId: string | null = null;
+      if (input.destination === "gdrive") {
+        const config = await getOperatorGDriveConfig();
+        if (!config) {
+          throw new ORPCError("BAD_REQUEST", {
+            message: "Google Drive is not configured by the administrator",
+          });
+        }
+        const connection = await getGDriveConnection(context.session.user.id);
+        if (!connection) {
+          throw new ORPCError("BAD_REQUEST", {
+            message: "Connect your Google Drive in account settings",
+          });
+        }
+        await ensureGDriveFolders(connection, server.name, server.uuid);
+        adapter = "google-drive";
+        driveUserId = context.session.user.id;
+      } else {
+        const node = server.node as typeof nodes.$inferSelect;
+        const destination = await resolveDestinationForNode(node.id);
+        adapter = destination ? adapterStringForType(destination.type) : "wings";
+      }
 
       await db.insert(backups).values({
         id,
@@ -52,6 +79,7 @@ export const backupsRouter = {
         name: input.name,
         ignoredFiles: input.ignoredFiles ?? null,
         disk: adapter,
+        driveUserId,
       });
 
       const client = createWingsClient(node);
@@ -140,6 +168,18 @@ export const backupsRouter = {
         return { url: await presignDownloadUrl(destination, backup.uuid) };
       }
 
+      if (backup.disk === "google-drive") {
+        const connection = backup.driveUserId
+          ? await getGDriveConnection(backup.driveUserId)
+          : null;
+        if (!connection) {
+          throw new ORPCError("BAD_REQUEST", {
+            message: "Google Drive connection removed",
+          });
+        }
+        return { url: `${await getAppUrl()}/api/backups/${backup.id}/download` };
+      }
+
       const token = await signBackupDownloadToken(
         context.session.user.id,
         server.uuid,
@@ -159,10 +199,18 @@ export const backupsRouter = {
         context.session.user.role,
       );
       const node = server.node as typeof nodes.$inferSelect;
-      const destination = await resolveDestinationForNode(node.id);
+      const [destination, gdriveConfig, gdriveConnection] = await Promise.all([
+        resolveDestinationForNode(node.id),
+        getOperatorGDriveConfig(),
+        getGDriveConnection(context.session.user.id),
+      ]);
       const s3PublicDownloads =
         destination?.type === "s3" && destination.allowPublicDownload;
-      return { s3PublicDownloads };
+      return {
+        s3PublicDownloads,
+        googleDriveConfigured: !!gdriveConfig,
+        googleDriveConnected: !!gdriveConnection,
+      };
     }),
 
   restore: protectedProcedure
