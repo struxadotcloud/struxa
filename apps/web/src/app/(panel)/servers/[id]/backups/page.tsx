@@ -264,17 +264,7 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
                     className={`grid grid-cols-[28px_1fr_100px_200px_100px] items-center px-4 py-3 transition-colors hover:bg-muted/40 ${!isLast ? "border-b border-border" : ""}`}
                   >
                     <StatusDot backup={backup} />
-                    <div className="flex items-center gap-2 min-w-0 pr-4">
-                      <span className="font-mono text-sm text-foreground truncate">{backup.name}</span>
-                      {backup.disk && backup.disk !== "local" && (
-                        <span
-                          className="shrink-0 rounded-full bg-muted px-2 py-0.5 font-mono text-[10px] text-muted-foreground"
-                          title={t("destinationBadge")}
-                        >
-                          {backup.disk}
-                        </span>
-                      )}
-                    </div>
+                    <span className="font-mono text-sm text-foreground truncate pr-4">{backup.name}</span>
                     <span className="text-sm text-muted-foreground">{fmtBytes(Number(backup.bytes ?? 0))}</span>
                     <span className="text-xs text-muted-foreground">{fmtDate(backup.createdAt)}</span>
                     <div className="flex items-center gap-2 justify-end pr-1">
