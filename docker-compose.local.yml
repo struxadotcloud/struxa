@@ -42,7 +42,7 @@ services:
       - minio_data:/data
     ports:
       - "127.0.0.1:9001:9001"
-      - "9000:9000"
+      - "127.0.0.1:9000:9000"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 10s
