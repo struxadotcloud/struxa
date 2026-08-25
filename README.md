@@ -7,6 +7,8 @@
 ![Last commit](https://www.shieldcn.dev/github/last-commit/struxadotcloud/struxa.svg?variant=secondary&size=sm)
 [![Discord](https://www.shieldcn.dev/badge/Join_Discord-5865F2.svg?logo=discord&variant=branded&size=sm)](https://discord.gg/struxa)
 
+<a href="https://www.producthunt.com/products/struxa?embed=true&amp;utm_source=badge-featured&amp;utm_medium=badge&amp;utm_campaign=badge-struxa" target="_blank" rel="noopener noreferrer"><img alt="struxa - A modern, open-source control panel for game server hosting | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1231214&amp;theme=dark&amp;t=1787640619106"></a>
+
 </div>
 
 <br />
