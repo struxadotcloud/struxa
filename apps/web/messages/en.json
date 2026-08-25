@@ -917,7 +917,24 @@
       "nestsAndEggs": "Nests & Eggs",
       "nestsAndEggsDesc": "Configure server templates",
       "createServer": "Create Server",
-      "createServerDesc": "Provision a new game server"
+      "createServerDesc": "Provision a new game server",
+      "resources": "Resources",
+      "fleetRamAllocated": "Allocated RAM",
+      "fleetRamUsed": "Real Usage",
+      "fleetRamAvailable": "Available RAM",
+      "fleetCpuLabel": "Avg CPU",
+      "fleetDiskUsed": "Disk Used",
+      "fleetNet": "Network In",
+      "fleetNetIn": "in",
+      "fleetNetOut": "out",
+      "ramChart": "Fleet RAM",
+      "cpuChart": "Fleet CPU",
+      "diskChart": "Fleet Disk",
+      "netChart": "Fleet Network",
+      "nodesSection": "Nodes",
+      "nodeCpu": "{value}% CPU",
+      "nodeRam": "{used} / {total} GB RAM",
+      "nodeDisk": "{used} / {total} GB disk"
     },
     "locations": {
       "title": "Locations",
@@ -1026,7 +1043,12 @@
       "configFileLabel": "Wings config.yml",
       "regenToken": "Regen Token",
       "descriptionLabel": "Description",
-      "descriptionPlaceholder": "Optional description"
+      "descriptionPlaceholder": "Optional description",
+      "tabMonitoring": "Monitoring",
+      "updateAvailable": "Update available",
+      "ram": "RAM",
+      "cpu": "CPU",
+      "disk": "Disk"
     },
     "nests": {
       "title": "Nests & Eggs",
@@ -1759,6 +1781,34 @@
           }
         }
       }
+    },
+    "monitoring": {
+      "allocatedRam": "Allocated RAM",
+      "realUsage": "Real Usage",
+      "availableRam": "Available RAM",
+      "cpuUsage": "CPU Usage",
+      "loadAverage": "Load Average",
+      "uptime": "Uptime",
+      "diskUsage": "Disk Usage",
+      "network": "Network",
+      "networkIn": "in",
+      "networkOut": "out",
+      "systemInfo": "System Information",
+      "cpuModel": "CPU",
+      "cpuCount": "Cores / Threads",
+      "os": "OS",
+      "kernelVersion": "Kernel",
+      "architecture": "Architecture",
+      "wingsVersion": "Wings Version",
+      "updateAvailable": "Update available ({latest})",
+      "used": "used",
+      "available": "available",
+      "ramChart": "RAM",
+      "cpuChart": "CPU",
+      "diskChart": "Disk",
+      "netChart": "Network",
+      "offline": "Wings is unreachable or offline.",
+      "diskUsed": "Disk Used"
     }
   },
   "setup": {

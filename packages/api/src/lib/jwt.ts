@@ -43,6 +43,7 @@ export async function signWsToken(
     user_uuid: toUuid(payload.user_uuid),
     server_uuid: payload.server_uuid,
     permissions: payload.permissions,
+    scope: "websocket",
   })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()

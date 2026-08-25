@@ -27,6 +27,7 @@ var alreadyAppliedErrnos = map[uint16]bool{
 	1050: true, // ER_TABLE_EXISTS_ERROR
 	1060: true, // ER_DUP_FIELDNAME
 	1061: true, // ER_DUP_KEYNAME
+	1091: true, // ER_CANT_DROP_FIELD_OR_KEY
 	1826: true, // ER_FK_DUP_NAME
 }
 

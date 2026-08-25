@@ -45,6 +45,8 @@ import { Switch } from "@struxa/ui/components/switch";
 import { BackupDestinationForm, defaultBackupDestination } from "@/components/backup-destination-form";
 import type { BackupDestinationInput } from "@struxa/api/lib/backup-destinations";
 import { orpc, queryClient } from "@/utils/orpc";
+import { isOutdatedWings, useSystemStats } from "@/hooks/use-system-stats";
+import { UsageBar } from "@/components/usage-bar";
 import { ContextMenu, RowMenu, type ActionItem } from "@/components/context-menu";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import {
@@ -137,12 +139,17 @@ type NodeItem = {
   locationId: string;
 };
 
+const MAX_LIVE_ROWS = 12;
+const GB = 1024 ** 3;
+
 function NodeRow({
   node,
+  liveIndex,
   isLast,
   onDelete,
 }: {
   node: NodeItem;
+  liveIndex: number;
   isLast: boolean;
   onDelete: (id: string) => void;
 }) {
@@ -151,12 +158,23 @@ function NodeRow({
   const actions: ActionItem[] = [
     { label: tc("delete"), icon: Trash2, onClick: () => onDelete(node.id), destructive: true },
   ];
+
+  const stats = useSystemStats(node, {
+    enabled: liveIndex < MAX_LIVE_ROWS && !node.maintenanceMode,
+  });
+  const { data: latestWingsVersion } = useQuery({
+    ...orpc.nodes.getLatestWingsVersion.queryOptions(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const outdated =
+    isOutdatedWings(stats.latest?.version, latestWingsVersion ?? null);
+
   return (
     <ContextMenu items={actions}>
       {({ onContextMenu }) => (
         <div
           onContextMenu={onContextMenu}
-          className={`grid grid-cols-[24px_1fr_200px_160px_48px] items-center pl-10 pr-4 py-3 hover:bg-muted/40 transition-colors ${!isLast ? "border-b border-border" : ""}`}
+          className={`grid grid-cols-[24px_1fr_200px_220px_48px] items-center pl-10 pr-4 py-3 hover:bg-muted/40 transition-colors ${!isLast ? "border-b border-border" : ""}`}
         >
           <NodeStatusDot
             fqdn={node.fqdn}
@@ -177,16 +195,41 @@ function NodeRow({
                 {t("maintenance")}
               </span>
             )}
+            {outdated && (
+              <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-medium text-amber-600">
+                {t("updateAvailable")}
+              </span>
+            )}
           </div>
           <span className="text-xs text-muted-foreground">
             {node.fqdn}:{node.daemonListen}
           </span>
-          <span className="text-xs text-muted-foreground">
-            {t("resources", {
-              memory: (node.memory / 1024).toFixed(1),
-              disk: (node.disk / 1024).toFixed(1),
-            })}
-          </span>
+          {stats.latest ? (
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                <span>{t("ram")}</span>
+                <span>
+                  {(stats.latest.memory.used / GB).toFixed(1)} / {(stats.latest.memory.total / GB).toFixed(1)} GB
+                </span>
+              </div>
+              <UsageBar used={stats.latest.memory.used} total={stats.latest.memory.total} />
+              <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                <span>
+                  {t("cpu")} {stats.latest.cpu.used.toFixed(0)}%
+                </span>
+                <span>
+                  {t("disk")} {(stats.latest.disk.used / GB).toFixed(0)} / {(stats.latest.disk.total / GB).toFixed(0)} GB
+                </span>
+              </div>
+            </div>
+          ) : (
+            <span className="text-xs text-muted-foreground">
+              {t("resources", {
+                memory: (node.memory / 1024).toFixed(1),
+                disk: (node.disk / 1024).toFixed(1),
+              })}
+            </span>
+          )}
           <div className="flex items-center justify-end">
             <RowMenu items={actions} />
           </div>
@@ -524,6 +567,13 @@ export default function NodesPage() {
   const hasAny = allLocations.length > 0 || allNodes.length > 0;
   const noResults =
     !isLoading && hasAny && visibleLocations.length === 0 && visibleUnassigned.length === 0;
+
+  const nodeIndexById = new Map<string, number>();
+  let nodeCounter = 0;
+  for (const loc of visibleLocations) {
+    for (const n of getVisibleNodes(loc.id)) nodeIndexById.set(n.id, nodeCounter++);
+  }
+  for (const n of visibleUnassigned) nodeIndexById.set(n.id, nodeCounter++);
 
   return (
     <>
@@ -897,9 +947,9 @@ export default function NodesPage() {
 
           <TooltipProvider>
             <div className="overflow-x-auto">
-              <div className="min-w-[520px] overflow-hidden rounded-xl border border-border bg-card">
+              <div className="min-w-[580px] overflow-hidden rounded-xl border border-border bg-card">
                 {/* Column header — aligns with node rows (pl-10) */}
-                <div className="grid grid-cols-[24px_1fr_200px_160px_48px] border-b border-border bg-muted/40 pl-10 pr-4 py-2.5">
+                <div className="grid grid-cols-[24px_1fr_200px_220px_48px] border-b border-border bg-muted/40 pl-10 pr-4 py-2.5">
                   <span />
                   <span className="text-xs font-medium text-muted-foreground">
                     {t("nameColumn")}
@@ -984,7 +1034,13 @@ export default function NodesPage() {
                             ni === locNodes.length - 1 &&
                             visibleUnassigned.length === 0;
                           return (
-                            <NodeRow key={node.id} node={node} isLast={isAbsoluteLast} onDelete={setConfirmDeleteNode} />
+                            <NodeRow
+                              key={node.id}
+                              node={node}
+                              liveIndex={nodeIndexById.get(node.id) ?? MAX_LIVE_ROWS}
+                              isLast={isAbsoluteLast}
+                              onDelete={setConfirmDeleteNode}
+                            />
                           );
                         })}
                     </div>
@@ -1023,6 +1079,7 @@ export default function NodesPage() {
                         <NodeRow
                           key={node.id}
                           node={node}
+                          liveIndex={nodeIndexById.get(node.id) ?? MAX_LIVE_ROWS}
                           isLast={ni === visibleUnassigned.length - 1}
                           onDelete={setConfirmDeleteNode}
                         />
