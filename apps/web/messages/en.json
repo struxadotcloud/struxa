@@ -1373,7 +1373,43 @@
       "serverEvents": "Server Events",
       "userModeration": "User Moderation",
       "infrastructure": "Infrastructure",
-      "billingEvents": "Billing"
+      "billingEvents": "Billing",
+      "events": {
+        "resource": {
+          "server": "Server",
+          "node": "Node",
+          "allocation": "Allocation",
+          "nest": "Nest",
+          "egg": "Egg",
+          "user": "User",
+          "database-host": "DB Host",
+          "location": "Location",
+          "settings": "Settings",
+          "backup-destination": "Backup Destination",
+          "billing_category": "Billing Category",
+          "billing_product": "Billing Plan",
+          "billing_gateway": "Payment Gateway",
+          "billing_wallet": "Wallet"
+        },
+        "action": {
+          "create": "Create",
+          "update": "Update",
+          "delete": "Delete",
+          "clear": "Clear",
+          "import": "Import",
+          "suspend": "Suspend",
+          "unsuspend": "Unsuspend",
+          "variables": "Variables",
+          "token-regenerate": "Regen Token",
+          "variable-add": "Add Variable",
+          "variable-update": "Update Variable",
+          "variable-delete": "Delete Variable",
+          "set-role": "Set Role",
+          "ban": "Ban",
+          "unban": "Unban",
+          "adjust": "Adjust"
+        }
+      }
     },
     "settings": {
       "title": "Settings",

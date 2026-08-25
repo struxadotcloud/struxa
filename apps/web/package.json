@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev --port 3001",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "check-i18n": "node scripts/check-activity-i18n.mjs"
   },
   "dependencies": {
     "@better-auth/api-key": "catalog:",

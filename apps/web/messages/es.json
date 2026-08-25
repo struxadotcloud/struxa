@@ -1375,7 +1375,43 @@
       "serverEvents": "Eventos del servidor",
       "userModeration": "Moderación de usuarios",
       "infrastructure": "Infraestructura",
-      "billingEvents": "Facturación"
+      "billingEvents": "Facturación",
+      "events": {
+        "resource": {
+          "server": "Servidor",
+          "node": "Nodo",
+          "allocation": "Asignación",
+          "nest": "Nest",
+          "egg": "Egg",
+          "user": "Usuario",
+          "database-host": "Host de BD",
+          "location": "Ubicación",
+          "settings": "Ajustes",
+          "backup-destination": "Destino de copias",
+          "billing_category": "Categoría de facturación",
+          "billing_product": "Plan de facturación",
+          "billing_gateway": "Pasarela de pago",
+          "billing_wallet": "Monedero"
+        },
+        "action": {
+          "create": "Crear",
+          "update": "Actualizar",
+          "delete": "Eliminar",
+          "clear": "Restablecer",
+          "import": "Importar",
+          "suspend": "Suspender",
+          "unsuspend": "Reactivar",
+          "variables": "Variables",
+          "token-regenerate": "Regenerar token",
+          "variable-add": "Añadir variable",
+          "variable-update": "Actualizar variable",
+          "variable-delete": "Eliminar variable",
+          "set-role": "Cambiar rol",
+          "ban": "Banear",
+          "unban": "Desbanear",
+          "adjust": "Ajustar"
+        }
+      }
     },
     "settings": {
       "title": "Ajustes",

@@ -1375,7 +1375,43 @@
       "serverEvents": "Événements du serveur",
       "userModeration": "Modération des utilisateurs",
       "infrastructure": "Infrastructure",
-      "billingEvents": "Facturation"
+      "billingEvents": "Facturation",
+      "events": {
+        "resource": {
+          "server": "Serveur",
+          "node": "Nœud",
+          "allocation": "Allocation",
+          "nest": "Nest",
+          "egg": "Egg",
+          "user": "Utilisateur",
+          "database-host": "Hôte BDD",
+          "location": "Emplacement",
+          "settings": "Paramètres",
+          "backup-destination": "Destination de sauvegarde",
+          "billing_category": "Catégorie de facturation",
+          "billing_product": "Forfait de facturation",
+          "billing_gateway": "Passerelle de paiement",
+          "billing_wallet": "Portefeuille"
+        },
+        "action": {
+          "create": "Créer",
+          "update": "Mettre à jour",
+          "delete": "Supprimer",
+          "clear": "Réinitialiser",
+          "import": "Importer",
+          "suspend": "Suspendre",
+          "unsuspend": "Réactiver",
+          "variables": "Variables",
+          "token-regenerate": "Régénérer le jeton",
+          "variable-add": "Ajouter une variable",
+          "variable-update": "Mettre à jour la variable",
+          "variable-delete": "Supprimer la variable",
+          "set-role": "Changer le rôle",
+          "ban": "Bannir",
+          "unban": "Débannir",
+          "adjust": "Ajuster"
+        }
+      }
     },
     "settings": {
       "title": "Paramètres",

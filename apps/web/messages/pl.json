@@ -1375,7 +1375,43 @@
       "serverEvents": "Wydarzenia serwerowe",
       "userModeration": "Moderacja użytkowników",
       "infrastructure": "Infrastruktura",
-      "billingEvents": "Rozliczenia"
+      "billingEvents": "Rozliczenia",
+      "events": {
+        "resource": {
+          "server": "Serwer",
+          "node": "Node",
+          "allocation": "Alokacja",
+          "nest": "Nest",
+          "egg": "Egg",
+          "user": "Użytkownik",
+          "database-host": "Host bazy danych",
+          "location": "Lokalizacja",
+          "settings": "Ustawienia",
+          "backup-destination": "Cel kopii zapasowych",
+          "billing_category": "Kategoria rozliczeń",
+          "billing_product": "Plan rozliczeniowy",
+          "billing_gateway": "Bramka płatności",
+          "billing_wallet": "Portfel"
+        },
+        "action": {
+          "create": "Utworzenie",
+          "update": "Aktualizacja",
+          "delete": "Usunięcie",
+          "clear": "Wyczyszczenie",
+          "import": "Import",
+          "suspend": "Zawieszenie",
+          "unsuspend": "Wznowienie",
+          "variables": "Zmienne",
+          "token-regenerate": "Regeneracja tokena",
+          "variable-add": "Dodanie zmiennej",
+          "variable-update": "Aktualizacja zmiennej",
+          "variable-delete": "Usunięcie zmiennej",
+          "set-role": "Zmiana roli",
+          "ban": "Zablokowanie",
+          "unban": "Odblokowanie",
+          "adjust": "Korekta"
+        }
+      }
     },
     "settings": {
       "title": "Ustawienia",
