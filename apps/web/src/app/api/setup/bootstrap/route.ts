@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "crypto";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { env } from "@struxa/env/server";
@@ -21,10 +22,16 @@ const bodySchema = z.object({
     .optional(),
 });
 
+function secretMatches(header: string | null, secret: string): boolean {
+  if (!header) return false;
+  const a = Buffer.from(header);
+  const b = Buffer.from(secret);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
 export async function POST(req: NextRequest) {
   const secret = env.BOOTSTRAP_SECRET;
-  const forwarded = req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip");
-  if (secret ? req.headers.get("x-bootstrap-secret") !== secret : forwarded) {
+  if (!secret || !secretMatches(req.headers.get("x-bootstrap-secret"), secret)) {
     return new Response("Forbidden", { status: 403 });
   }
 
