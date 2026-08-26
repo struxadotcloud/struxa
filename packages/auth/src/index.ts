@@ -5,6 +5,7 @@ import { env } from "@struxa/env/server";
 import { apiKey } from "@better-auth/api-key";
 import { i18n } from "@better-auth/i18n";
 import { betterAuth } from "better-auth";
+export { hashPassword } from "better-auth/crypto";
 import { APIError, createAuthMiddleware } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";

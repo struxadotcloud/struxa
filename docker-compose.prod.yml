@@ -16,6 +16,7 @@
 #   DATABASE_ENCRYPTION_KEY  — 64-char hex string
 #   APP_URL                  — public URL of the app
 #   TURNSTILE_SECRET_KEY     — (optional) Cloudflare Turnstile secret
+#   BOOTSTRAP_SECRET         — (optional) shared secret protecting /api/setup/bootstrap
 #   MINIO_ENDPOINT           — internal MinIO URL (e.g. http://minio:9000)
 #   MINIO_ACCESS_KEY         — MinIO root user / access key
 #   MINIO_SECRET_KEY         — MinIO root password / secret key
@@ -81,6 +82,7 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN}
       NODE_ENV: production
       TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY}
+      BOOTSTRAP_SECRET: ${BOOTSTRAP_SECRET:-}
       JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY}
       JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY}
       DATABASE_ENCRYPTION_KEY: ${DATABASE_ENCRYPTION_KEY}
