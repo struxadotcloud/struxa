@@ -102,7 +102,7 @@ export function FleetResources({ nodes, servers }: { nodes: NodeRow[]; servers: 
         <StatCard
           icon={Database}
           label={t("fleetRamAllocated")}
-          value={hasData ? `${(allocatedMb / 1024).toFixed(1)} GB` : "—"}
+          value={allocatedMb > 0 ? `${(allocatedMb / 1024).toFixed(1)} GB` : "—"}
           color="#f59e0b"
         />
         <StatCard

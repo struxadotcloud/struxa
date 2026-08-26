@@ -1430,7 +1430,8 @@
           "ban": "Ban",
           "unban": "Unban",
           "adjust": "Adjust"
-        }
+        },
+      "unknown": "Unknown"
       }
     },
     "settings": {

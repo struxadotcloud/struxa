@@ -140,6 +140,11 @@ export function useSystemStats(node: StatsNode, options?: { enabled?: boolean })
             reconnectTimer = setTimeout(() => setReconnectKey((k) => k + 1), 3000);
           }
         };
+      })
+      .catch(() => {
+        if (!cancelled) {
+          reconnectTimer = setTimeout(() => setReconnectKey((k) => k + 1), 3000);
+        }
       });
 
     return () => {
@@ -224,6 +229,11 @@ export function useFleetStats(nodes: StatsNode[] | undefined) {
               reconnectTimer = setTimeout(() => setReconnectKey((k) => k + 1), 3000);
             }
           };
+        })
+        .catch(() => {
+          if (!cancelled && !reconnectTimer) {
+            reconnectTimer = setTimeout(() => setReconnectKey((k) => k + 1), 3000);
+          }
         });
     }
 

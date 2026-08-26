@@ -18,6 +18,7 @@ for (const file of readdirSync(join(web, "messages"))) {
   const msgs = JSON.parse(readFileSync(join(web, "messages", file), "utf8"));
   const e = msgs.admin?.activity?.events;
   if (!e) { gaps.push(`${file}: missing admin.activity.events`); continue; }
+  if (typeof e.unknown !== "string") gaps.push(`${file}: missing events.unknown`);
   for (const ev of events) {
     const path = ev.replace(/^admin:/, "");
     const dot = path.lastIndexOf(".");

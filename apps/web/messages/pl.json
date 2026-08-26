@@ -1401,10 +1401,10 @@
       "events": {
         "resource": {
           "server": "Serwer",
-          "node": "Node",
+          "node": "Węzeł",
           "allocation": "Alokacja",
-          "nest": "Nest",
-          "egg": "Egg",
+          "nest": "Gniazdo",
+          "egg": "Jajko",
           "user": "Użytkownik",
           "database-host": "Host bazy danych",
           "location": "Lokalizacja",
@@ -1432,7 +1432,8 @@
           "ban": "Zablokowanie",
           "unban": "Odblokowanie",
           "adjust": "Korekta"
-        }
+        },
+      "unknown": "Nieznane"
       }
     },
     "settings": {

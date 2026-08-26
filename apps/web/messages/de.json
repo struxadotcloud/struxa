@@ -931,7 +931,7 @@
       "cpuChart": "Flotten-CPU",
       "diskChart": "Flotten-Speicher",
       "netChart": "Flotten-Netzwerk",
-      "nodesSection": "Nodes",
+      "nodesSection": "Knoten",
       "nodeCpu": "{value}% CPU",
       "nodeRam": "{used} / {total} GB RAM",
       "nodeDisk": "{used} / {total} GB Speicher"
@@ -1432,7 +1432,8 @@
           "ban": "Bannen",
           "unban": "Entbannen",
           "adjust": "Anpassen"
-        }
+        },
+      "unknown": "Unbekannt"
       }
     },
     "settings": {

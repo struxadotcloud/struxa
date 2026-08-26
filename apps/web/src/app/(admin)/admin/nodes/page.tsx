@@ -571,9 +571,18 @@ export default function NodesPage() {
   const nodeIndexById = new Map<string, number>();
   let nodeCounter = 0;
   for (const loc of visibleLocations) {
-    for (const n of getVisibleNodes(loc.id)) nodeIndexById.set(n.id, nodeCounter++);
+    if (collapsed.has(loc.id)) continue;
+    for (const n of getVisibleNodes(loc.id)) {
+      if (n.maintenanceMode) continue;
+      nodeIndexById.set(n.id, nodeCounter++);
+    }
   }
-  for (const n of visibleUnassigned) nodeIndexById.set(n.id, nodeCounter++);
+  if (!collapsed.has("__unassigned__")) {
+    for (const n of visibleUnassigned) {
+      if (n.maintenanceMode) continue;
+      nodeIndexById.set(n.id, nodeCounter++);
+    }
+  }
 
   return (
     <>

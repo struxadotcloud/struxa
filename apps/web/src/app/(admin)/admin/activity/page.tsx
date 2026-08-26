@@ -72,7 +72,7 @@ function useEventLabel() {
     const dot = path.lastIndexOf(".");
     if (dot < 0) return prettify(path);
     const part = (kind: string, slug: string) =>
-      t.has(`${kind}.${slug}`) ? t(`${kind}.${slug}`) : prettify(slug);
+      t.has(`${kind}.${slug}`) ? t(`${kind}.${slug}`) : t("unknown");
     return `${part("resource", path.slice(0, dot).replace(/\./g, "_"))}: ${part("action", path.slice(dot + 1))}`;
   };
 }

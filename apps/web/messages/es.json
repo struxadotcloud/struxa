@@ -1432,7 +1432,8 @@
           "ban": "Banear",
           "unban": "Desbanear",
           "adjust": "Ajustar"
-        }
+        },
+      "unknown": "Desconocido"
       }
     },
     "settings": {
