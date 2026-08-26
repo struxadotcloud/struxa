@@ -917,7 +917,24 @@
       "nestsAndEggs": "Nidos y huevos",
       "nestsAndEggsDesc": "Configurar plantillas de servidor",
       "createServer": "Crear servidor",
-      "createServerDesc": "Aprovisionar un nuevo servidor de juegos"
+      "createServerDesc": "Aprovisionar un nuevo servidor de juegos",
+      "resources": "Recursos",
+      "fleetRamAllocated": "RAM asignada",
+      "fleetRamUsed": "Uso real",
+      "fleetRamAvailable": "RAM disponible",
+      "fleetCpuLabel": "CPU medio",
+      "fleetDiskUsed": "Disco usado",
+      "fleetNet": "Red entrante",
+      "fleetNetIn": "entrada",
+      "fleetNetOut": "salida",
+      "ramChart": "RAM de la flota",
+      "cpuChart": "CPU de la flota",
+      "diskChart": "Disco de la flota",
+      "netChart": "Red de la flota",
+      "nodesSection": "Nodos",
+      "nodeCpu": "{value}% CPU",
+      "nodeRam": "{used} / {total} GB RAM",
+      "nodeDisk": "{used} / {total} GB disco"
     },
     "locations": {
       "title": "Ubicaciones",
@@ -1026,7 +1043,12 @@
       "backupUseGlobal": "Usar el valor predeterminado global",
       "backupUseGlobalDesc": "Si está habilitado, este nodo usa el destino predeterminado configurado en los ajustes de la instancia.",
       "prevPage": "Página anterior",
-      "nextPage": "Página siguiente"
+      "nextPage": "Página siguiente",
+      "tabMonitoring": "Monitorización",
+      "updateAvailable": "Actualización disponible",
+      "ram": "RAM",
+      "cpu": "CPU",
+      "disk": "Disco"
     },
     "nests": {
       "title": "Nidos y huevos",
@@ -1375,7 +1397,44 @@
       "serverEvents": "Eventos del servidor",
       "userModeration": "Moderación de usuarios",
       "infrastructure": "Infraestructura",
-      "billingEvents": "Facturación"
+      "billingEvents": "Facturación",
+      "events": {
+        "resource": {
+          "server": "Servidor",
+          "node": "Nodo",
+          "allocation": "Asignación",
+          "nest": "Nest",
+          "egg": "Egg",
+          "user": "Usuario",
+          "database-host": "Host de BD",
+          "location": "Ubicación",
+          "settings": "Ajustes",
+          "backup-destination": "Destino de copias",
+          "billing_category": "Categoría de facturación",
+          "billing_product": "Plan de facturación",
+          "billing_gateway": "Pasarela de pago",
+          "billing_wallet": "Monedero"
+        },
+        "action": {
+          "create": "Crear",
+          "update": "Actualizar",
+          "delete": "Eliminar",
+          "clear": "Restablecer",
+          "import": "Importar",
+          "suspend": "Suspender",
+          "unsuspend": "Reactivar",
+          "variables": "Variables",
+          "token-regenerate": "Regenerar token",
+          "variable-add": "Añadir variable",
+          "variable-update": "Actualizar variable",
+          "variable-delete": "Eliminar variable",
+          "set-role": "Cambiar rol",
+          "ban": "Banear",
+          "unban": "Desbanear",
+          "adjust": "Ajustar"
+        },
+      "unknown": "Desconocido"
+      }
     },
     "settings": {
       "title": "Ajustes",
@@ -1725,6 +1784,34 @@
       "kopiaFingerprintLabel": "Huella digital",
       "kopiaTagsLabel": "Etiquetas",
       "kopiaTagsPlaceholder": "backup=true"
+    },
+    "monitoring": {
+      "allocatedRam": "RAM asignada",
+      "realUsage": "Uso real",
+      "availableRam": "RAM disponible",
+      "cpuUsage": "Uso de CPU",
+      "loadAverage": "Carga media",
+      "uptime": "Tiempo activo",
+      "diskUsage": "Uso de disco",
+      "network": "Red",
+      "networkIn": "entrada",
+      "networkOut": "salida",
+      "systemInfo": "Información del sistema",
+      "cpuModel": "CPU",
+      "cpuCount": "Núcleos / hilos",
+      "os": "SO",
+      "kernelVersion": "Núcleo",
+      "architecture": "Arquitectura",
+      "wingsVersion": "Versión de Wings",
+      "updateAvailable": "Actualización disponible ({latest})",
+      "used": "usado",
+      "available": "disponible",
+      "ramChart": "RAM",
+      "cpuChart": "CPU",
+      "diskChart": "Disco",
+      "netChart": "Red",
+      "offline": "Wings no está disponible o está desconectado.",
+      "diskUsed": "Disco usado"
     }
   },
   "setup": {

@@ -917,7 +917,24 @@
       "nestsAndEggs": "Nids et œufs",
       "nestsAndEggsDesc": "Configurer les modèles de serveur",
       "createServer": "Créer un serveur",
-      "createServerDesc": "Provisionner un nouveau serveur de jeu"
+      "createServerDesc": "Provisionner un nouveau serveur de jeu",
+      "resources": "Ressources",
+      "fleetRamAllocated": "RAM allouée",
+      "fleetRamUsed": "Utilisation réelle",
+      "fleetRamAvailable": "RAM disponible",
+      "fleetCpuLabel": "CPU moy.",
+      "fleetDiskUsed": "Disque utilisé",
+      "fleetNet": "Réseau entrant",
+      "fleetNetIn": "entrant",
+      "fleetNetOut": "sortant",
+      "ramChart": "RAM de la flotte",
+      "cpuChart": "CPU de la flotte",
+      "diskChart": "Disque de la flotte",
+      "netChart": "Réseau de la flotte",
+      "nodesSection": "Nœuds",
+      "nodeCpu": "{value}% CPU",
+      "nodeRam": "{used} / {total} GB RAM",
+      "nodeDisk": "{used} / {total} GB disque"
     },
     "locations": {
       "title": "Emplacements",
@@ -1026,7 +1043,12 @@
       "backupUseGlobal": "Utiliser la valeur par défaut globale",
       "backupUseGlobalDesc": "Lorsqu'il est activé, ce nœud utilise la destination par défaut configurée dans les paramètres de l'instance.",
       "prevPage": "Page précédente",
-      "nextPage": "Page suivante"
+      "nextPage": "Page suivante",
+      "tabMonitoring": "Surveillance",
+      "updateAvailable": "Mise à jour disponible",
+      "ram": "RAM",
+      "cpu": "CPU",
+      "disk": "Disque"
     },
     "nests": {
       "title": "Nids et œufs",
@@ -1375,7 +1397,44 @@
       "serverEvents": "Événements du serveur",
       "userModeration": "Modération des utilisateurs",
       "infrastructure": "Infrastructure",
-      "billingEvents": "Facturation"
+      "billingEvents": "Facturation",
+      "events": {
+        "resource": {
+          "server": "Serveur",
+          "node": "Nœud",
+          "allocation": "Allocation",
+          "nest": "Nest",
+          "egg": "Egg",
+          "user": "Utilisateur",
+          "database-host": "Hôte BDD",
+          "location": "Emplacement",
+          "settings": "Paramètres",
+          "backup-destination": "Destination de sauvegarde",
+          "billing_category": "Catégorie de facturation",
+          "billing_product": "Forfait de facturation",
+          "billing_gateway": "Passerelle de paiement",
+          "billing_wallet": "Portefeuille"
+        },
+        "action": {
+          "create": "Créer",
+          "update": "Mettre à jour",
+          "delete": "Supprimer",
+          "clear": "Réinitialiser",
+          "import": "Importer",
+          "suspend": "Suspendre",
+          "unsuspend": "Réactiver",
+          "variables": "Variables",
+          "token-regenerate": "Régénérer le jeton",
+          "variable-add": "Ajouter une variable",
+          "variable-update": "Mettre à jour la variable",
+          "variable-delete": "Supprimer la variable",
+          "set-role": "Changer le rôle",
+          "ban": "Bannir",
+          "unban": "Débannir",
+          "adjust": "Ajuster"
+        },
+      "unknown": "Inconnu"
+      }
     },
     "settings": {
       "title": "Paramètres",
@@ -1725,6 +1784,34 @@
       "kopiaFingerprintLabel": "Empreinte",
       "kopiaTagsLabel": "Étiquettes",
       "kopiaTagsPlaceholder": "backup=true"
+    },
+    "monitoring": {
+      "allocatedRam": "RAM allouée",
+      "realUsage": "Utilisation réelle",
+      "availableRam": "RAM disponible",
+      "cpuUsage": "Utilisation CPU",
+      "loadAverage": "Charge moyenne",
+      "uptime": "Disponibilité",
+      "diskUsage": "Utilisation disque",
+      "network": "Réseau",
+      "networkIn": "entrant",
+      "networkOut": "sortant",
+      "systemInfo": "Informations système",
+      "cpuModel": "CPU",
+      "cpuCount": "Cœurs / threads",
+      "os": "OS",
+      "kernelVersion": "Noyau",
+      "architecture": "Architecture",
+      "wingsVersion": "Version Wings",
+      "updateAvailable": "Mise à jour disponible ({latest})",
+      "used": "utilisé",
+      "available": "disponible",
+      "ramChart": "RAM",
+      "cpuChart": "CPU",
+      "diskChart": "Disque",
+      "netChart": "Réseau",
+      "offline": "Wings est injoignable ou hors ligne.",
+      "diskUsed": "Disque utilisé"
     }
   },
   "setup": {

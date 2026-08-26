@@ -22,15 +22,18 @@ export default function NodeDetailLayout({
 
   const TABS = [
     { key: "settings", label: t("tabSettings"), path: "" },
+    { key: "monitoring", label: t("tabMonitoring"), path: "/monitoring" },
     { key: "allocations", label: t("tabAllocations"), path: "/allocations" },
     { key: "configuration", label: t("tabConfiguration"), path: "/configuration" },
   ];
 
-  const activeTab = pathname.endsWith("/allocations")
-    ? "allocations"
-    : pathname.endsWith("/configuration")
-      ? "configuration"
-      : "settings";
+  const activeTab = pathname.endsWith("/monitoring")
+    ? "monitoring"
+    : pathname.endsWith("/allocations")
+      ? "allocations"
+      : pathname.endsWith("/configuration")
+        ? "configuration"
+        : "settings";
 
   return (
     <div className="flex-1 overflow-auto px-6 py-5">

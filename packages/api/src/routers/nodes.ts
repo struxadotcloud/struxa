@@ -1,12 +1,16 @@
 import { randomBytes, randomUUID } from "crypto";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { ORPCError } from "@orpc/server";
 import { db } from "@struxa/db";
 import { nodes } from "@struxa/db";
 import { recordActivity } from "../services/activity";
 import { getEffectiveAppUrl } from "../services/instance";
 import { encrypt, safeDecrypt } from "../lib/crypto";
+import { signWsToken } from "../lib/jwt";
 import { adminProcedure } from "../index";
+
+let _latestWingsVersion: { data: string | null; expiresAt: number } | null = null;
 
 export const nodesRouter = {
   list: adminProcedure.handler(async () => {
@@ -135,6 +139,42 @@ export const nodesRouter = {
       recordActivity({ eventType: "admin:node.token-regenerate", userId: context.session.user.id, nodeId: input.id, ip: context.ip, properties: { name: node?.name } });
       return { tokenId, token };
     }),
+
+  getStatsSocket: adminProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .handler(async ({ context, input }) => {
+      const node = await db.query.nodes.findFirst({ where: eq(nodes.id, input.id) });
+      if (!node) throw new ORPCError("NOT_FOUND");
+
+      const token = await signWsToken(
+        { user_uuid: context.session.user.id, server_uuid: node.uuid, permissions: ["*"] },
+        safeDecrypt(node.token),
+      );
+
+      const wsScheme = node.scheme === "https" ? "wss" : "ws";
+      return { token, socket: `${wsScheme}://${node.fqdn}:${node.daemonListen}/api/system/stats/ws` };
+    }),
+
+  getLatestWingsVersion: adminProcedure.handler(async () => {
+    if (_latestWingsVersion && Date.now() < _latestWingsVersion.expiresAt) return _latestWingsVersion.data;
+
+    const cache = (data: string | null, ttlMs: number) => {
+      _latestWingsVersion = { data, expiresAt: Date.now() + ttlMs };
+      return data;
+    };
+
+    try {
+      const res = await fetch("https://api.github.com/repos/struxadotcloud/wings/releases/latest", {
+        headers: { Accept: "application/vnd.github+json" },
+        signal: AbortSignal.timeout(5000),
+      });
+      if (!res.ok) return cache(null, 5 * 60 * 1000);
+      const json = (await res.json()) as { tag_name?: string };
+      return cache(json.tag_name ?? null, 60 * 60 * 1000);
+    } catch {
+      return cache(null, 5 * 60 * 1000);
+    }
+  }),
 
   getDeploymentConfig: adminProcedure
     .input(z.object({ id: z.string().uuid() }))

@@ -44,6 +44,7 @@ const EVENT_STYLES: Record<string, { color: string; bg: string }> = {
   location: { color: "#f59e0b", bg: "rgba(245,158,11,0.12)" },
   settings: { color: "#71717a", bg: "rgba(113,113,122,0.10)" },
   billing: { color: "#10b981", bg: "rgba(16,185,129,0.12)" },
+  backup: { color: "#14b8a6", bg: "rgba(20,184,166,0.12)" },
 };
 
 function getEventStyle(event: string): { color: string; bg: string } {
@@ -57,57 +58,23 @@ function getEventStyle(event: string): { color: string; bg: string } {
   if (event.startsWith("admin:location.")) return EVENT_STYLES.location!;
   if (event.startsWith("admin:settings.")) return EVENT_STYLES.settings!;
   if (event.startsWith("admin:billing.")) return EVENT_STYLES.billing!;
+  if (event.startsWith("admin:backup-destination.")) return EVENT_STYLES.backup!;
   return { color: "#71717a", bg: "rgba(113,113,122,0.10)" };
 }
 
-const EVENT_LABELS: Record<string, string> = {
-  "admin:server.create":          "Server: Create",
-  "admin:server.delete":          "Server: Delete",
-  "admin:server.update":          "Server: Update",
-  "admin:server.suspend":         "Server: Suspend",
-  "admin:server.unsuspend":       "Server: Unsuspend",
-  "admin:server.variables":       "Server: Variables",
-  "admin:node.create":            "Node: Create",
-  "admin:node.update":            "Node: Update",
-  "admin:node.delete":            "Node: Delete",
-  "admin:node.token-regenerate":  "Node: Regen Token",
-  "admin:allocation.create":      "Allocation: Create",
-  "admin:allocation.delete":      "Allocation: Delete",
-  "admin:nest.create":            "Nest: Create",
-  "admin:nest.update":            "Nest: Update",
-  "admin:nest.delete":            "Nest: Delete",
-  "admin:egg.create":             "Egg: Create",
-  "admin:egg.update":             "Egg: Update",
-  "admin:egg.delete":             "Egg: Delete",
-  "admin:egg.variable-add":       "Egg: Add Variable",
-  "admin:egg.variable-update":    "Egg: Update Variable",
-  "admin:egg.variable-delete":    "Egg: Delete Variable",
-  "admin:egg.import":             "Egg: Import",
-  "admin:user.set-role":          "User: Set Role",
-  "admin:user.ban":               "User: Ban",
-  "admin:user.unban":             "User: Unban",
-  "admin:user.delete":            "User: Delete",
-  "admin:database-host.create":   "DB Host: Create",
-  "admin:database-host.update":   "DB Host: Update",
-  "admin:database-host.delete":   "DB Host: Delete",
-  "admin:location.create":        "Location: Create",
-  "admin:location.update":        "Location: Update",
-  "admin:location.delete":        "Location: Delete",
-  "admin:settings.update":           "Settings: Update",
-  "admin:billing.category.create":   "Billing: Create Category",
-  "admin:billing.category.update":   "Billing: Update Category",
-  "admin:billing.category.delete":   "Billing: Delete Category",
-  "admin:billing.product.create":    "Billing: Create Plan",
-  "admin:billing.product.update":    "Billing: Update Plan",
-  "admin:billing.product.delete":    "Billing: Delete Plan",
-  "admin:billing.gateway.create":    "Billing: Add Gateway",
-  "admin:billing.gateway.update":    "Billing: Update Gateway",
-  "admin:billing.gateway.delete":    "Billing: Remove Gateway",
-  "admin:billing.wallet.adjust":     "Billing: Adjust Wallet",
-};
+const prettify = (slug: string) =>
+  slug.replace(/[._-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
-function getEventLabel(event: string): string {
-  return EVENT_LABELS[event] ?? event;
+function useEventLabel() {
+  const t = useTranslations("admin.activity.events");
+  return (event: string) => {
+    const path = event.replace(/^admin:/, "");
+    const dot = path.lastIndexOf(".");
+    if (dot < 0) return prettify(path);
+    const part = (kind: string, slug: string) =>
+      t.has(`${kind}.${slug}`) ? t(`${kind}.${slug}`) : t("unknown");
+    return `${part("resource", path.slice(0, dot).replace(/\./g, "_"))}: ${part("action", path.slice(dot + 1))}`;
+  };
 }
 
 function ActorCell({ user }: { user: { name: string | null; email: string; image: string | null } | null | undefined }) {
@@ -153,6 +120,9 @@ function getEventDetails(eventType: string, propertiesJson: string | null): stri
   }
   if (typeof props.ip === "string" && typeof props.ports === "string") return `${props.ip}:${props.ports}`;
   if (typeof props.ip === "string" && typeof props.port === "number") return `${props.ip}:${props.port}`;
+  if (eventType.startsWith("admin:backup-destination.")) {
+    return [props.type, props.scope].filter((v) => typeof v === "string").join(" · ") || null;
+  }
   if (typeof props.key === "string") return props.key;
   return null;
 }
@@ -164,6 +134,7 @@ function fmtDate(d: Date | string | null): string {
 
 export default function AdminActivityPage() {
   const t = useTranslations("admin.activity");
+  const eventLabel = useEventLabel();
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
 
@@ -189,7 +160,8 @@ export default function AdminActivityPage() {
     e.eventType.startsWith("admin:database-host.") ||
     e.eventType.startsWith("admin:nest.") ||
     e.eventType.startsWith("admin:egg.") ||
-    e.eventType.startsWith("admin:settings.")
+    e.eventType.startsWith("admin:settings.") ||
+    e.eventType.startsWith("admin:backup-destination.")
   ).length;
   const billingCount = entries.filter((e) => e.eventType.startsWith("admin:billing.")).length;
 
@@ -230,7 +202,7 @@ export default function AdminActivityPage() {
                         className="rounded-full px-2 py-0.5 font-mono text-xs font-medium"
                         style={{ color: style.color, backgroundColor: style.bg }}
                       >
-                        {getEventLabel(entry.eventType)}
+                        {eventLabel(entry.eventType)}
                       </span>
                     </span>
                     <div className="min-w-0 pr-4">

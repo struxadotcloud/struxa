@@ -917,7 +917,24 @@
       "nestsAndEggs": "Nester und Eier",
       "nestsAndEggsDesc": "Konfigurieren Sie Servervorlagen",
       "createServer": "Server erstellen",
-      "createServerDesc": "Stellen Sie einen neuen Spieleserver bereit"
+      "createServerDesc": "Stellen Sie einen neuen Spieleserver bereit",
+      "resources": "Ressourcen",
+      "fleetRamAllocated": "Zugewiesener RAM",
+      "fleetRamUsed": "Tatsächliche Nutzung",
+      "fleetRamAvailable": "Verfügbarer RAM",
+      "fleetCpuLabel": "Ø CPU",
+      "fleetDiskUsed": "Speicher belegt",
+      "fleetNet": "Netzwerk ein",
+      "fleetNetIn": "ein",
+      "fleetNetOut": "aus",
+      "ramChart": "Flotten-RAM",
+      "cpuChart": "Flotten-CPU",
+      "diskChart": "Flotten-Speicher",
+      "netChart": "Flotten-Netzwerk",
+      "nodesSection": "Knoten",
+      "nodeCpu": "{value}% CPU",
+      "nodeRam": "{used} / {total} GB RAM",
+      "nodeDisk": "{used} / {total} GB Speicher"
     },
     "locations": {
       "title": "Standorte",
@@ -1026,7 +1043,12 @@
       "backupUseGlobal": "Globalen Standard verwenden",
       "backupUseGlobalDesc": "Wenn aktiviert, verwendet dieser Node das in den Instanzeinstellungen konfigurierte Standardziel.",
       "prevPage": "Vorherige Seite",
-      "nextPage": "Nächste Seite"
+      "nextPage": "Nächste Seite",
+      "tabMonitoring": "Monitoring",
+      "updateAvailable": "Update verfügbar",
+      "ram": "RAM",
+      "cpu": "CPU",
+      "disk": "Speicher"
     },
     "nests": {
       "title": "Nester und Eier",
@@ -1375,7 +1397,44 @@
       "serverEvents": "Serverereignisse",
       "userModeration": "Benutzermoderation",
       "infrastructure": "Infrastruktur",
-      "billingEvents": "Abrechnung"
+      "billingEvents": "Abrechnung",
+      "events": {
+        "resource": {
+          "server": "Server",
+          "node": "Node",
+          "allocation": "Zuweisung",
+          "nest": "Nest",
+          "egg": "Egg",
+          "user": "Benutzer",
+          "database-host": "DB-Host",
+          "location": "Standort",
+          "settings": "Einstellungen",
+          "backup-destination": "Backup-Ziel",
+          "billing_category": "Abrechnungskategorie",
+          "billing_product": "Abrechnungsplan",
+          "billing_gateway": "Zahlungs-Gateway",
+          "billing_wallet": "Guthaben"
+        },
+        "action": {
+          "create": "Erstellen",
+          "update": "Aktualisieren",
+          "delete": "Löschen",
+          "clear": "Zurücksetzen",
+          "import": "Importieren",
+          "suspend": "Sperren",
+          "unsuspend": "Entsperren",
+          "variables": "Variablen",
+          "token-regenerate": "Token erneuern",
+          "variable-add": "Variable hinzufügen",
+          "variable-update": "Variable aktualisieren",
+          "variable-delete": "Variable löschen",
+          "set-role": "Rolle ändern",
+          "ban": "Bannen",
+          "unban": "Entbannen",
+          "adjust": "Anpassen"
+        },
+      "unknown": "Unbekannt"
+      }
     },
     "settings": {
       "title": "Einstellungen",
@@ -1725,6 +1784,34 @@
       "kopiaFingerprintLabel": "Fingerprint",
       "kopiaTagsLabel": "Tags",
       "kopiaTagsPlaceholder": "backup=true"
+    },
+    "monitoring": {
+      "allocatedRam": "Zugewiesener RAM",
+      "realUsage": "Tatsächliche Nutzung",
+      "availableRam": "Verfügbarer RAM",
+      "cpuUsage": "CPU-Auslastung",
+      "loadAverage": "Lastdurchschnitt",
+      "uptime": "Betriebszeit",
+      "diskUsage": "Speichernutzung",
+      "network": "Netzwerk",
+      "networkIn": "ein",
+      "networkOut": "aus",
+      "systemInfo": "Systeminformationen",
+      "cpuModel": "CPU",
+      "cpuCount": "Kerne / Threads",
+      "os": "Betriebssystem",
+      "kernelVersion": "Kernel",
+      "architecture": "Architektur",
+      "wingsVersion": "Wings-Version",
+      "updateAvailable": "Update verfügbar ({latest})",
+      "used": "belegt",
+      "available": "verfügbar",
+      "ramChart": "RAM",
+      "cpuChart": "CPU",
+      "diskChart": "Speicher",
+      "netChart": "Netzwerk",
+      "offline": "Wings ist nicht erreichbar oder offline.",
+      "diskUsed": "Speicher belegt"
     }
   },
   "setup": {
