@@ -36,7 +36,7 @@ async function proxy(req: NextRequest, { params }: Params) {
       permissions = [];
     }
     const hasFileAccess = permissions.some(
-      (p) => p === "*" || p === "file" || p.startsWith("file."),
+      (p) => p === "*" || p === "files" || p === "file" || p.startsWith("file."),
     );
     if (!hasFileAccess) return new Response("Forbidden", { status: 403 });
   }
