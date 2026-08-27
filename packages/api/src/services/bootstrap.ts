@@ -74,6 +74,8 @@ export async function bootstrapInstaller(input: BootstrapInput) {
     adminId = created.user.id;
   }
 
+  await db.update(user).set({ role: "admin" }).where(eq(user.id, adminId));
+
   const locationId = randomUUID();
   await db.insert(locations).values({
     id: locationId,
