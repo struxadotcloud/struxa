@@ -29,6 +29,16 @@ async function proxy(req: NextRequest, { params }: Params) {
       where: and(eq(subusers.userId, session.user.id), eq(subusers.serverId, server.id)),
     });
     if (!sub) return new Response("Forbidden", { status: 403 });
+    let permissions: string[] = [];
+    try {
+      permissions = JSON.parse(sub.permissions) as string[];
+    } catch {
+      permissions = [];
+    }
+    const hasFileAccess = permissions.some(
+      (p) => p === "*" || p === "file" || p.startsWith("file."),
+    );
+    if (!hasFileAccess) return new Response("Forbidden", { status: 403 });
   }
 
   const node = server.node as typeof nodes.$inferSelect;
@@ -43,6 +53,8 @@ async function proxy(req: NextRequest, { params }: Params) {
 
   let bodyJson: { files?: unknown[] } | null = null;
   if ((req.method === "POST" && action === "delete") || (req.method === "PUT" && action === "rename")) {
+    const contentLength = Number(req.headers.get("content-length") ?? 0);
+    if (contentLength > 64 * 1024) return new Response("Payload Too Large", { status: 413 });
     bodyJson = (await req.clone().json().catch(() => null)) as { files?: unknown[] } | null;
   }
 
@@ -80,30 +92,34 @@ async function proxy(req: NextRequest, { params }: Params) {
         properties: filePath ? { file: filePath } : undefined,
       });
     } else if (req.method === "POST" && action === "delete" && bodyJson) {
-      const files = (bodyJson.files ?? []).filter((f): f is string => typeof f === "string");
+      const files = (bodyJson.files ?? [])
+        .slice(0, 50)
+        .filter((f): f is string => typeof f === "string");
       if (files.length > 0) {
         recordActivity({
           eventType: "server:files.delete",
           userId: session.user.id,
           serverId: server.id,
           ip,
-          properties: { file: files.join(", ") },
+          properties: { file: files.join(", ").slice(0, 2000) },
         });
       }
     } else if (req.method === "PUT" && action === "rename" && bodyJson) {
-      const renames = (bodyJson.files ?? []).filter(
-        (f): f is { from: string; to: string } =>
-          typeof f === "object" && f !== null &&
-          typeof (f as { from?: unknown }).from === "string" &&
-          typeof (f as { to?: unknown }).to === "string",
-      ) as { from: string; to: string }[];
+      const renames = (bodyJson.files ?? [])
+        .slice(0, 50)
+        .filter(
+          (f): f is { from: string; to: string } =>
+            typeof f === "object" && f !== null &&
+            typeof (f as { from?: unknown }).from === "string" &&
+            typeof (f as { to?: unknown }).to === "string",
+        ) as { from: string; to: string }[];
       if (renames.length > 0) {
         recordActivity({
           eventType: "server:files.rename",
           userId: session.user.id,
           serverId: server.id,
           ip,
-          properties: { file: renames.map((f) => `${f.from} → ${f.to}`).join(", ") },
+          properties: { file: renames.map((f) => `${f.from} → ${f.to}`).join(", ").slice(0, 2000) },
         });
       }
     }
