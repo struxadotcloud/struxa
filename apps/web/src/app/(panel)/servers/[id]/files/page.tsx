@@ -17,12 +17,22 @@ import {
   Plus,
   Upload,
   X,
+  Pencil,
+  Trash2,
+  MoreHorizontal,
 } from "lucide-react";
 import type { Monaco } from "@monaco-editor/react";
 import { useTranslations } from "next-intl";
 import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
 import Loader from "@/components/loader";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@struxa/ui/components/dropdown-menu";
 
 interface WingsFile {
   name: string;
@@ -128,6 +138,10 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
   const [newFileName, setNewFileName] = useState("");
   const [uploading, setUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [renamingPath, setRenamingPath] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<{ name: string; path: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const newFileInputRef = useRef<HTMLInputElement>(null);
   const handleSaveRef = useRef<() => Promise<void>>(async () => { /* not yet ready */ });
@@ -241,6 +255,54 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
     } finally {
       setUploading(false);
       if (uploadInputRef.current) uploadInputRef.current.value = "";
+    }
+  }
+
+  async function handleRename(oldPath: string) {
+    const newName = renameValue.trim();
+    const oldName = oldPath.split("/").pop() ?? "";
+    setRenamingPath(null);
+    if (!newName || newName === oldName || newName.includes("/")) return;
+    const parent = oldPath.split("/").slice(0, -1).join("/") || "/";
+    const newPath = parent === "/" ? `/${newName}` : `${parent}/${newName}`;
+    const res = await fetch(
+      `${filesBase}/rename`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ root: "", files: [{ from: oldPath, to: newPath }] }),
+      },
+    );
+    if (!res.ok) return;
+    if (openFilePath === oldPath) {
+      setOpenFilePath(newPath);
+      setSelectedFile((f) => (f ? { ...f, name: newName } : f));
+    }
+    await fetchDir(dirPath);
+  }
+
+  async function handleDelete(target: { name: string; path: string }) {
+    setDeleting(true);
+    try {
+      const res = await fetch(
+        `${filesBase}/delete`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ root: "", files: [target.path] }),
+        },
+      );
+      if (!res.ok) return;
+      if (openFilePath === target.path) {
+        setSelectedFile(null);
+        setOpenFilePath(null);
+        setEditContent("");
+        setUnsaved(false);
+      }
+      await fetchDir(dirPath);
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
     }
   }
 
@@ -362,10 +424,30 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
             ) : (
               entries.map((file) => {
                 const itemPath = dirPath === "/" ? `/${file.name}` : `${dirPath}/${file.name}`;
+                if (renamingPath === itemPath) {
+                  return (
+                    <div key={file.name} className="flex items-center gap-2 px-3 py-1.5 text-xs">
+                      <FileIcon file={file} />
+                      <input
+                        autoFocus
+                        type="text"
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") void handleRename(itemPath);
+                          if (e.key === "Escape") setRenamingPath(null);
+                        }}
+                        onBlur={() => setRenamingPath(null)}
+                        className="flex-1 bg-transparent font-mono text-xs text-foreground outline-none"
+                      />
+                    </div>
+                  );
+                }
                 return (
-                  <button
+                  <div
                     key={file.name}
-                    type="button"
+                    role="button"
+                    tabIndex={0}
                     onClick={() => {
                       if (file.directory) {
                         navigateInto(file.name);
@@ -373,7 +455,17 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
                         void openFile(file);
                       }
                     }}
-                    className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors hover:bg-muted ${
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        if (file.directory) {
+                          navigateInto(file.name);
+                        } else {
+                          void openFile(file);
+                        }
+                      }
+                    }}
+                    className={`group flex w-full cursor-pointer items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors hover:bg-muted ${
                       openFilePath === itemPath ? "bg-muted text-foreground" : "text-muted-foreground"
                     }`}
                   >
@@ -385,7 +477,36 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
                     {file.file && (
                       <span className="shrink-0 text-[10px] text-muted-foreground/60">{fmtBytes(file.size)}</span>
                     )}
-                  </button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        title={t("actions")}
+                        onClick={(e) => e.stopPropagation()}
+                        className="shrink-0 rounded-md p-0.5 text-muted-foreground opacity-0 transition-opacity hover:bg-background hover:text-foreground group-hover:opacity-100 group-focus-within:opacity-100 data-[state=open]:opacity-100"
+                      >
+                        <MoreHorizontal className="h-3.5 w-3.5" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" style={{ minWidth: "9rem" }}>
+                        <DropdownMenuItem
+                          className="cursor-pointer"
+                          onClick={() => {
+                            setRenamingPath(itemPath);
+                            setRenameValue(file.name);
+                          }}
+                        >
+                          <Pencil />
+                          {t("rename")}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          variant="destructive"
+                          className="cursor-pointer"
+                          onClick={() => setDeleteTarget({ name: file.name, path: itemPath })}
+                        >
+                          <Trash2 />
+                          {t("delete")}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 );
               })
             )}
@@ -470,6 +591,16 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
           )}
         </div>
       </div>
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        title={t("deleteFileTitle")}
+        description={deleteTarget ? t("deleteFileDescription", { name: deleteTarget.name }) : undefined}
+        confirmLabel={t("delete")}
+        destructive
+        loading={deleting}
+        onConfirm={() => { if (deleteTarget) void handleDelete(deleteTarget); }}
+      />
     </>
   );
 }

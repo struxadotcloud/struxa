@@ -66,6 +66,8 @@ const EVENT_LABEL_KEYS: Record<string, string> = {
   "server:backup.restore":           "eventBackupRestore",
   "server:files.read":               "eventFilesRead",
   "server:files.write":              "eventFilesWrite",
+  "server:files.rename":             "eventFilesRename",
+  "server:files.delete":             "eventFilesDelete",
   "server:settings":                 "eventSettingsUpdate",
   "server:reinstall":                "eventServerReinstall",
   "server:database.create":          "eventDatabaseCreate",

@@ -421,7 +421,12 @@
       "noFileSelectedHint": "Select a file from the panel to view or edit",
       "saving": "Saving…",
       "save": "Save",
-      "dropToUpload": "Drop files to upload"
+      "dropToUpload": "Drop files to upload",
+      "rename": "Rename",
+      "delete": "Delete",
+      "actions": "Actions",
+      "deleteFileTitle": "Delete file?",
+      "deleteFileDescription": "This will permanently delete {name}. This action cannot be undone."
     },
     "plugins": {
       "searchPlaceholder": "Search Modrinth plugins…",
@@ -728,6 +733,8 @@
       "eventBackupRestore": "Backup: Restore",
       "eventFilesRead": "Files: Read",
       "eventFilesWrite": "Files: Write",
+      "eventFilesRename": "Files: Rename",
+      "eventFilesDelete": "Files: Delete",
       "eventSettingsUpdate": "Settings: Update",
       "eventServerReinstall": "Server: Reinstall",
       "eventDatabaseCreate": "Database: Create",
