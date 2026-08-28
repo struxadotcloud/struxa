@@ -410,8 +410,9 @@ function EmailChangeDialog() {
           </DialogHeader>
           <div className="flex flex-col gap-3 px-5 py-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-foreground">{t("newEmailLabel")}</label>
+              <label htmlFor="change-email-new" className="text-xs font-medium text-foreground">{t("newEmailLabel")}</label>
               <input
+                id="change-email-new"
                 autoFocus
                 type="email"
                 className={inputClass(true)}
@@ -421,8 +422,9 @@ function EmailChangeDialog() {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-foreground">{t("confirmEmailLabel")}</label>
+              <label htmlFor="change-email-confirm" className="text-xs font-medium text-foreground">{t("confirmEmailLabel")}</label>
               <input
+                id="change-email-confirm"
                 type="email"
                 className={inputClass(true)}
                 placeholder={t("confirmEmailPlaceholder")}
