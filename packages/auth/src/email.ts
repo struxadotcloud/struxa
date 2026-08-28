@@ -118,7 +118,7 @@ function baseTemplate(appName: string, header: string, body: string): string {
 </html>`;
 }
 
-export const TEMPLATE_NAMES = ["verification", "password-reset", "welcome", "server-install"] as const;
+export const TEMPLATE_NAMES = ["verification", "password-reset", "welcome", "server-install", "change-email"] as const;
 export type TemplateName = (typeof TEMPLATE_NAMES)[number];
 
 export const DEFAULT_TEMPLATES: Record<TemplateName, (vars: Record<string, string>) => string> = {
@@ -163,6 +163,17 @@ export const DEFAULT_TEMPLATES: Record<TemplateName, (vars: Record<string, strin
 <p>Your server <strong>${vars.serverName ?? "your server"}</strong> has finished installing and is ready to start.</p>
 <p>Log in to your panel to start and manage your server.</p>`,
     ),
+
+  "change-email": (vars) =>
+    baseTemplate(
+      vars.appName ?? "Struxa",
+      "Confirm your new email",
+      `<h2>Confirm your new email address</h2>
+<p>Hi ${vars.userName ?? "there"},</p>
+<p>We received a request to change the email address on your account. Click the button below to confirm your new address. Your email will only be changed once you confirm it.</p>
+<p><a class="btn" href="${vars.verificationUrl ?? "#"}">Confirm Email Change</a></p>
+<p style="font-size:12px;color:#a1a1aa;">If you didn't request this change, you can safely ignore this email.<br><br>Button not working? Copy and paste this link into your browser:<br><a href="${vars.verificationUrl ?? "#"}" style="color:#52525b;word-break:break-all;">${vars.verificationUrl ?? ""}</a></p>`,
+    ),
 };
 
 export const TEMPLATE_VARIABLES: Record<TemplateName, string[]> = {
@@ -170,4 +181,5 @@ export const TEMPLATE_VARIABLES: Record<TemplateName, string[]> = {
   "password-reset": ["appName", "userName", "resetUrl", "resetToken"],
   welcome: ["appName", "userName"],
   "server-install": ["appName", "userName", "serverName"],
+  "change-email": ["appName", "userName", "verificationUrl", "verificationToken"],
 };

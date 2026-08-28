@@ -846,6 +846,21 @@
       "saved": "Saved",
       "updateFailed": "Failed to update password"
     },
+    "email": {
+      "dialogTitle": "Change Email",
+      "dialogDesc": "We'll send a verification link to your new address. Your email is only changed once you confirm it.",
+      "newEmailLabel": "New Email",
+      "newEmailPlaceholder": "new@example.com",
+      "confirmEmailLabel": "Confirm New Email",
+      "confirmEmailPlaceholder": "new@example.com",
+      "emailInvalid": "Enter a valid email address.",
+      "emailsDoNotMatch": "Email addresses do not match.",
+      "sameEmail": "The new email must be different from your current email.",
+      "sending": "Sending…",
+      "sent": "Verification email sent",
+      "updated": "Email updated",
+      "sendFailed": "Failed to request email change"
+    },
     "apiKeys": {
       "title": "API Keys",
       "description": "Use API keys to authenticate programmatic access to the API.",
@@ -1616,6 +1631,7 @@
       "templatePasswordReset": "Password Reset",
       "templateWelcome": "Welcome",
       "templateServerInstall": "Server Install",
+      "templateChangeEmail": "Email Change",
       "save": "Save",
       "saving": "Saving…",
       "saved": "Saved",

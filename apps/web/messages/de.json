@@ -826,6 +826,21 @@
       "saved": "Gespeichert",
       "updateFailed": "Das Passwort konnte nicht aktualisiert werden"
     },
+    "email": {
+      "dialogTitle": "E-Mail-Adresse ändern",
+      "dialogDesc": "Wir senden einen Bestätigungslink an Ihre neue Adresse. Ihre E-Mail-Adresse wird erst nach der Bestätigung geändert.",
+      "newEmailLabel": "Neue E-Mail-Adresse",
+      "newEmailPlaceholder": "neu@beispiel.de",
+      "confirmEmailLabel": "Neue E-Mail-Adresse bestätigen",
+      "confirmEmailPlaceholder": "neu@beispiel.de",
+      "emailInvalid": "Geben Sie eine gültige E-Mail-Adresse ein.",
+      "emailsDoNotMatch": "Die E-Mail-Adressen stimmen nicht überein.",
+      "sameEmail": "Die neue Adresse muss sich von der aktuellen unterscheiden.",
+      "sending": "Senden…",
+      "sent": "Bestätigungs-E-Mail gesendet",
+      "updated": "E-Mail-Adresse aktualisiert",
+      "sendFailed": "Die E-Mail-Adresse konnte nicht geändert werden"
+    },
     "apiKeys": {
       "title": "API-Schlüssel",
       "description": "Verwenden Sie API-Schlüssel, um den programmgesteuerten Zugriff auf die API zu authentifizieren.",
@@ -1572,6 +1587,7 @@
       "templatePasswordReset": "Passwort zurücksetzen",
       "templateWelcome": "Willkommen",
       "templateServerInstall": "Server-Installation",
+      "templateChangeEmail": "E-Mail-Änderung",
       "save": "Speichern",
       "saving": "Speichern…",
       "saved": "Gespeichert",

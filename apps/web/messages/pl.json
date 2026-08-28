@@ -826,6 +826,21 @@
       "saved": "Zapisano",
       "updateFailed": "Nie udało się zaktualizować hasła"
     },
+    "email": {
+      "dialogTitle": "Zmiana adresu e-mail",
+      "dialogDesc": "Wyślemy link weryfikacyjny na nowy adres. Adres e-mail zostanie zmieniony dopiero po jego potwierdzeniu.",
+      "newEmailLabel": "Nowy adres e-mail",
+      "newEmailPlaceholder": "nowy@przyklad.pl",
+      "confirmEmailLabel": "Potwierdź nowy adres e-mail",
+      "confirmEmailPlaceholder": "nowy@przyklad.pl",
+      "emailInvalid": "Podaj prawidłowy adres e-mail.",
+      "emailsDoNotMatch": "Adresy e-mail nie pasują.",
+      "sameEmail": "Nowy adres musi różnić się od obecnego.",
+      "sending": "Wysyłanie…",
+      "sent": "Wysłano e-mail weryfikacyjny",
+      "updated": "Adres e-mail został zmieniony",
+      "sendFailed": "Nie udało się zmienić adresu e-mail"
+    },
     "apiKeys": {
       "title": "Klucze API",
       "description": "Użyj kluczy API, aby uwierzytelnić programowy dostęp do interfejsu API.",
@@ -1572,6 +1587,7 @@
       "templatePasswordReset": "Reset hasła",
       "templateWelcome": "Powitanie",
       "templateServerInstall": "Instalacja serwera",
+      "templateChangeEmail": "Zmiana adresu e-mail",
       "save": "Zapisz",
       "saving": "Zapisywanie…",
       "saved": "Zapisano",
