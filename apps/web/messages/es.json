@@ -826,6 +826,21 @@
       "saved": "Guardado",
       "updateFailed": "No se pudo actualizar la contraseña"
     },
+    "email": {
+      "dialogTitle": "Cambiar correo electrónico",
+      "dialogDesc": "Enviaremos un enlace de verificación a su nueva dirección. Su correo solo se cambiará una vez que lo confirme.",
+      "newEmailLabel": "Nuevo correo electrónico",
+      "newEmailPlaceholder": "nuevo@ejemplo.com",
+      "confirmEmailLabel": "Confirmar nuevo correo electrónico",
+      "confirmEmailPlaceholder": "nuevo@ejemplo.com",
+      "emailInvalid": "Introduzca un correo electrónico válido.",
+      "emailsDoNotMatch": "Los correos electrónicos no coinciden.",
+      "sameEmail": "El nuevo correo debe ser diferente del actual.",
+      "sending": "Enviando…",
+      "sent": "Correo de verificación enviado",
+      "updated": "Correo electrónico actualizado",
+      "sendFailed": "No se pudo solicitar el cambio de correo"
+    },
     "apiKeys": {
       "title": "Claves API",
       "description": "Utilice claves API para autenticar el acceso programático a la API.",
@@ -1572,6 +1587,7 @@
       "templatePasswordReset": "Restablecimiento de contraseña",
       "templateWelcome": "Bienvenida",
       "templateServerInstall": "Instalación del servidor",
+      "templateChangeEmail": "Cambio de correo electrónico",
       "save": "Guardar",
       "saving": "Guardando…",
       "saved": "Guardado",

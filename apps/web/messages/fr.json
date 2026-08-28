@@ -826,6 +826,21 @@
       "saved": "Enregistr?",
       "updateFailed": "Échec de la mise à jour du mot de passe"
     },
+    "email": {
+      "dialogTitle": "Changer d'adresse e-mail",
+      "dialogDesc": "Nous enverrons un lien de vérification à votre nouvelle adresse. Votre e-mail ne sera changé qu'après confirmation.",
+      "newEmailLabel": "Nouvelle adresse e-mail",
+      "newEmailPlaceholder": "nouveau@exemple.fr",
+      "confirmEmailLabel": "Confirmer la nouvelle adresse e-mail",
+      "confirmEmailPlaceholder": "nouveau@exemple.fr",
+      "emailInvalid": "Saisissez une adresse e-mail valide.",
+      "emailsDoNotMatch": "Les adresses e-mail ne correspondent pas.",
+      "sameEmail": "La nouvelle adresse doit être différente de l'adresse actuelle.",
+      "sending": "Envoi…",
+      "sent": "E-mail de vérification envoyé",
+      "updated": "Adresse e-mail mise à jour",
+      "sendFailed": "Impossible de demander le changement d'adresse e-mail"
+    },
     "apiKeys": {
       "title": "Clés API",
       "description": "Utilisez des clés API pour authentifier l'accès programmatique à l'API.",
@@ -1572,6 +1587,7 @@
       "templatePasswordReset": "Réinitialisation du mot de passe",
       "templateWelcome": "Bienvenue",
       "templateServerInstall": "Installation du serveur",
+      "templateChangeEmail": "Changement d'adresse e-mail",
       "save": "Enregistrer",
       "saving": "Enregistrement…",
       "saved": "Enregistré",

@@ -65,8 +65,19 @@ export async function getEmailTemplate(name: string): Promise<string | null> {
   return row?.value ?? null;
 }
 
+export function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export function substituteVars(html: string, vars: Record<string, string>): string {
-  return html.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? `{{${key}}}`);
+  return html.replace(/\{\{(\w+)\}\}/g, (_, key) =>
+    vars[key] === undefined ? `{{${key}}}` : escapeHtml(vars[key]),
+  );
 }
 
 export async function sendEmail(
@@ -108,17 +119,17 @@ function baseTemplate(appName: string, header: string, body: string): string {
 <body>
 <div class="wrapper">
   <div class="card">
-    <div class="header"><h1>${appName}</h1></div>
+    <div class="header"><h1>${escapeHtml(appName)}</h1></div>
     <div class="body">${body}</div>
     <hr class="divider" />
-    <div class="footer"><p>This email was sent by ${appName}. If you didn't expect this, you can safely ignore it.</p></div>
+    <div class="footer"><p>This email was sent by ${escapeHtml(appName)}. If you didn't expect this, you can safely ignore it.</p></div>
   </div>
 </div>
 </body>
 </html>`;
 }
 
-export const TEMPLATE_NAMES = ["verification", "password-reset", "welcome", "server-install"] as const;
+export const TEMPLATE_NAMES = ["verification", "password-reset", "welcome", "server-install", "change-email"] as const;
 export type TemplateName = (typeof TEMPLATE_NAMES)[number];
 
 export const DEFAULT_TEMPLATES: Record<TemplateName, (vars: Record<string, string>) => string> = {
@@ -127,10 +138,10 @@ export const DEFAULT_TEMPLATES: Record<TemplateName, (vars: Record<string, strin
       vars.appName ?? "Struxa",
       "Verify your email",
       `<h2>Verify your email address</h2>
-<p>Hi ${vars.userName ?? "there"},</p>
+<p>Hi ${escapeHtml(vars.userName ?? "there")},</p>
 <p>Thanks for signing up. Click the button below to verify your email address and activate your account.</p>
-<p><a class="btn" href="${vars.verificationUrl ?? "#"}">Verify Email</a></p>
-<p style="font-size:12px;color:#a1a1aa;">Button not working? Copy and paste this link into your browser:<br><a href="${vars.verificationUrl ?? "#"}" style="color:#52525b;word-break:break-all;">${vars.verificationUrl ?? ""}</a></p>`,
+<p><a class="btn" href="${escapeHtml(vars.verificationUrl ?? "#")}">Verify Email</a></p>
+<p style="font-size:12px;color:#a1a1aa;">Button not working? Copy and paste this link into your browser:<br><a href="${escapeHtml(vars.verificationUrl ?? "#")}" style="color:#52525b;word-break:break-all;">${escapeHtml(vars.verificationUrl ?? "")}</a></p>`,
     ),
 
   "password-reset": (vars) =>
@@ -138,18 +149,18 @@ export const DEFAULT_TEMPLATES: Record<TemplateName, (vars: Record<string, strin
       vars.appName ?? "Struxa",
       "Reset your password",
       `<h2>Reset your password</h2>
-<p>Hi ${vars.userName ?? "there"},</p>
+<p>Hi ${escapeHtml(vars.userName ?? "there")},</p>
 <p>We received a request to reset the password for your account. Click the button below to choose a new password. This link expires in 1 hour.</p>
-<p><a class="btn" href="${vars.resetUrl ?? "#"}">Reset Password</a></p>
-<p style="font-size:12px;color:#a1a1aa;">If you didn't request a password reset, you can safely ignore this email. Your password won't change.<br><br>Button not working? Copy and paste this link:<br><a href="${vars.resetUrl ?? "#"}" style="color:#52525b;word-break:break-all;">${vars.resetUrl ?? ""}</a></p>`,
+<p><a class="btn" href="${escapeHtml(vars.resetUrl ?? "#")}">Reset Password</a></p>
+<p style="font-size:12px;color:#a1a1aa;">If you didn't request a password reset, you can safely ignore this email. Your password won't change.<br><br>Button not working? Copy and paste this link:<br><a href="${escapeHtml(vars.resetUrl ?? "#")}" style="color:#52525b;word-break:break-all;">${escapeHtml(vars.resetUrl ?? "")}</a></p>`,
     ),
 
   welcome: (vars) =>
     baseTemplate(
       vars.appName ?? "Struxa",
-      `Welcome to ${vars.appName ?? "Struxa"}`,
-      `<h2>Welcome to ${vars.appName ?? "Struxa"}!</h2>
-<p>Hi ${vars.userName ?? "there"},</p>
+      `Welcome to ${escapeHtml(vars.appName ?? "Struxa")}`,
+      `<h2>Welcome to ${escapeHtml(vars.appName ?? "Struxa")}!</h2>
+<p>Hi ${escapeHtml(vars.userName ?? "there")},</p>
 <p>Your account has been created and is ready to use. You can now log in and start managing your servers.</p>
 <p>If you have any questions, reach out to your panel administrator.</p>`,
     ),
@@ -159,9 +170,20 @@ export const DEFAULT_TEMPLATES: Record<TemplateName, (vars: Record<string, strin
       vars.appName ?? "Struxa",
       "Server installation complete",
       `<h2>Your server is ready</h2>
-<p>Hi ${vars.userName ?? "there"},</p>
-<p>Your server <strong>${vars.serverName ?? "your server"}</strong> has finished installing and is ready to start.</p>
+<p>Hi ${escapeHtml(vars.userName ?? "there")},</p>
+<p>Your server <strong>${escapeHtml(vars.serverName ?? "your server")}</strong> has finished installing and is ready to start.</p>
 <p>Log in to your panel to start and manage your server.</p>`,
+    ),
+
+  "change-email": (vars) =>
+    baseTemplate(
+      vars.appName ?? "Struxa",
+      "Confirm your new email",
+      `<h2>Confirm your new email address</h2>
+<p>Hi ${escapeHtml(vars.userName ?? "there")},</p>
+<p>We received a request to change the email address on your account. Click the button below to confirm your new address. Your email will only be changed once you confirm it.</p>
+<p><a class="btn" href="${escapeHtml(vars.verificationUrl ?? "#")}">Confirm Email Change</a></p>
+<p style="font-size:12px;color:#a1a1aa;">If you didn't request this change, you can safely ignore this email.<br><br>Button not working? Copy and paste this link into your browser:<br><a href="${escapeHtml(vars.verificationUrl ?? "#")}" style="color:#52525b;word-break:break-all;">${escapeHtml(vars.verificationUrl ?? "")}</a></p>`,
     ),
 };
 
@@ -170,4 +192,5 @@ export const TEMPLATE_VARIABLES: Record<TemplateName, string[]> = {
   "password-reset": ["appName", "userName", "resetUrl", "resetToken"],
   welcome: ["appName", "userName"],
   "server-install": ["appName", "userName", "serverName"],
+  "change-email": ["appName", "userName", "verificationUrl", "verificationToken"],
 };

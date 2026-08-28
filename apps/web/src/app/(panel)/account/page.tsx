@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { Copy, Check, Key, Plus, Trash2, Monitor, LogOut, Camera, Link2, Unlink, Download } from "lucide-react";
+import { Copy, Check, Key, Plus, Trash2, Monitor, LogOut, Camera, Link2, Unlink, Download, Pencil } from "lucide-react";
 import { motion } from "motion/react";
 import QRCode from "qrcode";
 import {
@@ -348,6 +348,117 @@ function PasswordSection({ hasPassword }: { hasPassword: boolean }) {
 }
 
 // ─────────────────────────────────────────────
+// Change Email Dialog
+// ─────────────────────────────────────────────
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function EmailChangeDialog() {
+  const t = useTranslations("account.email");
+  const tc = useTranslations("common");
+  const { data: session } = authClient.useSession();
+  const [open, setOpen] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [confirmEmail, setConfirmEmail] = useState("");
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState("");
+
+  function reset() {
+    setOpen(false);
+    setNewEmail("");
+    setConfirmEmail("");
+    setError("");
+  }
+
+  async function handleSubmit() {
+    const next = newEmail.trim().toLowerCase();
+    if (!EMAIL_RE.test(next)) { setError(t("emailInvalid")); return; }
+    if (next === (session?.user.email ?? "").toLowerCase()) { setError(t("sameEmail")); return; }
+    if (next !== confirmEmail.trim().toLowerCase()) { setError(t("emailsDoNotMatch")); return; }
+    setError("");
+    setPending(true);
+    try {
+      const prevEmail = session?.user.email;
+      const res = await authClient.changeEmail({ newEmail: next, callbackURL: "/account" });
+      if (res.error) throw new Error(res.error.message);
+      setOpen(false);
+      const fresh = (await authClient.$fetch("/api/auth/get-session")) as { user?: { email?: string } } | null;
+      toast.success(fresh?.user?.email !== prevEmail ? t("updated") : t("sent"));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("sendFailed"));
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        aria-label={t("dialogTitle")}
+        title={t("dialogTitle")}
+        onClick={() => setOpen(true)}
+        className="absolute right-1.5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+      >
+        <Pencil className="h-3.5 w-3.5" />
+      </button>
+
+      <Dialog open={open} onOpenChange={(o) => { if (!o) reset(); }}>
+        <DialogPopup showCloseButton={false} className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("dialogTitle")}</DialogTitle>
+            <DialogDescription>{t("dialogDesc")}</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 px-5 py-4">
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="change-email-new" className="text-xs font-medium text-foreground">{t("newEmailLabel")}</label>
+              <input
+                id="change-email-new"
+                autoFocus
+                type="email"
+                className={inputClass(true)}
+                placeholder={t("newEmailPlaceholder")}
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="change-email-confirm" className="text-xs font-medium text-foreground">{t("confirmEmailLabel")}</label>
+              <input
+                id="change-email-confirm"
+                type="email"
+                className={inputClass(true)}
+                placeholder={t("confirmEmailPlaceholder")}
+                value={confirmEmail}
+                onChange={(e) => setConfirmEmail(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") void handleSubmit(); }}
+              />
+            </div>
+            {error && <p className="text-xs text-destructive">{error}</p>}
+          </div>
+          <DialogFooter>
+            <DialogClose
+              className="rounded-lg px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              disabled={pending}
+              onClick={reset}
+            >
+              {tc("cancel")}
+            </DialogClose>
+            <button
+              type="button"
+              disabled={pending || !newEmail || !confirmEmail}
+              onClick={() => void handleSubmit()}
+              className="rounded-lg bg-foreground px-4 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
+            >
+              {pending ? t("sending") : tc("continue")}
+            </button>
+          </DialogFooter>
+        </DialogPopup>
+      </Dialog>
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────
 // Locale Section
 // ─────────────────────────────────────────────
 const LOCALES = [
@@ -487,11 +598,14 @@ function ProfileTab() {
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium text-foreground">{t("emailLabel")}</label>
-                <input
-                  className={`${inputClass()} cursor-not-allowed opacity-60`}
-                  value={session?.user.email ?? ""}
-                  readOnly
-                />
+                <div className="relative">
+                  <input
+                    className={`${inputClass()} cursor-not-allowed opacity-60 pr-9`}
+                    value={session?.user.email ?? ""}
+                    readOnly
+                  />
+                  <EmailChangeDialog />
+                </div>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">

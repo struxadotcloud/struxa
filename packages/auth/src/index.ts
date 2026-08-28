@@ -67,22 +67,38 @@ async function buildAuth(): Promise<AuthInstance> {
         await sendEmail(svc, user.email, `Reset your ${appName} password`, html);
       },
     },
+    user: {
+      changeEmail: {
+        enabled: true,
+      },
+    },
     emailVerification: {
-      sendVerificationEmail: async ({ user, url }) => {
+      sendVerificationEmail: async ({ user, url }, request) => {
+        const isChangeEmail =
+          typeof request?.url === "string" &&
+          new URL(request.url).pathname.endsWith("/change-email");
         const svc = await buildEmailServiceFromSettings();
         if (!svc) {
-          // Email disabled — auto-verify so email/password signups aren't permanently locked out.
-          // Social logins auto-verify; this keeps consistent behaviour when no email service is set.
+          if (isChangeEmail) {
+            await db.update(schema.user)
+              .set({ email: user.email, emailVerified: true })
+              .where(eq(schema.user.id, user.id));
+            return;
+          }
           await db.update(schema.user).set({ emailVerified: true }).where(eq(schema.user.id, user.id));
           return;
         }
         const verificationToken = (() => { try { return new URL(url).searchParams.get("token") ?? ""; } catch { return ""; } })();
-        const custom = await getEmailTemplate("verification");
+        const templateName = isChangeEmail ? "change-email" : "verification";
+        const custom = await getEmailTemplate(templateName);
         const vars = { appName, userName: user.name ?? user.email, verificationUrl: url, verificationToken };
         const html = custom
           ? substituteVars(custom, vars)
-          : DEFAULT_TEMPLATES.verification(vars);
-        await sendEmail(svc, user.email, `Verify your ${appName} email`, html);
+          : DEFAULT_TEMPLATES[templateName](vars);
+        const subject = isChangeEmail
+          ? `Confirm your new ${appName} email`
+          : `Verify your ${appName} email`;
+        await sendEmail(svc, user.email, subject, html);
       },
     },
     socialProviders,

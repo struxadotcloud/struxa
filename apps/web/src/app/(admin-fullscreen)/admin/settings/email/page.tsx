@@ -10,6 +10,7 @@ import type { Monaco } from "@monaco-editor/react";
 import {
   ChevronLeft,
   Mail,
+  MailPlus,
   KeyRound,
   PartyPopper,
   Server,
@@ -22,13 +23,14 @@ import { toast } from "sonner";
 import { orpc } from "@/utils/orpc";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@struxa/ui/components/select";
 
-type TemplateName = "verification" | "password-reset" | "welcome" | "server-install";
+type TemplateName = "verification" | "password-reset" | "welcome" | "server-install" | "change-email";
 
 const TEMPLATES: { name: TemplateName; icon: React.ElementType }[] = [
   { name: "verification",   icon: Mail },
   { name: "password-reset", icon: KeyRound },
   { name: "welcome",        icon: PartyPopper },
   { name: "server-install", icon: Server },
+  { name: "change-email",   icon: MailPlus },
 ];
 
 const SAMPLE_VARS: Record<string, string> = {
@@ -244,6 +246,7 @@ export default function EmailEditorPage() {
     "password-reset": t("templatePasswordReset"),
     welcome:        t("templateWelcome"),
     "server-install": t("templateServerInstall"),
+    "change-email": t("templateChangeEmail"),
   };
 
   const activeTemplate = TEMPLATES.find((t) => t.name === active)!;
