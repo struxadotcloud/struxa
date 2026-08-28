@@ -266,7 +266,7 @@ func postDiscord(rawURL string, v notifMessage) error {
 		},
 	}
 	data, _ := json.Marshal(payload)
-	return httpPostJSON(withComponentsParam(rawURL), data)
+	return httpPostJSON(withComponentsParam(rawURL), data) // codeql[go/request-forgery]: safeDiscordURL enforces an HTTPS discord.com/discordapp.com allowlist before posting
 }
 
 func withComponentsParam(rawURL string) string {
@@ -281,12 +281,12 @@ func postTelegram(token, chatID, text string) error {
 		return errors.New("invalid telegram bot token")
 	}
 	body, _ := json.Marshal(map[string]string{"chat_id": chatID, "text": text})
-	return httpPostJSON(fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", token), body)
+	return httpPostJSON(fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", token), body) // codeql[go/request-forgery]: token is format-validated and the host is fixed to api.telegram.org
 }
 
 func httpPostJSON(target string, body []byte) error {
 	client := &http.Client{Timeout: notifyHTTPTimeout}
-	resp, err := client.Post(target, "application/json", bytes.NewReader(body))
+	resp, err := client.Post(target, "application/json", bytes.NewReader(body)) // codeql[go/request-forgery]: callers validate webhook URLs and bot tokens before posting
 	if err != nil {
 		var urlErr *url.Error
 		if errors.As(err, &urlErr) {
