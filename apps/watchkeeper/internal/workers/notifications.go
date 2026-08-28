@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -220,7 +221,23 @@ type notifMessage struct {
 	buttonURL   string
 }
 
-func postDiscord(url string, v notifMessage) error {
+var telegramTokenPattern = regexp.MustCompile(`^[0-9]{6,}:[A-Za-z0-9_-]{30,}$`)
+
+func safeDiscordURL(raw string) bool {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return false
+	}
+	if u.Scheme != "https" || (u.Host != "discord.com" && u.Host != "discordapp.com") {
+		return false
+	}
+	return strings.HasPrefix(u.Path, "/api/webhooks/")
+}
+
+func postDiscord(rawURL string, v notifMessage) error {
+	if !safeDiscordURL(rawURL) {
+		return errors.New("invalid discord webhook url")
+	}
 	header := fmt.Sprintf("### ✦ %s\n%s", v.title, v.subtitle)
 	inner := []any{}
 	if v.buttonURL != "" {
@@ -249,17 +266,20 @@ func postDiscord(url string, v notifMessage) error {
 		},
 	}
 	data, _ := json.Marshal(payload)
-	return httpPostJSON(withComponentsParam(url), data)
+	return httpPostJSON(withComponentsParam(rawURL), data)
 }
 
-func withComponentsParam(url string) string {
-	if strings.Contains(url, "?") {
-		return url + "&with_components=true"
+func withComponentsParam(rawURL string) string {
+	if strings.Contains(rawURL, "?") {
+		return rawURL + "&with_components=true"
 	}
-	return url + "?with_components=true"
+	return rawURL + "?with_components=true"
 }
 
 func postTelegram(token, chatID, text string) error {
+	if !telegramTokenPattern.MatchString(token) {
+		return errors.New("invalid telegram bot token")
+	}
 	body, _ := json.Marshal(map[string]string{"chat_id": chatID, "text": text})
 	return httpPostJSON(fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", token), body)
 }
