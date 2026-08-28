@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db } from "@struxa/db";
 import { user, session, servers, nodeAllocations, nodes } from "@struxa/db";
 import { recordActivity } from "../services/activity";
+import { notifyAdmins } from "../services/notifications";
 import { adminProcedure, protectedProcedure } from "../index";
 
 export const usersRouter = {
@@ -284,7 +285,12 @@ export const usersRouter = {
       if (input.userId === context.session.user.id) {
         throw new Error("Cannot delete your own account.");
       }
+      const target = await db.query.user.findFirst({
+        where: eq(user.id, input.userId),
+        columns: { email: true },
+      });
       await db.delete(user).where(eq(user.id, input.userId));
       recordActivity({ eventType: "admin:user.delete", userId: context.session.user.id, ip: context.ip, properties: { targetUserId: input.userId } });
+      if (target) notifyAdmins("user-deleted", { userEmail: target.email, actor: context.session.user.name ?? context.session.user.email });
     }),
 };

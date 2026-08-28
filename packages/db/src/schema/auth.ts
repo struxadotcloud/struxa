@@ -40,6 +40,9 @@ export const user = mysqlTable("user", {
   vatCountry: varchar("vat_country", { length: 2 }),
   // i18n
   locale: varchar("locale", { length: 10 }).default("en").notNull(),
+  notificationDiscordWebhook: text("notification_discord_webhook"),
+  notificationTelegramToken: text("notification_telegram_token"),
+  notificationTelegramChatId: text("notification_telegram_chat_id"),
 });
 
 export const session = mysqlTable(

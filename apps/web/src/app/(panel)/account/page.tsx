@@ -23,8 +23,9 @@ import { orpc, queryClient } from "@/utils/orpc";
 import { toast } from "sonner";
 import { DitherAvatar } from "@struxa/ui/components/dither-kit/avatar";
 import { GoogleIcon } from "@/components/google-icon";
+import { SENTINEL } from "@struxa/api/lib/notification-constants";
 
-type Tab = "profile" | "api-keys" | "billing";
+type Tab = "profile" | "api-keys" | "billing" | "notifications";
 
 const COUNTRIES = [
   { code: "US", name: "United States" },
@@ -1475,16 +1476,165 @@ function BillingTab() {
 }
 
 // ─────────────────────────────────────────────
+// Notifications Tab
+// ─────────────────────────────────────────────
+function NotificationsTab() {
+  const t = useTranslations("account.notifications");
+  const tc = useTranslations("common");
+  const { data: cfg, isLoading } = useQuery(orpc.notifications.getUserConfig.queryOptions());
+
+  const [form, setForm] = useState({
+    discordWebhookUrl: "",
+    telegramBotToken: "",
+    telegramChatId: "",
+  });
+
+  useEffect(() => {
+    if (!cfg || !cfg.enabled) return;
+    setForm((prev) => (prev.telegramChatId ? prev : { ...prev, telegramChatId: cfg.telegramChatId }));
+  }, [cfg]);
+
+  const saveMutation = useMutation(
+    orpc.notifications.saveUserConfig.mutationOptions({
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: orpc.notifications.key() });
+        toast.success(tc("saved"));
+      },
+      onError: (error) => {
+        toast.error(t("saveFailed", { error: error instanceof Error ? error.message : "" }));
+      },
+    }),
+  );
+  const testMutation = useMutation(orpc.notifications.testUser.mutationOptions());
+
+  if (isLoading) return <div className="py-8 text-center text-sm text-muted-foreground">{tc("loading")}</div>;
+
+  if (!cfg?.enabled) return null;
+
+  const saveDiscord = () => {
+    saveMutation.mutate({
+      discordWebhookUrl: form.discordWebhookUrl || (cfg.discordWebhookSet ? SENTINEL : ""),
+    });
+    setForm((prev) => ({ ...prev, discordWebhookUrl: "" }));
+  };
+
+  const saveTelegram = () => {
+    saveMutation.mutate({
+      telegramBotToken: form.telegramBotToken || (cfg.telegramTokenSet ? SENTINEL : ""),
+      telegramChatId: form.telegramChatId,
+    });
+    setForm((prev) => ({ ...prev, telegramBotToken: "" }));
+  };
+
+  async function testChannel(channel: "discord" | "telegram") {
+    try {
+      const result = await testMutation.mutateAsync({ channel });
+      if (result.ok) toast.success(t("testSuccess"));
+      else toast.error(t("testFailed", { error: result.error ?? "" }));
+    } catch (err) {
+      toast.error(t("testFailed", { error: err instanceof Error ? err.message : "" }));
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <SectionCard title={t("discordTitle")} description={t("discordDesc")}>
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-foreground">{t("discordUrlLabel")}</label>
+            <input
+              className={inputClass(true)}
+              type="password"
+              placeholder={cfg.discordWebhookSet ? t("secretSet") : t("discordUrlPlaceholder")}
+              value={form.discordWebhookUrl}
+              onChange={(e) => setForm({ ...form, discordWebhookUrl: e.target.value })}
+              autoComplete="new-password"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={saveMutation.isPending}
+              onClick={saveDiscord}
+              className="rounded-lg bg-foreground px-4 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
+            >
+              {saveMutation.isPending ? tc("saving") : tc("save")}
+            </button>
+            <button
+              type="button"
+              disabled={testMutation.isPending}
+              onClick={() => testChannel("discord")}
+              className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-50"
+            >
+              {testMutation.isPending ? t("testing") : t("test")}
+            </button>
+          </div>
+        </div>
+      </SectionCard>
+
+      <SectionCard title={t("telegramTitle")} description={t("telegramDesc")}>
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-foreground">{t("telegramTokenLabel")}</label>
+            <input
+              className={inputClass(true)}
+              type="password"
+              placeholder={cfg.telegramTokenSet ? t("secretSet") : t("telegramTokenPlaceholder")}
+              value={form.telegramBotToken}
+              onChange={(e) => setForm({ ...form, telegramBotToken: e.target.value })}
+              autoComplete="new-password"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-foreground">{t("telegramChatIdLabel")}</label>
+            <input
+              className={inputClass(true)}
+              placeholder={t("telegramChatIdPlaceholder")}
+              value={form.telegramChatId}
+              onChange={(e) => setForm({ ...form, telegramChatId: e.target.value })}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={saveMutation.isPending}
+              onClick={saveTelegram}
+              className="rounded-lg bg-foreground px-4 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
+            >
+              {saveMutation.isPending ? tc("saving") : tc("save")}
+            </button>
+            <button
+              type="button"
+              disabled={testMutation.isPending}
+              onClick={() => testChannel("telegram")}
+              className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-50"
+            >
+              {testMutation.isPending ? t("testing") : t("test")}
+            </button>
+          </div>
+        </div>
+      </SectionCard>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
 // Page
 // ─────────────────────────────────────────────
 export default function AccountPage() {
   const t = useTranslations("account.tabs");
   const [tab, setTab] = useState<Tab>("profile");
+  const { data: notifCfg } = useQuery(orpc.notifications.getUserConfig.queryOptions());
+
+  useEffect(() => {
+    if (!notifCfg?.enabled && tab === "notifications") setTab("profile");
+  }, [notifCfg, tab]);
 
   const TABS: { id: Tab; label: string }[] = [
     { id: "profile", label: t("profile") },
     { id: "api-keys", label: t("apiKeys") },
     { id: "billing", label: t("billing") },
+    ...(notifCfg?.enabled ? [{ id: "notifications" as Tab, label: t("notifications") }] : []),
   ];
 
   return (
@@ -1517,6 +1667,7 @@ export default function AccountPage() {
             {tab === "profile" && <ProfileTab />}
             {tab === "api-keys" && <ApiKeysTab />}
             {tab === "billing" && <BillingTab />}
+            {tab === "notifications" && <NotificationsTab />}
           </motion.div>
         </div>
       </div>

@@ -4,7 +4,7 @@ import { useRef, useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { Check, Upload, X, Github, ChevronDown, RotateCcw, Copy, Mail, Loader2, ChevronRight } from "lucide-react";
+import { Check, Upload, X, Github, ChevronDown, RotateCcw, Copy, Mail, Loader2, ChevronRight, Send } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { orpc, queryClient } from "@/utils/orpc";
@@ -13,6 +13,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { BackupDestinationForm, defaultBackupDestination } from "@/components/backup-destination-form";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import type { BackupDestinationInput } from "@struxa/api/lib/backup-destinations";
+import { SENTINEL } from "@struxa/api/lib/notification-constants";
 
 function invalidateSettings() {
   void queryClient.invalidateQueries({ queryKey: orpc.settings.key() });
@@ -193,7 +194,49 @@ function DiscordIcon({ className }: { className?: string }) {
   );
 }
 
-const TABS = ["branding", "seo", "auth", "email", "backups"] as const;
+function NotificationEndpointRow({
+  icon,
+  name,
+  enabled,
+  onToggle,
+  expanded,
+  onExpandToggle,
+  children,
+}: {
+  icon: React.ReactNode;
+  name: string;
+  enabled: boolean;
+  onToggle: (v: boolean) => void;
+  expanded: boolean;
+  onExpandToggle: () => void;
+  children: React.ReactNode;
+}) {
+  const t = useTranslations("admin.settings");
+  return (
+    <div className="rounded-lg border border-border overflow-hidden">
+      <button
+        type="button"
+        onClick={onExpandToggle}
+        className="flex w-full items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors"
+      >
+        <div className="flex items-center gap-2.5">
+          {icon}
+          <span className="text-sm font-medium text-foreground">{name}</span>
+          {enabled && (
+            <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-[11px] font-medium text-green-600 dark:text-green-400">{t("enabled")}</span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <Toggle enabled={enabled} onChange={onToggle} />
+          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${expanded ? "rotate-180" : ""}`} />
+        </div>
+      </button>
+      {expanded && <div className="border-t border-border px-4 py-4">{children}</div>}
+    </div>
+  );
+}
+
+const TABS = ["branding", "seo", "auth", "email", "backups", "notifications"] as const;
 type Tab = (typeof TABS)[number];
 
 export default function AdminSettingsPage() {
@@ -288,6 +331,85 @@ export default function AdminSettingsPage() {
     await clearGlobalDestinationMutation.mutateAsync(undefined);
     setBackupDestination(null);
     setBackupResetOpen(false);
+  }
+
+  const { data: notifData, isLoading: notifLoading } = useQuery(orpc.notifications.getAdminConfig.queryOptions());
+  const saveNotifMutation = useMutation(orpc.notifications.saveAdminConfig.mutationOptions({
+    onSuccess: () => { void queryClient.invalidateQueries({ queryKey: orpc.notifications.key() }); },
+  }));
+  const testNotifMutation = useMutation(orpc.notifications.test.mutationOptions());
+  const [notif, setNotif] = useState<{
+    discordEnabled: boolean;
+    discordWebhookUrl: string;
+    telegramEnabled: boolean;
+    telegramBotToken: string;
+    telegramChatId: string;
+    userConfigEnabled: boolean;
+  } | null>(null);
+  const [discordNotifExpanded, setDiscordNotifExpanded] = useState(false);
+  const [telegramNotifExpanded, setTelegramNotifExpanded] = useState(false);
+
+  useEffect(() => {
+    if (!notifData || notif !== null) return;
+    setNotif({
+      discordEnabled: notifData.discordEnabled,
+      discordWebhookUrl: "",
+      telegramEnabled: notifData.telegramEnabled,
+      telegramBotToken: "",
+      telegramChatId: notifData.telegramChatId,
+      userConfigEnabled: notifData.userConfigEnabled,
+    });
+  }, [notifData, notif]);
+
+  async function saveDiscordNotifications() {
+    if (!notif) return;
+    try {
+      await saveNotifMutation.mutateAsync({
+        discordEnabled: notif.discordEnabled,
+        discordWebhookUrl: notif.discordWebhookUrl || (notifData?.discordWebhookSet ? SENTINEL : ""),
+      });
+      setNotif((prev) => (prev ? { ...prev, discordWebhookUrl: "" } : null));
+      toast.success(tc("saved"));
+    } catch (err) {
+      toast.error(t("notifSaveFailed", { error: err instanceof Error ? err.message : "" }));
+    }
+  }
+
+  async function saveTelegramNotifications() {
+    if (!notif) return;
+    try {
+      await saveNotifMutation.mutateAsync({
+        telegramEnabled: notif.telegramEnabled,
+        telegramBotToken: notif.telegramBotToken || (notifData?.telegramTokenSet ? SENTINEL : ""),
+        telegramChatId: notif.telegramChatId,
+      });
+      setNotif((prev) => (prev ? { ...prev, telegramBotToken: "" } : null));
+      toast.success(tc("saved"));
+    } catch (err) {
+      toast.error(t("notifSaveFailed", { error: err instanceof Error ? err.message : "" }));
+    }
+  }
+
+  async function saveUserConfigNotifications() {
+    if (!notif) return;
+    try {
+      await saveNotifMutation.mutateAsync({
+        userConfigEnabled: notif.userConfigEnabled,
+      });
+      toast.success(tc("saved"));
+    } catch (err) {
+      toast.error(t("notifSaveFailed", { error: err instanceof Error ? err.message : "" }));
+    }
+  }
+
+  async function testNotification(channel: "discord" | "telegram") {
+    try {
+      const result = await testNotifMutation.mutateAsync({ channel });
+      if (result.ok) toast.success(t("notifTestSuccess"));
+      else toast.error(t("notifTestFailed", { error: result.error ?? "" }));
+    } catch (err) {
+      toast.error(t("notifTestFailed", { error: err instanceof Error ? err.message : "" }));
+    }
   }
 
   function generalForm() {
@@ -432,7 +554,7 @@ export default function AdminSettingsPage() {
   if (isLoading) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <p className="text-sm text-muted-foreground">{tc("loading")}</p>
       </div>
     );
   }
@@ -463,7 +585,8 @@ export default function AdminSettingsPage() {
                 : tab_item === "seo" ? t("tabSeo")
                 : tab_item === "auth" ? t("tabAuth")
                 : tab_item === "email" ? t("tabEmail")
-                : t("tabBackups")}
+                : tab_item === "backups" ? t("tabBackups")
+                : t("tabNotifications")}
             </button>
           ))}
         </div>
@@ -867,7 +990,7 @@ export default function AdminSettingsPage() {
           <>
             <SectionCard title={t("smtpTitle")} description={t("smtpDesc")}>
               {smtpLoading || !smtp ? (
-                <div className="py-4 text-center text-xs text-muted-foreground">Loading…</div>
+                <div className="py-4 text-center text-xs text-muted-foreground">{tc("loading")}</div>
               ) : (
                 <div className="flex flex-col gap-4">
                   {/* Enable toggle */}
@@ -1008,7 +1131,7 @@ export default function AdminSettingsPage() {
           <>
             <SectionCard title={t("backupsGlobalTitle")} description={t("backupsGlobalDesc")}>
               {globalDestinationLoading ? (
-                <div className="py-4 text-center text-xs text-muted-foreground">Loading…</div>
+                <div className="py-4 text-center text-xs text-muted-foreground">{tc("loading")}</div>
               ) : (
                 <div className="flex flex-col gap-4">
                   {!globalDestination && (
@@ -1077,6 +1200,126 @@ export default function AdminSettingsPage() {
               loading={clearGlobalDestinationMutation.isPending}
               onConfirm={resetBackupDestination}
             />
+          </>
+        )}
+
+        {tab === "notifications" && (
+          <>
+            <SectionCard title={t("notifEndpointsTitle")} description={t("notifEndpointsDesc")}>
+              {notifLoading || !notif ? (
+                <div className="py-4 text-center text-xs text-muted-foreground">{tc("loading")}</div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <NotificationEndpointRow
+                    icon={<DiscordIcon className="h-4 w-4 text-[#5865F2]" />}
+                    name="Discord"
+                    enabled={notif.discordEnabled}
+                    onToggle={(v) => setNotif({ ...notif, discordEnabled: v })}
+                    expanded={discordNotifExpanded}
+                    onExpandToggle={() => setDiscordNotifExpanded((v) => !v)}
+                  >
+                    <div className="flex flex-col gap-4">
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-xs font-medium text-foreground">{t("notifDiscordUrlLabel")}</label>
+                        <input
+                          className={inputClass()}
+                          type="password"
+                          placeholder={notifData?.discordWebhookSet ? t("clientSecretSet") : t("notifDiscordUrlPlaceholder")}
+                          value={notif.discordWebhookUrl}
+                          onChange={(e) => setNotif({ ...notif, discordWebhookUrl: e.target.value })}
+                          autoComplete="new-password"
+                        />
+                      </div>
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <div onClick={saveDiscordNotifications}>
+                          <SaveButton saving={saveNotifMutation.isPending} />
+                        </div>
+                        <button
+                          type="button"
+                          disabled={testNotifMutation.isPending}
+                          onClick={() => testNotification("discord")}
+                          className="flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-50"
+                        >
+                          {testNotifMutation.isPending ? (
+                            <><Loader2 className="h-3.5 w-3.5 animate-spin" /> {t("notifTesting")}</>
+                          ) : (
+                            <><Mail className="h-3.5 w-3.5" /> {t("notifTest")}</>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </NotificationEndpointRow>
+
+                  <NotificationEndpointRow
+                    icon={<Send className="h-4 w-4 text-[#26A5E4]" />}
+                    name="Telegram"
+                    enabled={notif.telegramEnabled}
+                    onToggle={(v) => setNotif({ ...notif, telegramEnabled: v })}
+                    expanded={telegramNotifExpanded}
+                    onExpandToggle={() => setTelegramNotifExpanded((v) => !v)}
+                  >
+                    <div className="flex flex-col gap-4">
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-xs font-medium text-foreground">{t("notifTelegramTokenLabel")}</label>
+                        <input
+                          className={inputClass()}
+                          type="password"
+                          placeholder={notifData?.telegramTokenSet ? t("clientSecretSet") : t("notifTelegramTokenPlaceholder")}
+                          value={notif.telegramBotToken}
+                          onChange={(e) => setNotif({ ...notif, telegramBotToken: e.target.value })}
+                          autoComplete="new-password"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-xs font-medium text-foreground">{t("notifTelegramChatIdLabel")}</label>
+                        <input
+                          className={inputClass()}
+                          placeholder={t("notifTelegramChatIdPlaceholder")}
+                          value={notif.telegramChatId}
+                          onChange={(e) => setNotif({ ...notif, telegramChatId: e.target.value })}
+                        />
+                      </div>
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <div onClick={saveTelegramNotifications}>
+                          <SaveButton saving={saveNotifMutation.isPending} />
+                        </div>
+                        <button
+                          type="button"
+                          disabled={testNotifMutation.isPending}
+                          onClick={() => testNotification("telegram")}
+                          className="flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-50"
+                        >
+                          {testNotifMutation.isPending ? (
+                            <><Loader2 className="h-3.5 w-3.5 animate-spin" /> {t("notifTesting")}</>
+                          ) : (
+                            <><Mail className="h-3.5 w-3.5" /> {t("notifTest")}</>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </NotificationEndpointRow>
+                </div>
+              )}
+            </SectionCard>
+
+            <SectionCard title={t("notifUserConfigTitle")} description={t("notifUserConfigDesc")}>
+              {notifLoading || !notif ? (
+                <div className="py-4 text-center text-xs text-muted-foreground">{tc("loading")}</div>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{t("notifUserConfigEnabled")}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{t("notifUserConfigEnabledDesc")}</p>
+                    </div>
+                    <Toggle enabled={notif.userConfigEnabled} onChange={(v) => setNotif({ ...notif, userConfigEnabled: v })} />
+                  </div>
+                  <div onClick={saveUserConfigNotifications}>
+                    <SaveButton saving={saveNotifMutation.isPending} />
+                  </div>
+                </div>
+              )}
+            </SectionCard>
           </>
         )}
         </motion.div>

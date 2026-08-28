@@ -752,7 +752,26 @@
     "tabs": {
       "profile": "Profile",
       "apiKeys": "API Keys",
-      "billing": "Billing"
+      "billing": "Billing",
+      "notifications": "Notifications"
+    },
+    "notifications": {
+      "discordTitle": "Discord",
+      "discordDesc": "Get notified about your servers' power, backup, and status events in a Discord channel.",
+      "discordUrlLabel": "Webhook URL",
+      "discordUrlPlaceholder": "https://discord.com/api/webhooks/…",
+      "telegramTitle": "Telegram",
+      "telegramDesc": "Get notified about your servers' events via a Telegram bot.",
+      "telegramTokenLabel": "Bot Token",
+      "telegramTokenPlaceholder": "1234567890:ABC…",
+      "telegramChatIdLabel": "Chat ID",
+      "telegramChatIdPlaceholder": "123456789",
+      "secretSet": "••••••••  (already set)",
+      "test": "Send Test",
+      "testing": "Sending…",
+      "testSuccess": "Test notification sent",
+      "testFailed": "Failed: {error}",
+      "saveFailed": "Failed to save: {error}"
     },
     "profile": {
       "personalInfoTitle": "Personal Information",
@@ -1581,7 +1600,25 @@
       "gdriveDesc": "Allow users to save backups to their personal Google Drive. Create a Google Cloud project, enable the Drive API, and paste the OAuth client credentials below. While your app is in testing mode, add each user's email as a test user.",
       "gdriveClientIdLabel": "Client ID",
       "gdriveClientIdPlaceholder": "1234567890-abc.apps.googleusercontent.com",
-      "gdriveClientSecretLabel": "Client Secret"
+      "gdriveClientSecretLabel": "Client Secret",
+      "tabNotifications": "Notifications",
+      "notifEndpointsTitle": "Notification Endpoints",
+      "notifEndpointsDesc": "Outbound endpoints for admin notifications about user signups and server/user changes.",
+      "notifDiscordUrlLabel": "Webhook URL",
+      "notifDiscordUrlPlaceholder": "https://discord.com/api/webhooks/…",
+      "notifTelegramTokenLabel": "Bot Token",
+      "notifTelegramTokenPlaceholder": "1234567890:ABC…",
+      "notifTelegramChatIdLabel": "Chat ID",
+      "notifTelegramChatIdPlaceholder": "123456789",
+      "notifUserConfigTitle": "User Notifications",
+      "notifUserConfigDesc": "Allow users to configure their own Discord/Telegram notifications for their servers in account settings.",
+      "notifUserConfigEnabled": "Allow users to set up their own notifications",
+      "notifUserConfigEnabledDesc": "When disabled, users cannot save or receive user-level notifications.",
+      "notifTest": "Send Test",
+      "notifTesting": "Sending…",
+      "notifTestSuccess": "Test notification sent",
+      "notifTestFailed": "Failed: {error}",
+      "notifSaveFailed": "Failed to save: {error}"
     },
     "backupDestinations": {
       "typeLabel": "Destination Type",

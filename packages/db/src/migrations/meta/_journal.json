@@ -71,6 +71,13 @@
       "when": 1787239128488,
       "tag": "0009_concerned_maddog",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1787498400000,
+      "tag": "0010_add_user_notifications",
+      "breakpoints": true
     }
   ]
 }

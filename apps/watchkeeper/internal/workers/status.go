@@ -14,6 +14,8 @@ const statusInterval = 30 * time.Second
 
 func RunStatusWorker(db *sql.DB) {
 	log.Println("[status] worker started, polling every 30s")
+	go runStatusNotifyDispatcher(db)
+	go runStatusNotifyDispatcher(db)
 	statusTick(db)
 	for range time.Tick(statusInterval) {
 		statusTick(db)
@@ -67,10 +69,12 @@ type serverRow struct {
 	uuid       string
 	status     string
 	powerState sql.NullString
+	name       string
+	userId     sql.NullString
 }
 
 func fetchServers(db *sql.DB, nodeID string) ([]serverRow, error) {
-	rows, err := db.Query(`SELECT id, uuid, status, power_state FROM servers WHERE node_id=?`, nodeID)
+	rows, err := db.Query(`SELECT id, uuid, status, power_state, name, user_id FROM servers WHERE node_id=?`, nodeID)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +82,7 @@ func fetchServers(db *sql.DB, nodeID string) ([]serverRow, error) {
 	var out []serverRow
 	for rows.Next() {
 		var s serverRow
-		if err := rows.Scan(&s.id, &s.uuid, &s.status, &s.powerState); err != nil {
+		if err := rows.Scan(&s.id, &s.uuid, &s.status, &s.powerState, &s.name, &s.userId); err != nil {
 			return nil, err
 		}
 		out = append(out, s)
@@ -120,6 +124,8 @@ func processNode(db *sql.DB, node nodeRow) {
 		}
 		if _, err := db.Exec(`UPDATE servers SET power_state=? WHERE id=?`, state, srv.id); err != nil {
 			log.Printf("[status] failed to update server %s: %v", srv.uuid, err)
+			continue
 		}
+		enqueueStatusNotify(statusNotifyJob{serverID: srv.id, serverName: srv.name, uuid: srv.uuid, ownerID: srv.userId.String, state: state})
 	}
 }
