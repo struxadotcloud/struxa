@@ -17,6 +17,7 @@ import {
   getOperatorGDriveConfig,
 } from "../services/google-drive";
 import { recordActivity } from "../services/activity";
+import { notifyServerOwner } from "../services/notifications";
 import { protectedProcedure } from "../index";
 
 export const backupsRouter = {
@@ -133,6 +134,7 @@ export const backupsRouter = {
         ip: context.ip,
         properties: { name: input.name },
       });
+      notifyServerOwner(server.userId, "backup", { backupName: input.name, serverName: server.name, serverUuid: server.uuid, result: "started" });
 
       return db.query.backups.findFirst({ where: eq(backups.id, id) });
     }),
@@ -172,6 +174,7 @@ export const backupsRouter = {
         ip: context.ip,
         properties: { name: backup.name },
       });
+      notifyServerOwner(server.userId, "backup", { backupName: backup.name, serverName: server.name, serverUuid: server.uuid, result: "deleted" });
     }),
 
   getDownloadUrl: protectedProcedure
@@ -292,5 +295,6 @@ export const backupsRouter = {
         ip: context.ip,
         properties: { name: backup.name },
       });
+      notifyServerOwner(server.userId, "backup", { backupName: backup.name, serverName: server.name, serverUuid: server.uuid, result: "restore started" });
     }),
 };

@@ -8,7 +8,7 @@ import { deleteObject } from "../services/storage";
 import { encrypt } from "../lib/crypto";
 import { adminProcedure, publicProcedure } from "../index";
 
-const ENCRYPTED_SETTINGS_KEYS = new Set(["github_client_secret", "discord_client_secret", "google_drive_client_secret"]);
+const ENCRYPTED_SETTINGS_KEYS = new Set(["github_client_secret", "discord_client_secret", "google_drive_client_secret", "notifications_discord_webhook_url", "notifications_telegram_bot_token"]);
 
 export const settingsRouter = {
   getActiveSocialProviders: publicProcedure.handler(async () => {

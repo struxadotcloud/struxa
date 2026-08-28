@@ -4,6 +4,7 @@ import { db } from "@struxa/db";
 import { backups } from "@struxa/db";
 import { resolveDestinationForNode } from "@struxa/api/lib/backup-destinations";
 import { abortMultipart, completeMultipart } from "@struxa/api/services/backup-s3";
+import { notifyServerOwner } from "@struxa/api/services/notifications";
 import { authenticateWings } from "@/lib/wings-auth";
 import { getBackupWithServer } from "@/lib/remote-backups";
 
@@ -53,6 +54,15 @@ export async function POST(
       remoteFileId: remoteId,
     })
     .where(eq(backups.id, backup.id));
+
+  if (backup.server?.userId) {
+    notifyServerOwner(backup.server.userId, "backup", {
+      backupName: backup.name,
+      serverName: backup.server.name,
+      serverUuid: backup.server.uuid,
+      result: body.successful ? "completed successfully" : "failed",
+    });
+  }
 
   if (backup.disk === "s3") {
     const destination = await resolveDestinationForNode(auth.node.id);

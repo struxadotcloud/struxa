@@ -18,6 +18,7 @@ import {
   substituteVars,
   sendEmail,
 } from "./email";
+import { notifyAdminsSignup } from "./notifications";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AuthInstance = any;
@@ -122,6 +123,7 @@ async function buildAuth(): Promise<AuthInstance> {
         if (ctx.path !== "/sign-up/email") return;
         const newUser = ctx.context.newSession?.user;
         if (!newUser) return;
+        notifyAdminsSignup(newUser.email ?? "", newUser.name ?? "");
         void (async () => {
           try {
             const svc = await buildEmailServiceFromSettings();

@@ -10,6 +10,7 @@ import {
   settings,
 } from "@struxa/db";
 import { decrypt } from "@struxa/api/lib/crypto";
+import { notifyAdmins } from "@struxa/api/services/notifications";
 import { handleWebhook } from "@struxa/payments";
 import type { WebhookPayload } from "@struxa/payments";
 import { randomUUID } from "crypto";
@@ -157,6 +158,9 @@ export async function POST(
 
   if (payload?.type === "topup.succeeded") {
     await creditWallet(payload, gateway.provider);
+    notifyAdmins("payment", { result: "received", amount: (payload.amountCents / 100).toFixed(2), currency: payload.currency.toUpperCase(), provider: gateway.provider });
+  } else if (payload?.type === "topup.failed") {
+    notifyAdmins("payment", { result: "failed", provider: gateway.provider });
   }
 
   return new Response("OK", { status: 200 });

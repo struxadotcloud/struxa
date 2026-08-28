@@ -18,6 +18,7 @@ import { safeDecrypt } from "../lib/crypto";
 import { signWsToken } from "../lib/jwt";
 import { buildInvocation } from "../services/wings-servers";
 import { recordActivity } from "../services/activity";
+import { notifyAdmins, notifyServerOwner } from "../services/notifications";
 import { adminProcedure, protectedProcedure } from "../index";
 
 export const serversRouter = {
@@ -585,6 +586,12 @@ export const serversRouter = {
         serverId: server.id,
         ip: context.ip,
       });
+      notifyServerOwner(server.userId, "server-power", {
+        serverName: server.name,
+        serverUuid: server.uuid,
+        action: input.action,
+        actor: context.session.user.name ?? context.session.user.email,
+      });
     }),
 
   reinstall: protectedProcedure
@@ -873,6 +880,7 @@ export const serversRouter = {
       }
 
       recordActivity({ eventType: "admin:server.create", userId: context.session.user.id, serverId: id, ip: context.ip, properties: { name: input.name } });
+      notifyAdmins("server-created", { serverName: input.name, serverUuid: uuid, actor: context.session.user.name ?? context.session.user.email });
 
       return db.query.servers.findFirst({ where: eq(servers.id, id) });
     }),
@@ -905,6 +913,7 @@ export const serversRouter = {
 
       await db.delete(servers).where(eq(servers.id, server.id));
       recordActivity({ eventType: "admin:server.delete", userId: context.session.user.id, ip: context.ip, properties: { name: server.name } });
+      notifyAdmins("server-deleted", { serverName: server.name, actor: context.session.user.name ?? context.session.user.email });
     }),
 
   getWebSocketToken: protectedProcedure
