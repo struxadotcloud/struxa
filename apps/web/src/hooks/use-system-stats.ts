@@ -124,6 +124,7 @@ export function useSystemStats(node: StatsNode, options?: { enabled?: boolean })
           try {
             const stats = JSON.parse(event.data) as SystemStatsMessage;
             if (typeof stats.cpu?.used !== "number") return;
+            stats.load_average ??= { one: 0, five: 0, fifteen: 0 };
             setLatest(stats);
             counterRef.current += 1;
             if (counterRef.current % SAMPLE_EVERY !== 0) return;
@@ -209,6 +210,7 @@ export function useFleetStats(nodes: StatsNode[] | undefined) {
             try {
               const stats = JSON.parse(event.data) as SystemStatsMessage;
               if (typeof stats.cpu?.used !== "number") return;
+              stats.load_average ??= { one: 0, five: 0, fifteen: 0 };
               latestMap.set(node.id, stats);
               const count = (counters.get(node.id) ?? 0) + 1;
               counters.set(node.id, count);
