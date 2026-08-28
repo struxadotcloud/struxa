@@ -41,7 +41,7 @@ async function addWalletCredits(
   });
 }
 
-async function creditWallet(payload: Extract<WebhookPayload, { type: "topup.succeeded" }>, gatewayProvider: string) {
+async function creditWallet(payload: Extract<WebhookPayload, { type: "topup.succeeded" }>, gatewayProvider: string): Promise<boolean> {
   try {
     await db.transaction(async (tx) => {
       const walletRow = await tx.query.billingWallet.findFirst({ where: eq(billingWallet.userId, payload.userId) });
@@ -114,10 +114,11 @@ async function creditWallet(payload: Extract<WebhookPayload, { type: "topup.succ
         }
       }
     });
+    return true;
   } catch (err) {
     const sqlErr = err as { code?: string };
     // Unique constraint violation = already processed this webhook
-    if (sqlErr?.code === "ER_DUP_ENTRY") return;
+    if (sqlErr?.code === "ER_DUP_ENTRY") return false;
     throw err;
   }
 }
@@ -157,8 +158,10 @@ export async function POST(
   const payload = await handleWebhook(provider, { rawBody, headers, config, gatewayId: gateway.id, sourceIp });
 
   if (payload?.type === "topup.succeeded") {
-    await creditWallet(payload, gateway.provider);
-    notifyAdmins("payment", { result: "received", amount: (payload.amountCents / 100).toFixed(2), currency: payload.currency.toUpperCase(), provider: gateway.provider });
+    const inserted = await creditWallet(payload, gateway.provider);
+    if (inserted) {
+      notifyAdmins("payment", { result: "received", amount: (payload.amountCents / 100).toFixed(2), currency: payload.currency.toUpperCase(), provider: gateway.provider });
+    }
   } else if (payload?.type === "topup.failed") {
     notifyAdmins("payment", { result: "failed", provider: gateway.provider });
   }

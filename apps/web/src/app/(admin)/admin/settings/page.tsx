@@ -13,6 +13,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { BackupDestinationForm, defaultBackupDestination } from "@/components/backup-destination-form";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import type { BackupDestinationInput } from "@struxa/api/lib/backup-destinations";
+import { SENTINEL } from "@struxa/api/lib/notification-constants";
 
 function invalidateSettings() {
   void queryClient.invalidateQueries({ queryKey: orpc.settings.key() });
@@ -362,37 +363,53 @@ export default function AdminSettingsPage() {
 
   async function saveDiscordNotifications() {
     if (!notif) return;
-    await saveNotifMutation.mutateAsync({
-      discordEnabled: notif.discordEnabled,
-      discordWebhookUrl: notif.discordWebhookUrl || (notifData?.discordWebhookSet ? "[set]" : ""),
-    });
-    setNotif((prev) => (prev ? { ...prev, discordWebhookUrl: "" } : null));
-    toast.success(tc("saved"));
+    try {
+      await saveNotifMutation.mutateAsync({
+        discordEnabled: notif.discordEnabled,
+        discordWebhookUrl: notif.discordWebhookUrl || (notifData?.discordWebhookSet ? SENTINEL : ""),
+      });
+      setNotif((prev) => (prev ? { ...prev, discordWebhookUrl: "" } : null));
+      toast.success(tc("saved"));
+    } catch (err) {
+      toast.error(t("notifSaveFailed", { error: err instanceof Error ? err.message : "" }));
+    }
   }
 
   async function saveTelegramNotifications() {
     if (!notif) return;
-    await saveNotifMutation.mutateAsync({
-      telegramEnabled: notif.telegramEnabled,
-      telegramBotToken: notif.telegramBotToken || (notifData?.telegramTokenSet ? "[set]" : ""),
-      telegramChatId: notif.telegramChatId,
-    });
-    setNotif((prev) => (prev ? { ...prev, telegramBotToken: "" } : null));
-    toast.success(tc("saved"));
+    try {
+      await saveNotifMutation.mutateAsync({
+        telegramEnabled: notif.telegramEnabled,
+        telegramBotToken: notif.telegramBotToken || (notifData?.telegramTokenSet ? SENTINEL : ""),
+        telegramChatId: notif.telegramChatId,
+      });
+      setNotif((prev) => (prev ? { ...prev, telegramBotToken: "" } : null));
+      toast.success(tc("saved"));
+    } catch (err) {
+      toast.error(t("notifSaveFailed", { error: err instanceof Error ? err.message : "" }));
+    }
   }
 
   async function saveUserConfigNotifications() {
     if (!notif) return;
-    await saveNotifMutation.mutateAsync({
-      userConfigEnabled: notif.userConfigEnabled,
-    });
-    toast.success(tc("saved"));
+    try {
+      await saveNotifMutation.mutateAsync({
+        userConfigEnabled: notif.userConfigEnabled,
+      });
+      toast.success(tc("saved"));
+    } catch (err) {
+      toast.error(t("notifSaveFailed", { error: err instanceof Error ? err.message : "" }));
+    }
   }
 
   async function testNotification(channel: "discord" | "telegram") {
-    const result = await testNotifMutation.mutateAsync({ channel });
-    if (result.ok) toast.success(t("notifTestSuccess"));
-    else toast.error(t("notifTestFailed", { error: result.error ?? "" }));
+    try {
+      const result = await testNotifMutation.mutateAsync({ channel });
+      if (result.ok) toast.success(t("notifTestSuccess"));
+      else toast.error(t("notifTestFailed", { error: result.error ?? "" }));
+    } catch (err) {
+      toast.error(t("notifTestFailed", { error: err instanceof Error ? err.message : "" }));
+    }
   }
 
   function generalForm() {
@@ -537,7 +554,7 @@ export default function AdminSettingsPage() {
   if (isLoading) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <p className="text-sm text-muted-foreground">{tc("loading")}</p>
       </div>
     );
   }
@@ -973,7 +990,7 @@ export default function AdminSettingsPage() {
           <>
             <SectionCard title={t("smtpTitle")} description={t("smtpDesc")}>
               {smtpLoading || !smtp ? (
-                <div className="py-4 text-center text-xs text-muted-foreground">Loading…</div>
+                <div className="py-4 text-center text-xs text-muted-foreground">{tc("loading")}</div>
               ) : (
                 <div className="flex flex-col gap-4">
                   {/* Enable toggle */}
@@ -1114,7 +1131,7 @@ export default function AdminSettingsPage() {
           <>
             <SectionCard title={t("backupsGlobalTitle")} description={t("backupsGlobalDesc")}>
               {globalDestinationLoading ? (
-                <div className="py-4 text-center text-xs text-muted-foreground">Loading…</div>
+                <div className="py-4 text-center text-xs text-muted-foreground">{tc("loading")}</div>
               ) : (
                 <div className="flex flex-col gap-4">
                   {!globalDestination && (
@@ -1190,7 +1207,7 @@ export default function AdminSettingsPage() {
           <>
             <SectionCard title={t("notifEndpointsTitle")} description={t("notifEndpointsDesc")}>
               {notifLoading || !notif ? (
-                <div className="py-4 text-center text-xs text-muted-foreground">Loading…</div>
+                <div className="py-4 text-center text-xs text-muted-foreground">{tc("loading")}</div>
               ) : (
                 <div className="flex flex-col gap-2">
                   <NotificationEndpointRow
@@ -1287,7 +1304,7 @@ export default function AdminSettingsPage() {
 
             <SectionCard title={t("notifUserConfigTitle")} description={t("notifUserConfigDesc")}>
               {notifLoading || !notif ? (
-                <div className="py-4 text-center text-xs text-muted-foreground">Loading…</div>
+                <div className="py-4 text-center text-xs text-muted-foreground">{tc("loading")}</div>
               ) : (
                 <div className="flex flex-col gap-4">
                   <div className="flex items-center justify-between">

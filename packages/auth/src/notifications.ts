@@ -41,6 +41,7 @@ export function notifyAdminsSignup(userEmail: string, userName: string): void {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             flags: 32768,
+            allowed_mentions: { parse: [] },
             components: [{ type: 17, accent_color: null, components: inner }],
           }),
           signal: AbortSignal.timeout(TIMEOUT_MS),

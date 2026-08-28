@@ -770,7 +770,8 @@
       "test": "Send Test",
       "testing": "Sending…",
       "testSuccess": "Test notification sent",
-      "testFailed": "Failed: {error}"
+      "testFailed": "Failed: {error}",
+      "saveFailed": "Failed to save: {error}"
     },
     "profile": {
       "personalInfoTitle": "Personal Information",
@@ -1616,7 +1617,8 @@
       "notifTest": "Send Test",
       "notifTesting": "Sending…",
       "notifTestSuccess": "Test notification sent",
-      "notifTestFailed": "Failed: {error}"
+      "notifTestFailed": "Failed: {error}",
+      "notifSaveFailed": "Failed to save: {error}"
     },
     "backupDestinations": {
       "typeLabel": "Destination Type",

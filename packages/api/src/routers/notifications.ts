@@ -27,6 +27,16 @@ async function upsertSetting(key: string, value: string) {
     .onDuplicateKeyUpdate({ set: { value, updatedAt: new Date() } });
 }
 
+function resolveSecret(
+  input: string | undefined,
+  validate: (v: string) => void,
+): "keep" | "clear" | string {
+  if (input === undefined || input === SENTINEL) return "keep";
+  if (input === "") return "clear";
+  validate(input);
+  return input;
+}
+
 export const notificationsRouter = {
   getAdminConfig: adminProcedure.handler(async () => {
     const rows = await db.select().from(settings);
@@ -57,32 +67,34 @@ export const notificationsRouter = {
       if (input.discordEnabled !== undefined) pairs.push({ key: "notifications_discord_enabled", value: String(input.discordEnabled) });
       if (input.telegramEnabled !== undefined) pairs.push({ key: "notifications_telegram_enabled", value: String(input.telegramEnabled) });
       if (input.userConfigEnabled !== undefined) pairs.push({ key: "notifications_user_config_enabled", value: String(input.userConfigEnabled) });
-      if (input.discordWebhookUrl !== undefined && input.discordWebhookUrl !== SENTINEL) {
-        if (input.discordWebhookUrl === "") {
-          await db.delete(settings).where(eq(settings.key, "notifications_discord_webhook_url"));
-        } else {
-          if (!isValidDiscordWebhookUrl(input.discordWebhookUrl)) {
-            throw new ORPCError("BAD_REQUEST", { message: "Invalid Discord webhook URL" });
-          }
-          pairs.push({ key: "notifications_discord_webhook_url", value: encrypt(input.discordWebhookUrl) });
-        }
+
+      const discordWebhook = resolveSecret(input.discordWebhookUrl, (v) => {
+        if (!isValidDiscordWebhookUrl(v)) throw new ORPCError("BAD_REQUEST", { message: "Invalid Discord webhook URL" });
+      });
+      if (discordWebhook === "clear") {
+        await db.delete(settings).where(eq(settings.key, "notifications_discord_webhook_url"));
+      } else if (discordWebhook !== "keep") {
+        pairs.push({ key: "notifications_discord_webhook_url", value: encrypt(discordWebhook) });
       }
-      if (input.telegramBotToken !== undefined && input.telegramBotToken !== SENTINEL) {
-        if (input.telegramBotToken === "") {
-          await db.delete(settings).where(eq(settings.key, "notifications_telegram_bot_token"));
-        } else {
-          if (!isValidTelegramBotToken(input.telegramBotToken)) {
-            throw new ORPCError("BAD_REQUEST", { message: "Invalid Telegram bot token" });
-          }
-          pairs.push({ key: "notifications_telegram_bot_token", value: encrypt(input.telegramBotToken) });
-        }
+
+      const telegramToken = resolveSecret(input.telegramBotToken, (v) => {
+        if (!isValidTelegramBotToken(v)) throw new ORPCError("BAD_REQUEST", { message: "Invalid Telegram bot token" });
+      });
+      if (telegramToken === "clear") {
+        await db.delete(settings).where(eq(settings.key, "notifications_telegram_bot_token"));
+      } else if (telegramToken !== "keep") {
+        pairs.push({ key: "notifications_telegram_bot_token", value: encrypt(telegramToken) });
       }
-      if (input.telegramChatId !== undefined && input.telegramChatId !== SENTINEL) {
-        if (!isValidTelegramChatId(input.telegramChatId)) {
-          throw new ORPCError("BAD_REQUEST", { message: "Invalid Telegram chat id" });
-        }
-        pairs.push({ key: "notifications_telegram_chat_id", value: input.telegramChatId });
+
+      const telegramChatId = resolveSecret(input.telegramChatId, (v) => {
+        if (!isValidTelegramChatId(v)) throw new ORPCError("BAD_REQUEST", { message: "Invalid Telegram chat id" });
+      });
+      if (telegramChatId === "clear") {
+        await db.delete(settings).where(eq(settings.key, "notifications_telegram_chat_id"));
+      } else if (telegramChatId !== "keep") {
+        pairs.push({ key: "notifications_telegram_chat_id", value: telegramChatId });
       }
+
       for (const { key, value } of pairs) {
         await upsertSetting(key, value);
       }
@@ -146,32 +158,24 @@ export const notificationsRouter = {
       }
 
       const updates: Record<string, string | null> = {};
-      if (input.discordWebhookUrl !== undefined && input.discordWebhookUrl !== SENTINEL) {
-        if (input.discordWebhookUrl === "") {
-          updates.notificationDiscordWebhook = null;
-        } else {
-          if (!isValidDiscordWebhookUrl(input.discordWebhookUrl)) {
-            throw new ORPCError("BAD_REQUEST", { message: "Invalid Discord webhook URL" });
-          }
-          updates.notificationDiscordWebhook = encrypt(input.discordWebhookUrl);
-        }
-      }
-      if (input.telegramBotToken !== undefined && input.telegramBotToken !== SENTINEL) {
-        if (input.telegramBotToken === "") {
-          updates.notificationTelegramToken = null;
-        } else {
-          if (!isValidTelegramBotToken(input.telegramBotToken)) {
-            throw new ORPCError("BAD_REQUEST", { message: "Invalid Telegram bot token" });
-          }
-          updates.notificationTelegramToken = encrypt(input.telegramBotToken);
-        }
-      }
-      if (input.telegramChatId !== undefined && input.telegramChatId !== SENTINEL) {
-        if (!isValidTelegramChatId(input.telegramChatId)) {
-          throw new ORPCError("BAD_REQUEST", { message: "Invalid Telegram chat id" });
-        }
-        updates.notificationTelegramChatId = input.telegramChatId;
-      }
+      const discordWebhook = resolveSecret(input.discordWebhookUrl, (v) => {
+        if (!isValidDiscordWebhookUrl(v)) throw new ORPCError("BAD_REQUEST", { message: "Invalid Discord webhook URL" });
+      });
+      if (discordWebhook === "clear") updates.notificationDiscordWebhook = null;
+      else if (discordWebhook !== "keep") updates.notificationDiscordWebhook = encrypt(discordWebhook);
+
+      const telegramToken = resolveSecret(input.telegramBotToken, (v) => {
+        if (!isValidTelegramBotToken(v)) throw new ORPCError("BAD_REQUEST", { message: "Invalid Telegram bot token" });
+      });
+      if (telegramToken === "clear") updates.notificationTelegramToken = null;
+      else if (telegramToken !== "keep") updates.notificationTelegramToken = encrypt(telegramToken);
+
+      const telegramChatId = resolveSecret(input.telegramChatId, (v) => {
+        if (!isValidTelegramChatId(v)) throw new ORPCError("BAD_REQUEST", { message: "Invalid Telegram chat id" });
+      });
+      if (telegramChatId === "clear") updates.notificationTelegramChatId = null;
+      else if (telegramChatId !== "keep") updates.notificationTelegramChatId = telegramChatId;
+
       if (Object.keys(updates).length > 0) {
         await db.update(user).set(updates).where(eq(user.id, context.session.user.id));
       }

@@ -14,6 +14,8 @@ const statusInterval = 30 * time.Second
 
 func RunStatusWorker(db *sql.DB) {
 	log.Println("[status] worker started, polling every 30s")
+	go runStatusNotifyDispatcher(db)
+	go runStatusNotifyDispatcher(db)
 	statusTick(db)
 	for range time.Tick(statusInterval) {
 		statusTick(db)
@@ -124,6 +126,6 @@ func processNode(db *sql.DB, node nodeRow) {
 			log.Printf("[status] failed to update server %s: %v", srv.uuid, err)
 			continue
 		}
-		go notifyServerStatus(db, srv.id, srv.name, srv.uuid, srv.userId.String, state)
+		enqueueStatusNotify(statusNotifyJob{serverID: srv.id, serverName: srv.name, uuid: srv.uuid, ownerID: srv.userId.String, state: state})
 	}
 }

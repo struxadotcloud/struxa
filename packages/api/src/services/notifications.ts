@@ -5,7 +5,7 @@ import { user as userTable } from "@struxa/db";
 import { env } from "@struxa/env/server";
 import { safeDecrypt } from "../lib/crypto";
 
-export const SENTINEL = "[set]";
+export { SENTINEL } from "../lib/notification-constants";
 
 const TIMEOUT_MS = 8000;
 
@@ -32,7 +32,7 @@ export function isValidTelegramChatId(id: string): boolean {
 }
 
 export async function postDiscord(url: string, payload: object): Promise<void> {
-  if (!isValidDiscordWebhookUrl(url)) return;
+  if (!isValidDiscordWebhookUrl(url)) throw new Error("Invalid Discord webhook URL");
   const res = await fetch(withComponentsParam(url), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -47,7 +47,9 @@ function withComponentsParam(url: string): string {
 }
 
 export async function postTelegram(token: string, chatId: string, text: string): Promise<void> {
-  if (!isValidTelegramBotToken(token) || !isValidTelegramChatId(chatId)) return;
+  if (!isValidTelegramBotToken(token) || !isValidTelegramChatId(chatId)) {
+    throw new Error("Invalid Telegram configuration");
+  }
   const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -230,6 +232,7 @@ function componentsPayload(v: { title: string; subtitle: string; detail: string;
   inner.push({ type: 10, content: `-# <t:${Math.floor(Date.now() / 1000)}:R>` });
   return {
     flags: DISCORD_COMPONENTS_V2_FLAG,
+    allowed_mentions: { parse: [] },
     components: [{ type: 17, accent_color: null, components: inner }],
   };
 }

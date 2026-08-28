@@ -55,15 +55,6 @@ export async function POST(
     })
     .where(eq(backups.id, backup.id));
 
-  if (backup.server?.userId) {
-    notifyServerOwner(backup.server.userId, "backup", {
-      backupName: backup.name,
-      serverName: backup.server.name,
-      serverUuid: backup.server.uuid,
-      result: body.successful ? "completed successfully" : "failed",
-    });
-  }
-
   if (backup.disk === "s3") {
     const destination = await resolveDestinationForNode(auth.node.id);
     if (!destination || destination.type !== "s3") {
@@ -86,6 +77,15 @@ export async function POST(
         status: 500,
       });
     }
+  }
+
+  if (backup.server?.userId) {
+    notifyServerOwner(backup.server.userId, "backup", {
+      backupName: backup.name,
+      serverName: backup.server.name,
+      serverUuid: backup.server.uuid,
+      result: body.successful ? "completed successfully" : "failed",
+    });
   }
 
   return new Response(null, { status: 204 });

@@ -23,6 +23,7 @@ import { orpc, queryClient } from "@/utils/orpc";
 import { toast } from "sonner";
 import { DitherAvatar } from "@struxa/ui/components/dither-kit/avatar";
 import { GoogleIcon } from "@/components/google-icon";
+import { SENTINEL } from "@struxa/api/lib/notification-constants";
 
 type Tab = "profile" | "api-keys" | "billing" | "notifications";
 
@@ -1499,33 +1500,40 @@ function NotificationsTab() {
         void queryClient.invalidateQueries({ queryKey: orpc.notifications.key() });
         toast.success(tc("saved"));
       },
+      onError: (error) => {
+        toast.error(t("saveFailed", { error: error instanceof Error ? error.message : "" }));
+      },
     }),
   );
   const testMutation = useMutation(orpc.notifications.testUser.mutationOptions());
 
-  if (isLoading) return <div className="py-8 text-center text-sm text-muted-foreground">Loading…</div>;
+  if (isLoading) return <div className="py-8 text-center text-sm text-muted-foreground">{tc("loading")}</div>;
 
   if (!cfg?.enabled) return null;
 
   const saveDiscord = () => {
     saveMutation.mutate({
-      discordWebhookUrl: form.discordWebhookUrl || (cfg.discordWebhookSet ? "[set]" : ""),
+      discordWebhookUrl: form.discordWebhookUrl || (cfg.discordWebhookSet ? SENTINEL : ""),
     });
     setForm((prev) => ({ ...prev, discordWebhookUrl: "" }));
   };
 
   const saveTelegram = () => {
     saveMutation.mutate({
-      telegramBotToken: form.telegramBotToken || (cfg.telegramTokenSet ? "[set]" : ""),
+      telegramBotToken: form.telegramBotToken || (cfg.telegramTokenSet ? SENTINEL : ""),
       telegramChatId: form.telegramChatId,
     });
     setForm((prev) => ({ ...prev, telegramBotToken: "" }));
   };
 
   async function testChannel(channel: "discord" | "telegram") {
-    const result = await testMutation.mutateAsync({ channel });
-    if (result.ok) toast.success(t("testSuccess"));
-    else toast.error(t("testFailed", { error: result.error ?? "" }));
+    try {
+      const result = await testMutation.mutateAsync({ channel });
+      if (result.ok) toast.success(t("testSuccess"));
+      else toast.error(t("testFailed", { error: result.error ?? "" }));
+    } catch (err) {
+      toast.error(t("testFailed", { error: err instanceof Error ? err.message : "" }));
+    }
   }
 
   return (
