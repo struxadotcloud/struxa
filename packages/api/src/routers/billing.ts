@@ -27,6 +27,7 @@ import {
   settings,
 } from "@struxa/db";
 import { recordActivity } from "../services/activity";
+import { getEffectiveAppUrl } from "../services/instance";
 import { encrypt, decrypt } from "../lib/crypto";
 import { createWingsClient } from "../lib/wings-client";
 import { buildInvocation } from "../services/wings-servers";
@@ -314,6 +315,8 @@ export const billingRouter = {
         if (!raw.serviceId) throw new Error("P24 POS ID not configured");
         if (!raw.secretKey) throw new Error("P24 API key not configured");
         if (!raw.webhookSecret) throw new Error("P24 CRC not configured");
+        const appUrl = await getEffectiveAppUrl();
+        if (!appUrl) throw new Error("App URL not configured");
         const { url } = await createP24TopupSession(
           {
             merchantId: raw.publishableKey,
@@ -327,7 +330,7 @@ export const billingRouter = {
             currency,
             successUrl: input.successUrl,
             cancelUrl: input.cancelUrl,
-            statusUrl: new URL(`/api/billing/webhook/${gateway.provider}`, input.successUrl).toString(),
+            statusUrl: new URL(`/api/billing/webhook/${gateway.provider}`, appUrl).toString(),
             gatewayId: gateway.id,
             customerEmail: context.session.user.email,
           },
