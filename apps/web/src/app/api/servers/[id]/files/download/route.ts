@@ -18,6 +18,11 @@ export async function GET(
   const file = req.nextUrl.searchParams.get("file");
   if (!file) return new Response("Missing file parameter", { status: 400 });
 
+  const normalized = file.replace(/\\/g, "/");
+  if (normalized.includes("\0") || normalized.split("/").some((segment) => segment === "..")) {
+    return new Response("Invalid file parameter", { status: 400 });
+  }
+
   const server = await db.query.servers.findFirst({
     where: eq(servers.uuid, id),
     with: { node: true },
@@ -52,5 +57,5 @@ export async function GET(
     safeDecrypt(node.token),
   );
   const url = `${node.scheme}://${node.fqdn}:${node.daemonListen}/download/file?token=${encodeURIComponent(token)}`;
-  return Response.redirect(url, 302);
+  return Response.redirect(url, { status: 302, headers: { "Referrer-Policy": "no-referrer" } });
 }
