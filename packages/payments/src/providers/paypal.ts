@@ -106,13 +106,16 @@ export async function handlePayPalWebhook(ctx: WebhookContext): Promise<WebhookP
     resource?: { id?: string };
   };
   if (e.event_type !== "CHECKOUT.ORDER.APPROVED" || !e.resource?.id) return null;
+  const orderId = e.resource.id;
+  if (!/^[A-Za-z0-9_-]{1,64}$/.test(orderId)) return null;
+  const encodedOrderId = encodeURIComponent(orderId);
 
   const token = await getAccessToken({
     clientId: ctx.config.publishableKey,
     secret: ctx.config.secretKey,
     sandbox: ctx.config.sandbox,
   });
-  const captureRes = await fetch(`${apiBase(ctx.config.sandbox)}/v2/checkout/orders/${e.resource.id}/capture`, {
+  const captureRes = await fetch(`${apiBase(ctx.config.sandbox)}/v2/checkout/orders/${encodedOrderId}/capture`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
