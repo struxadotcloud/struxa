@@ -65,13 +65,10 @@ export const onboardingRouter = {
         if (!res.ok) return { id, label, categories: [] };
 
         const data = (await res.json()) as { tree: { path: string; type: string }[] };
-        const jsonFiles = data.tree.filter(
-          (item) =>
-            item.type === "blob" &&
-            item.path.endsWith(".json") &&
-            !item.path.includes("README") &&
-            !item.path.toLowerCase().includes("package.json"),
-        );
+        const jsonFiles = data.tree.filter((item) => {
+          const base = item.path.split("/").pop() ?? "";
+          return item.type === "blob" && base.startsWith("egg-") && base.endsWith(".json");
+        });
 
         const categoryMap = new Map<string, EggEntry[]>();
 
@@ -117,6 +114,7 @@ export const onboardingRouter = {
     .handler(async ({ input }) => {
       const nestCache = new Map<string, string>();
       let imported = 0;
+      const skipped: { name: string; reason: "download" | "parse" | "save" }[] = [];
 
       async function getOrCreateNest(name: string): Promise<string> {
         if (nestCache.has(name)) return nestCache.get(name)!;
@@ -142,28 +140,44 @@ export const onboardingRouter = {
       }
 
       for (const item of input.eggs) {
-        try {
-          const res = await fetch(item.rawUrl);
-          if (!res.ok) continue;
+        const fallbackName =
+          item.rawUrl.split("/").pop()?.replace(/\.json$/, "").replace(/[-_]/g, " ") ?? item.rawUrl;
 
-          const raw = (await res.json()) as {
+        let raw: {
+          name: string;
+          description?: string;
+          startup?: string;
+          config?: { files?: string; startup?: string; stop?: string; logs?: string };
+          scripts?: { installation?: { script?: string; container?: string; entrypoint?: string } };
+          variables?: Array<{
             name: string;
             description?: string;
-            startup?: string;
-            config?: { files?: string; startup?: string; stop?: string; logs?: string };
-            scripts?: { installation?: { script?: string; container?: string; entrypoint?: string } };
-            variables?: Array<{
-              name: string;
-              description?: string;
-              env_variable: string;
-              default_value?: string;
-              user_viewable?: boolean;
-              user_editable?: boolean;
-              rules?: string;
-            }>;
-            docker_images?: Record<string, string>;
-          };
+            env_variable: string;
+            default_value?: string;
+            user_viewable?: boolean;
+            user_editable?: boolean;
+            rules?: string;
+          }>;
+          docker_images?: Record<string, string>;
+        };
 
+        try {
+          const res = await fetch(item.rawUrl);
+          if (!res.ok) {
+            skipped.push({ name: fallbackName, reason: "download" });
+            continue;
+          }
+          raw = (await res.json()) as typeof raw;
+          if (!raw?.name) {
+            skipped.push({ name: fallbackName, reason: "parse" });
+            continue;
+          }
+        } catch {
+          skipped.push({ name: fallbackName, reason: "parse" });
+          continue;
+        }
+
+        try {
           const nestId = await getOrCreateNest(item.nestName);
           const eggId = randomUUID();
 
@@ -202,11 +216,11 @@ export const onboardingRouter = {
 
           imported++;
         } catch {
-          // skip failed imports silently
+          skipped.push({ name: fallbackName, reason: "save" });
         }
       }
 
-      return { imported };
+      return { imported, skipped };
     }),
 
   completeSetup: adminProcedure.handler(async () => {

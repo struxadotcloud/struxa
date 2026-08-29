@@ -30,7 +30,7 @@ import { recordActivity } from "../services/activity";
 import { encrypt, decrypt } from "../lib/crypto";
 import { createWingsClient } from "../lib/wings-client";
 import { buildInvocation } from "../services/wings-servers";
-import { createStripeTopupSession, createSimPayTopupSession } from "@struxa/payments";
+import { createStripeTopupSession, createSimPayTopupSession, createPayPalTopupSession, createP24TopupSession } from "@struxa/payments";
 import { adminProcedure, protectedProcedure } from "../index";
 
 const DURATION_DAYS: Record<string, number> = {
@@ -246,7 +246,7 @@ export const billingRouter = {
       if (!gateway) throw new Error("Payment gateway not found or inactive");
 
       const raw = gateway.config as {
-        publishableKey?: string; secretKey?: string; serviceId?: string;
+        publishableKey?: string; secretKey?: string; serviceId?: string; webhookSecret?: string; sandbox?: string;
       } | null ?? {};
 
       const wallet = await db.query.billingWallet.findFirst({
@@ -287,6 +287,49 @@ export const billingRouter = {
             gatewayId: gateway.id,
             customerEmail: context.session.user.email,
             customerName: context.session.user.name ?? undefined,
+          },
+        );
+        return { url };
+      }
+
+      if (gateway.provider === "paypal") {
+        if (!raw.publishableKey) throw new Error("PayPal client ID not configured");
+        if (!raw.secretKey) throw new Error("PayPal secret not configured");
+        const { url } = await createPayPalTopupSession(
+          { clientId: raw.publishableKey, secret: decrypt(raw.secretKey), sandbox: raw.sandbox === "true" },
+          {
+            userId: context.session.user.id,
+            amountCents: input.amountCents,
+            currency,
+            successUrl: input.successUrl,
+            cancelUrl: input.cancelUrl,
+            gatewayId: gateway.id,
+          },
+        );
+        return { url };
+      }
+
+      if (gateway.provider === "przelewy24") {
+        if (!raw.publishableKey) throw new Error("P24 merchant ID not configured");
+        if (!raw.serviceId) throw new Error("P24 POS ID not configured");
+        if (!raw.secretKey) throw new Error("P24 API key not configured");
+        if (!raw.webhookSecret) throw new Error("P24 CRC not configured");
+        const { url } = await createP24TopupSession(
+          {
+            merchantId: raw.publishableKey,
+            posId: raw.serviceId,
+            apiKey: decrypt(raw.secretKey),
+            sandbox: raw.sandbox === "true",
+          },
+          {
+            userId: context.session.user.id,
+            amountCents: input.amountCents,
+            currency,
+            successUrl: input.successUrl,
+            cancelUrl: input.cancelUrl,
+            statusUrl: new URL(`/api/billing/webhook/${gateway.provider}`, input.successUrl).toString(),
+            gatewayId: gateway.id,
+            customerEmail: context.session.user.email,
           },
         );
         return { url };
@@ -579,7 +622,7 @@ export const billingRouter = {
       .from(billingPaymentGateways)
       .orderBy(asc(billingPaymentGateways.sortOrder));
     return rows.map((r) => {
-      const config = r.config as { publishableKey?: string; secretKey?: string; webhookSecret?: string } | null ?? {};
+      const config = r.config as { publishableKey?: string; secretKey?: string; webhookSecret?: string; sandbox?: string } | null ?? {};
       return {
         id: r.id,
         name: r.name,
@@ -589,6 +632,7 @@ export const billingRouter = {
         hasPublishableKey: !!config.publishableKey,
         hasSecretKey: !!config.secretKey,
         hasWebhookSecret: !!config.webhookSecret,
+        sandbox: config.sandbox === "true",
       };
     });
   }),
@@ -604,6 +648,7 @@ export const billingRouter = {
         secretKey: z.string().optional(),
         webhookSecret: z.string().optional(),
         serviceId: z.string().optional(),
+        sandbox: z.boolean().optional(),
       }),
     )
     .handler(async ({ context, input }) => {
@@ -613,6 +658,7 @@ export const billingRouter = {
       if (input.secretKey) config.secretKey = encrypt(input.secretKey);
       if (input.webhookSecret) config.webhookSecret = encrypt(input.webhookSecret);
       if (input.serviceId) config.serviceId = input.serviceId;
+      if (input.sandbox) config.sandbox = "true";
       await db.insert(billingPaymentGateways).values({
         id,
         name: input.name,
@@ -636,6 +682,7 @@ export const billingRouter = {
         secretKey: z.string().optional(),
         webhookSecret: z.string().optional(),
         serviceId: z.string().optional(),
+        sandbox: z.boolean().optional(),
       }),
     )
     .handler(async ({ context, input }) => {
@@ -650,6 +697,7 @@ export const billingRouter = {
       if (input.secretKey !== undefined && input.secretKey !== "") config.secretKey = encrypt(input.secretKey);
       if (input.webhookSecret !== undefined && input.webhookSecret !== "") config.webhookSecret = encrypt(input.webhookSecret);
       if (input.serviceId !== undefined && input.serviceId !== "") config.serviceId = input.serviceId;
+      if (input.sandbox !== undefined) config.sandbox = String(input.sandbox);
 
       await db.update(billingPaymentGateways).set({
         ...(input.name !== undefined && { name: input.name }),

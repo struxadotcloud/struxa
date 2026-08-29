@@ -36,8 +36,6 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
-  const [touchedEmail, setTouchedEmail] = useState(false);
-  const [touchedPassword, setTouchedPassword] = useState(false);
 
   const normalizedEmail = email.trim();
   const emailError = !normalizedEmail
@@ -46,8 +44,8 @@ export default function LoginPage() {
       ? null
       : t("emailInvalid");
   const passwordError = password.length >= 8 ? null : t("passwordMinLength");
-  const showEmailError = Boolean(emailError && (hasSubmitted || touchedEmail));
-  const showPasswordError = Boolean(passwordError && (hasSubmitted || touchedPassword));
+  const showEmailError = Boolean(emailError && hasSubmitted);
+  const showPasswordError = Boolean(passwordError && hasSubmitted);
   const isDisabled = Boolean(emailError || passwordError || isSubmitting);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -82,7 +80,6 @@ export default function LoginPage() {
             id="email"
             name="email"
             onChange={(event) => setEmail(event.target.value)}
-            onBlur={() => setTouchedEmail(true)}
             placeholder={t("emailPlaceholder")}
             type="email"
             value={email}
@@ -106,7 +103,6 @@ export default function LoginPage() {
             id="password"
             name="password"
             onChange={(event) => setPassword(event.target.value)}
-            onBlur={() => setTouchedPassword(true)}
             placeholder={t("passwordPlaceholder")}
             type="password"
             value={password}

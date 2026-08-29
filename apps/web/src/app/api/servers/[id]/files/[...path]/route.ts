@@ -58,6 +58,13 @@ async function proxy(req: NextRequest, { params }: Params) {
     bodyJson = (await req.clone().json().catch(() => null)) as { files?: unknown[] } | null;
   }
 
+  let archiveJson: { files?: unknown[]; file?: unknown } | null = null;
+  if (req.method === "POST" && (action === "compress" || action === "decompress")) {
+    const contentLength = Number(req.headers.get("content-length") ?? 0);
+    if (contentLength > 64 * 1024) return new Response("Payload Too Large", { status: 413 });
+    archiveJson = (await req.clone().json().catch(() => null)) as { files?: unknown[]; file?: unknown } | null;
+  }
+
   const upstream = await fetch(daemonUrl, {
     method: req.method,
     headers,
@@ -67,6 +74,8 @@ async function proxy(req: NextRequest, { params }: Params) {
   const resHeaders: Record<string, string> = {};
   const resContentType = upstream.headers.get("Content-Type");
   if (resContentType) resHeaders["Content-Type"] = resContentType;
+  const resContentDisposition = upstream.headers.get("Content-Disposition");
+  if (resContentDisposition) resHeaders["Content-Disposition"] = resContentDisposition;
 
   if (upstream.ok) {
     const filePath = req.nextUrl.searchParams.get("file");
@@ -120,6 +129,29 @@ async function proxy(req: NextRequest, { params }: Params) {
           serverId: server.id,
           ip,
           properties: { file: renames.map((f) => `${f.from} → ${f.to}`).join(", ").slice(0, 2000) },
+        });
+      }
+    } else if (req.method === "POST" && action === "compress" && archiveJson) {
+      const files = (archiveJson.files ?? [])
+        .slice(0, 50)
+        .filter((f): f is string => typeof f === "string");
+      if (files.length > 0) {
+        recordActivity({
+          eventType: "server:files.archive",
+          userId: session.user.id,
+          serverId: server.id,
+          ip,
+          properties: { file: files.join(", ").slice(0, 2000) },
+        });
+      }
+    } else if (req.method === "POST" && action === "decompress" && archiveJson) {
+      if (typeof archiveJson.file === "string") {
+        recordActivity({
+          eventType: "server:files.unarchive",
+          userId: session.user.id,
+          serverId: server.id,
+          ip,
+          properties: { file: archiveJson.file.slice(0, 2000) },
         });
       }
     }

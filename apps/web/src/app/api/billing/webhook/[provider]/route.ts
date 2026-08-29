@@ -141,7 +141,7 @@ export async function POST(
   if (!gateway) return new Response("Not found", { status: 404 });
 
   const raw = gateway.config as {
-    publishableKey?: string; secretKey?: string; webhookSecret?: string; serviceId?: string;
+    publishableKey?: string; secretKey?: string; webhookSecret?: string; serviceId?: string; sandbox?: string;
   } | null ?? {};
 
   const sourceIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
@@ -153,6 +153,7 @@ export async function POST(
     secretKey: raw.secretKey ? decrypt(raw.secretKey) : "",
     webhookSecret: raw.webhookSecret ? decrypt(raw.webhookSecret) : "",
     serviceId: raw.serviceId,
+    sandbox: raw.sandbox === "true",
   };
 
   const payload = await handleWebhook(provider, { rawBody, headers, config, gatewayId: gateway.id, sourceIp });
