@@ -50,7 +50,7 @@ function Logo({ logoUrl, appName, className }: { logoUrl: string | null; appName
 
 export default function AuthShell({ title, subtitle, children, reverse }: AuthShellProps) {
   const t = useTranslations("auth.social");
-  const { appName, logoUrl, socialProviders } = useAuthSettings();
+  const { appName, logoUrl, ogDescription, socialProviders } = useAuthSettings();
   const [loadingProvider, setLoadingProvider] = useState<string | null>(null);
 
   async function signInWithProvider(provider: string) {
@@ -70,7 +70,7 @@ export default function AuthShell({ title, subtitle, children, reverse }: AuthSh
         <div className={`flex flex-col gap-2 ${reverse ? "items-end text-right" : "items-start text-left"}`}>
           <p className="text-2xl font-semibold tracking-tight text-foreground">{appName}</p>
           <p className="text-sm text-muted-foreground max-w-xs">
-            {t("tagline")}
+            {ogDescription || t("tagline")}
           </p>
         </div>
         <p className="text-xs text-muted-foreground/60">© {new Date().getFullYear()} Struxa</p>

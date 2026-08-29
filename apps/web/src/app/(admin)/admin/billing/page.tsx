@@ -91,7 +91,7 @@ import {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type ProviderType = "stripe" | "simpay";
+type ProviderType = "stripe" | "simpay" | "paypal" | "przelewy24";
 
 interface Gateway {
   id: string;
@@ -102,6 +102,7 @@ interface Gateway {
   hasPublishableKey: boolean;
   hasSecretKey: boolean;
   hasWebhookSecret: boolean;
+  sandbox: boolean;
 }
 
 interface Category {
@@ -175,7 +176,7 @@ function formatPrice(price: number) {
 function ProviderLogo({ provider, size = "md" }: { provider: ProviderType; size?: "sm" | "md" }) {
   const box = size === "sm" ? "h-5 w-5 rounded-md" : "h-7 w-7 rounded-lg";
   const iconMd = size === "sm" ? "size-3" : "size-4";
-  if (provider === "stripe" || provider === "simpay") {
+  if (provider === "stripe" || provider === "simpay" || provider === "paypal" || provider === "przelewy24") {
     return (
       <img
         src={`/providers/${provider}-icon.png`}
@@ -733,15 +734,18 @@ function ProvidersTab() {
     secretKey: "",
     webhookSecret: "",
     serviceId: "",
+    sandbox: false,
   });
 
   const activeId = useId();
 
-  const ALL_PROVIDERS: ProviderType[] = ["stripe", "simpay"];
+  const ALL_PROVIDERS: ProviderType[] = ["stripe", "simpay", "paypal", "przelewy24"];
 
   const providerLabels: Record<string, string> = {
     stripe: t("stripe"),
     simpay: t("simpay"),
+    paypal: t("paypal"),
+    przelewy24: t("przelewy24"),
   };
 
   const configuredProviders = new Set(gateways.map((g) => g.provider));
@@ -749,12 +753,12 @@ function ProvidersTab() {
 
   function openAdd() {
     const defaultProvider = availableProviders[0] ?? "stripe";
-    setForm({ provider: defaultProvider, isActive: true, publishableKey: "", secretKey: "", webhookSecret: "", serviceId: "" });
+    setForm({ provider: defaultProvider, isActive: true, publishableKey: "", secretKey: "", webhookSecret: "", serviceId: "", sandbox: false });
     setDialog({ type: "add" });
   }
 
   function openEdit(g: Gateway) {
-    setForm({ provider: g.provider, isActive: g.isActive, publishableKey: "", secretKey: "", webhookSecret: "", serviceId: "" });
+    setForm({ provider: g.provider, isActive: g.isActive, publishableKey: "", secretKey: "", webhookSecret: "", serviceId: "", sandbox: g.sandbox });
     setDialog({ type: "edit", gateway: g });
   }
 
@@ -768,6 +772,7 @@ function ProvidersTab() {
         secretKey: form.secretKey || undefined,
         webhookSecret: form.webhookSecret || undefined,
         serviceId: form.serviceId || undefined,
+        sandbox: form.sandbox,
       }, { onSuccess: () => setDialog(null) });
     } else if (dialog?.type === "edit") {
       updateMutation.mutate({
@@ -777,6 +782,7 @@ function ProvidersTab() {
         secretKey: form.secretKey || undefined,
         webhookSecret: form.webhookSecret || undefined,
         serviceId: form.serviceId || undefined,
+        sandbox: form.sandbox,
       }, { onSuccess: () => setDialog(null) });
     }
   }
@@ -990,6 +996,99 @@ function ProvidersTab() {
                       placeholder={dialog?.type === "edit" ? t("keepExisting") : t("signatureKeyPlaceholder")}
                       className="font-mono text-xs"
                     />
+                  </div>
+                  <WebhookEndpointInfo provider={form.provider} />
+                </div>
+              )}
+
+              {form.provider === "paypal" && (
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <Label className="text-xs font-medium">{t("clientId")}</Label>
+                    <Input
+                      value={form.publishableKey}
+                      onChange={(e) => setForm((s) => ({ ...s, publishableKey: e.target.value }))}
+                      placeholder={dialog?.type === "edit" ? t("keepExisting") : "Ab…"}
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <Label className="text-xs font-medium">{t("secretKey")}</Label>
+                    <Input
+                      type="password"
+                      value={form.secretKey}
+                      onChange={(e) => setForm((s) => ({ ...s, secretKey: e.target.value }))}
+                      placeholder={dialog?.type === "edit" ? t("keepExisting") : "E…"}
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <Label className="text-xs font-medium">{t("webhookId")}</Label>
+                    <Input
+                      type="password"
+                      value={form.webhookSecret}
+                      onChange={(e) => setForm((s) => ({ ...s, webhookSecret: e.target.value }))}
+                      placeholder={dialog?.type === "edit" ? t("keepExisting") : "WH-…"}
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-0.5">
+                      <Label className="text-xs font-medium">{t("sandbox")}</Label>
+                      <p className="text-xs text-muted-foreground">{t("sandboxDescription")}</p>
+                    </div>
+                    <Switch checked={form.sandbox} onCheckedChange={(v) => setForm((s) => ({ ...s, sandbox: !!v }))} />
+                  </div>
+                  <WebhookEndpointInfo provider={form.provider} />
+                </div>
+              )}
+
+              {form.provider === "przelewy24" && (
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <Label className="text-xs font-medium">{t("merchantId")}</Label>
+                    <Input
+                      value={form.publishableKey}
+                      onChange={(e) => setForm((s) => ({ ...s, publishableKey: e.target.value }))}
+                      placeholder={dialog?.type === "edit" ? t("keepExisting") : "12345"}
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <Label className="text-xs font-medium">{t("posId")}</Label>
+                    <Input
+                      value={form.serviceId}
+                      onChange={(e) => setForm((s) => ({ ...s, serviceId: e.target.value }))}
+                      placeholder={dialog?.type === "edit" ? t("keepExisting") : "12345"}
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <Label className="text-xs font-medium">{t("apiKey")}</Label>
+                    <Input
+                      type="password"
+                      value={form.secretKey}
+                      onChange={(e) => setForm((s) => ({ ...s, secretKey: e.target.value }))}
+                      placeholder={dialog?.type === "edit" ? t("keepExisting") : ""}
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <Label className="text-xs font-medium">{t("crc")}</Label>
+                    <Input
+                      type="password"
+                      value={form.webhookSecret}
+                      onChange={(e) => setForm((s) => ({ ...s, webhookSecret: e.target.value }))}
+                      placeholder={dialog?.type === "edit" ? t("keepExisting") : ""}
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-0.5">
+                      <Label className="text-xs font-medium">{t("sandbox")}</Label>
+                      <p className="text-xs text-muted-foreground">{t("sandboxDescription")}</p>
+                    </div>
+                    <Switch checked={form.sandbox} onCheckedChange={(v) => setForm((s) => ({ ...s, sandbox: !!v }))} />
                   </div>
                   <WebhookEndpointInfo provider={form.provider} />
                 </div>

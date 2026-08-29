@@ -3,6 +3,7 @@ export interface ProviderConfig {
   secretKey: string;
   webhookSecret: string;
   serviceId?: string;
+  sandbox?: boolean;
 }
 
 export interface WebhookContext {

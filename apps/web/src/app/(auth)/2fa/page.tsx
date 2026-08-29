@@ -14,9 +14,9 @@ import { AuthSettingsProvider, useAuthSettings } from "@/components/auth-setting
 import { authClient } from "@/lib/auth-client";
 
 export default function TwoFactorPage() {
-  const { appName, logoUrl } = useAuthSettings();
+  const { appName, logoUrl, ogDescription } = useAuthSettings();
   return (
-    <AuthSettingsProvider value={{ appName, logoUrl, socialProviders: [], smtpEnabled: false }}>
+    <AuthSettingsProvider value={{ appName, logoUrl, ogDescription, socialProviders: [], smtpEnabled: false }}>
       <TwoFactorForm />
     </AuthSettingsProvider>
   );

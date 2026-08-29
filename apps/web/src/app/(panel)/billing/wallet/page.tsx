@@ -71,6 +71,8 @@ const TYPE_POSITIVE: Record<TxType, boolean> = {
 const PROVIDER_ICON: Record<string, React.ElementType> = {
   stripe: CreditCard,
   simpay: Banknote,
+  paypal: CreditCard,
+  przelewy24: Banknote,
 };
 
 const PRESET_AMOUNTS = [5, 10, 25, 50];
@@ -151,6 +153,8 @@ const TX_DESC_LEGACY: Record<string, string> = {
 const PROVIDER_DISPLAY: Record<string, string> = {
   stripe: "Stripe",
   simpay: "SimPay",
+  paypal: "PayPal",
+  przelewy24: "Przelewy24",
 };
 
 export default function WalletPage() {
@@ -302,7 +306,7 @@ export default function WalletPage() {
   const modalTitle = isProviderStep ? t("chooseProvider") : t("topUpSheet.title");
   const modalDesc = isProviderStep ? t("chooseProviderDesc") : t("topUpSheet.description");
 
-  const BANNER_PROVIDERS = ["stripe", "simpay"];
+  const BANNER_PROVIDERS = ["stripe", "simpay", "paypal", "przelewy24"];
 
   const modalContent = isProviderStep ? (
     <div className="flex flex-col gap-2 p-5">

@@ -78,6 +78,30 @@ export async function signBackupDownloadToken(
     .sign(secret);
 }
 
+export async function signFileDownloadToken(
+  userId: string,
+  serverUuid: string,
+  filePath: string,
+  nodeToken: string,
+): Promise<string> {
+  const secret = new TextEncoder().encode(nodeToken);
+  const appUrl = await getEffectiveAppUrl();
+  return new jose.SignJWT({
+    user_uuid: toUuid(userId),
+    server_uuid: serverUuid,
+    file_path: filePath,
+    unique_id: randomUUID(),
+    scope: "file-download",
+  })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("15m")
+    .setIssuer(appUrl)
+    .setAudience(["*"])
+    .setJti(randomUUID())
+    .sign(secret);
+}
+
 export async function getPublicKeyJwk(): Promise<jose.JWK> {
   const key = await getPublicKey();
   return jose.exportJWK(key);

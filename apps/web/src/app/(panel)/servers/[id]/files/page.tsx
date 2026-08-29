@@ -20,6 +20,10 @@ import {
   Pencil,
   Trash2,
   MoreHorizontal,
+  Archive,
+  PackageOpen,
+  Download,
+  Loader2,
 } from "lucide-react";
 import type { Monaco } from "@monaco-editor/react";
 import { useTranslations } from "next-intl";
@@ -33,6 +37,26 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@struxa/ui/components/dropdown-menu";
+import { Checkbox } from "@struxa/ui/components/checkbox";
+import { Button } from "@struxa/ui/components/button";
+import { Input } from "@struxa/ui/components/input";
+import { Label } from "@struxa/ui/components/label";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@struxa/ui/components/select";
+import {
+  Dialog,
+  DialogClose,
+  DialogPopup,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from "@struxa/ui/components/dialog";
 
 interface WingsFile {
   name: string;
@@ -109,6 +133,26 @@ function isImage(file: WingsFile): boolean {
   return (file.mime ?? "").startsWith("image/");
 }
 
+function isArchiveFile(name: string): boolean {
+  return /\.(tar\.gz|tgz|zip|tar\.xz|tar\.bz2|tar\.zst|tar\.lz4?|7z|tar)$/i.test(name);
+}
+
+function stripArchiveExt(name: string): string {
+  return name.replace(/\.(tar\.gz|tgz|zip|tar\.xz|tar\.bz2|tar\.zst|tar\.lz4?|7z|tar)$/i, "");
+}
+
+const ARCHIVE_FORMATS = [
+  { value: "tar_gz", ext: ".tar.gz" },
+  { value: "zip", ext: ".zip" },
+  { value: "tar_xz", ext: ".tar.xz" },
+  { value: "tar_bz2", ext: ".tar.bz2" },
+  { value: "tar_zstd", ext: ".tar.zst" },
+  { value: "seven_zip", ext: ".7z" },
+  { value: "tar", ext: ".tar" },
+] as const;
+
+const ARCHIVE_FORMAT_ITEMS = ARCHIVE_FORMATS.map((f) => ({ value: f.value, label: f.ext }));
+
 function FileIcon({ file, className = "h-4 w-4 shrink-0" }: { file: WingsFile; className?: string }) {
   if (file.directory) return <Folder className={`${className} text-muted-foreground`} />;
   if (isImage(file)) return <FileImage className={`${className} text-purple-500`} />;
@@ -140,7 +184,10 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
   const [isDragging, setIsDragging] = useState(false);
   const [renamingPath, setRenamingPath] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
-  const [deleteTarget, setDeleteTarget] = useState<{ name: string; path: string } | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [busyAction, setBusyAction] = useState<"archive" | "unarchive" | null>(null);
+  const [archiveDialog, setArchiveDialog] = useState<{ paths: string[]; name: string; format: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ label: string; paths: string[]; bulk: boolean } | null>(null);
   const [deleting, setDeleting] = useState(false);
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const newFileInputRef = useRef<HTMLInputElement>(null);
@@ -163,6 +210,7 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
       });
       setEntries(sorted);
       setDirPath(dir);
+      setSelected(new Set());
       return sorted;
     } finally {
       setLoadingDir(false);
@@ -281,7 +329,7 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
     await fetchDir(dirPath);
   }
 
-  async function handleDelete(target: { name: string; path: string }) {
+  async function handleDelete(target: { label: string; paths: string[] }) {
     setDeleting(true);
     try {
       const res = await fetch(
@@ -289,20 +337,120 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ root: "", files: [target.path] }),
+          body: JSON.stringify({ root: "", files: target.paths }),
         },
       );
       if (!res.ok) return;
-      if (openFilePath === target.path) {
+      if (openFilePath && target.paths.includes(openFilePath)) {
         setSelectedFile(null);
         setOpenFilePath(null);
         setEditContent("");
         setUnsaved(false);
       }
+      setSelected(new Set());
       await fetchDir(dirPath);
     } finally {
       setDeleting(false);
       setDeleteTarget(null);
+    }
+  }
+
+  function toggleSelect(itemPath: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(itemPath)) {
+        next.delete(itemPath);
+      } else {
+        next.add(itemPath);
+      }
+      return next;
+    });
+  }
+
+  function openArchiveDialog(paths: string[]) {
+    const single = paths.length === 1 ? paths[0].split("/").pop() ?? "" : null;
+    setArchiveDialog({
+      paths,
+      name: single ? `${single}.tar.gz` : "",
+      format: "tar_gz",
+    });
+  }
+
+  function setArchiveFormat(format: string) {
+    setArchiveDialog((d) => {
+      if (!d) return d;
+      const newExt = ARCHIVE_FORMATS.find((f) => f.value === format)?.ext ?? ".tar.gz";
+      const oldExt = ARCHIVE_FORMATS.find((f) => f.value === d.format)?.ext;
+      const name = d.name && oldExt && d.name.endsWith(oldExt)
+        ? `${d.name.slice(0, -oldExt.length)}${newExt}`
+        : d.name;
+      return { ...d, format, name };
+    });
+  }
+
+  async function handleArchive(paths: string[], name?: string, format = "tar_gz") {
+    setBusyAction("archive");
+    try {
+      const res = await fetch(
+        `${filesBase}/compress`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            root: dirPath,
+            files: paths.map((p) => p.split("/").pop() ?? p),
+            format,
+            ...(name?.trim() ? { name: name.trim() } : {}),
+          }),
+        },
+      );
+      if (!res.ok) return;
+      setArchiveDialog(null);
+      setSelected(new Set());
+      await fetchDir(dirPath);
+    } finally {
+      setBusyAction(null);
+    }
+  }
+
+  async function handleUnarchive(path: string) {
+    const base = path.split("/").pop() ?? "";
+    const folder = stripArchiveExt(base);
+    const parent = path.split("/").slice(0, -1).join("/") || "/";
+    const folderPath = parent === "/" ? `/${folder}` : `${parent}/${folder}`;
+    setBusyAction("unarchive");
+    try {
+      const mk = await fetch(
+        `${filesBase}/create-directory`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ root: parent, name: folder }),
+        },
+      );
+      if (!mk.ok) return;
+      const un = await fetch(
+        `${filesBase}/decompress`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ root: folderPath, file: path }),
+        },
+      );
+      if (!un.ok) {
+        await fetch(
+          `${filesBase}/delete`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ root: "", files: [folderPath] }),
+          },
+        );
+        return;
+      }
+      await fetchDir(dirPath);
+    } finally {
+      setBusyAction(null);
     }
   }
 
@@ -408,6 +556,39 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
               </button>
             </div>
           )}
+          {selected.size > 0 && (
+            <div className="flex items-center justify-between border-b border-border bg-muted/40 px-2 py-1.5">
+              <span className="text-[11px] font-medium text-foreground">{t("selectedCount", { count: selected.size })}</span>
+              <div className="flex shrink-0 items-center gap-0.5">
+                <button
+                  type="button"
+                  title={t("archive")}
+                  disabled={busyAction !== null}
+                  onClick={() => openArchiveDialog(Array.from(selected))}
+                  className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-background hover:text-foreground disabled:opacity-40"
+                >
+                  {busyAction === "archive" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Archive className="h-3.5 w-3.5" />}
+                </button>
+                <button
+                  type="button"
+                  title={t("delete")}
+                  disabled={deleting}
+                  onClick={() => setDeleteTarget({ label: "", paths: Array.from(selected), bulk: true })}
+                  className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-background hover:text-destructive disabled:opacity-40"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  title={t("clearSelection")}
+                  onClick={() => setSelected(new Set())}
+                  className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
           <div className="flex-1 overflow-y-auto py-1">
             {pathSegments.length > 0 && (
               <button
@@ -469,6 +650,12 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
                       openFilePath === itemPath ? "bg-muted text-foreground" : "text-muted-foreground"
                     }`}
                   >
+                    <Checkbox
+                      className={`size-3.5 shrink-0 rounded-sm [&>svg]:size-3 ${selected.has(itemPath) ? "" : "opacity-0 group-hover:opacity-100"}`}
+                      checked={selected.has(itemPath)}
+                      onClick={(e) => e.stopPropagation()}
+                      onCheckedChange={() => toggleSelect(itemPath)}
+                    />
                     <FileIcon file={file} />
                     <span className="flex-1 truncate font-mono">{file.name}</span>
                     {file.directory && (
@@ -486,6 +673,19 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
                         <MoreHorizontal className="h-3.5 w-3.5" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" style={{ minWidth: "9rem" }}>
+                        {file.file && (
+                          <DropdownMenuItem
+                            className="cursor-pointer"
+                            onClick={() => {
+                              const a = document.createElement("a");
+                              a.href = `${filesBase}/download?file=${encodeURIComponent(itemPath)}`;
+                              a.click();
+                            }}
+                          >
+                            <Download />
+                            {t("download")}
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem
                           className="cursor-pointer"
                           onClick={() => {
@@ -497,9 +697,27 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
                           {t("rename")}
                         </DropdownMenuItem>
                         <DropdownMenuItem
+                          className="cursor-pointer"
+                          disabled={busyAction !== null}
+                          onClick={() => openArchiveDialog([itemPath])}
+                        >
+                          {busyAction === "archive" ? <Loader2 className="animate-spin" /> : <Archive />}
+                          {t("archive")}
+                        </DropdownMenuItem>
+                        {isArchiveFile(file.name) && (
+                          <DropdownMenuItem
+                            className="cursor-pointer"
+                            disabled={busyAction !== null}
+                            onClick={() => void handleUnarchive(itemPath)}
+                          >
+                            {busyAction === "unarchive" ? <Loader2 className="animate-spin" /> : <PackageOpen />}
+                            {t("unarchive")}
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem
                           variant="destructive"
                           className="cursor-pointer"
-                          onClick={() => setDeleteTarget({ name: file.name, path: itemPath })}
+                          onClick={() => setDeleteTarget({ label: file.name, paths: [itemPath], bulk: false })}
                         >
                           <Trash2 />
                           {t("delete")}
@@ -591,11 +809,68 @@ export default function FilesPage({ params }: { params: Promise<{ id: string }> 
           )}
         </div>
       </div>
+      <Dialog open={archiveDialog !== null} onOpenChange={(open) => { if (!open) setArchiveDialog(null); }}>
+        <DialogPopup showCloseButton={false} className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t("archive")}</DialogTitle>
+            <DialogDescription>{t("archiveDescription")}</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-4 px-5 py-4">
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs font-medium">{t("archiveName")}</Label>
+              <Input
+                autoFocus
+                className="font-mono text-xs"
+                placeholder={t("archiveNamePlaceholder")}
+                value={archiveDialog?.name ?? ""}
+                onChange={(e) => setArchiveDialog((d) => (d ? { ...d, name: e.target.value } : d))}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs font-medium">{t("archiveFormat")}</Label>
+              <Select
+                value={archiveDialog?.format}
+                items={ARCHIVE_FORMAT_ITEMS}
+                onValueChange={(v) => { if (v) setArchiveFormat(String(v)); }}
+              >
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ARCHIVE_FORMATS.map((f) => (
+                    <SelectItem key={f.value} value={f.value}>{f.ext}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose className="rounded-lg px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+              {t("cancel")}
+            </DialogClose>
+            <Button
+              size="sm"
+              disabled={busyAction === "archive"}
+              onClick={() => { if (archiveDialog) void handleArchive(archiveDialog.paths, archiveDialog.name, archiveDialog.format); }}
+            >
+              {busyAction === "archive" && <Loader2 className="animate-spin" />}
+              {t("createArchive")}
+            </Button>
+          </DialogFooter>
+        </DialogPopup>
+      </Dialog>
+
       <ConfirmDialog
         open={deleteTarget !== null}
         onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
         title={t("deleteFileTitle")}
-        description={deleteTarget ? t("deleteFileDescription", { name: deleteTarget.name }) : undefined}
+        description={
+          deleteTarget
+            ? deleteTarget.bulk
+              ? t("deleteSelectedDescription", { count: deleteTarget.paths.length })
+              : t("deleteFileDescription", { name: deleteTarget.label })
+            : undefined
+        }
         confirmLabel={t("delete")}
         destructive
         loading={deleting}
