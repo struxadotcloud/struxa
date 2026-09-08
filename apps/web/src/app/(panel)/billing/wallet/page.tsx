@@ -181,7 +181,7 @@ export default function WalletPage() {
 
   const { data: wallet, refetch: refetchWallet } = useQuery(orpc.billing.getWallet.queryOptions());
   const { data: txRaw = [], isLoading: txLoading, refetch: refetchTransactions } = useQuery(
-    orpc.billing.listWalletTransactions.queryOptions({ limit: TX_PAGE_SIZE + 1, offset: txPage * TX_PAGE_SIZE }),
+    orpc.billing.listWalletTransactions.queryOptions({ input: { limit: TX_PAGE_SIZE + 1, offset: txPage * TX_PAGE_SIZE } }),
   );
   const hasNextPage = txRaw.length > TX_PAGE_SIZE;
   const transactions = txRaw.slice(0, TX_PAGE_SIZE);
