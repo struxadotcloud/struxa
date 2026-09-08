@@ -1,6 +1,6 @@
 <div align="center">
   
-<img src="https://struxa.cloud/images/banner.png" alt="Struxa panel preview" width="860" />
+<img src="https://struxa.cloud/images/struxa-small-banner.png" alt="Struxa panel preview" width="860" />
 
 ![GitHub Stars](https://www.shieldcn.dev/github/stars/struxadotcloud/struxa.svg?variant=secondary&size=sm)
 ![GitHub Forks](https://www.shieldcn.dev/github/forks/struxadotcloud/struxa.svg?variant=secondary&size=sm)
