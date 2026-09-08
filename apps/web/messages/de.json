@@ -762,7 +762,26 @@
     "tabs": {
       "profile": "Profil",
       "apiKeys": "API-Schlüssel",
-      "billing": "Abrechnung"
+      "billing": "Abrechnung",
+      "notifications": "Benachrichtigungen"
+    },
+    "notifications": {
+      "discordTitle": "Discord",
+      "discordDesc": "Erhalte Benachrichtigungen über Strom-, Backup- und Statusereignisse deiner Server in einem Discord-Kanal.",
+      "discordUrlLabel": "Webhook-URL",
+      "discordUrlPlaceholder": "https://discord.com/api/webhooks/…",
+      "telegramTitle": "Telegram",
+      "telegramDesc": "Erhalte Benachrichtigungen über Serverereignisse über einen Telegram-Bot.",
+      "telegramTokenLabel": "Bot-Token",
+      "telegramTokenPlaceholder": "1234567890:ABC…",
+      "telegramChatIdLabel": "Chat-ID",
+      "telegramChatIdPlaceholder": "123456789",
+      "secretSet": "••••••••  (bereits gesetzt)",
+      "test": "Test senden",
+      "testing": "Wird gesendet…",
+      "testSuccess": "Testbenachrichtigung gesendet",
+      "testFailed": "Fehlgeschlagen: {error}",
+      "saveFailed": "Speichern fehlgeschlagen: {error}"
     },
     "profile": {
       "personalInfoTitle": "Persönliche Informationen",
