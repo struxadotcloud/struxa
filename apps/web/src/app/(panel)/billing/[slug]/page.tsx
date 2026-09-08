@@ -947,7 +947,7 @@ export default function BillingCategoryPage({
   const category = categories.find((c) => c.slug === slug);
 
   const { data: products = [], isLoading: productsLoading } = useQuery({
-    ...orpc.billing.listProducts.queryOptions({ categoryId: category?.id }),
+    ...orpc.billing.listProducts.queryOptions({ input: { categoryId: category?.id } }),
     enabled: !!category?.id,
   });
 
