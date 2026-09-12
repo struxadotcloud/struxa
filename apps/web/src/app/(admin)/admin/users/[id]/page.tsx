@@ -320,7 +320,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
                     )}
                   </div>
                   <div>
-                    <p className="text-base font-semibold text-foreground">{user.name ?? "—"}</p>
+                    <p className="text-base font-semibold text-foreground">{user.name ?? "-"}</p>
                     <p className="font-mono text-xs text-muted-foreground">{user.email}</p>
                   </div>
                 </div>
@@ -343,7 +343,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
                     </span>
                   </InfoRow>
                   <InfoRow label={t("joinedLabel")}>
-                    {user.createdAt ? new Date(user.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : "—"}
+                    {user.createdAt ? new Date(user.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : "-"}
                   </InfoRow>
                   <InfoRow label={t("serversLabel")}>
                     <button
@@ -375,8 +375,8 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
                     {user.billingName && <InfoRow label="Name">{user.billingName}</InfoRow>}
                     <InfoRow label={t("addressLabel")}>{user.billingAddressLine1}{user.billingAddressLine2 ? `, ${user.billingAddressLine2}` : ""}</InfoRow>
                     <InfoRow label={t("cityStateLabel")}>{[user.billingCity, user.billingState].filter(Boolean).join(", ")}</InfoRow>
-                    <InfoRow label={t("postalCodeLabel")}>{user.billingPostalCode ?? "—"}</InfoRow>
-                    <InfoRow label={t("countryLabel")}>{user.billingCountry ?? "—"}</InfoRow>
+                    <InfoRow label={t("postalCodeLabel")}>{user.billingPostalCode ?? "-"}</InfoRow>
+                    <InfoRow label={t("countryLabel")}>{user.billingCountry ?? "-"}</InfoRow>
                     {user.vatNumber && <InfoRow label={t("vatLabel")}>{user.vatNumber} ({user.vatCountry})</InfoRow>}
                   </div>
                 ) : (
@@ -409,7 +409,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
                         <Server className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                         <span className="text-sm font-medium text-foreground">{s.name}</span>
                       </div>
-                      <span className="text-xs text-muted-foreground">{s.nodeName ?? "—"}</span>
+                      <span className="text-xs text-muted-foreground">{s.nodeName ?? "-"}</span>
                       <span className="font-mono text-xs text-muted-foreground">
                         {s.allocationIp}:{s.allocationPort}
                       </span>
@@ -471,11 +471,11 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
                     <span className="font-semibold text-foreground">
                       {userWallet
                         ? (userWallet.balanceCents / 100).toLocaleString("en-US", { style: "currency", currency: userWallet.currency })
-                        : "—"}
+                        : "-"}
                     </span>
                   </InfoRow>
                   <InfoRow label={t("billingCurrencyLabel")}>
-                    {userWallet?.currency ?? "—"}
+                    {userWallet?.currency ?? "-"}
                   </InfoRow>
                 </div>
                 <div className="mt-3 flex justify-end">
@@ -498,7 +498,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
                     {userSubscriptions.filter((s) => s.status !== "canceled").map((s) => (
                       <div key={s.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
                         <div>
-                          <p className="text-sm font-medium text-foreground">{s.productName} — {s.planName}</p>
+                          <p className="text-sm font-medium text-foreground">{s.productName} - {s.planName}</p>
                           <p className="mt-0.5 text-xs text-muted-foreground">
                             {(s.priceCents / 100).toLocaleString("en-US", { style: "currency", currency: s.currency })} / {tBilling(`durations.${s.duration}`)}
                             {s.currentPeriodEnd && (
@@ -526,9 +526,9 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
                   <div className="flex flex-col divide-y divide-border">
                     {userSubscriptions.filter((s) => s.status === "canceled").map((s) => (
                       <div key={s.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
-                        <p className="text-sm text-foreground">{s.productName} — {s.planName}</p>
+                        <p className="text-sm text-foreground">{s.productName} - {s.planName}</p>
                         <span className="text-xs text-muted-foreground">
-                          {t("billingSubCanceledAt")} {s.canceledAt ? new Date(s.canceledAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—"}
+                          {t("billingSubCanceledAt")} {s.canceledAt ? new Date(s.canceledAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "-"}
                         </span>
                       </div>
                     ))}
@@ -568,7 +568,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
                         <span className="text-foreground">
                           {(txn.balanceAfterCents / 100).toLocaleString("en-US", { style: "currency", currency: txn.currency })}
                         </span>
-                        <span className="truncate text-muted-foreground">{txn.description ?? "—"}</span>
+                        <span className="truncate text-muted-foreground">{txn.description ?? "-"}</span>
                         <span className="text-muted-foreground">
                           {new Date(txn.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                         </span>

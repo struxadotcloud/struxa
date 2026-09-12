@@ -57,7 +57,7 @@ export function buildXScale(length: number, plotWidth: number) {
     .range([0, plotWidth])
 }
 
-/** Banded x for bar categories — each index owns a slot of `bandwidth` width. */
+/** Banded x for bar categories - each index owns a slot of `bandwidth` width. */
 export function buildBandScale(length: number, plotWidth: number) {
   return scaleBand<number>()
     .domain(Array.from({ length }, (_, i) => i))

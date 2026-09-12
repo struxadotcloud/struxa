@@ -205,7 +205,7 @@ export default function NestsPage() {
                       </Link>
                       {nest.description && <span className="text-xs text-muted-foreground">{nest.description}</span>}
                     </div>
-                    <span className="text-xs text-muted-foreground">{nest.author ?? "—"}</span>
+                    <span className="text-xs text-muted-foreground">{nest.author ?? "-"}</span>
                     <div className="flex items-center justify-end">
                       <RowMenu items={actions} />
                     </div>

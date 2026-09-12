@@ -35,4 +35,4 @@ if (gaps.length) {
   console.error(`\n${gaps.length} untranslated activity event part(s).`);
   process.exit(1);
 }
-console.log(`activity i18n ok — ${events.size} admin event types resolve in all locales`);
+console.log(`activity i18n ok - ${events.size} admin event types resolve in all locales`);

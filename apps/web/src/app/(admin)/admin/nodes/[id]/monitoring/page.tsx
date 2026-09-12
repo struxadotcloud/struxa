@@ -101,45 +101,45 @@ export default function NodeMonitoringPage({ params }: { params: Promise<{ id: s
         <StatCard
           icon={MemoryStick}
           label={t("realUsage")}
-          value={latest ? `${(latest.memory.used / GB).toFixed(1)} GB` : "—"}
+          value={latest ? `${(latest.memory.used / GB).toFixed(1)} GB` : "-"}
           color="#8b5cf6"
         />
         <StatCard
           icon={MemoryStick}
           label={t("availableRam")}
-          value={latest ? `${(latest.memory.available / GB).toFixed(1)} GB` : "—"}
+          value={latest ? `${(latest.memory.available / GB).toFixed(1)} GB` : "-"}
           color="#22c55e"
         />
         <StatCard
           icon={Cpu}
           label={t("cpuUsage")}
-          value={latest ? `${latest.cpu.used.toFixed(0)}%` : "—"}
+          value={latest ? `${latest.cpu.used.toFixed(0)}%` : "-"}
           color="#3b82f6"
         />
         <StatCard
           icon={Gauge}
           label={t("loadAverage")}
-          value={latest ? latest.load_average.one.toFixed(2) : "—"}
+          value={latest ? latest.load_average.one.toFixed(2) : "-"}
           sub={latest ? `${latest.load_average.five.toFixed(2)} · ${latest.load_average.fifteen.toFixed(2)}` : undefined}
           color="#f59e0b"
         />
         <StatCard
           icon={Clock}
           label={t("uptime")}
-          value={latest ? formatUptime(latest.uptime_seconds, locale) : "—"}
+          value={latest ? formatUptime(latest.uptime_seconds, locale) : "-"}
           color="#22c55e"
         />
         <StatCard
           icon={HardDrive}
           label={t("diskUsage")}
-          value={latest ? `${(latest.disk.used / GB).toFixed(1)} GB` : "—"}
+          value={latest ? `${(latest.disk.used / GB).toFixed(1)} GB` : "-"}
           sub={latest ? `/ ${(latest.disk.total / GB).toFixed(0)} GB` : undefined}
           color="#f97316"
         />
         <StatCard
           icon={ArrowDownToLine}
           label={t("network")}
-          value={latest ? `${(latest.network.receiving_rate / MB).toFixed(1)} MB/s` : "—"}
+          value={latest ? `${(latest.network.receiving_rate / MB).toFixed(1)} MB/s` : "-"}
           sub={latest ? `↑ ${(latest.network.sending_rate / MB).toFixed(1)}` : undefined}
           color="#3b82f6"
         />

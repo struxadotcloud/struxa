@@ -34,7 +34,7 @@ export const redisAdapter: DbEngineAdapter = {
     try {
       await client.connect();
       // ponytail: no per-key isolation (~*), matches MySQL's GRANT ALL trust
-      // model for this host type — a deliberate, confirmed simplification.
+      // model for this host type - a deliberate, confirmed simplification.
       await client.call(
         "ACL",
         "SETUSER",

@@ -6,7 +6,7 @@
 FROM oven/bun:1.3.5-alpine AS builder
 WORKDIR /repo
 
-# Install deps — layer cached until lockfile or any package.json changes
+# Install deps - layer cached until lockfile or any package.json changes
 COPY bun.lock package.json ./
 COPY apps/web/package.json          ./apps/web/
 COPY apps/watchkeeper/package.json  ./apps/watchkeeper/

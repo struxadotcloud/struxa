@@ -113,7 +113,7 @@ export const nodesRouter = {
           );
           wingsUpdated = res.ok;
         } catch {
-          // Wings unreachable — DB update already succeeded
+          // Wings unreachable - DB update already succeeded
         }
       }
 

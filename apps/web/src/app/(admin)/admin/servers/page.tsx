@@ -161,7 +161,7 @@ export default function AdminServersPage() {
                       {server.allocation.ip}:{server.allocation.port}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      {(server as { node?: { name: string } }).node?.name ?? "—"}
+                      {(server as { node?: { name: string } }).node?.name ?? "-"}
                     </span>
                     <span>
                       <span

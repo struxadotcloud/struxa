@@ -61,7 +61,7 @@ export function Dot({
   )
 }
 
-/** A single marker at the hovered point — keys off the shared hover index. */
+/** A single marker at the hovered point - keys off the shared hover index. */
 export function ActiveDot({
   variant = "colored-border",
   r = 3,

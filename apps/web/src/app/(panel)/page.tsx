@@ -27,7 +27,7 @@ const STATUS_CONFIG: Record<string, StatusConfig> = {
 
 function getStatus(dbStatus: DbStatus, powerState: string | undefined, loading: boolean) {
   if (dbStatus !== "") return STATUS_CONFIG[dbStatus] ?? { color: "#71717a", bg: "rgba(113,113,122,0.12)", labelKey: dbStatus, pulse: false };
-  if (loading) return { color: "#71717a", bg: "rgba(113,113,122,0.08)", labelKey: "—", pulse: true };
+  if (loading) return { color: "#71717a", bg: "rgba(113,113,122,0.08)", labelKey: "-", pulse: true };
   return STATUS_CONFIG[powerState ?? "offline"] ?? STATUS_CONFIG.offline!;
 }
 

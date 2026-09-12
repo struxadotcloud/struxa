@@ -67,7 +67,7 @@ async function creditWallet(payload: Extract<WebhookPayload, { type: "topup.succ
         description: `wallet_topup:${gatewayProvider}`,
       });
 
-      // Insert last — unique constraint on providerTransactionId prevents double-processing
+      // Insert last - unique constraint on providerTransactionId prevents double-processing
       await tx.insert(billingTransactions).values({
         id: randomUUID(),
         userId: payload.userId,

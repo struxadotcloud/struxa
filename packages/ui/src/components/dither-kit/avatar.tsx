@@ -22,11 +22,11 @@ const CELL_PX = 4 // backing px per cell → a 32×32 canvas, scaled up pixelate
 export type AvatarMirror = "auto" | "horizontal" | "vertical"
 
 export type DitherAvatarProps = {
-  /** The seed — same name, same avatar, every time. */
+  /** The seed - same name, same avatar, every time. */
   name: string
   /** Hue override (0–360). Derived from the name when omitted. */
   hue?: number
-  /** Mirror axis. "auto" picks one from the name — half the avatars fold
+  /** Mirror axis. "auto" picks one from the name - half the avatars fold
    * left/right, half fold top/bottom. */
   mirror?: AvatarMirror
   /** Square size in px. Omit to size via className (e.g. `size-12`). */
@@ -112,7 +112,7 @@ function paintAvatar(
     for (let r = 0; r < GRID; r++) {
       for (let c = 0; c < GRID; c++) {
         if (!model.on[r * GRID + c]) continue
-        // Cells materialize in Bayer order — the entrance is made of the same
+        // Cells materialize in Bayer order - the entrance is made of the same
         // matrix as the texture.
         const start = BAYER4[r % 4]![c % 4]! * 0.7
         const cellAlpha = clamp01((progress - start) / 0.3)
@@ -156,7 +156,7 @@ function paintAvatar(
 }
 
 /**
- * Generative dithered avatar — a mirrored 8×8 pixel glyph derived from a name,
+ * Generative dithered avatar - a mirrored 8×8 pixel glyph derived from a name,
  * rendered with the ordered-dither texture the charts are made of. Same name,
  * same avatar; ~1.5 trillion combinations across pattern, mirror axis, and hue.
  */

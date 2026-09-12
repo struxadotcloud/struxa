@@ -26,7 +26,7 @@ type LoopArgs = {
 }
 
 /**
- * The requestAnimationFrame paint loop — eases each series toward its target
+ * The requestAnimationFrame paint loop - eases each series toward its target
  * surface, paints the dither fill (with the entrance reveal), then layers the
  * crosshair marker and winking stars on top. Lives outside the component so the
  * component stays small and this hot closure isn't re-created on every render.
@@ -187,7 +187,7 @@ function startCartesianLoop({
     const marker = s.hoverIndex != null ? s.hoverIndex : s.markerIndex
     const winkDue = !reduce && now - last >= 100
     // Repaint when a tweak-driven paint input changes (variant, stacking) so
-    // the panel updates the fill live — without resetting the entrance reveal.
+    // the panel updates the fill live - without resetting the entrance reveal.
     const paintSig = `${s.stackType}|${s.configKeys
       .map((k) => s.seriesSpecs[k]?.variant ?? "")
       .join(",")}`
@@ -216,7 +216,7 @@ function startCartesianLoop({
       tick += 1
     }
 
-    // Reveal front (left-to-right) — stars + crosshair stay behind it so
+    // Reveal front (left-to-right) - stars + crosshair stay behind it so
     // they don't float over the not-yet-drawn area during the entrance.
     const reveal = animate ? easeInOutCubic(prog) : 1
     const revealCols = reveal * cols
@@ -238,7 +238,7 @@ function startCartesianLoop({
         if (!cur) continue
         const seed = s.seedOf(key)
         const my = Math.round(cur.top[mx] ?? 0)
-        // Full-height column + a chunky marker block at the point — the
+        // Full-height column + a chunky marker block at the point - the
         // series colour at higher opacity, so it reads on either theme.
         c.fillStyle = rgb(seed.fill, 1, 0.55)
         for (let y = my; y < rows; y++) c.fillRect(mx, y, 1, 1)
@@ -261,7 +261,7 @@ function startCartesianLoop({
       const lift = tw * (0.7 + 0.3 * intensity)
       if (lift < 0.55 || sy < 0 || sy >= rows) continue
       // Sparkles glint in the series colour via opacity (the `lift` wink)
-      // rather than a lighter shade — so they never read as stray white
+      // rather than a lighter shade - so they never read as stray white
       // pixels on a light background.
       const starColor = s.seedOf(star.key).fill
       c.fillStyle = rgb(starColor, 1, lift)
@@ -297,7 +297,7 @@ export function CartesianCanvas() {
   const { cols, rows } = backingSize(width, height)
   const { ready, chartType, configKeys, bands, seriesSpecs, y, dataLength } = ctx
 
-  // Memoized: the pricey bit in the render path — a `resample` per series to
+  // Memoized: the pricey bit in the render path - a `resample` per series to
   // the backing column count. The canvas re-renders on every hover/cursor tick
   // (it consumes ctx), so without this the whole surface is rebuilt each time.
   // Pinned to the exact ctx fields it reads, plus the backing geometry.
@@ -320,7 +320,7 @@ export function CartesianCanvas() {
     return out
   }, [ready, chartType, configKeys, bands, seriesSpecs, y, height, rows, cols])
 
-  // Memoized: the star field is deterministic — only its shape (series ×
+  // Memoized: the star field is deterministic - only its shape (series ×
   // column count) matters, so it need not be rebuilt on unrelated re-renders.
   const stars = useMemo(() => {
     const out: Star[] = []
@@ -341,7 +341,7 @@ export function CartesianCanvas() {
 
   // The RAF loop reads these through refs so it always sees the latest values
   // without re-subscribing. Refs are written in an effect (never during
-  // render) — mutating a ref mid-render is a React anti-pattern that tears
+  // render) - mutating a ref mid-render is a React anti-pattern that tears
   // under Strict Mode / concurrent rendering.
   const stateRef = useRef(ctx)
   const targetsRef = useRef(targets)

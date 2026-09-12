@@ -104,7 +104,7 @@ export default function NetworkPage({ params }: { params: Promise<{ id: string }
           <div className="overflow-y-auto">
             <StatRow icon={Globe} label={t("statPrimary")}>
               <span className="text-sm font-semibold text-foreground leading-snug">
-                {alloc ? `${allocIp}:${alloc.port}` : "—"}
+                {alloc ? `${allocIp}:${alloc.port}` : "-"}
               </span>
             </StatRow>
             <StatRow icon={Globe} label={t("statAllocations")}>

@@ -131,7 +131,7 @@ function loaderLabel(l: string) {
 
 function versionLabel(v: ModrinthVersion) {
   const mc = v.game_versions[0];
-  return mc ? `${v.version_number} — MC ${mc}` : v.version_number;
+  return mc ? `${v.version_number} - MC ${mc}` : v.version_number;
 }
 
 function PluginIcon({ plugin, size = "md" }: { plugin: ModrinthProject; size?: "sm" | "md" | "lg" }) {
@@ -636,7 +636,7 @@ function PluginDetail({
             <ProjectMetadata detail={detail} members={members} />
           </div>
 
-          {/* Right column — README */}
+          {/* Right column - README */}
           <div className="flex-1 overflow-y-auto p-6">
             <Readme body={body} />
           </div>

@@ -1,16 +1,16 @@
 # Contributing to Struxa
 
-Thank you for your interest in contributing. Struxa is an open-source project and every bit of help — code, bug reports, design critique, or documentation — moves it forward.
+Thank you for your interest in contributing. Struxa is an open-source project and every bit of help - code, bug reports, design critique, or documentation - moves it forward.
 
 ---
 
 ## Ways to Contribute
 
-- **Bug reports** — open an Issue describing what happened, what you expected, and your environment
-- **Feature requests** — open an Issue with a clear description of the problem you are solving, not just the solution
-- **Code** — pick up an open Issue, discuss your approach in the Issue thread, then open a PR
-- **Design feedback** — UI/UX critique on open Issues or PRs is welcome; refer to [DESIGN.md](./DESIGN.md)
-- **Documentation** — improve README, CONTRIBUTING, or inline code comments
+- **Bug reports** - open an Issue describing what happened, what you expected, and your environment
+- **Feature requests** - open an Issue with a clear description of the problem you are solving, not just the solution
+- **Code** - pick up an open Issue, discuss your approach in the Issue thread, then open a PR
+- **Design feedback** - UI/UX critique on open Issues or PRs is welcome; refer to [DESIGN.md](./DESIGN.md)
+- **Documentation** - improve README, CONTRIBUTING, or inline code comments
 
 If you are unsure where to start, look for Issues labeled `good first issue`.
 
@@ -22,7 +22,7 @@ If you are unsure where to start, look for Issues labeled `good first issue`.
 
 - [Bun](https://bun.sh) `>= 1.3.5`
 - MySQL (local install or Docker)
-- Node.js is not required — Bun handles everything
+- Node.js is not required - Bun handles everything
 
 ### Steps
 
@@ -57,8 +57,8 @@ bun run dev               # panel runs at http://localhost:3001
 
 | Path               | Package          | What goes here                                            |
 | ------------------ | ---------------- | --------------------------------------------------------- |
-| `apps/web/`        | —                | Next.js panel app. Pages, routes, app-specific components |
-| `apps/fumadocs/`   | —                | Documentation site                                        |
+| `apps/web/`        | -                | Next.js panel app. Pages, routes, app-specific components |
+| `apps/fumadocs/`   | -                | Documentation site                                        |
 | `packages/ui/`     | `@struxa/ui`     | Shared shadcn/ui primitives and global styles             |
 | `packages/api/`    | `@struxa/api`    | oRPC router definitions and procedures                    |
 | `packages/auth/`   | `@struxa/auth`   | Better-Auth server and client configuration               |
@@ -72,13 +72,13 @@ bun run dev               # panel runs at http://localhost:3001
 
 ## Code Style
 
-- **TypeScript strict** — no `any`, no skipped type errors
-- **Formatting** — Oxfmt handles it; run `bun run check` before committing
-- **Linting** — Oxlint; run `bun run check` before committing
-- **Environment variables** — all env vars must go through `packages/env`; do not read `process.env` directly in app code
-- **Authentication** — use Better-Auth via `packages/auth`; do not implement manual token management
-- **UI** — compose from `@struxa/ui` before creating app-local primitives; follow [DESIGN.md](./DESIGN.md) for all visual decisions
-- **API** — define procedures in `packages/api`; do not write raw fetch calls to your own backend
+- **TypeScript strict** - no `any`, no skipped type errors
+- **Formatting** - Oxfmt handles it; run `bun run check` before committing
+- **Linting** - Oxlint; run `bun run check` before committing
+- **Environment variables** - all env vars must go through `packages/env`; do not read `process.env` directly in app code
+- **Authentication** - use Better-Auth via `packages/auth`; do not implement manual token management
+- **UI** - compose from `@struxa/ui` before creating app-local primitives; follow [DESIGN.md](./DESIGN.md) for all visual decisions
+- **API** - define procedures in `packages/api`; do not write raw fetch calls to your own backend
 
 ---
 
@@ -123,8 +123,8 @@ chore(db): upgrade drizzle-orm to 0.43.0
    bun run check-types
    bun run check
    ```
-5. **Fill in the PR template** — describe what changed, why, and how to verify it manually.
-6. **UI changes** — include a screenshot or screen recording. State which parts of [DESIGN.md](./DESIGN.md) apply and how you followed them.
+5. **Fill in the PR template** - describe what changed, why, and how to verify it manually.
+6. **UI changes** - include a screenshot or screen recording. State which parts of [DESIGN.md](./DESIGN.md) apply and how you followed them.
 7. A maintainer will review. Expect feedback. Do not merge your own PRs.
 
 ---
@@ -138,7 +138,7 @@ All UI work must follow the design language documented in [DESIGN.md](./DESIGN.m
 - Green (`#22c55e`) for status indicators and charts only
 - Amber (`#f59e0b`) for primary CTAs only
 - Rose (`#f43f5e`) for destructive actions only
-- No border radius (or minimal — `rounded-sm` maximum for inputs)
+- No border radius (or minimal - `rounded-sm` maximum for inputs)
 - ALL CAPS labels with wide letter-spacing
 - Monospace font for any terminal, log, or code surface
 

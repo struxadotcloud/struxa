@@ -948,7 +948,7 @@ export const billingRouter = {
         with: { node: true },
       });
 
-      // ponytail: soft capacity check — two concurrent buys can both pass; overallocation headroom absorbs the slop
+      // ponytail: soft capacity check - two concurrent buys can both pass; overallocation headroom absorbs the slop
       const nodeUsageCache = new Map<string, { usedRam: number; usedDisk: number }>();
       let alloc: (typeof freeAllocs)[0] | null = null;
 
@@ -1140,7 +1140,7 @@ export const billingRouter = {
         await tx.insert(billingInvoiceItems).values({
           id: invoiceItemId,
           invoiceId,
-          description: `${plan.name} — ${priceRow.duration}`,
+          description: `${plan.name} - ${priceRow.duration}`,
           quantity: 1,
           unitAmountCents: priceRow.priceCents,
           totalCents: priceRow.priceCents,
@@ -1158,7 +1158,7 @@ export const billingRouter = {
             balanceAfterCents: balanceAfter,
             currency,
             type: "charge",
-            description: `${plan.name} — ${priceRow.duration}`,
+            description: `${plan.name} - ${priceRow.duration}`,
           });
 
           await tx.insert(billingTransactions).values({
@@ -1169,7 +1169,7 @@ export const billingRouter = {
             status: "succeeded",
             amountCents: finalAmountCents,
             currency,
-            description: `${plan.name} — ${priceRow.duration}`,
+            description: `${plan.name} - ${priceRow.duration}`,
           });
         }
 
@@ -1215,7 +1215,7 @@ export const billingRouter = {
           },
         });
       } catch {
-        // Wings provisioning failed; server stays "installing" — admin can reinstall
+        // Wings provisioning failed; server stays "installing" - admin can reinstall
       }
 
       invalidateCapacityCache();
@@ -1301,7 +1301,7 @@ export const billingRouter = {
 
       const durationDays = DURATION_DAYS[priceRow.duration] ?? 30;
       const planName = sub.plan?.name ?? "";
-      const txDescription = `${planName} — extension:${priceRow.duration}`;
+      const txDescription = `${planName} - extension:${priceRow.duration}`;
       const priceCents = priceRow.priceCents;
       const currency = sub.currency;
 

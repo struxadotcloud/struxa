@@ -47,7 +47,7 @@ export type PolarChartContextValue = {
 
   selectedDataKey: string | null
   selectDataKey: (key: string | null) => void
-  /** Legend-hover spotlight — dims every series but this one while set. */
+  /** Legend-hover spotlight - dims every series but this one while set. */
   focusDataKey: string | null
   setFocusDataKey: (key: string | null) => void
   hoverIndex: number | null
@@ -80,7 +80,7 @@ export function usePolarPart(part: string, kind: "pie" | "radar") {
   }
   if (ctx.chartType !== kind) {
     throw new Error(
-      `<${part} /> is not valid inside ${ROOT_OF[ctx.chartType]} — it belongs in ${ROOT_OF[kind]}.`
+      `<${part} /> is not valid inside ${ROOT_OF[ctx.chartType]} - it belongs in ${ROOT_OF[kind]}.`
     )
   }
   return ctx
@@ -121,14 +121,14 @@ export function usePolarController({
   defaultSelectedDataKey?: string | null
   onSelectionChange?: (key: string | null) => void
 }): PolarChartContextValue {
-  // This object becomes the PolarChartContext value, so its identity — and the
-  // identity of every function/object it carries — must stay stable across
+  // This object becomes the PolarChartContext value, so its identity - and the
+  // identity of every function/object it carries - must stay stable across
   // renders that don't change the inputs; otherwise every consumer (legend,
   // tooltip, slices, axes) re-renders on every parent render. The expensive
   // derivations, exposed callbacks, and returned value are memoized below;
   // cheap scalars (radii, ready) are left bare as plain recomputed reads.
 
-  // Memoized: drives `pie`/`radar`/`common` — a fresh array would bust them.
+  // Memoized: drives `pie`/`radar`/`common` - a fresh array would bust them.
   const configKeys = useMemo(() => Object.keys(config), [config])
   const revision = useRevision(data, replayToken)
 
@@ -201,7 +201,7 @@ export function usePolarController({
     [variants]
   )
 
-  // Memoized: slice geometry — recomputing it on every hover/cursor tick would
+  // Memoized: slice geometry - recomputing it on every hover/cursor tick would
   // rebuild the pie layout needlessly.
   const pie = useMemo(
     () => (chartType === "pie" ? pieSlices(data, dataKey, nameKey) : null),
@@ -305,7 +305,7 @@ export function usePolarController({
   ])
 
   // Memoized: this is the PolarChartContext value. A fresh object here would
-  // re-render every consumer on every parent render — the reason the pieces
+  // re-render every consumer on every parent render - the reason the pieces
   // above are stabilized. Rebuilds only when a listed input changes. The
   // useState setters are listed but never change identity.
   return useMemo<PolarChartContextValue>(

@@ -363,7 +363,7 @@ export default function WalletPage() {
           <div className="flex flex-col gap-1">
             <p className="text-xs text-muted-foreground">{t("balance")}</p>
             <p className="text-4xl font-bold tabular-nums text-foreground leading-none">
-              {wallet ? formatBalance(wallet.balanceCents, currency) : "—"}
+              {wallet ? formatBalance(wallet.balanceCents, currency) : "-"}
             </p>
           </div>
           <Button onClick={openTopup} size="sm">
@@ -408,27 +408,27 @@ export default function WalletPage() {
                           if (desc.startsWith("wallet_topup:")) {
                             const providerKey = desc.slice("wallet_topup:".length);
                             const providerName = PROVIDER_DISPLAY[providerKey] ?? providerKey;
-                            return <span className="ml-1.5 font-normal text-muted-foreground">— {t("txDescriptions.wallet_topup_via", { provider: providerName })}</span>;
+                            return <span className="ml-1.5 font-normal text-muted-foreground">- {t("txDescriptions.wallet_topup_via", { provider: providerName })}</span>;
                           }
                           if (TX_DESC_KEYS.has(desc)) {
-                            return <span className="ml-1.5 font-normal text-muted-foreground">— {t(`txDescriptions.${desc}`)}</span>;
+                            return <span className="ml-1.5 font-normal text-muted-foreground">- {t(`txDescriptions.${desc}`)}</span>;
                           }
-                          const sep = desc.lastIndexOf(" — ");
+                          const sep = desc.lastIndexOf(" - ");
                           if (sep !== -1) {
                             const rawSuffix = desc.slice(sep + 3);
                             if (rawSuffix.startsWith("extension:")) {
                               const durKey = rawSuffix.slice("extension:".length);
                               const dur = DURATION_KEYS.has(durKey) ? durKey : null;
                               if (dur) {
-                                return <span className="ml-1.5 font-normal text-muted-foreground">— {desc.slice(0, sep)} — {t("txDescriptions.extension")} ({tBilling(`durations.${dur}`)})</span>;
+                                return <span className="ml-1.5 font-normal text-muted-foreground">- {desc.slice(0, sep)} - {t("txDescriptions.extension")} ({tBilling(`durations.${dur}`)})</span>;
                               }
                             }
                             const suffix = DURATION_KEYS.has(rawSuffix) ? rawSuffix : (DURATION_LEGACY[rawSuffix] ?? null);
                             if (suffix) {
-                              return <span className="ml-1.5 font-normal text-muted-foreground">— {desc.slice(0, sep)} — {tBilling(`durations.${suffix}`)}</span>;
+                              return <span className="ml-1.5 font-normal text-muted-foreground">- {desc.slice(0, sep)} - {tBilling(`durations.${suffix}`)}</span>;
                             }
                           }
-                          return <span className="ml-1.5 font-normal text-muted-foreground">— {desc}</span>;
+                          return <span className="ml-1.5 font-normal text-muted-foreground">- {desc}</span>;
                         })()}
                       </p>
                       <p className="text-xs text-muted-foreground">{formatDate(tx.createdAt)}</p>

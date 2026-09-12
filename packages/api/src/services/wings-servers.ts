@@ -309,7 +309,7 @@ export async function completeInstall(
           : DEFAULT_TEMPLATES["server-install"](vars);
         await sendEmail(svc, owner.email, `Your ${appName} server is ready`, html);
       } catch {
-        // non-critical — don't fail the install callback
+        // non-critical - don't fail the install callback
       }
     })();
   }

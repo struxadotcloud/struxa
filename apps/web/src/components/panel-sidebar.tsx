@@ -161,7 +161,7 @@ export function PanelSidebar() {
                 )}
               </div>
               <div className="min-w-0 flex-1 text-left">
-                <p className="truncate text-sm font-medium text-foreground">{user?.name ?? "—"}</p>
+                <p className="truncate text-sm font-medium text-foreground">{user?.name ?? "-"}</p>
               </div>
               {billingConfig?.enabled && wallet && (
                 <span className="shrink-0 text-[10px] font-semibold tabular-nums text-muted-foreground bg-muted rounded px-1.5 py-0.5 leading-none">

@@ -313,7 +313,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
 
   const node = server?.node as { name?: string; fqdn?: string; daemonSFTP?: number } | undefined;
   const sftp = {
-    host: node?.fqdn ?? "—",
+    host: node?.fqdn ?? "-",
     port: node?.daemonSFTP ?? 2022,
     username: `${session?.user.email?.split("@")[0] ?? "user"}.${server?.uuidShort ?? ""}`,
   };
@@ -472,7 +472,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
                 </div>
               ) : (
                 <span className="font-mono text-sm text-muted-foreground max-w-xs truncate">
-                  {currentImage || "—"}
+                  {currentImage || "-"}
                 </span>
               )}
             </SettingRow>
@@ -519,7 +519,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
             <div className="border-b border-border px-4 py-3">
               <p className="mb-1 text-xs font-medium text-muted-foreground">{t("startupCommandLabel")}</p>
               <p className="font-mono text-xs text-foreground/70 leading-relaxed break-all">
-                {server?.startup ?? "—"}
+                {server?.startup ?? "-"}
               </p>
             </div>
             {serverVars.map((sv) => {
@@ -645,7 +645,7 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
                       <div className="flex items-center gap-2">
                         {expiringSoon && <AlertTriangle className="size-3.5 text-amber-500" />}
                         <span className={cn("text-sm font-medium", expiringSoon ? "text-amber-600" : "text-foreground")}>
-                          {periodEnd ? periodEnd.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : "—"}
+                          {periodEnd ? periodEnd.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : "-"}
                         </span>
                       </div>
                     </SettingRow>
@@ -721,13 +721,13 @@ export default function SettingsPage({ params }: { params: Promise<{ id: string 
         <aside className="flex w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card md:w-[240px]">
           <div className="overflow-y-auto">
             <StatRow icon={Server} label={t("statServerId")}>
-              <span className="font-mono text-xs text-muted-foreground break-all">{server?.uuid ?? "—"}</span>
+              <span className="font-mono text-xs text-muted-foreground break-all">{server?.uuid ?? "-"}</span>
             </StatRow>
             <StatRow icon={Globe} label={t("statNode")}>
-              <span className="text-sm font-semibold text-foreground">{node?.name ?? "—"}</span>
+              <span className="text-sm font-semibold text-foreground">{node?.name ?? "-"}</span>
             </StatRow>
             <StatRow icon={Server} label={t("statEgg")}>
-              <span className="text-sm font-semibold text-foreground">{(server?.egg as { name?: string } | undefined)?.name ?? "—"}</span>
+              <span className="text-sm font-semibold text-foreground">{(server?.egg as { name?: string } | undefined)?.name ?? "-"}</span>
             </StatRow>
             <StatRow icon={Terminal} label={t("statSftpHost")}>
               <div className="flex items-center gap-2">

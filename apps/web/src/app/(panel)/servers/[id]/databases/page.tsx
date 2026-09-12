@@ -351,7 +351,7 @@ export default function DatabasesPage({ params }: { params: Promise<{ id: string
             </StatRow>
             <StatRow icon={Database} label={t("statHost")}>
               <span className="font-mono text-sm font-semibold text-foreground leading-snug">
-                {(databases[0] as DbRow | undefined)?.host.host ?? "—"}
+                {(databases[0] as DbRow | undefined)?.host.host ?? "-"}
               </span>
             </StatRow>
             <StatRow icon={Database} label={t("statNote")}>

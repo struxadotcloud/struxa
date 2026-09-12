@@ -42,7 +42,7 @@ export async function GET(req: NextRequest, { params }: Params) {
 
   const ifNoneMatch = req.headers.get("if-none-match");
 
-  // Cheap ETag check — no body download needed
+  // Cheap ETag check - no body download needed
   if (ifNoneMatch) {
     try {
       const { etag } = await headObject(key);

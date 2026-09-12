@@ -1,4 +1,4 @@
-# Local Docker Compose — builds all images from source
+# Local Docker Compose - builds all images from source
 # Usage: docker compose -f docker-compose.local.yml --env-file .env.local up --build
 
 services:

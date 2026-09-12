@@ -8,6 +8,6 @@ export async function syncLocaleFromDB(): Promise<void> {
     const locale = self?.locale ?? "en";
     document.cookie = `NEXT_LOCALE=${locale}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
   } catch {
-    // non-critical — locale defaults to 'en'
+    // non-critical - locale defaults to 'en'
   }
 }

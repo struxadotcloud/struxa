@@ -102,37 +102,37 @@ export function FleetResources({ nodes, servers }: { nodes: NodeRow[]; servers: 
         <StatCard
           icon={Database}
           label={t("fleetRamAllocated")}
-          value={allocatedMb > 0 ? `${(allocatedMb / 1024).toFixed(1)} GB` : "—"}
+          value={allocatedMb > 0 ? `${(allocatedMb / 1024).toFixed(1)} GB` : "-"}
           color="#f59e0b"
         />
         <StatCard
           icon={MemoryStick}
           label={t("fleetRamUsed")}
-          value={hasData ? `${(agg!.latest.memUsed / GB).toFixed(1)} GB` : "—"}
+          value={hasData ? `${(agg!.latest.memUsed / GB).toFixed(1)} GB` : "-"}
           color="#8b5cf6"
         />
         <StatCard
           icon={MemoryStick}
           label={t("fleetRamAvailable")}
-          value={hasData ? `${(agg!.latest.memAvailable / GB).toFixed(1)} GB` : "—"}
+          value={hasData ? `${(agg!.latest.memAvailable / GB).toFixed(1)} GB` : "-"}
           color="#22c55e"
         />
         <StatCard
           icon={Cpu}
           label={t("fleetCpuLabel")}
-          value={hasData ? `${agg!.latest.cpuAvg.toFixed(0)}%` : "—"}
+          value={hasData ? `${agg!.latest.cpuAvg.toFixed(0)}%` : "-"}
           color="#3b82f6"
         />
         <StatCard
           icon={HardDrive}
           label={t("fleetDiskUsed")}
-          value={hasData ? `${(agg!.latest.diskUsed / GB).toFixed(1)} GB` : "—"}
+          value={hasData ? `${(agg!.latest.diskUsed / GB).toFixed(1)} GB` : "-"}
           color="#f97316"
         />
         <StatCard
           icon={ArrowDownToLine}
           label={t("fleetNet")}
-          value={hasData ? `${(agg!.latest.netRx / MB).toFixed(1)} MB/s` : "—"}
+          value={hasData ? `${(agg!.latest.netRx / MB).toFixed(1)} MB/s` : "-"}
           sub={hasData ? `↑ ${(agg!.latest.netTx / MB).toFixed(1)}` : undefined}
           color="#22c55e"
         />

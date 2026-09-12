@@ -391,7 +391,7 @@ export default function EmailEditorPage() {
 
       {/* Body */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar — hidden on mobile/tablet, visible md+ */}
+        {/* Sidebar - hidden on mobile/tablet, visible md+ */}
         <div className="hidden md:flex w-48 shrink-0 flex-col border-r border-border bg-card overflow-y-auto py-2">
           <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
             {t("templates")}

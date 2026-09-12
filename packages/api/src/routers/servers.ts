@@ -134,7 +134,7 @@ export const serversRouter = {
             }
           }
         } catch {
-          // Node unreachable — its servers are absent from the map, UI treats them as offline
+          // Node unreachable - its servers are absent from the map, UI treats them as offline
         }
       }),
     );
@@ -246,7 +246,7 @@ export const serversRouter = {
         try {
           await client.sendPowerAction(server.uuid, "kill");
         } catch {
-          // Wings unreachable — DB flag is set; enforcement happens at next Wings contact
+          // Wings unreachable - DB flag is set; enforcement happens at next Wings contact
         }
       }
 
@@ -903,7 +903,7 @@ export const serversRouter = {
       try {
         await client.deleteServer(server.uuid, { purge: input.purgeData });
       } catch {
-        // If Wings returns 404 the server doesn't exist on Wings — proceed with DB cleanup
+        // If Wings returns 404 the server doesn't exist on Wings - proceed with DB cleanup
       }
 
       await db
