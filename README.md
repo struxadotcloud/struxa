@@ -13,14 +13,14 @@
 
 <br />
 
-Struxa is a self-hosted server management panel — a clean-room, modern replacement for [Pterodactyl](https://pterodactyl.io). Built on a fully typed TypeScript monorepo with a dark, operator-focused UI.
+Struxa is a self-hosted server management panel - a clean-room, modern replacement for [Pterodactyl](https://pterodactyl.io). Built on a fully typed TypeScript monorepo with a dark, operator-focused UI.
 
 ## Related repositories
 
 | Repository | Description |
 |---|---|
-| [struxadotcloud/struxa](https://github.com/struxadotcloud/struxa) | This repo — main panel (web UI, API, database) |
-| [struxadotcloud/wings](https://github.com/struxadotcloud/wings) | Node agent — server lifecycle, file management, SFTP |
+| [struxadotcloud/struxa](https://github.com/struxadotcloud/struxa) | This repo - main panel (web UI, API, database) |
+| [struxadotcloud/wings](https://github.com/struxadotcloud/wings) | Node agent - server lifecycle, file management, SFTP |
 | [struxadotcloud/install](https://github.com/struxadotcloud/install) | One-command installer |
 | [struxadotcloud/docs](https://github.com/struxadotcloud/docs) | Documentation site |
 
@@ -36,11 +36,11 @@ For full installation and configuration instructions, see the [documentation](ht
 
 ## Contributing
 
-Contributions are welcome — code, bug reports, and design feedback. See [CONTRIBUTING.md](./CONTRIBUTING.md) to get started. Progress is tracked via [GitHub Issues](https://github.com/struxadotcloud/struxa/issues).
+Contributions are welcome - code, bug reports, and design feedback. See [CONTRIBUTING.md](./CONTRIBUTING.md) to get started. Progress is tracked via [GitHub Issues](https://github.com/struxadotcloud/struxa/issues).
 
 ## License
 
-[MIT](./LICENSE) — free to use, modify, and self-host
+[MIT](./LICENSE) - free to use, modify, and self-host
 
 <br />
 
