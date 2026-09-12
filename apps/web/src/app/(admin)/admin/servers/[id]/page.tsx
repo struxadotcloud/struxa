@@ -254,7 +254,7 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
                 </div>
                 <div>
                   <p className="mb-1 text-xs font-medium text-muted-foreground">{t("eggDetailLabel")}</p>
-                  <p className="text-sm text-foreground">{server.egg?.name ?? "—"}</p>
+                  <p className="text-sm text-foreground">{server.egg?.name ?? "-"}</p>
                 </div>
               </div>
               <div className="mt-4 flex items-center gap-2">

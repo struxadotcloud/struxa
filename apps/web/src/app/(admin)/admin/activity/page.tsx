@@ -110,7 +110,7 @@ function getEventDetails(eventType: string, propertiesJson: string | null): stri
   }
   if (typeof props.name === "string") return props.name;
   if (typeof props.short === "string") {
-    return props.long && typeof props.long === "string" ? `${props.short} — ${props.long}` : props.short;
+    return props.long && typeof props.long === "string" ? `${props.short} - ${props.long}` : props.short;
   }
   if (typeof props.variable === "string") return props.variable;
   if (typeof props.targetUserId === "string") {
@@ -128,7 +128,7 @@ function getEventDetails(eventType: string, propertiesJson: string | null): stri
 }
 
 function fmtDate(d: Date | string | null): string {
-  if (!d) return "—";
+  if (!d) return "-";
   return new Date(d).toLocaleString();
 }
 
@@ -209,12 +209,12 @@ export default function AdminActivityPage() {
                       <ActorCell user={entry.user} />
                     </div>
                     <span className="truncate pr-4 font-mono text-xs text-muted-foreground">
-                      {target ?? "—"}
+                      {target ?? "-"}
                     </span>
                     <span className="truncate pr-4 font-mono text-xs text-muted-foreground">
-                      {getEventDetails(entry.eventType, entry.properties) ?? "—"}
+                      {getEventDetails(entry.eventType, entry.properties) ?? "-"}
                     </span>
-                    <span className="font-mono text-xs text-muted-foreground">{entry.ip ?? "—"}</span>
+                    <span className="font-mono text-xs text-muted-foreground">{entry.ip ?? "-"}</span>
                   </div>
                 );
               })

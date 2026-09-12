@@ -35,14 +35,14 @@ export default function AdminDashboard() {
             <StatCard
               icon={Server}
               label={t("nodesLabel")}
-              value={nodes?.length ?? "—"}
+              value={nodes?.length ?? "-"}
               sub={t("nodesOnline", { count: onlineNodes })}
               color="#22c55e"
             />
             <StatCard
               icon={Monitor}
               label={t("serversLabel")}
-              value={servers?.length ?? "—"}
+              value={servers?.length ?? "-"}
               color="#3b82f6"
             />
             <StatCard

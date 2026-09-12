@@ -2,25 +2,25 @@
 # Usage: docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
 #
 # Required .env.prod variables:
-#   IMAGE_TAG                — release version to deploy (e.g. 1.0.0)
-#   MYSQL_ROOT_PASSWORD      — strong root password for MySQL
-#   MYSQL_DATABASE           — database name (e.g. struxav2)
-#   MYSQL_USER               — app database user
-#   MYSQL_PASSWORD           — app database password
-#   DATABASE_URL             — full DSN using service name: mysql://user:pass@mysql:3306/struxav2
-#   BETTER_AUTH_SECRET       — min 32-char random secret
-#   BETTER_AUTH_URL          — public URL of the web app (e.g. https://panel.example.com)
-#   CORS_ORIGIN              — allowed CORS origin URL
-#   JWT_PRIVATE_KEY          — PEM or base64-encoded private key
-#   JWT_PUBLIC_KEY           — PEM or base64-encoded public key
-#   DATABASE_ENCRYPTION_KEY  — 64-char hex string
-#   APP_URL                  — public URL of the app
-#   TURNSTILE_SECRET_KEY     — (optional) Cloudflare Turnstile secret
-#   BOOTSTRAP_SECRET         — (optional) shared secret protecting /api/setup/bootstrap
-#   MINIO_ENDPOINT           — internal MinIO URL (e.g. http://minio:9000)
-#   MINIO_ACCESS_KEY         — MinIO root user / access key
-#   MINIO_SECRET_KEY         — MinIO root password / secret key
-#   MINIO_BUCKET             — storage bucket name (default: struxa)
+#   IMAGE_TAG                - release version to deploy (e.g. 1.0.0)
+#   MYSQL_ROOT_PASSWORD      - strong root password for MySQL
+#   MYSQL_DATABASE           - database name (e.g. struxav2)
+#   MYSQL_USER               - app database user
+#   MYSQL_PASSWORD           - app database password
+#   DATABASE_URL             - full DSN using service name: mysql://user:pass@mysql:3306/struxav2
+#   BETTER_AUTH_SECRET       - min 32-char random secret
+#   BETTER_AUTH_URL          - public URL of the web app (e.g. https://panel.example.com)
+#   CORS_ORIGIN              - allowed CORS origin URL
+#   JWT_PRIVATE_KEY          - PEM or base64-encoded private key
+#   JWT_PUBLIC_KEY           - PEM or base64-encoded public key
+#   DATABASE_ENCRYPTION_KEY  - 64-char hex string
+#   APP_URL                  - public URL of the app
+#   TURNSTILE_SECRET_KEY     - (optional) Cloudflare Turnstile secret
+#   BOOTSTRAP_SECRET         - (optional) shared secret protecting /api/setup/bootstrap
+#   MINIO_ENDPOINT           - internal MinIO URL (e.g. http://minio:9000)
+#   MINIO_ACCESS_KEY         - MinIO root user / access key
+#   MINIO_SECRET_KEY         - MinIO root password / secret key
+#   MINIO_BUCKET             - storage bucket name (default: struxa)
 
 services:
   mysql:

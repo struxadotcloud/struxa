@@ -620,7 +620,7 @@ export default function SetupPage() {
 
   return (
     <main className="min-h-svh bg-background lg:grid lg:grid-cols-2">
-      {/* Branding panel — desktop only */}
+      {/* Branding panel - desktop only */}
       <div className="relative hidden lg:flex lg:flex-col lg:justify-between lg:items-start lg:order-1 bg-muted/40 border-border px-12 py-10 border-r">
         <Image src="/logo-dark.svg" alt="Struxa" width={96} height={28} priority className="h-7 w-auto dark:hidden" />
         <Image src="/logo-white.svg" alt="Struxa" width={96} height={28} priority className="hidden h-7 w-auto dark:block" />

@@ -209,7 +209,7 @@ export default function AdminUsersPage() {
                           <DitherAvatar name={u.name ?? u.email} className="h-full w-full" />
                         )}
                       </div>
-                      <span className="text-sm font-medium text-foreground">{u.name ?? "—"}</span>
+                      <span className="text-sm font-medium text-foreground">{u.name ?? "-"}</span>
                     </div>
 
                     <span className="font-mono text-xs text-muted-foreground">{u.email}</span>
@@ -239,7 +239,7 @@ export default function AdminUsersPage() {
                     <span className="text-xs text-muted-foreground">
                       {u.createdAt
                         ? new Date(u.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-                        : "—"}
+                        : "-"}
                     </span>
 
                     <RowMenu items={actions} />

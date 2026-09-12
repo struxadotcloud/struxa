@@ -36,11 +36,11 @@ lifting state, and composing internals.
 
 ## Core Principles
 
-1. **Composition over configuration** — Instead of adding props, let consumers
+1. **Composition over configuration** - Instead of adding props, let consumers
    compose
-2. **Lift your state** — State in providers, not trapped in components
-3. **Compose your internals** — Subcomponents access context, not props
-4. **Explicit variants** — Create ThreadComposer, EditComposer, not Composer
+2. **Lift your state** - State in providers, not trapped in components
+3. **Compose your internals** - Subcomponents access context, not props
+4. **Explicit variants** - Create ThreadComposer, EditComposer, not Composer
    with isThread
 
 ## Creating a New Rule

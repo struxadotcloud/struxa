@@ -20,17 +20,17 @@ Composition patterns for building flexible, maintainable React components. Avoid
 
 ## Table of Contents
 
-1. [Component Architecture](#1-component-architecture) — **HIGH**
+1. [Component Architecture](#1-component-architecture) - **HIGH**
    - 1.1 [Avoid Boolean Prop Proliferation](#11-avoid-boolean-prop-proliferation)
    - 1.2 [Use Compound Components](#12-use-compound-components)
-2. [State Management](#2-state-management) — **MEDIUM**
+2. [State Management](#2-state-management) - **MEDIUM**
    - 2.1 [Decouple State Management from UI](#21-decouple-state-management-from-ui)
    - 2.2 [Define Generic Context Interfaces for Dependency Injection](#22-define-generic-context-interfaces-for-dependency-injection)
    - 2.3 [Lift State into Provider Components](#23-lift-state-into-provider-components)
-3. [Implementation Patterns](#3-implementation-patterns) — **MEDIUM**
+3. [Implementation Patterns](#3-implementation-patterns) - **MEDIUM**
    - 3.1 [Create Explicit Component Variants](#31-create-explicit-component-variants)
    - 3.2 [Prefer Composing Children Over Render Props](#32-prefer-composing-children-over-render-props)
-4. [React 19 APIs](#4-react-19-apis) — **MEDIUM**
+4. [React 19 APIs](#4-react-19-apis) - **MEDIUM**
    - 4.1 [React 19 API Changes](#41-react-19-api-changes)
 
 ---
@@ -256,7 +256,7 @@ composed components.
 
 The provider component should be the only place that knows how state is managed.
 
-UI components consume the context interface—they don't know if state comes from
+UI components consume the context interface-they don't know if state comes from
 
 useState, Zustand, or a server sync.
 
@@ -360,7 +360,7 @@ Define a **generic interface** for your component context with three parts:
 
 `state`, `actions`, and `meta`. This interface is a contract that any provider
 
-can implement—enabling the same UI components to work with completely different
+can implement-enabling the same UI components to work with completely different
 
 state implementations.
 
@@ -532,7 +532,7 @@ function MessagePreview() {
 }
 ```
 
-The provider boundary is what matters—not the visual nesting. Components that
+The provider boundary is what matters-not the visual nesting. Components that
 
 need shared state don't have to be inside the `Composer.Frame`. They just need
 
@@ -673,7 +673,7 @@ UI itself.
 
 **Key insight:** Components that need shared state don't have to be visually
 
-nested inside each other—they just need to be within the same provider.
+nested inside each other-they just need to be within the same provider.
 
 ---
 

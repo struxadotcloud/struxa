@@ -30,7 +30,7 @@ Logs are written by evlog's file system drain as `.jsonl` files, organized by da
 
 Always check the first few bytes of the file to detect the format: if the second character is a newline or `"`, it's NDJSON; if it's a space or newline followed by spaces, it's pretty-printed.
 
-**Search order** — check these locations relative to the project root:
+**Search order** - check these locations relative to the project root:
 
 1. `.evlog/logs/` (default)
 2. Any `.evlog/logs/` inside app directories (monorepos: `apps/*/.evlog/logs/`)
@@ -165,8 +165,8 @@ Look for: client errors that don't have corresponding server errors (network iss
 
 ## Important notes
 
-- Each line is a **complete, self-contained event**. Unlike traditional logs, you don't need to correlate multiple lines — one line has all the context for one request.
+- Each line is a **complete, self-contained event**. Unlike traditional logs, you don't need to correlate multiple lines - one line has all the context for one request.
 - The `error.data.why` and `error.data.fix` fields are evlog-specific structured error fields. When present, they provide the most actionable information.
 - Duration values are strings with units (e.g. `"706ms"`). Parse the numeric part for comparisons.
 - Events with `"source":"client"` originated from browser-side logging and were sent to the server via the transport endpoint.
-- Log files are `.gitignore`'d automatically — they exist only on the local machine or server where the app runs.
+- Log files are `.gitignore`'d automatically - they exist only on the local machine or server where the app runs.

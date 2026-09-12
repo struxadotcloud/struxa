@@ -169,7 +169,7 @@ export function buildDiscordComponents(kind: string, fields: Record<string, stri
     case "backup": {
       const result = fields.result ?? "";
       title = "Backup update";
-      subtitle = `${fields.backupName} — ${result}.`;
+      subtitle = `${fields.backupName} - ${result}.`;
       detail = `**${fields.backupName}** · ${fields.serverName}`;
       buttonLabel = "View server";
       if (appUrl && fields.serverUuid) buttonUrl = `${appUrl}/servers/${fields.serverUuid}`;

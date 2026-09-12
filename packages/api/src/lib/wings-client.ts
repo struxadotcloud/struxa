@@ -64,7 +64,7 @@ export class WingsClient {
     });
     if (!res.ok) {
       const body = await res.text().catch(() => "");
-      throw new WingsError(res.status, `Wings API error: ${res.status} ${path} — ${body}`);
+      throw new WingsError(res.status, `Wings API error: ${res.status} ${path} - ${body}`);
     }
     return res;
   }

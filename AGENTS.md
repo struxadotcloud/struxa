@@ -66,7 +66,7 @@ Use these as documentation for intent; avoid executing runtime/dev commands unle
 
 This project uses **next-intl** for all user-visible strings in `apps/web`.
 
-- **Never hardcode English strings** in React components — labels, placeholders, validation messages, toast messages, button text, and empty states all go in `apps/web/messages/en.json`.
+- **Never hardcode English strings** in React components - labels, placeholders, validation messages, toast messages, button text, and empty states all go in `apps/web/messages/en.json`.
 - In server components (no `"use client"`), use `getTranslations` from `next-intl/server`. In client components (`"use client"`), use `useTranslations` from `next-intl`.
 - Follow the existing namespace hierarchy: `auth.*`, `nav.*`, `panel.*`, `account.*`, `admin.*`, `setup.*`, `common.*`.
 - All new strings must be added to `en.json` in the same commit as the feature code.
@@ -79,7 +79,7 @@ This project uses **next-intl** for all user-visible strings in `apps/web`.
 - Put shared logic in `packages/*` when used by multiple apps.
 - Keep environment parsing centralized in `packages/env`.
 - Keep API contract/type updates synchronized across `packages/api`, `packages/auth`, and `packages/db` where relevant.
-- Auth is handled by better-auth via `packages/auth` — do not implement manual token management.
+- Auth is handled by better-auth via `packages/auth` - do not implement manual token management.
 
 ## Validation Strategy (No App Runtime)
 

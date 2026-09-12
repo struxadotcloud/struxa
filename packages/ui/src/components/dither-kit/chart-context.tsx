@@ -17,7 +17,7 @@ import {
 } from "./scales"
 import type { Dimensions } from "./use-chart-dimensions"
 
-/** Which chart root a part is composed under — drives the boundary guards. */
+/** Which chart root a part is composed under - drives the boundary guards. */
 export type ChartType = "area" | "bar" | "line" | "pie" | "radar"
 
 export type ChartConfig = Record<string, { label?: string; color: DitherColor }>
@@ -47,7 +47,7 @@ export type SeriesSpec = {
 export type ChartContextValue = {
   chartType: ChartType // which root this part is under
   config: ChartConfig
-  configKeys: string[] // series order — drives stacking + legend
+  configKeys: string[] // series order - drives stacking + legend
   data: Row[]
   dataLength: number
   stackType: StackType
@@ -59,7 +59,7 @@ export type ChartContextValue = {
   xCenter: (index: number) => number // category centre px within the plot
   bandwidth: number // category slot width (0 for point/area scales)
   indexAtX: (px: number) => number // nearest category for a pointer x
-  // Bar geometry in plot px — one source of truth for the canvas + click rects.
+  // Bar geometry in plot px - one source of truth for the canvas + click rects.
   barSlot: (
     index: number,
     seriesIndex: number,
@@ -72,7 +72,7 @@ export type ChartContextValue = {
   // Interaction state, shared by every part.
   selectedDataKey: string | null
   selectDataKey: (key: string | null) => void
-  /** Legend-hover spotlight — dims every series but this one while set. */
+  /** Legend-hover spotlight - dims every series but this one while set. */
   focusDataKey: string | null
   setFocusDataKey: (key: string | null) => void
   hoverIndex: number | null
@@ -82,7 +82,7 @@ export type ChartContextValue = {
   setCursorX: (px: number) => void
   isMouseInChart: boolean
   setMouseInChart: (over: boolean) => void
-  hovered: boolean // parent-driven hover (e.g. the whole card) — lifts the fill
+  hovered: boolean // parent-driven hover (e.g. the whole card) - lifts the fill
   bloom: BloomInput // glow on the dither canvas
   bloomOnHover: boolean // only bloom while hovered
 
@@ -96,7 +96,7 @@ export type ChartContextValue = {
   animate: boolean
   animationDuration: number
   revision: number
-  entranceDone: boolean // true once the entrance has played — gates SVG markers
+  entranceDone: boolean // true once the entrance has played - gates SVG markers
   markEntranceDone: () => void // the canvas calls this when its reveal completes
 
   // Helpers.
@@ -127,7 +127,7 @@ export function useChart() {
 
 /**
  * Boundary guard for a composable part. Throws a precise error when used outside
- * a root, or inside the wrong chart type — e.g. `<Bar />` placed in an area
+ * a root, or inside the wrong chart type - e.g. `<Bar />` placed in an area
  * chart. `kind` omitted means the part works under any root (grid, axes, …).
  */
 export function useChartPart(
@@ -145,7 +145,7 @@ export function useChartPart(
     const allowed = Array.isArray(kind) ? kind : [kind]
     if (!allowed.includes(ctx.chartType)) {
       throw new Error(
-        `<${part} /> is not valid inside ${ROOT_OF[ctx.chartType]} — it belongs in ${allowed
+        `<${part} /> is not valid inside ${ROOT_OF[ctx.chartType]} - it belongs in ${allowed
           .map((k) => ROOT_OF[k])
           .join(" or ")}.`
       )
@@ -157,7 +157,7 @@ export function useChartPart(
 export { ChartContext }
 
 /** A counter that advances whenever `data` changes identity or `token` advances
- * — drives entrance replays without remounting. Uses the adjust-state-during-
+ * - drives entrance replays without remounting. Uses the adjust-state-during-
  * render pattern (https://react.dev/reference/react/useState) instead of a ref:
  * the revision is derived purely from render inputs, so it stays consistent
  * across the memoized values below rather than lagging a render behind. */
@@ -209,8 +209,8 @@ export function useChartController({
   defaultSelectedDataKey?: string | null
   onSelectionChange?: (key: string | null) => void
 }): ChartContextValue {
-  // This object becomes the ChartContext value, so its identity — and the
-  // identity of every function/object it carries — must stay stable across
+  // This object becomes the ChartContext value, so its identity - and the
+  // identity of every function/object it carries - must stay stable across
   // renders that don't change the underlying inputs. Otherwise every consumer
   // (axes, legend, tooltip, dots) re-renders on every parent render. So the
   // expensive derivations, the exposed callbacks, and the returned value are
@@ -218,7 +218,7 @@ export function useChartController({
   // bare, since they're just recomputed reads, not identities anyone depends on.
 
   // Memoized: configKeys is the dep that drives `bands`, `common` and the
-  // canvas `targets` memo — a fresh array each render would bust all of them.
+  // canvas `targets` memo - a fresh array each render would bust all of them.
   const configKeys = useMemo(() => Object.keys(config), [config])
   const revision = useRevision(data, replayToken)
 
@@ -232,7 +232,7 @@ export function useChartController({
   const [seriesSpecs, setSeriesSpecs] = useState<Record<string, SeriesSpec>>({})
 
   // useCallback because the series effects in area.tsx/bar.tsx list these as
-  // deps — without stable identities the unregister/register effect re-fires
+  // deps - without stable identities the unregister/register effect re-fires
   // every render and its setState pair loops ("Maximum update depth exceeded").
   const registerSeries = useCallback((spec: SeriesSpec) => {
     setSeriesSpecs((prev) => {
@@ -292,7 +292,7 @@ export function useChartController({
     [revision]
   )
 
-  // Memoized: the priciest derivation in the render path — it walks every
+  // Memoized: the priciest derivation in the render path - it walks every
   // row × series to build the stack bands. Hover/cursor state changes must not
   // recompute it, only a real data/series/stack change.
   const { bands, max } = useMemo(
@@ -411,7 +411,7 @@ export function useChartController({
   ])
 
   // Memoized: this is the ChartContext value. A fresh object here would
-  // re-render every consumer on every parent render — the whole reason the
+  // re-render every consumer on every parent render - the whole reason the
   // pieces above are stabilized. Rebuilds only when a listed input changes
   // (which is exactly when a consumer needs the update). The useState setters
   // are listed but never change identity, so they never trigger a rebuild.

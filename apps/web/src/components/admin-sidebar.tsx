@@ -113,7 +113,7 @@ export function AdminSidebar() {
                 )}
               </div>
               <div className="min-w-0 flex-1 text-left">
-                <p className="truncate text-sm font-medium text-foreground">{user?.name ?? "—"}</p>
+                <p className="truncate text-sm font-medium text-foreground">{user?.name ?? "-"}</p>
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent side="right" align="start" className="w-52 rounded-xl border border-border bg-card p-1 shadow-lg">

@@ -525,7 +525,7 @@ function PurchaseDialog({
                 <span className="font-medium">
                   {selectedPrice
                     ? t(`durations.${selectedPrice.duration}`)
-                    : "—"}
+                    : "-"}
                 </span>
               </div>
               {selectedEgg && (
@@ -557,7 +557,7 @@ function PurchaseDialog({
                 <span className="font-bold tabular-nums text-foreground">
                   {selectedPrice
                     ? formatPrice(selectedPrice.price, currency)
-                    : "—"}
+                    : "-"}
                 </span>
               </div>
             </div>
@@ -640,7 +640,7 @@ function PurchaseDialog({
               {d("summaryDuration")}
             </span>
             <span className="font-medium text-foreground">
-              {selectedPrice ? t(`durations.${selectedPrice.duration}`) : "—"}
+              {selectedPrice ? t(`durations.${selectedPrice.duration}`) : "-"}
             </span>
           </div>
           {selectedEgg && (
@@ -672,7 +672,7 @@ function PurchaseDialog({
               {d("summaryTotal")}
             </span>
             <span className="text-xl font-bold tabular-nums text-foreground">
-              {selectedPrice ? formatPrice(selectedPrice.price, currency) : "—"}
+              {selectedPrice ? formatPrice(selectedPrice.price, currency) : "-"}
             </span>
           </div>
           <p className="text-xs text-muted-foreground">

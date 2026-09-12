@@ -42,7 +42,7 @@ function StatRow({ icon: Icon, label, children }: { icon: LucideIcon; label: str
 }
 
 function fmtDate(d: Date | string | null): string {
-  if (!d) return "—";
+  if (!d) return "-";
   return new Date(d).toLocaleString();
 }
 
@@ -366,7 +366,7 @@ function TasksPanel({
                       {ACTION_LABEL_KEYS[action] ? t(ACTION_LABEL_KEYS[action]) : action}
                     </span>
                     <span className="flex-1 font-mono text-xs text-foreground truncate">
-                      {task.payload || "—"}
+                      {task.payload || "-"}
                     </span>
                     {task.timeOffset > 0 && (
                       <span className="text-[11px] text-muted-foreground">+{task.timeOffset}s</span>
@@ -691,7 +691,7 @@ export default function SchedulesPage({ params }: { params: Promise<{ id: string
             </StatRow>
             <StatRow icon={Clock} label={t("statNextRun")}>
               <span className="text-sm font-semibold text-foreground leading-snug">
-                {soonest ? fmtDate(soonest.nextRunAt) : "—"}
+                {soonest ? fmtDate(soonest.nextRunAt) : "-"}
               </span>
               {soonest && <span className="text-xs text-muted-foreground">{soonest.name}</span>}
             </StatRow>

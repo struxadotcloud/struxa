@@ -64,7 +64,7 @@ export default function AuthShell({ title, subtitle, children, reverse }: AuthSh
 
   return (
     <main className="min-h-svh bg-background lg:grid lg:grid-cols-2">
-      {/* Branding panel — desktop only */}
+      {/* Branding panel - desktop only */}
       <div className={`relative hidden lg:flex lg:flex-col lg:justify-between bg-muted/40 border-border px-12 py-10 ${reverse ? "lg:order-2 lg:items-end border-l" : "lg:order-1 lg:items-start border-r"}`}>
         <Logo logoUrl={logoUrl} appName={appName} className="h-7" />
         <div className={`flex flex-col gap-2 ${reverse ? "items-end text-right" : "items-start text-left"}`}>

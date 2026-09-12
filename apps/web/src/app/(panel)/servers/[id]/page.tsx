@@ -39,7 +39,7 @@ import { ChevronDown } from "lucide-react";
 import { Sparkline } from "@struxa/ui/components/dither-kit/sparkline";
 
 function fmtUptime(ms: number): string {
-  if (ms <= 0) return "—";
+  if (ms <= 0) return "-";
   const secs = Math.floor(ms / 1000);
   const d = Math.floor(secs / 86400);
   const h = Math.floor((secs % 86400) / 3600);
@@ -133,7 +133,7 @@ function parseAnsi(raw: string): AnsiSpan[] {
 }
 
 function processConsoleLine(raw: string): string {
-  // Split on cursor-horizontal-absolute (\x1b[nG) — spinner animations emit
+  // Split on cursor-horizontal-absolute (\x1b[nG) - spinner animations emit
   // \x1b[1G\x1b[0K<char> in a loop to overwrite the same position. Treat each
   // G-delimited segment as a "frame" and keep the last one with visible content.
   const frames = raw.split(/\x1b\[\d*G/);
@@ -397,7 +397,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
   if (isPending || !session) return <Loader />;
 
   const alloc = server?.allocation as { ip: string; ipAlias: string | null; port: number } | null | undefined;
-  const allocDisplay = alloc ? `${alloc.ipAlias ?? alloc.ip}:${alloc.port}` : "—";
+  const allocDisplay = alloc ? `${alloc.ipAlias ?? alloc.ip}:${alloc.port}` : "-";
   const canStart = wsStatus === "offline";
   const canStop = wsStatus === "running";
   const canKill = wsStatus === "starting" || wsStatus === "stopping";

@@ -957,7 +957,7 @@ export default function NodesPage() {
           <TooltipProvider>
             <div className="overflow-x-auto">
               <div className="min-w-[580px] overflow-hidden rounded-xl border border-border bg-card">
-                {/* Column header — aligns with node rows (pl-10) */}
+                {/* Column header - aligns with node rows (pl-10) */}
                 <div className="grid grid-cols-[24px_1fr_200px_220px_48px] border-b border-border bg-muted/40 pl-10 pr-4 py-2.5">
                   <span />
                   <span className="text-xs font-medium text-muted-foreground">

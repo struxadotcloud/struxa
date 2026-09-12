@@ -118,7 +118,7 @@ function getEventDetails(eventType: string, propertiesJson: string | null): stri
 }
 
 function fmtDate(d: Date | string | null): string {
-  if (!d) return "—";
+  if (!d) return "-";
   return new Date(d).toLocaleString();
 }
 
@@ -190,9 +190,9 @@ export default function ActivityPage({ params }: { params: Promise<{ id: string 
                       <ActorCell user={entry.user} systemLabel={t("system")} />
                     </div>
                     <span className="truncate pr-4 font-mono text-xs text-muted-foreground">
-                      {getEventDetails(entry.eventType, entry.properties) ?? "—"}
+                      {getEventDetails(entry.eventType, entry.properties) ?? "-"}
                     </span>
-                    <span className="font-mono text-xs text-muted-foreground">{entry.ip ?? "—"}</span>
+                    <span className="font-mono text-xs text-muted-foreground">{entry.ip ?? "-"}</span>
                   </div>
                 );
               })

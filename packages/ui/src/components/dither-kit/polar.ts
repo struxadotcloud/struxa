@@ -95,7 +95,7 @@ export function pointInPolygon(
   return inside
 }
 
-/** Distance from a point to the nearest edge of a polygon — drives the radial
+/** Distance from a point to the nearest edge of a polygon - drives the radial
  * dither density (dense near the edge, thinning to the centre). */
 export function distToPolygonEdge(
   px: number,

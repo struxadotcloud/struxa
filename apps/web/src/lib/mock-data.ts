@@ -565,14 +565,14 @@ export const mockActivityLog: MockActivity[] = [
     ts: "May 16, 2026 04:02",
     event: "server:backup.complete",
     actor: "system",
-    ip: "—",
+    ip: "-",
   },
   {
     id: "act-002",
     ts: "May 16, 2026 04:00",
     event: "server:backup.start",
     actor: "system",
-    ip: "—",
+    ip: "-",
   },
   {
     id: "act-003",
@@ -607,14 +607,14 @@ export const mockActivityLog: MockActivity[] = [
     ts: "May 15, 2026 06:00",
     event: "server:power.restart",
     actor: "system",
-    ip: "—",
+    ip: "-",
   },
   {
     id: "act-008",
     ts: "May 15, 2026 04:01",
     event: "server:backup.complete",
     actor: "system",
-    ip: "—",
+    ip: "-",
   },
   {
     id: "act-009",

@@ -8,19 +8,19 @@ import type { BloomInput } from "./dither-paint"
 import type { DitherColor } from "./palette"
 
 export type SparklineProps = {
-  /** Plain numeric series — the common sparkline case. */
+  /** Plain numeric series - the common sparkline case. */
   data: number[]
   color: DitherColor
   variant?: AreaVariant
   /** Controlled crosshair position (e.g. a committed point). */
   markerIndex?: number | null
-  /** Parent-driven hover (e.g. the whole card/row) — lifts the fill. */
+  /** Parent-driven hover (e.g. the whole card/row) - lifts the fill. */
   hovered?: boolean
   /** Glow on the dither fill. */
   bloom?: BloomInput
   /** Only bloom while hovered. */
   bloomOnHover?: boolean
-  /** Play the entrance sweep — off by default for a calm spark. */
+  /** Play the entrance sweep - off by default for a calm spark. */
   animate?: boolean
   className?: string
 }

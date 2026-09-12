@@ -9,7 +9,7 @@ tags: composition, context, state, typescript, dependency-injection
 
 Define a **generic interface** for your component context with three parts:
 `state`, `actions`, and `meta`. This interface is a contract that any provider
-can implement—enabling the same UI components to work with completely different
+can implement-enabling the same UI components to work with completely different
 state implementations.
 
 **Core principle:** Lift state, compose internals, make state
@@ -137,7 +137,7 @@ function ChannelProvider({ channelId, children }: Props) {
 
 **Custom UI outside the component can access state and actions:**
 
-The provider boundary is what matters—not the visual nesting. Components that
+The provider boundary is what matters-not the visual nesting. Components that
 need shared state don't have to be inside the `Composer.Frame`. They just need
 to be within the provider.
 

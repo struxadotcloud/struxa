@@ -30,14 +30,14 @@ import { authClient } from "@/lib/auth-client";
 import Loader from "@/components/loader";
 
 function fmtBytes(bytes: number): string {
-  if (bytes === 0) return "—";
+  if (bytes === 0) return "-";
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 }
 
 function fmtDate(d: Date | string | null): string {
-  if (!d) return "—";
+  if (!d) return "-";
   return new Date(d).toLocaleString();
 }
 
@@ -385,7 +385,7 @@ export default function BackupsPage({ params }: { params: Promise<{ id: string }
             </StatRow>
             <StatRow icon={Clock} label={t("statLastBackup")}>
               <span className="text-sm font-semibold text-foreground leading-snug">
-                {lastBackup ? fmtDate(lastBackup.createdAt) : "—"}
+                {lastBackup ? fmtDate(lastBackup.createdAt) : "-"}
               </span>
             </StatRow>
           </div>

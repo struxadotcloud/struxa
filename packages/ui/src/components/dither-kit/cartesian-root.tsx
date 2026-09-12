@@ -44,10 +44,10 @@ export type CartesianChartProps<TData extends Row> = {
   /** Set false for a decorative sparkline: keeps the hover lift but no scrub
    * crosshair / tooltip. */
   interactive?: boolean
-  /** Controlled crosshair position (e.g. a committed point) — overrides the
+  /** Controlled crosshair position (e.g. a committed point) - overrides the
    * internal hover when set. */
   markerIndex?: number | null
-  /** Parent-driven hover (e.g. the whole card/row) — lifts the fill. */
+  /** Parent-driven hover (e.g. the whole card/row) - lifts the fill. */
   hovered?: boolean
   /** Glow on the dither fill. */
   bloom?: BloomInput
@@ -59,7 +59,7 @@ export type CartesianChartProps<TData extends Row> = {
   onSelectionChange?: (key: string | null) => void
 }
 
-/** Which render layer a composed part targets — defaults to the front SVG. */
+/** Which render layer a composed part targets - defaults to the front SVG. */
 function layerOf(node: ReactNode): "back" | "dom" | "svg" {
   if (!isValidElement(node) || typeof node.type === "string") return "svg"
   return (node.type as { chartLayer?: "back" | "dom" }).chartLayer ?? "svg"
@@ -72,7 +72,7 @@ function layerOf(node: ReactNode): "back" | "dom" | "svg" {
  * canvas paints the fill/line/bars + stars; front chrome (axes, dots) and DOM
  * legend/tooltip layer on top. `chartType` drives the scales/interaction and the
  * `Canvas` prop supplies the family's painter (continuous for area/line, bars for
- * bar) — so each chart ships only its own canvas.
+ * bar) - so each chart ships only its own canvas.
  */
 export function CartesianRoot<TData extends Row>({
   chartType,

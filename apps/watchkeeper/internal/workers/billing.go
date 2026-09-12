@@ -275,7 +275,7 @@ func suspendSubscription(db *sql.DB, sub expiredSubRow) {
 		}
 	}
 
-	log.Printf("[billing] subscription %s past_due — %d server(s) suspended", sub.id, len(srvs))
+	log.Printf("[billing] subscription %s past_due - %d server(s) suspended", sub.id, len(srvs))
 }
 
 func billingUUID() string {
