@@ -31,7 +31,7 @@
     "mongodb": "^6.11.0",
     "mysql2": "^3.14.0",
     "next": "catalog:",
-    "nodemailer": "^9.0.3",
+    "nodemailer": "^10.0.13",
     "pg": "^8.13.1",
     "zod": "catalog:"
   },
