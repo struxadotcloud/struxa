@@ -17,6 +17,7 @@ import { createWingsClient } from "../lib/wings-client";
 import { safeDecrypt } from "../lib/crypto";
 import { signWsToken } from "../lib/jwt";
 import { buildInvocation } from "../services/wings-servers";
+import { assignServerAllocations } from "../services/server-allocations";
 import { recordActivity } from "../services/activity";
 import { notifyAdmins, notifyServerOwner } from "../services/notifications";
 import { adminProcedure, protectedProcedure } from "../index";
@@ -160,6 +161,7 @@ export const serversRouter = {
         userId: z.string().optional(),
         nodeId: z.string().uuid().optional(),
         allocationId: z.string().uuid().optional(),
+        additionalAllocationIds: z.array(z.string().uuid()).max(1000).optional(),
       }),
     )
     .handler(async ({ context, input }) => {
@@ -205,11 +207,7 @@ export const serversRouter = {
       if (userId !== undefined) updates.userId = userId;
       if (nodeId !== undefined) updates.nodeId = nodeId;
 
-      if (allocationId !== undefined && allocationId !== server.allocationId) {
-        await db.update(nodeAllocations).set({ serverId: null }).where(eq(nodeAllocations.id, server.allocationId));
-        await db.update(nodeAllocations).set({ serverId: server.id }).where(eq(nodeAllocations.id, allocationId));
-        updates.allocationId = allocationId;
-      }
+      if (allocationId !== undefined) updates.allocationId = allocationId;
 
       if (startup !== undefined) {
         updates.startup = startup;
@@ -224,10 +222,29 @@ export const serversRouter = {
         updates.invocation = buildInvocation(startup, varMap);
       }
 
-      if (Object.keys(updates).length > 0) {
-        await db.update(servers).set(updates).where(eq(servers.uuid, id));
-      }
+      await db.transaction(async (tx) => {
+        const [current] = await tx.select().from(servers).where(eq(servers.id, server.id)).for("update");
+        if (!current) throw new ORPCError("NOT_FOUND");
+        if (allocationId !== undefined || nodeId !== undefined || input.additionalAllocationIds !== undefined) {
+          const existing = await tx.select().from(nodeAllocations).where(eq(nodeAllocations.serverId, server.id));
+          const additional = input.additionalAllocationIds ?? existing.filter((a) => a.id !== current.allocationId).map((a) => a.id);
+          await assignServerAllocations(tx, server.id, nodeId ?? current.nodeId, [allocationId ?? current.allocationId, ...additional]);
+        }
+        if (Object.keys(updates).length > 0) await tx.update(servers).set(updates).where(eq(servers.id, server.id));
+      });
       recordActivity({ eventType: "admin:server.update", userId: context.session.user.id, serverId: server.id, ip: context.ip, properties: name !== undefined ? { name } : {} });
+      let allocationSyncFailed = false;
+      if (allocationId !== undefined || input.additionalAllocationIds !== undefined) {
+        const node = await db.query.nodes.findFirst({ where: eq(nodes.id, nodeId ?? server.nodeId) });
+        try {
+          if (!node) throw new Error("Node not found");
+          await createWingsClient(node).syncServer(server.uuid);
+        } catch {
+          // The database remains authoritative; allow the administrator to retry sync by saving again.
+          allocationSyncFailed = true;
+        }
+      }
+      return { allocationSyncFailed };
     }),
 
   suspend: adminProcedure
@@ -544,7 +561,8 @@ export const serversRouter = {
         },
       });
 
-      return { ...server, serverVariables: variables };
+      const allocations = await db.query.nodeAllocations.findMany({ where: eq(nodeAllocations.serverId, server.id) });
+      return { ...server, serverVariables: variables, allocations };
     }),
 
   power: protectedProcedure
@@ -756,6 +774,7 @@ export const serversRouter = {
         nodeId: z.string().uuid(),
         eggId: z.string().uuid(),
         allocationId: z.string().uuid(),
+        additionalAllocationIds: z.array(z.string().uuid()).max(1000).default([]),
         memory: z.number().int().min(1),
         disk: z.number().int().min(1),
         cpu: z.number().int().min(0),
@@ -800,45 +819,43 @@ export const serversRouter = {
       const uuid = randomUUID();
       const uuidShort = uuid.slice(0, 8);
 
-      await db.insert(servers).values({
-        id,
-        uuid,
-        uuidShort,
-        name: input.name,
-        description: input.description ?? null,
-        userId: input.userId,
-        nodeId: input.nodeId,
-        eggId: input.eggId,
-        allocationId: input.allocationId,
-        memory: input.memory,
-        disk: input.disk,
-        cpu: input.cpu,
-        swap: input.swap,
-        io: input.io,
-        threads: input.threads ?? null,
-        oomDisabled: input.oomDisabled,
-        image: input.image,
-        startup: egg.startup,
-        skipScripts: input.skipScripts,
-        invocation,
-        status: "installing",
+      await db.transaction(async (tx) => {
+        await assignServerAllocations(tx, id, input.nodeId, [input.allocationId, ...input.additionalAllocationIds]);
+        await tx.insert(servers).values({
+          id,
+          uuid,
+          uuidShort,
+          name: input.name,
+          description: input.description ?? null,
+          userId: input.userId,
+          nodeId: input.nodeId,
+          eggId: input.eggId,
+          allocationId: input.allocationId,
+          memory: input.memory,
+          disk: input.disk,
+          cpu: input.cpu,
+          swap: input.swap,
+          io: input.io,
+          threads: input.threads ?? null,
+          oomDisabled: input.oomDisabled,
+          image: input.image,
+          startup: egg.startup,
+          skipScripts: input.skipScripts,
+          invocation,
+          status: "installing",
+        });
+
+        if (egg.variables.length > 0) {
+          await tx.insert(serverVariables).values(
+            egg.variables.map((v) => ({
+              id: randomUUID(),
+              serverId: id,
+              variableId: v.id,
+              variableValue: resolveVar(input.variableValues, v.envVariable, v.defaultValue),
+            })),
+          );
+        }
       });
-
-      if (egg.variables.length > 0) {
-        await db.insert(serverVariables).values(
-          egg.variables.map((v) => ({
-            id: randomUUID(),
-            serverId: id,
-            variableId: v.id,
-            variableValue: resolveVar(input.variableValues, v.envVariable, v.defaultValue),
-          })),
-        );
-      }
-
-      await db
-        .update(nodeAllocations)
-        .set({ serverId: id })
-        .where(eq(nodeAllocations.id, input.allocationId));
 
       const environment: Record<string, string> = {};
       for (const v of egg.variables) {
@@ -875,7 +892,7 @@ export const serversRouter = {
         await db
           .update(nodeAllocations)
           .set({ serverId: null })
-          .where(eq(nodeAllocations.id, input.allocationId));
+          .where(eq(nodeAllocations.serverId, id));
         throw err;
       }
 
@@ -909,7 +926,7 @@ export const serversRouter = {
       await db
         .update(nodeAllocations)
         .set({ serverId: null })
-        .where(eq(nodeAllocations.id, server.allocationId));
+        .where(eq(nodeAllocations.serverId, server.id));
 
       await db.delete(servers).where(eq(servers.id, server.id));
       recordActivity({ eventType: "admin:server.delete", userId: context.session.user.id, ip: context.ip, properties: { name: server.name } });

@@ -16,6 +16,8 @@ import { ChevronRight, ChevronDown, Check } from "lucide-react";
 import { orpc } from "@/utils/orpc";
 import { UserCombobox } from "@/components/user-combobox";
 import { AllocationCombobox } from "@/components/allocation-combobox";
+import type { AllocationResult } from "@/components/allocation-combobox";
+import { AdditionalAllocations } from "@/components/additional-allocations";
 
 function StepIndicator({ current, steps }: { current: number; steps: string[] }) {
   return (
@@ -84,6 +86,7 @@ export default function NewServerPage() {
 
   const [basicInfo, setBasicInfo] = useState({ name: "", description: "", userId: "" });
   const [nodeAlloc, setNodeAlloc] = useState({ nodeId: "", allocationId: "" });
+  const [additionalAllocations, setAdditionalAllocations] = useState<AllocationResult[]>([]);
   const [nestEgg, setNestEgg] = useState({ nestId: "", eggId: "", image: "" });
   const [resources, setResources] = useState({
     memory: 1024,
@@ -146,6 +149,7 @@ export default function NewServerPage() {
       userId: basicInfo.userId,
       nodeId: nodeAlloc.nodeId,
       allocationId: nodeAlloc.allocationId,
+      additionalAllocationIds: additionalAllocations.filter((a) => a.id !== nodeAlloc.allocationId).map((a) => a.id),
       eggId: nestEgg.eggId,
       image: nestEgg.image,
       memory: resources.memory,
@@ -212,7 +216,7 @@ export default function NewServerPage() {
                     {nodes?.map((n) => (
                       <DropdownMenuItem
                         key={n.id}
-                        onClick={() => setNodeAlloc({ nodeId: n.id, allocationId: "" })}
+                        onClick={() => { setNodeAlloc({ nodeId: n.id, allocationId: "" }); setAdditionalAllocations([]); }}
                         className={dropdownItemClass()}
                       >
                         <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${nodeAlloc.nodeId === n.id ? "bg-blue-500" : "bg-transparent"}`} />
@@ -230,10 +234,13 @@ export default function NewServerPage() {
                   <AllocationCombobox
                     nodeId={nodeAlloc.nodeId}
                     value={nodeAlloc.allocationId}
+                    excludeIds={additionalAllocations.map((a) => a.id)}
                     onChange={(id) => setNodeAlloc((f) => ({ ...f, allocationId: id }))}
                     placeholder={t("allocationPlaceholder")}
                     emptyText={t("noFreeAllocations")}
                   />
+                  <AdditionalAllocations nodeId={nodeAlloc.nodeId} primaryId={nodeAlloc.allocationId}
+                    value={additionalAllocations} onChange={setAdditionalAllocations} />
                 </div>
               )}
             </div>

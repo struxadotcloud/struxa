@@ -1,4 +1,5 @@
 import { and, count, eq } from "drizzle-orm";
+import { buildAllocationMappings } from "../lib/allocations";
 import { db } from "@struxa/db";
 import {
   eggs,
@@ -121,7 +122,7 @@ function parseProcessConfiguration(egg: { configStartup: string | null; configSt
 async function buildServerConfig(
   server: typeof servers.$inferSelect,
 ): Promise<RawServer> {
-  const [egg, allocation, serverVars, eggVars, mountRows] = await Promise.all([
+  const [egg, allocation, serverVars, eggVars, mountRows, allocations] = await Promise.all([
     db.query.eggs.findFirst({ where: eq(eggs.id, server.eggId) }),
     db.query.nodeAllocations.findFirst({
       where: eq(nodeAllocations.id, server.allocationId),
@@ -136,6 +137,7 @@ async function buildServerConfig(
       where: eq(serverMounts.serverId, server.id),
       with: { mount: true },
     }),
+    db.query.nodeAllocations.findMany({ where: eq(nodeAllocations.serverId, server.id) }),
   ]);
 
   if (!egg || !allocation) {
@@ -158,8 +160,7 @@ async function buildServerConfig(
     }
   } catch {}
 
-  const mappings: Record<string, number[]> = {};
-  mappings[allocation.ip] = [allocation.port];
+  const mappings = buildAllocationMappings(allocation, allocations);
 
   return {
     settings: {

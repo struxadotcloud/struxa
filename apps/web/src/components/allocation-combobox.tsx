@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useQuery, keepPreviousData, skipToken } from "@tanstack/react-query";
+import { useQuery, skipToken } from "@tanstack/react-query";
 import { orpc } from "@/utils/orpc";
+import { useTranslations } from "next-intl";
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState(value);
@@ -13,7 +14,7 @@ function useDebounce<T>(value: T, delay: number): T {
   return debounced;
 }
 
-type AllocationResult = { id: string; ip: string; port: number; ipAlias?: string | null };
+export type AllocationResult = { id: string; ip: string; port: number; ipAlias?: string | null };
 
 function formatAllocation(a: AllocationResult) {
   return a.ipAlias ? `${a.ipAlias} (${a.ip}:${a.port})` : `${a.ip}:${a.port}`;
@@ -24,9 +25,12 @@ export function AllocationCombobox({
   value,
   onChange,
   initialAllocation,
-  placeholder = "Search by IP or port…",
-  disabledPlaceholder = "Select a node first",
-  emptyText = "No free allocations found",
+  placeholder,
+  disabledPlaceholder,
+  emptyText,
+  excludeIds = [],
+  assignedAllocations = [],
+  onSelect,
 }: {
   nodeId: string;
   value: string;
@@ -35,7 +39,11 @@ export function AllocationCombobox({
   placeholder?: string;
   disabledPlaceholder?: string;
   emptyText?: string;
+  excludeIds?: string[];
+  assignedAllocations?: AllocationResult[];
+  onSelect?: (allocation: AllocationResult) => void;
 }) {
+  const t = useTranslations("admin.servers");
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<AllocationResult | null>(initialAllocation ?? null);
@@ -43,10 +51,12 @@ export function AllocationCombobox({
 
   const debouncedQuery = useDebounce(query.trim(), 300);
 
-  const { data: results = [], isFetching } = useQuery({
+  const { data: freeResults = [], isFetching } = useQuery({
     ...orpc.allocations.search.queryOptions({ input: nodeId ? { nodeId, query: debouncedQuery } : skipToken }),
-    placeholderData: keepPreviousData,
   });
+  const results = [...assignedAllocations.filter((a) =>
+    `${a.ip}:${a.port} ${a.ipAlias ?? ""}`.toLowerCase().includes(debouncedQuery.toLowerCase()),
+  ), ...freeResults].filter((a) => !excludeIds.includes(a.id));
 
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
@@ -65,6 +75,12 @@ export function AllocationCombobox({
   }, [initialAllocation?.id]);
 
   function select(a: AllocationResult) {
+    if (onSelect) {
+      onSelect(a);
+      setQuery("");
+      setOpen(false);
+      return;
+    }
     onChange(a.id);
     setSelected(a);
     setQuery("");
@@ -74,7 +90,7 @@ export function AllocationCombobox({
   if (!nodeId) {
     return (
       <div className="w-full rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm text-muted-foreground/50">
-        {disabledPlaceholder}
+        {disabledPlaceholder ?? t("selectNodeFirst")}
       </div>
     );
   }
@@ -93,14 +109,14 @@ export function AllocationCombobox({
             }}
             className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
           >
-            change
+            {t("changeAllocation")}
           </button>
         </div>
       ) : (
         <input
           autoFocus={open}
           className="w-full rounded-lg border border-border bg-background px-3 py-2 font-mono text-sm text-foreground outline-none placeholder:font-sans placeholder:text-muted-foreground/50 focus:border-ring transition-colors"
-          placeholder={placeholder}
+          placeholder={placeholder ?? t("allocationPlaceholder")}
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
@@ -112,9 +128,9 @@ export function AllocationCombobox({
       {open && (
         <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded-xl border border-border bg-card shadow-lg overflow-hidden">
           {isFetching && debouncedQuery !== query.trim() ? (
-            <div className="px-3 py-2.5 text-xs text-muted-foreground">Searching…</div>
+            <div className="px-3 py-2.5 text-xs text-muted-foreground">{t("searchingAllocations")}</div>
           ) : results.length === 0 ? (
-            <div className="px-3 py-2.5 text-xs text-muted-foreground">{emptyText}</div>
+            <div className="px-3 py-2.5 text-xs text-muted-foreground">{emptyText ?? t("noFreeAllocationsShort")}</div>
           ) : (
             results.map((a) => (
               <button

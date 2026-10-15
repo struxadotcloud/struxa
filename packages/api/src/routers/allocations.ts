@@ -74,16 +74,17 @@ export const allocationsRouter = {
   delete: adminProcedure
     .input(z.object({ id: z.string().uuid() }))
     .handler(async ({ context, input }) => {
-      const allocation = await db.query.nodeAllocations.findFirst({
-        where: eq(nodeAllocations.id, input.id),
+      const allocation = await db.transaction(async (tx) => {
+        const [allocation] = await tx.select().from(nodeAllocations).where(eq(nodeAllocations.id, input.id)).for("update");
+        if (!allocation) throw new ORPCError("NOT_FOUND");
+        if (allocation.serverId) {
+          throw new ORPCError("BAD_REQUEST", {
+            message: "Cannot delete an allocation assigned to a server",
+          });
+        }
+        await tx.delete(nodeAllocations).where(eq(nodeAllocations.id, input.id));
+        return allocation;
       });
-      if (!allocation) throw new ORPCError("NOT_FOUND");
-      if (allocation.serverId) {
-        throw new ORPCError("BAD_REQUEST", {
-          message: "Cannot delete an allocation assigned to a server",
-        });
-      }
-      await db.delete(nodeAllocations).where(eq(nodeAllocations.id, input.id));
       recordActivity({ eventType: "admin:allocation.delete", userId: context.session.user.id, nodeId: allocation.nodeId, ip: context.ip, properties: { ip: allocation.ip, port: allocation.port } });
     }),
 };
