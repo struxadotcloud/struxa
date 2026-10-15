@@ -3,7 +3,6 @@
 import { use, useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   DropdownMenu,
@@ -19,6 +18,8 @@ import { toast } from "sonner";
 import { orpc, queryClient } from "@/utils/orpc";
 import { UserCombobox } from "@/components/user-combobox";
 import { AllocationCombobox } from "@/components/allocation-combobox";
+import type { AllocationResult } from "@/components/allocation-combobox";
+import { AdditionalAllocations } from "@/components/additional-allocations";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { DangerZone, DangerZoneRow } from "@/components/danger-zone";
 
@@ -73,10 +74,11 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
 
   const updateMutation = useMutation(
     orpc.servers.update.mutationOptions({
-      onSuccess: () => {
+      onSuccess: (result) => {
         invalidateServer(serverId);
         invalidateList();
-        toast.success(tc("saved"));
+        if (result.allocationSyncFailed) toast.warning(t("allocationSyncFailed"));
+        else toast.success(tc("saved"));
       },
     }),
   );
@@ -123,6 +125,7 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
   const [description, setDescription] = useState("");
   const [ownerId, setOwnerId] = useState("");
   const [allocationId, setAllocationId] = useState("");
+  const [additionalAllocations, setAdditionalAllocations] = useState<AllocationResult[]>([]);
   const [memory, setMemory] = useState(0);
   const [disk, setDisk] = useState(0);
   const [cpu, setCpu] = useState(0);
@@ -143,6 +146,7 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
     setOwnerId(server.userId);
     setSelectedNodeId(server.nodeId);
     setAllocationId(server.allocationId);
+    setAdditionalAllocations(server.allocations.filter((a) => a.id !== server.allocationId));
     setMemory(server.memory);
     setDisk(server.disk);
     setCpu(server.cpu);
@@ -287,7 +291,7 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
                       {(nodesList ?? []).map((n) => (
                         <DropdownMenuItem
                           key={n.id}
-                          onClick={() => { setSelectedNodeId(n.id); setAllocationId(""); }}
+                          onClick={() => { setSelectedNodeId(n.id); setAllocationId(""); setAdditionalAllocations([]); }}
                           className="cursor-pointer rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground"
                         >
                           {n.name}
@@ -302,6 +306,7 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
                     nodeId={selectedNodeId}
                     value={allocationId}
                     onChange={setAllocationId}
+                    assignedAllocations={!nodeChanged ? server.allocations : []}
                     initialAllocation={
                       !nodeChanged && server.allocation
                         ? { id: server.allocationId, ip: server.allocation.ip, port: server.allocation.port, ipAlias: server.allocation.ipAlias }
@@ -313,6 +318,9 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
                   />
                 </div>
               </div>
+              <AdditionalAllocations nodeId={selectedNodeId} primaryId={allocationId}
+                value={additionalAllocations} onChange={setAdditionalAllocations}
+                assignedAllocations={!nodeChanged ? server.allocations : []} />
               <div className="mt-4 flex items-center gap-2">
                 <button
                   type="button"
@@ -320,8 +328,9 @@ export default function AdminServerDetailPage({ params }: { params: Promise<{ id
                     id: serverId,
                     nodeId: nodeChanged ? selectedNodeId : undefined,
                     allocationId: allocationId !== server.allocationId ? allocationId : undefined,
+                    additionalAllocationIds: additionalAllocations.filter((a) => a.id !== allocationId).map((a) => a.id),
                   })}
-                  disabled={updateMutation.isPending}
+                  disabled={updateMutation.isPending || !allocationId}
                   className="rounded-lg bg-foreground px-4 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-80 disabled:opacity-40"
                 >
                   {updateMutation.isPending ? tc("saving") : tc("save")}

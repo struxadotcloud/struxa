@@ -31,6 +31,8 @@ import { getEffectiveAppUrl } from "../services/instance";
 import { encrypt, decrypt } from "../lib/crypto";
 import { createWingsClient } from "../lib/wings-client";
 import { buildInvocation } from "../services/wings-servers";
+import { assignServerAllocations } from "../services/server-allocations";
+import { groupAllocationsByNode, requiredAllocationCount } from "../lib/allocations";
 import { createStripeTopupSession, createSimPayTopupSession, createPayPalTopupSession, createP24TopupSession } from "@struxa/payments";
 import { adminProcedure, protectedProcedure } from "../index";
 
@@ -160,7 +162,7 @@ export const billingRouter = {
           let soldOut = true;
           for (const [nodeId, cap] of nodeCapacity) {
             if (allowedNodes.length > 0 && !allowedNodes.includes(nodeId)) continue;
-            if (cap.freeAllocCount > 0 && cap.remainingRamMB >= requiredRamMB && cap.remainingDiskMB >= requiredDiskMB) {
+            if (cap.freeAllocCount >= requiredAllocationCount(limits?.allocations) && cap.remainingRamMB >= requiredRamMB && cap.remainingDiskMB >= requiredDiskMB) {
               soldOut = false;
               break;
             }
@@ -939,6 +941,7 @@ export const billingRouter = {
       const allowedNodeIds = (planLimits?.nodes ?? []) as string[];
       const requiredRam = (planLimits?.ram ?? 0.5) * 1024;
       const requiredDisk = (planLimits?.disk ?? 1) * 1024;
+      const requiredAllocations = requiredAllocationCount(planLimits?.allocations);
 
       const freeAllocs = await db.query.nodeAllocations.findMany({
         where: and(
@@ -951,9 +954,11 @@ export const billingRouter = {
       // ponytail: soft capacity check - two concurrent buys can both pass; overallocation headroom absorbs the slop
       const nodeUsageCache = new Map<string, { usedRam: number; usedDisk: number }>();
       let alloc: (typeof freeAllocs)[0] | null = null;
+      const allocationsByNode = groupAllocationsByNode(freeAllocs);
 
       for (const candidate of freeAllocs) {
         const nodeId = candidate.nodeId;
+        if ((allocationsByNode.get(nodeId)?.length ?? 0) < requiredAllocations) continue;
         if (!nodeUsageCache.has(nodeId)) {
           const [usage] = await db.select({
             usedRam: sql<number>`COALESCE(SUM(${servers.memory}), 0)`,
@@ -972,7 +977,7 @@ export const billingRouter = {
       }
 
       if (!alloc) {
-        const hasAnyFree = freeAllocs.length > 0;
+        const hasAnyFree = [...allocationsByNode.values()].some((group) => group.length >= requiredAllocations);
         throw new ORPCError("BAD_REQUEST", { data: { code: hasAnyFree ? "NO_CAPACITY" : "NO_ALLOCATIONS" } });
       }
 
@@ -1055,6 +1060,8 @@ export const billingRouter = {
       }
 
       await db.transaction(async (tx) => {
+        await assignServerAllocations(tx, serverId, alloc.nodeId,
+          allocationsByNode.get(alloc.nodeId)!.slice(0, requiredAllocations).map((allocation) => allocation.id));
         let balanceAfter = (wallet?.balanceCents ?? 0) - finalAmountCents;
 
         if (finalAmountCents > 0) {
@@ -1119,8 +1126,6 @@ export const billingRouter = {
             })),
           );
         }
-
-        await tx.update(nodeAllocations).set({ serverId }).where(eq(nodeAllocations.id, alloc.id));
 
         await tx.insert(billingInvoices).values({
           id: invoiceId,

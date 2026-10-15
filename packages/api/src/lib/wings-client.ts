@@ -88,6 +88,10 @@ export class WingsClient {
     await this.request("POST", `/api/servers/${uuid}/reinstall`, {});
   }
 
+  async syncServer(uuid: string): Promise<void> {
+    await this.request("POST", `/api/servers/${uuid}/sync`, {});
+  }
+
   async createBackup(uuid: string, payload: BackupPayload): Promise<void> {
     await this.request("POST", `/api/servers/${uuid}/backup`, payload);
   }
