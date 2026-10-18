@@ -534,6 +534,7 @@
       "loading": "Chargement…",
       "noAllocation": "Aucune allocation assignée",
       "typePrimary": "Principale",
+      "typeAdditional": "Supplémentaire",
       "statPrimary": "Principale",
       "statAllocations": "Allocations",
       "statNote": "Note",

@@ -50,7 +50,11 @@ export default function NetworkPage({ params }: { params: Promise<{ id: string }
   if (isPending || !session) return <Loader />;
 
   const alloc = server?.allocation as { ip: string; ipAlias: string | null; port: number } | null | undefined;
-  const allocIp = alloc ? (alloc.ipAlias ?? alloc.ip) : null;
+  const allocations = (server?.allocations ?? []) as { id: string; ip: string; ipAlias: string | null; port: number }[];
+  const sorted = [...allocations].sort((a, b) =>
+    Number(!!alloc && a.ip === alloc.ip && a.port === alloc.port ? 0 : 1) -
+    Number(!!alloc && b.ip === alloc.ip && b.port === alloc.port ? 0 : 1),
+  );
 
   function copy(text: string) {
     void navigator.clipboard.writeText(text);
@@ -69,33 +73,45 @@ export default function NetworkPage({ params }: { params: Promise<{ id: string }
           <div className="flex-1 overflow-y-auto">
             {serverPending ? (
               <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">{t("loading")}</div>
-            ) : !alloc ? (
+            ) : sorted.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 gap-2">
                 <Globe className="h-8 w-8 text-muted-foreground/30" />
                 <p className="text-sm text-muted-foreground">{t("noAllocation")}</p>
               </div>
             ) : (
-              <div className="grid grid-cols-[32px_1fr_100px_120px] items-center px-4 py-3 hover:bg-muted/40 transition-colors">
-                <span className="flex items-center justify-center">
-                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                </span>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-foreground">{allocIp}</span>
-                  <button
-                    type="button"
-                    onClick={() => copy(allocIp!)}
-                    className="rounded p-0.5 text-muted-foreground/50 hover:bg-muted hover:text-foreground transition-colors"
-                  >
-                    <Copy className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-                <span className="text-sm text-foreground">{alloc.port}</span>
-                <span>
-                  <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-[11px] font-medium text-blue-600 dark:text-blue-400">
-                    {t("typePrimary")}
-                  </span>
-                </span>
-              </div>
+              sorted.map((a) => {
+                const isPrimary = !!alloc && a.ip === alloc.ip && a.port === alloc.port;
+                const ip = a.ipAlias ?? a.ip;
+                return (
+                  <div key={a.id} className="grid grid-cols-[32px_1fr_100px_120px] items-center px-4 py-3 hover:bg-muted/40 transition-colors">
+                    <span className="flex items-center justify-center">
+                      {isPrimary && <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-foreground">{ip}</span>
+                      <button
+                        type="button"
+                        onClick={() => copy(ip)}
+                        className="rounded p-0.5 text-muted-foreground/50 hover:bg-muted hover:text-foreground transition-colors"
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    <span className="text-sm text-foreground">{a.port}</span>
+                    <span>
+                      {isPrimary ? (
+                        <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-[11px] font-medium text-blue-600 dark:text-blue-400">
+                          {t("typePrimary")}
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                          {t("typeAdditional")}
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                );
+              })
             )}
           </div>
         </div>
@@ -104,11 +120,11 @@ export default function NetworkPage({ params }: { params: Promise<{ id: string }
           <div className="overflow-y-auto">
             <StatRow icon={Globe} label={t("statPrimary")}>
               <span className="text-sm font-semibold text-foreground leading-snug">
-                {alloc ? `${allocIp}:${alloc.port}` : "-"}
+                {alloc ? `${alloc.ipAlias ?? alloc.ip}:${alloc.port}` : "-"}
               </span>
             </StatRow>
             <StatRow icon={Globe} label={t("statAllocations")}>
-              <span className="text-xl font-bold text-foreground">{alloc ? 1 : 0}</span>
+              <span className="text-xl font-bold text-foreground">{sorted.length}</span>
             </StatRow>
             <StatRow icon={Globe} label={t("statNote")}>
               <p className="text-xs text-muted-foreground leading-relaxed">

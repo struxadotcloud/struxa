@@ -534,6 +534,7 @@
       "loading": "Cargando…",
       "noAllocation": "Sin asignación",
       "typePrimary": "Primaria",
+      "typeAdditional": "Adicional",
       "statPrimary": "Primaria",
       "statAllocations": "Asignaciones",
       "statNote": "Nota",

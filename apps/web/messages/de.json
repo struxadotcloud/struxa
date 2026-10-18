@@ -534,6 +534,7 @@
       "loading": "Laden…",
       "noAllocation": "Keine Zuweisung",
       "typePrimary": "Primär",
+      "typeAdditional": "Zusätzlich",
       "statPrimary": "Primär",
       "statAllocations": "Zuweisungen",
       "statNote": "Hinweis",
