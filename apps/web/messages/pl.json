@@ -534,6 +534,7 @@
       "loading": "Ładowanie…",
       "noAllocation": "Brak przypisanego przydziału",
       "typePrimary": "Podstawowy",
+      "typeAdditional": "Dodatkowy",
       "statPrimary": "Podstawowy",
       "statAllocations": "Przydziały",
       "statNote": "Uwaga",

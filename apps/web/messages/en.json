@@ -667,6 +667,7 @@
       "loading": "Loading…",
       "noAllocation": "No allocation assigned",
       "typePrimary": "Primary",
+      "typeAdditional": "Additional",
       "statPrimary": "Primary",
       "statAllocations": "Allocations",
       "statNote": "Note",

@@ -1,6 +1,8 @@
 # Local Docker Compose - builds all images from source
 # Usage: docker compose -f docker-compose.local.yml --env-file .env.local up --build
 
+name: struxa-local
+
 services:
   mysql:
     image: mysql:8.4
@@ -88,6 +90,7 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
       MINIO_BUCKET: ${MINIO_BUCKET:-struxa}
+      BOOTSTRAP_SECRET: ${BOOTSTRAP_SECRET}
     depends_on:
       migrate:
         condition: service_completed_successfully

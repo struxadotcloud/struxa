@@ -514,7 +514,11 @@ export const serversRouter = {
       });
 
       const { userId: _uid, ...serverFields } = server;
-      return { ...serverFields, serverVariables: variables };
+      const allocations = await db.query.nodeAllocations.findMany({
+        where: eq(nodeAllocations.serverId, server.id),
+        columns: { id: true, ip: true, ipAlias: true, port: true },
+      });
+      return { ...serverFields, serverVariables: variables, allocations };
     }),
 
   adminGet: adminProcedure
